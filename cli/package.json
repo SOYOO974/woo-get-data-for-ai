@@ -1,0 +1,17 @@
+{
+  "name": "wp-agent-bridge-cli",
+  "version": "1.0.0",
+  "description": "Local synchronization CLI for WP Agent Bridge",
+  "main": "sync.js",
+  "scripts": {
+    "sync": "node sync.js",
+    "pull:all": "node sync.js pull:all",
+    "pull:system": "node sync.js pull:system",
+    "pull:theme": "node sync.js pull:theme",
+    "pull:elementor": "node sync.js pull:elementor",
+    "pull:snippets": "node sync.js pull:snippets",
+    "pull:logs": "node sync.js pull:logs"
+  },
+  "author": "SOYOO",
+  "license": "GPL-2.0-or-later"
+}

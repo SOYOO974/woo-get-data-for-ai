@@ -1,0 +1,230 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Agent Bridge (Data for AI) 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
+"POT-Creation-Date: 2026-09-05 16:40:00+00:00\n"
+"PO-Revision-Date: 2026-09-05 16:45:00+00:00\n"
+"Last-Translator: SOYOO\n"
+"Language-Team: Français\n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Domain: woo-get-data-for-ai\n"
+
+#: woo-get-data-for-ai.php:6
+msgid "WP Agent Bridge (Data for AI)"
+msgstr "WP Agent Bridge (Données pour IA)"
+
+#: woo-get-data-for-ai.php:7
+msgid "Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode snippets, and theme options to AI agents (Antigravity, Claude, Cursor)."
+msgstr "API d'inspection en lecture seule pour WordPress et WooCommerce. Expose de manière sécurisée l'état système, les logs, les arbres Elementor, les snippets WPCode et les réglages de thèmes aux agents IA (Antigravity, Claude, Cursor)."
+
+#: includes/class-security.php:63
+msgid "Only GET (Read-Only) requests are permitted by WP Agent Bridge."
+msgstr "Seules les requêtes GET (Lecture seule) sont autorisées par WP Agent Bridge."
+
+#: includes/class-security.php:73
+msgid "No Agent Bridge token configured on this server."
+msgstr "Aucun token Agent Bridge configuré sur ce serveur."
+
+#: includes/class-security.php:94
+msgid "Missing or invalid Authorization Bearer header."
+msgstr "En-tête Authorization Bearer manquant ou invalide."
+
+#: includes/class-security.php:104
+msgid "Invalid authentication token."
+msgstr "Token d'authentification invalide."
+
+#: includes/class-security.php:118
+msgid "Access denied: Client IP is not in the authorized whitelist."
+msgstr "Accès refusé : L'adresse IP cliente n'est pas dans la liste blanche autorisée."
+
+#: includes/class-security.php:131
+msgid "Too many requests. Please throttle your queries (limit: 120/min)."
+msgstr "Trop de requêtes. Veuillez ralentir vos appels (limite : 120/min)."
+
+#: includes/class-permissions.php:17
+msgid "System & Environment"
+msgstr "Système & Environnement"
+
+#: includes/class-permissions.php:18
+msgid "Allows inspection of WP, PHP, MySQL versions, active plugins list, server limits, and Action Scheduler crons."
+msgstr "Permet l'inspection des versions WP, PHP, MySQL, des extensions actives, des limites serveur et de l'Action Scheduler."
+
+#: includes/class-permissions.php:23
+msgid "WooCommerce Diagnostic & Overrides"
+msgstr "Diagnostic WooCommerce & Surcharges"
+
+#: includes/class-permissions.php:24
+msgid "Allows auditing template overrides in active themes, detecting outdated WooCommerce templates, and HPOS status."
+msgstr "Permet d'auditer les templates WooCommerce surchargés dans le thème actif, de détecter les versions obsolètes et le statut HPOS."
+
+#: includes/class-permissions.php:29
+msgid "Theme Settings & Child Theme"
+msgstr "Réglages Thème & Thème Enfant"
+
+#: includes/class-permissions.php:30
+msgid "Allows exporting Woodmart (xts-woodmart-options), Elessi (elessi_options) settings, and child theme functions.php/style.css."
+msgstr "Permet d'exporter les options Woodmart (xts-woodmart-options), Elessi (elessi_options) et le code du thème enfant."
+
+#: includes/class-permissions.php:35
+msgid "Code & Plugin File Inspector"
+msgstr "Inspecteur de Code & Extensions"
+
+#: includes/class-permissions.php:36
+msgid "Allows browsing active plugins and mu-plugins file structures and reading specific PHP/JS/CSS files in sandbox."
+msgstr "Permet de parcourir les fichiers des extensions actives/mu-plugins et de lire des fichiers PHP/JS/CSS sous sandbox."
+
+#: includes/class-permissions.php:41
+msgid "Elementor Architecture"
+msgstr "Architecture Elementor"
+
+#: includes/class-permissions.php:42
+msgid "Allows reading Elementor page trees, global kit styles, and mapping form widgets with webhooks."
+msgstr "Permet de lire les arbres JSON Elementor, les styles globaux du kit et de cartographier les formulaires et webhooks."
+
+#: includes/class-permissions.php:47
+msgid "WPCode Snippets"
+msgstr "Extraits de Code WPCode"
+
+#: includes/class-permissions.php:48
+msgid "Allows listing and inspecting custom PHP, JS, and CSS snippets stored in WPCode plugin."
+msgstr "Permet de lister et d'inspecter les extraits de code personnalisés PHP, JS et CSS stockés dans WPCode."
+
+#: includes/class-permissions.php:53
+msgid "Error & WooCommerce Logs"
+msgstr "Journaux d'Erreurs & Logs WooCommerce"
+
+#: includes/class-permissions.php:54
+msgid "Allows listing and tail-reading debug.log and uploads/wc-logs/*.log with memory protection."
+msgstr "Permet de lister et d'extraire les dernières lignes de debug.log et wc-logs avec protection mémoire."
+
+#: includes/admin/class-admin-settings.php:23
+msgid "WP Agent Bridge Settings"
+msgstr "Réglages WP Agent Bridge"
+
+#: includes/admin/class-admin-settings.php:24
+msgid "Agent Bridge"
+msgstr "Agent Bridge"
+
+#: includes/admin/class-admin-settings.php:79
+msgid "Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated."
+msgstr "Êtes-vous sûr de vouloir régénérer le token ? Les agents IA et scripts CLI perdront immédiatement l'accès jusqu'à leur mise à jour."
+
+#: includes/admin/class-admin-settings.php:80
+msgid "Are you sure you want to clear all connection logs?"
+msgstr "Êtes-vous sûr de vouloir effacer tout l'historique des logs de connexion ?"
+
+#: includes/admin/class-admin-settings.php:81
+msgid "Copied to clipboard!"
+msgstr "Copié dans le presse-papier !"
+
+#: includes/admin/class-admin-settings.php:93
+msgid "General & Status"
+msgstr "Général & Statut"
+
+#: includes/admin/class-admin-settings.php:94
+msgid "Permissions Matrix"
+msgstr "Matrice de Permissions"
+
+#: includes/admin/class-admin-settings.php:95
+msgid "AI Mega-Prompt & Skill"
+msgstr "Méga-Prompt IA & Skill"
+
+#: includes/admin/class-admin-settings.php:96
+msgid "Connection Logs & Analytics"
+msgstr "Logs de Connexion & Statistiques"
+
+#: includes/admin/class-admin-settings.php:111
+msgid "Active & Protected"
+msgstr "Actif & Protégé"
+
+#: includes/admin/class-admin-settings.php:111
+msgid "Token Missing"
+msgstr "Token Manquant"
+
+#: includes/class-security.php:186
+msgid "Too many failed authentication attempts. Your IP has been temporarily locked out for %d more minute(s)."
+msgstr "Trop de tentatives d'authentification échouées. Votre adresse IP a été temporairement bloquée pour encore %d minute(s)."
+
+#: includes/class-security.php:236
+msgid "Too many failed authentication attempts. Your IP has been locked out for %d minutes."
+msgstr "Trop de tentatives d'authentification échouées. Votre adresse IP a été bloquée pendant %d minutes."
+
+#: includes/class-security.php:248
+msgid "Invalid authentication token. %d attempt(s) remaining before temporary lockout."
+msgstr "Token d'authentification invalide. Encore %d tentative(s) restante(s) avant blocage temporaire."
+
+#: includes/admin/class-admin-settings.php:94
+msgid "Are you sure you want to unlock this IP address immediately?"
+msgstr "Êtes-vous sûr de vouloir débloquer cette adresse IP immédiatement ?"
+
+#: includes/admin/class-admin-settings.php:218
+msgid "IP address %s has been unlocked."
+msgstr "L'adresse IP %s a été débloquée."
+
+#: includes/admin/views/tab-general.php:97
+msgid "Anti-Brute-Force Protection & Lockouts"
+msgstr "Protection Anti-Brute-Force & Blocages"
+
+#: includes/admin/views/tab-general.php:100
+msgid "Protects your site against unauthorized automated attempts to guess your Bearer token. Any IP that submits wrong tokens repeatedly is automatically locked out."
+msgstr "Protège votre site contre les tentatives automatisées de deviner votre token Bearer. Toute IP soumettant des clés erronées de manière répétée est automatiquement bloquée."
+
+#: includes/admin/views/tab-general.php:106
+msgid "%d IP address(es) currently locked out."
+msgstr "%d adresse(s) IP actuellement bloquée(s)."
+
+#: includes/admin/views/tab-general.php:111
+msgid "Locked IP"
+msgstr "IP Bloquée"
+
+#: includes/admin/views/tab-general.php:112
+msgid "Locked Since"
+msgstr "Bloquée Depuis"
+
+#: includes/admin/views/tab-general.php:113
+msgid "Remaining Lockout"
+msgstr "Temps Restant"
+
+#: includes/admin/views/tab-general.php:114
+msgid "Action"
+msgstr "Action"
+
+#: includes/admin/views/tab-general.php:123
+msgid "%d minute(s) remaining"
+msgstr "%d minute(s) restante(s)"
+
+#: includes/admin/views/tab-general.php:128
+msgid "Unlock IP"
+msgstr "Débloquer l'IP"
+
+#: includes/admin/views/tab-general.php:137
+msgid "No IP addresses currently locked out. Your inspection API is secure."
+msgstr "Aucune adresse IP bloquée actuellement. Votre API d'inspection est sécurisée."
+
+#: includes/admin/views/tab-general.php:146
+msgid "Security & Restrictions Settings"
+msgstr "Réglages de Sécurité & Restrictions"
+
+#: includes/admin/views/tab-general.php:149
+msgid "Max Failed Attempts Before Lockout"
+msgstr "Tentatives Échouées Max Avant Blocage"
+
+#: includes/admin/views/tab-general.php:152
+msgid "Number of invalid authentication attempts permitted from an IP address before it is temporarily blocked (default: 5 attempts)."
+msgstr "Nombre de tentatives invalides autorisées depuis une adresse IP avant son blocage temporaire (par défaut : 5 tentatives)."
+
+#: includes/admin/views/tab-general.php:157
+msgid "Lockout Duration (Minutes)"
+msgstr "Durée du Blocage (Minutes)"
+
+#: includes/admin/views/tab-general.php:160
+msgid "Duration in minutes for which an offending IP remains completely blocked from querying the API (default: 30 minutes)."
+msgstr "Durée en minutes pendant laquelle une IP fautive reste totalement bloquée (par défaut : 30 minutes)."
+
+#: includes/admin/views/tab-general.php:181
+msgid "Save Security Settings"
+msgstr "Enregistrer les Réglages de Sécurité"
