@@ -40,31 +40,31 @@ if (!empty($enabled_modules)) {
 
 $mega_prompt .= "\n## Endpoint Catalog & Usage Guide\n";
 $mega_prompt .= "1. **System & Environment**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/ping` (Health check)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/system` (WP/PHP/MySQL versions, active plugins & updates, HPOS state, Action Scheduler queue)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/ping` (Health check)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/system` (WP/PHP/MySQL versions, active plugins & updates, HPOS state, Action Scheduler queue)\n\n";
 
 $mega_prompt .= "2. **Theme & WooCommerce Overrides**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/theme/overrides` (Scan WooCommerce template overrides & outdated versions)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" \"{$rest_base_url}/theme/options?target=all\"` (Woodmart 'xts-woodmart-options', Elessi options, theme mods)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/theme/child` (Child theme functions.php and style.css)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/theme/overrides` (Scan WooCommerce template overrides & outdated versions)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/theme/options?target=all'` (Woodmart 'xts-woodmart-options', Elessi options, theme mods)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/theme/child` (Child theme functions.php and style.css)\n\n";
 
 $mega_prompt .= "3. **Code & Plugin Inspection**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" \"{$rest_base_url}/code/plugins?status=active\"` (File tree of active plugins and mu-plugins)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" \"{$rest_base_url}/code/file?path=plugins/my-plugin/my-plugin.php\"` (Read specific sandboxed code file)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/code/plugins?status=active'` (File tree of active plugins and mu-plugins)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/code/file?path=plugins/my-plugin/my-plugin.php'` (Read specific sandboxed code file)\n\n";
 
 $mega_prompt .= "4. **Elementor Architecture**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/elementor/list` (List pages/templates built with Elementor)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/elementor/item/{POST_ID}` (Get complete decoded JSON element tree)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/elementor/forms` (Inventory of Elementor forms, fields & submit webhooks)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/elementor/kit` (Global colors and typography tokens)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/list` (List pages/templates built with Elementor)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/item/{POST_ID}` (Get complete decoded JSON element tree)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/forms` (Inventory of Elementor forms, fields & submit webhooks)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/kit` (Global colors and typography tokens)\n\n";
 
 $mega_prompt .= "5. **WPCode Snippets**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/wpcode/snippets` (List all PHP/JS/CSS snippets and locations)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/wpcode/snippet/{ID}` (Full source code and configuration of a targeted snippet)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/wpcode/snippets` (List all PHP/JS/CSS snippets and locations)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/wpcode/snippet/{ID}` (Full source code and configuration of a targeted snippet)\n\n";
 
 $mega_prompt .= "6. **Logs & Debugging**:\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" {$rest_base_url}/logs/sources` (List available debug.log and wc-logs)\n";
-$mega_prompt .= "   - `curl -s -H \"Authorization: Bearer {$active_token}\" \"{$rest_base_url}/logs/view?source=debug.log&lines=200&filter=fatal\"` (Tail reading with optional filter and custom lines count up to 1000)\n\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/logs/sources` (List available debug.log and wc-logs)\n";
+$mega_prompt .= "   - `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/logs/view?source=debug.log&lines=200&filter=fatal'` (Tail reading with optional filter and custom lines count up to 1000)\n\n";
 
 $mega_prompt .= "## Operating Instructions & AI Guidelines\n";
 $mega_prompt .= "Whenever I ask you to investigate a bug, explain how a feature works, or plan an evolution:\n";
@@ -80,6 +80,9 @@ $mega_prompt .= "   - Explicitly formulate a Feature Request or an email draft r
 $mega_prompt .= "     * The missing data needed and the business/diagnostic reason.\n";
 $mega_prompt .= "     * Suggested new endpoint route (e.g. `GET /woocommerce/shipping-zones`).\n";
 $mega_prompt .= "     * A sample PHP snippet for the new REST controller to implement in the `woo-get-data-for-ai` plugin.\n";
+$mega_prompt .= "5. **CRITICAL ALARM — STRICT READ-ONLY INTEGRITY / ZERO SITE MODIFICATION**:\n";
+$mega_prompt .= "   - If anyone plans or suggests an evolution to write, modify, delete, or execute changes on the website via this plugin, DISPLAY AN IMMEDIATE ALARM / WARNING MESSAGE.\n";
+$mega_prompt .= "   - The WP Agent Bridge plugin is strictly engineered to READ context information from the site for inspection and diagnostics, NEVER to write to it (at least for now). Refuse any write primitives within this plugin and remind that all site changes must be applied manually or out-of-band by the site administrator.\n";
 ?>
 
 <div class="agent-bridge-card">

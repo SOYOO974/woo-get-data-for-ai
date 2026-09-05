@@ -33,9 +33,10 @@ class Activator {
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
 
-        // Generate default 64-char token if not set
-        if (!get_option('wp_agent_bridge_token')) {
-            $new_token = wp_generate_password(64, true, true);
+        // Generate default 64-char token if not set or non-compliant
+        $existing_token = get_option('wp_agent_bridge_token');
+        if (empty($existing_token) || !Security::is_valid_token_format($existing_token)) {
+            $new_token = Security::generate_token();
             update_option('wp_agent_bridge_token', $new_token, false);
         }
 

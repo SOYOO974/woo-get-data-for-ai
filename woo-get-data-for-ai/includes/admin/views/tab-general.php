@@ -78,7 +78,7 @@ if (isset($_POST['agent_bridge_save_general']) && check_admin_referer('agent_bri
             </p>
         <?php else : ?>
             <p class="description">
-                <?php esc_html_e('Cryptographically secure 64-character token stored in database. Keep it private. Click Regenerate at any time to invalidate old credentials.', 'woo-get-data-for-ai'); ?>
+                <?php esc_html_e('Cryptographically secure 64-character hexadecimal token (RFC 6750 compliant, shell-safe). Keep it private. Click Regenerate at any time to invalidate old credentials.', 'woo-get-data-for-ai'); ?>
             </p>
         <?php endif; ?>
     </div>
@@ -86,10 +86,15 @@ if (isset($_POST['agent_bridge_save_general']) && check_admin_referer('agent_bri
 
 <!-- Anti-Brute-Force & Lockout Monitor -->
 <div class="agent-bridge-card">
-    <h3>
-        <span class="dashicons dashicons-shield"></span> 
-        <?php esc_html_e('Anti-Brute-Force Protection & Lockouts', 'woo-get-data-for-ai'); ?>
-    </h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+        <h3 style="margin: 0;">
+            <span class="dashicons dashicons-shield"></span> 
+            <?php esc_html_e('Anti-Brute-Force Protection & Lockouts', 'woo-get-data-for-ai'); ?>
+        </h3>
+        <button type="button" class="button button-secondary btn-reset-failures">
+            <span class="dashicons dashicons-image-rotate"></span> <?php esc_html_e('Reset All Failures & Unblock All IPs', 'woo-get-data-for-ai'); ?>
+        </button>
+    </div>
     <p class="description">
         <?php esc_html_e('Protects your site against unauthorized automated attempts to guess your Bearer token. Any IP that submits wrong tokens repeatedly is automatically locked out.', 'woo-get-data-for-ai'); ?>
     </p>

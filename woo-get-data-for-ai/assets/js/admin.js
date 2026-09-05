@@ -3,6 +3,9 @@
     'use strict';
 
     $(document).ready(function() {
+        // Relocate any stray admin notices out of the plugin header card
+        $('.agent-bridge-header').find('.notice, div.updated, div.error').insertBefore('.agent-bridge-header');
+
         // Copy to clipboard handler
         $('.btn-copy').on('click', function(e) {
             e.preventDefault();
@@ -156,6 +159,40 @@
                 error: function() {
                     $btn.prop('disabled', false);
                     alert('Network error occurred while unlocking IP.');
+                }
+            });
+        });
+
+        // Reset all failed attempts and IP lockouts via AJAX
+        $('.btn-reset-failures').on('click', function(e) {
+            e.preventDefault();
+
+            if (!confirm(agentBridgeData.confirmReset || 'Reset all lockout counters and unblock all IP addresses?')) {
+                return;
+            }
+
+            var $btn = $(this);
+            $btn.prop('disabled', true).addClass('updating-message');
+
+            $.ajax({
+                url: agentBridgeData.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'agent_bridge_reset_failures',
+                    security: agentBridgeData.nonce
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false).removeClass('updating-message');
+                    if (response.success) {
+                        alert(response.data.message || 'All lockouts have been cleared.');
+                        location.reload();
+                    } else {
+                        alert(response.data && response.data.message ? response.data.message : 'Error resetting lockouts.');
+                    }
+                },
+                error: function() {
+                    $btn.prop('disabled', false).removeClass('updating-message');
+                    alert('Network error occurred while resetting lockouts.');
                 }
             });
         });

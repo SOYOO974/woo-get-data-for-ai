@@ -20,6 +20,7 @@ class Admin_Settings {
         add_action('wp_ajax_agent_bridge_regenerate_token', [$this, 'ajax_regenerate_token']);
         add_action('wp_ajax_agent_bridge_clear_logs', [$this, 'ajax_clear_logs']);
         add_action('wp_ajax_agent_bridge_unlock_ip', [$this, 'ajax_unlock_ip']);
+        add_action('wp_ajax_agent_bridge_reset_failures', [$this, 'ajax_reset_failures']);
 
         // Action links on plugins list page
         add_filter('plugin_action_links_' . WOO_GET_DATA_AI_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
@@ -125,6 +126,7 @@ class Admin_Settings {
             'confirmRegen'  => esc_html__('Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated.', 'woo-get-data-for-ai'),
             'confirmClear'  => esc_html__('Are you sure you want to clear all connection logs?', 'woo-get-data-for-ai'),
             'confirmUnlock' => esc_html__('Are you sure you want to unlock this IP address immediately?', 'woo-get-data-for-ai'),
+            'confirmReset'  => esc_html__('Are you sure you want to reset all lockout counters and unblock all IP addresses?', 'woo-get-data-for-ai'),
             'copiedText'    => esc_html__('Copied to clipboard!', 'woo-get-data-for-ai'),
         ]);
     }
@@ -136,21 +138,25 @@ class Admin_Settings {
 
         $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'general';
         $tabs = [
-            'general'     => esc_html__('General & Status', 'woo-get-data-for-ai'),
-            'permissions' => esc_html__('Permissions Matrix', 'woo-get-data-for-ai'),
-            'ai_prompt'   => esc_html__('AI Mega-Prompt & Skill', 'woo-get-data-for-ai'),
-            'logs'        => esc_html__('Connection Logs & Analytics', 'woo-get-data-for-ai'),
+            'general'       => esc_html__('General & Status', 'woo-get-data-for-ai'),
+            'permissions'   => esc_html__('Permissions Matrix', 'woo-get-data-for-ai'),
+            'ai_prompt'     => esc_html__('AI Mega-Prompt & Skill', 'woo-get-data-for-ai'),
+            'logs'          => esc_html__('Connection Logs & Analytics', 'woo-get-data-for-ai'),
+            'documentation' => esc_html__('Documentation & Guide', 'woo-get-data-for-ai'),
         ];
 
         ?>
         <div class="wrap agent-bridge-wrap">
+            <h1 class="wp-heading-inline screen-reader-text"><?php esc_html_e('WP Agent Bridge', 'woo-get-data-for-ai'); ?></h1>
+            <hr class="wp-header-end">
+
             <div class="agent-bridge-header">
                 <div class="header-title-row">
-                    <h1>
+                    <h2 class="header-title">
                         <span class="dashicons dashicons-rest-api"></span> 
                         <?php esc_html_e('WP Agent Bridge', 'woo-get-data-for-ai'); ?>
                         <span class="badge-version">v<?php echo esc_html(WOO_GET_DATA_AI_VERSION); ?></span>
-                    </h1>
+                    </h2>
                     <div class="header-status-badge <?php echo Security::get_active_token() ? 'status-active' : 'status-warning'; ?>">
                         <span class="status-dot"></span>
                         <?php echo Security::get_active_token() ? esc_html__('Active & Protected', 'woo-get-data-for-ai') : esc_html__('Token Missing', 'woo-get-data-for-ai'); ?>
@@ -182,6 +188,9 @@ class Admin_Settings {
                     case 'logs':
                         include WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/admin/views/tab-logs.php';
                         break;
+                    case 'documentation':
+                        include WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/admin/views/tab-docs.php';
+                        break;
                     case 'general':
                     default:
                         include WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/admin/views/tab-general.php';
@@ -206,12 +215,29 @@ class Admin_Settings {
             ]);
         }
 
-        $new_token = wp_generate_password(64, true, true);
+        $new_token = Security::generate_token();
         update_option('wp_agent_bridge_token', $new_token, false);
+
+        // Reset any failed attempts for current admin IP upon token generation
+        Security::reset_failed_attempts(Security::get_client_ip());
 
         wp_send_json_success([
             'token'   => $new_token,
             'message' => esc_html__('Access token regenerated successfully.', 'woo-get-data-for-ai'),
+        ]);
+    }
+
+    public function ajax_reset_failures() {
+        check_ajax_referer('agent_bridge_admin_nonce', 'security');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => esc_html__('Unauthorized.', 'woo-get-data-for-ai')]);
+        }
+
+        Security::reset_all_lockouts_and_failures();
+
+        wp_send_json_success([
+            'message' => esc_html__('All failed attempts and IP lockouts have been reset successfully.', 'woo-get-data-for-ai'),
         ]);
     }
 

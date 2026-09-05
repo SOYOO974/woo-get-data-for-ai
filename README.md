@@ -68,15 +68,18 @@ It allows AI assistants to instantly inspect live site configurations, debug log
    - Check the modules you wish to allow external AI tools to query.
 4. **AI Mega-Prompt & Skill Tab**:
    - Click **"Copy Mega-Prompt for AI"** and paste it directly into Antigravity, Cursor, or Claude Desktop!
+5. **Documentation & Guide Tab**:
+   - Consult the complete on-site manual, architectural pillars, 4-step quickstart, and GitHub contribution guidelines.
 
 ---
 
 ## 📡 REST API Catalog (`agent-bridge/v1/`)
 
-All requests must include the Bearer token in the `Authorization` header:
+All requests must authenticate using the 64-character hexadecimal Bearer token in the `Authorization` header:
 ```bash
 Authorization: Bearer <YOUR_ACCESS_TOKEN>
 ```
+*(Fallback headers `X-Agent-Bridge-Token` or `X-API-Key`, or URI parameter `?access_token=<TOKEN>` are also supported if your web server strips the Authorization header).*
 
 | Endpoint | Description |
 | :--- | :--- |

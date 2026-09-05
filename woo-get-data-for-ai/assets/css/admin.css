@@ -19,22 +19,44 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
-.header-title-row h1 {
+.header-title-row h1,
+.header-title-row h2,
+.header-title-row .header-title {
     margin: 0;
     font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
     display: flex;
     align-items: center;
     gap: 8px;
     color: #1d2327;
 }
 
-.header-title-row h1 .dashicons {
+.header-title-row h1 .dashicons,
+.header-title-row h2 .dashicons,
+.header-title-row .header-title .dashicons {
     font-size: 28px;
     width: 28px;
     height: 28px;
     color: #2271b1;
+}
+
+/* Guard: admin notices should never render inside the header card */
+.agent-bridge-header .notice,
+.agent-bridge-header div.updated,
+.agent-bridge-header div.error {
+    display: none !important;
+}
+
+/* Proper spacing for admin notices placed above the plugin header */
+.agent-bridge-wrap > .notice,
+.agent-bridge-wrap > div.updated,
+.agent-bridge-wrap > div.error {
+    margin: 12px 0 16px 0;
 }
 
 .badge-version {
@@ -390,5 +412,303 @@
 
 .table-locked-ips td {
     vertical-align: middle;
+}
+
+/* Documentation Tab Styles */
+.docs-hero-card {
+    background: linear-gradient(135deg, #f0f6fc 0%, #ffffff 100%);
+    border-left: 4px solid #2271b1;
+}
+
+.docs-hero-content h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1d2327;
+}
+
+.docs-hero-content h2 .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #2271b1;
+}
+
+.docs-hero-desc {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #444746;
+}
+
+/* Steps Grid (First Steps) */
+.docs-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+    .docs-steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .docs-steps-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.docs-step-item {
+    background: #f8f9fa;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.docs-step-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.docs-step-item.step-highlight {
+    background: #f0f6fc;
+    border-color: #72aee6;
+}
+
+.step-badge {
+    width: 28px;
+    height: 28px;
+    background: #2271b1;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.step-highlight .step-badge {
+    background: #0073aa;
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.2);
+}
+
+.step-body h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.step-body p {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #50575e;
+}
+
+.step-body .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: auto;
+}
+
+/* Features Grid (Architecture & Security) */
+.docs-features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+    .docs-features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .docs-features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.docs-feature-card {
+    background: #ffffff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.feature-icon {
+    font-size: 24px;
+    color: #2271b1;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.feature-icon .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+}
+
+.feature-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.feature-content p {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #646970;
+}
+
+/* Technical Data Scope Table */
+.docs-scope-table-wrap {
+    margin-top: 16px;
+    overflow-x: auto;
+}
+
+.docs-scope-table-wrap table {
+    border: 1px solid #ccd0d4;
+    box-shadow: none;
+}
+
+.docs-scope-table-wrap td,
+.docs-scope-table-wrap th {
+    padding: 10px 14px;
+}
+
+.docs-scope-table-wrap code {
+    font-size: 11.5px;
+    background: #f0f0f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 1px 2px;
+}
+
+/* GitHub Contribution Card */
+.docs-github-card {
+    border-left: 4px solid #24292e;
+}
+
+.docs-github-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #f0f0f1;
+    margin-bottom: 18px;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.github-title-group {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 750px;
+}
+
+.github-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+    color: #24292e;
+    margin-top: 2px;
+}
+
+.github-title-group h3 {
+    margin: 0 0 6px 0;
+    font-size: 17px;
+    color: #1d2327;
+}
+
+.github-title-group .description {
+    margin: 0;
+    font-size: 13.5px;
+    color: #646970;
+}
+
+.docs-btn-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #24292e !important;
+    border-color: #24292e !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.docs-btn-github:hover,
+.docs-btn-github:focus {
+    background: #000000 !important;
+    border-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+.docs-github-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+@media (max-width: 960px) {
+    .docs-github-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.github-card-item {
+    background: #f8f9fa;
+    border: 1px solid #e2e4e7;
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+
+.github-card-item h4 {
+    margin: 0 0 8px 0;
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #1d2327;
+}
+
+.github-card-item p {
+    margin: 0 0 6px 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #50575e;
+}
+
+.docs-subtext {
+    color: #2271b1 !important;
+    font-style: italic;
+}
+
+.docs-contact-link code {
+    font-size: 13px;
+    color: #2271b1;
+    background: #eef5fb;
+    padding: 3px 8px;
+    border-radius: 4px;
 }
 

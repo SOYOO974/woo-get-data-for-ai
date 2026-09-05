@@ -233,3 +233,243 @@ msgstr "Enregistrer les Réglages de Sécurité"
 msgid "Settings"
 msgstr "Réglages"
 
+#: includes/admin/class-admin-settings.php:143
+msgid "Documentation & Guide"
+msgstr "Documentation & Guide"
+
+#: includes/admin/views/tab-docs.php:17
+msgid "WP Agent Bridge Documentation & Quick Guide"
+msgstr "Documentation & Guide Rapide WP Agent Bridge"
+
+#: includes/admin/views/tab-docs.php:20
+msgid "WP Agent Bridge is an enterprise-grade, lightweight, and ultra-secure inspection plugin for WordPress & WooCommerce. It exposes a protected, 100% read-only REST API (agent-bridge/v1/) allowing AI coding assistants (Antigravity, Cursor, Claude, ChatGPT) and developer tools to safely audit, diagnose bugs, and inspect live site architecture without requiring risky SSH, SFTP, or database credentials."
+msgstr "WP Agent Bridge est une extension d'inspection sécurisée et légère pour WordPress et WooCommerce. Elle expose une API REST protégée et 100% en lecture seule (agent-bridge/v1/) permettant aux assistants de codage IA (Antigravity, Cursor, Claude, ChatGPT) et aux outils de développement d'auditer, diagnostiquer les bugs et explorer l'architecture du site sans exiger d'accès risqué SSH, SFTP ou base de données."
+
+#: includes/admin/views/tab-docs.php:29
+msgid "Getting Started in 4 Quick Steps"
+msgstr "Premières Étapes en 4 Gestes Simples"
+
+#: includes/admin/views/tab-docs.php:32
+msgid "Follow these simple steps to connect your AI assistant to this WordPress installation in less than two minutes."
+msgstr "Suivez ces étapes simples pour connecter votre assistant IA à cette installation WordPress en moins de deux minutes."
+
+#: includes/admin/views/tab-docs.php:38
+msgid "Verify Permissions & Token"
+msgstr "Vérifier les Permissions & le Jeton"
+
+#: includes/admin/views/tab-docs.php:40
+msgid "Make sure your Bearer token is active in the General tab, and select which data modules your AI is allowed to query in the Permissions Matrix tab."
+msgstr "Assurez-vous que votre jeton Bearer est actif dans l'onglet Général, puis sélectionnez les modules que votre IA est autorisée à interroger dans l'onglet Matrice de Permissions."
+
+#: includes/admin/views/tab-docs.php:43
+msgid "Configure Permissions"
+msgstr "Configurer les Permissions"
+
+#: includes/admin/views/tab-docs.php:50
+msgid "Copy the AI Mega-Prompt"
+msgstr "Copier le Mega-Prompt IA"
+
+#: includes/admin/views/tab-docs.php:52
+msgid "Open the \"AI Mega-Prompt & Skill\" tab and click the copy button. The prompt is automatically pre-filled with your live site URL, active Bearer token, and available endpoints."
+msgstr "Ouvrez l'onglet \"AI Mega-Prompt & Skill\" et cliquez sur le bouton de copie. Le prompt est automatiquement pré-rempli avec l'URL de votre site, votre jeton Bearer actif et les endpoints disponibles."
+
+#: includes/admin/views/tab-docs.php:55
+msgid "Go to AI Mega-Prompt Tab"
+msgstr "Aller à l'onglet Mega-Prompt IA"
+
+#: includes/admin/views/tab-docs.php:62
+msgid "Paste into your AI Assistant"
+msgstr "Coller dans votre Assistant IA"
+
+#: includes/admin/views/tab-docs.php:64
+msgid "Paste the entire copied prompt into your chat session with Antigravity, Cursor, Claude Desktop, or ChatGPT. Your AI will instantly understand how to inspect the site safely."
+msgstr "Collez l'intégralité du prompt copié dans votre conversation avec Antigravity, Cursor, Claude Desktop ou ChatGPT. Votre IA saura immédiatement inspecter le site en toute sécurité."
+
+#: includes/admin/views/tab-docs.php:72
+msgid "Audit, Diagnose & Build"
+msgstr "Auditer, Diagnostiquer & Développer"
+
+#: includes/admin/views/tab-docs.php:74
+msgid "Ask your AI to inspect recent WooCommerce fatal errors, analyze theme overrides, or examine custom WPCode snippets. The AI queries the endpoints via curl with zero SSH needed."
+msgstr "Demandez à votre IA d'inspecter les erreurs fatales WooCommerce récentes, d'analyser les surcharges de thèmes ou d'examiner vos snippets WPCode. L'IA interroge les endpoints via curl sans aucun accès SSH requis."
+
+#: includes/admin/views/tab-docs.php:85
+msgid "How It Works & Security Architecture"
+msgstr "Fonctionnement & Architecture de Sécurité"
+
+#: includes/admin/views/tab-docs.php:88
+msgid "WP Agent Bridge has been engineered from the ground up for maximum safety on high-traffic production environments."
+msgstr "WP Agent Bridge a été conçu dès l'origine pour une sécurité maximale sur les environnements de production à fort trafic."
+
+#: includes/admin/views/tab-docs.php:95
+msgid "100% Read-Only Guarantee"
+msgstr "Garantie 100% Lecture Seule"
+
+#: includes/admin/views/tab-docs.php:96
+msgid "Every single endpoint strictly enforces HTTP GET (WP_REST_Server::READABLE). There are zero POST, PUT, or DELETE routes. The plugin contains no modification or execution primitives, ensuring your database and site files remain completely untouched."
+msgstr "Chaque endpoint impose strictement la méthode HTTP GET (WP_REST_Server::READABLE). Il n'existe aucune route POST, PUT ou DELETE. L'extension ne contient aucune primitive de modification ou d'exécution, garantissant l'intégrité absolue de votre base de données et de vos fichiers."
+
+#: includes/admin/views/tab-docs.php:103
+msgid "Bearer Token Authentication"
+msgstr "Authentification par Jeton Bearer"
+
+#: includes/admin/views/tab-docs.php:104
+msgid "Requests must supply an Authorization: Bearer header. The 64-character cryptographically secure token can be rotated at any time with 1 click in admin, or permanently hardcoded via WP_AGENT_BRIDGE_TOKEN in wp-config.php."
+msgstr "Les requêtes doivent obligatoirement fournir un en-tête Authorization: Bearer. Le jeton cryptographique de 64 caractères peut être régénéré en 1 clic dans l'administration, ou fixé de façon permanente via la constante WP_AGENT_BRIDGE_TOKEN dans wp-config.php."
+
+#: includes/admin/views/tab-docs.php:111
+msgid "Anti-Brute-Force & IP Lockout"
+msgstr "Protection Anti-Brute-Force & Blocage IP"
+
+#: includes/admin/views/tab-docs.php:112
+msgid "Failed authentication attempts are automatically tracked per client IP. After exceeding the threshold, offending IPs are locked out with HTTP 429 responses. Active lockouts can be monitored and unlocked with 1 click in the admin."
+msgstr "Les tentatives d'authentification infructueuses sont automatiquement comptabilisées par adresse IP. Au-delà du seuil défini, les IP fautives sont bloquées avec une réponse HTTP 429. Les blocages actifs sont visibles et déblocables en 1 clic dans l'administration."
+
+#: includes/admin/views/tab-docs.php:119
+msgid "Real-Time Secret & PII Redaction"
+msgstr "Anonymisation en Temps Réel des Secrets & PII"
+
+#: includes/admin/views/tab-docs.php:120
+msgid "Before returning any JSON response, an integrated redaction engine systematically masks Stripe secret keys (sk_live_*), payment gateway secrets, database passwords, salts, and customer email addresses."
+msgstr "Avant d'envoyer la moindre réponse JSON, un moteur d'anonymisation intégré masque systématiquement les clés secrètes Stripe (sk_live_*), les secrets de passerelles de paiement, mots de passe de base de données, sels et adresses emails des clients."
+
+#: includes/admin/views/tab-docs.php:127
+msgid "Memory-Safe Log Streaming"
+msgstr "Streaming de Logs Économe en Mémoire"
+
+#: includes/admin/views/tab-docs.php:128
+msgid "Large log files (debug.log and WooCommerce logs) are extracted from the bottom up using reverse file pointer (fseek). This guarantees low memory consumption and avoids PHP out-of-memory errors on heavy sites."
+msgstr "Les fichiers de logs volumineux (debug.log et logs WooCommerce) sont extraits par le bas via un pointeur de fichier inversé (fseek). Cela garantit une faible consommation de RAM et prévient tout dépassement de mémoire PHP."
+
+#: includes/admin/views/tab-docs.php:135
+msgid "Audit Trail & GeoIP Analytics"
+msgstr "Piste d'Audit & Statistiques Géographiques"
+
+#: includes/admin/views/tab-docs.php:136
+msgid "All incoming API requests are logged in a lightweight table with timestamps, IP addresses, country flags (via Cloudflare header or cached GeoIP), endpoints, and HTTP response status codes."
+msgstr "Toutes les requêtes API entrantes sont journalisées dans une table légère avec horodatage, adresses IP, drapeaux de pays (via en-tête Cloudflare ou GeoIP en cache), endpoints et codes HTTP retournés."
+
+#: includes/admin/views/tab-docs.php:146
+msgid "Inspectable Technical Data"
+msgstr "Périmètre des Données Inspectables"
+
+#: includes/admin/views/tab-docs.php:149
+msgid "Here is the technical scope exposed by the plugin according to your permissions matrix:"
+msgstr "Voici l'étendue technique exposée par l'extension en fonction de votre matrice de permissions :"
+
+#: includes/admin/views/tab-docs.php:156
+msgid "Domain"
+msgstr "Domaine"
+
+#: includes/admin/views/tab-docs.php:157
+msgid "Available Endpoints"
+msgstr "Endpoints Disponibles"
+
+#: includes/admin/views/tab-docs.php:158
+msgid "Data Returned to AI"
+msgstr "Données Renvoyées à l'IA"
+
+#: includes/admin/views/tab-docs.php:163
+msgid "System & Limits"
+msgstr "Système & Limites"
+
+#: includes/admin/views/tab-docs.php:165
+msgid "WordPress, PHP, MySQL versions, memory limits, active plugins with update status, HPOS state, Action Scheduler queues."
+msgstr "Versions WordPress, PHP, MySQL, limites mémoire, extensions actives avec statut des mises à jour, état HPOS, files Action Scheduler."
+
+#: includes/admin/views/tab-docs.php:168
+msgid "WooCommerce & Themes"
+msgstr "WooCommerce & Thèmes"
+
+#: includes/admin/views/tab-docs.php:170
+msgid "Overridden WooCommerce templates with version check against core, Woodmart & Elessi theme settings, child theme functions.php and style.css."
+msgstr "Templates WooCommerce surchargés avec comparaison de version par rapport au core, réglages des thèmes Woodmart & Elessi, code de functions.php et style.css du thème enfant."
+
+#: includes/admin/views/tab-docs.php:173
+msgid "Code & Plugins"
+msgstr "Code & Extensions"
+
+#: includes/admin/views/tab-docs.php:175
+msgid "File trees of active plugins and mu-plugins, sandboxed reading of specific PHP, JS, or CSS files with strict path validation."
+msgstr "Arborescences des extensions actives et mu-plugins, lecture sécurisée sous sandbox de fichiers PHP, JS ou CSS avec validation stricte des chemins."
+
+#: includes/admin/views/tab-docs.php:178
+msgid "Elementor Architecture"
+msgstr "Architecture Elementor"
+
+#: includes/admin/views/tab-docs.php:180
+msgid "Elementor page/template listings, complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens."
+msgstr "Liste des pages/modèles Elementor, arbres JSON complets des widgets décodés, définitions des champs de formulaires et webhooks, jetons globaux du kit de design."
+
+#: includes/admin/views/tab-docs.php:183
+msgid "WPCode Snippets"
+msgstr "Extraits de Code WPCode"
+
+#: includes/admin/views/tab-docs.php:185
+msgid "Inventory of all custom PHP/JS/CSS snippets stored in WPCode, execution location, active state, and full source code."
+msgstr "Inventaire de tous les snippets personnalisés PHP/JS/CSS enregistrés dans WPCode, emplacement d'exécution, état d'activation et code source complet."
+
+#: includes/admin/views/tab-docs.php:188
+msgid "Logs & Diagnostics"
+msgstr "Journaux & Diagnostics"
+
+#: includes/admin/views/tab-docs.php:190
+msgid "List of available log files (debug.log, uploads/wc-logs/*.log), tail extraction up to 1000 lines, error and fatal filtering."
+msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log), extraction de fin de fichier jusqu'à 1000 lignes, filtrage des erreurs et fatales."
+
+#: includes/admin/views/tab-docs.php:203
+msgid "Open Source & Plugin Evolution (GitHub)"
+msgstr "Open Source & Évolution de l'Extension (GitHub)"
+
+#: includes/admin/views/tab-docs.php:205
+msgid "WP Agent Bridge is actively maintained and open source. If you need new inspection capabilities or wish to contribute improvements, you are warmly invited to participate!"
+msgstr "WP Agent Bridge est activement maintenu et open source. Si vous avez besoin de nouvelles capacités d'inspection ou souhaitez apporter des améliorations, vous êtes chaleureusement invité à participer !"
+
+#: includes/admin/views/tab-docs.php:210
+msgid "View Repository on GitHub"
+msgstr "Voir le Dépôt sur GitHub"
+
+#: includes/admin/views/tab-docs.php:216
+msgid "Suggesting New Endpoints"
+msgstr "Suggérer de Nouveaux Endpoints"
+
+#: includes/admin/views/tab-docs.php:218
+msgid "Need to inspect WooCommerce shipping zones, tax rules, payment gateway settings, or custom database tables? You can open an issue or submit a Pull Request on GitHub."
+msgstr "Besoin d'inspecter les zones d'expédition WooCommerce, les règles de taxes, les réglages de passerelles de paiement ou des tables SQL personnalisées ? Vous pouvez ouvrir une issue ou soumettre une Pull Request sur GitHub."
+
+#: includes/admin/views/tab-docs.php:221
+msgid "The AI Mega-Prompt is also programmed to formulate ready-to-send feature requests and sample PHP controller code whenever your AI assistant identifies missing technical context!"
+msgstr "Le Mega-Prompt IA est également configuré pour formuler des demandes de fonctionnalités prêtes à envoyer avec un exemple de contrôleur PHP dès que votre assistant IA identifie un contexte manquant !"
+
+#: includes/admin/views/tab-docs.php:226
+msgid "Automatic Updates via PUC"
+msgstr "Mises à Jour Automatiques via PUC"
+
+#: includes/admin/views/tab-docs.php:228
+msgid "This plugin embeds the Plugin Update Checker (PUC v5.6). Whenever a new GitHub Release is tagged and published with a higher version number, your WordPress installation will automatically notify you and allow 1-click updates right from your Plugins dashboard."
+msgstr "Cette extension intègre Plugin Update Checker (PUC v5.6). Dès qu'une nouvelle version GitHub Release est publiée avec un numéro supérieur, votre WordPress vous notifiera automatiquement et permettra la mise à jour en 1 clic depuis votre tableau de bord des extensions."
+
+#: includes/admin/views/tab-docs.php:233
+msgid "Contact & Direct Support"
+msgstr "Contact & Support Direct"
+
+#: includes/admin/views/tab-docs.php:235
+msgid "Have questions, ideas, or feedback? You can contact the author directly at:"
+msgstr "Des questions, des idées ou des retours ? Vous pouvez contacter l'auteur directement à :"
+
+#: includes/admin/views/tab-general.php:81
+msgid "Cryptographically secure 64-character hexadecimal token (RFC 6750 compliant, shell-safe). Keep it private. Click Regenerate at any time to invalidate old credentials."
+msgstr "Token hexadécimal sécurisé de 64 caractères (conforme RFC 6750, sans risque shell). Gardez-le privé. Cliquez sur Régénérer à tout moment pour invalider les anciens identifiants."
+
+#: includes/admin/views/tab-general.php:94
+msgid "Reset All Failures & Unblock All IPs"
+msgstr "Réinitialiser tous les échecs & Débloquer toutes les IPs"
+
+#: includes/admin/class-admin-settings.php:129
+msgid "Are you sure you want to reset all lockout counters and unblock all IP addresses?"
+msgstr "Êtes-vous sûr de vouloir réinitialiser tous les compteurs de blocage et débloquer toutes les adresses IP ?"
+
+#: includes/admin/class-admin-settings.php:234
+msgid "All failed attempts and IP lockouts have been reset successfully."
+msgstr "Toutes les tentatives échouées et blocages IP ont été réinitialisés avec succès."
+

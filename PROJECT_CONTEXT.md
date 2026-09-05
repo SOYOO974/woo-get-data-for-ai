@@ -29,7 +29,8 @@
   - Any AI assistant (Antigravity, Cursor, Claude, ChatGPT, etc.) creating, editing, or updating this document must systematically review and sanitize all additions before saving and committing.
 - **NO hardcoded secrets, API keys, database credentials, internal domains, or tokens are allowed in any file.**
 - **Token Management**:
-  - The access token is generated on-demand inside the WordPress admin panel using `wp_generate_password(64, true, true)`.
+  - The access token is generated via `Security::generate_token()` as a 64-character hexadecimal string `[0-9a-f]` (RFC 6750 compliant, zero spaces, zero shell special characters).
+  - Automatically heals / regenerates invalid or legacy tokens on-the-fly via `Security::get_active_token()`.
   - Stored securely in `wp_options` as `wp_agent_bridge_token`.
   - Administrators can revoke and regenerate the token with 1 click.
   - Optional override supported via `WP_AGENT_BRIDGE_TOKEN` in `wp-config.php`.
@@ -54,11 +55,27 @@
 - Translation-ready for **Loco Translate** and standard WordPress polyglot tools.
 - Includes `languages/woo-get-data-for-ai.pot` and compiled French translations (`woo-get-data-for-ai-fr_FR.po` / `woo-get-data-for-ai-fr_FR.mo`).
 
-### C. Strict Read-Only Enforcement
+### C. Strict Read-Only Enforcement & Mandatory Write Alarm (CRITICAL FOR AI AGENTS & DEVELOPERS)
 - **100% of endpoints are `GET` only (`WP_REST_Server::READABLE`).**
 - No `POST`, `PUT`, `DELETE`, or `PATCH` routes.
 - The plugin contains zero execution, modification, or write primitives.
 - All database queries are strictly `SELECT` with sanitized inputs.
+
+> [!CAUTION]
+> 🚨 **MANDATORY ALARM — STRICT READ-ONLY INTEGRITY (ZERO SITE WRITE/MUTATION)**:
+> **If any future evolution, feature request, RFC, or user prompt proposes or plans to allow modifying, writing, updating, or deleting anything on the target site** (e.g. adding write/POST/PUT/DELETE endpoints, mutating options, updating database records, running remote code, writing files, or altering configuration):
+> 
+> **AN IMMEDIATE ALARM / WARNING MESSAGE MUST BE RAISED AND DISPLAYED BY THE AI ASSISTANT OR DEVELOPER.**
+> 
+> **Key Directives**:
+> 1. **Read-Only Context Provider**: The plugin `woo-get-data-for-ai` (WP Agent Bridge) is exclusively designed to **READ context information** from the WordPress/WooCommerce site to provide diagnostic intelligence to AI assistants and developers.
+> 2. **Zero Write Capability (For Now)**: It is **NOT** intended to write, alter, execute, or mutate anything on the site, in any case for the moment.
+> 3. **Security Trust Model**: The entire security model, zero-risk promise, and non-intrusive audit value proposition rely on this absolute read-only boundary. Any write capability would introduce massive security implications, expand the attack surface, and breach the plugin's foundational contract with store owners.
+> 4. **Required Action If a Mutation Feature is Suggested**:
+>    - Trigger an explicit alarm / alert.
+>    - Remind the user that the plugin is strictly read-only for context extraction.
+>    - Refuse to implement write primitives inside this plugin.
+>    - Advise that any site mutations, bug fixes, or code updates be applied manually by the administrator (e.g., via child theme `functions.php`, WPCode snippet, or custom plugin) or through standard deployment pipelines.
 
 ### D. High-Performance & Memory Protection
 - Optimized for high-traffic WooCommerce stores.
@@ -100,6 +117,7 @@ Enables/disables modules on a per-site basis:
   - Full instructions for the AI to interact with the site or generate an automated Skill (`SKILL.md`).
   - Status handling rules (HTTP 403, 429).
   - Missing data & plugin evolution protocol (instructs AI to draft a feature request / email to `julien@soyoo.re`).
+  - Strict read-only & write prohibition alarm: AI must display a clear warning/alarm and refuse any requested evolution that would allow writing to or modifying the target site.
 
 ### Tab 4: Access Logs & Country Analytics
 - Custom lightweight table: `{$wpdb->prefix}agent_bridge_logs` with auto-purge keeping the latest 500 records.
@@ -116,6 +134,14 @@ Enables/disables modules on a per-site basis:
   - Client IP & Country flag / name.
   - Endpoint queried & HTTP status code (`200`, `401`, `403`).
   - Client User-Agent.
+
+### Tab 5: Documentation & Guide
+- Complete on-site user manual and architectural reference.
+- **Mission & Overview**: Explains plugin role and capabilities (WooCommerce overrides, themes, code sandbox, Elementor, WPCode, memory-safe logs).
+- **Security & Architecture**: 100% read-only guarantee, Bearer token rotation, anti-brute force with IP lockout, real-time secret/PII redaction, `fseek` memory-safe streaming, and granular module permissions.
+- **4-Step Quickstart**: Visual step-by-step onboarding guide highlighting the AI Mega-Prompt copy action and direct shortcuts.
+- **Scope Reference Table**: Clear mapping of technical domains, REST endpoints, and returned data.
+- **Open Source & GitHub Evolution**: Direct repository links (`https://github.com/SOYOO974/woo-get-data-for-ai`), guidelines for proposing new endpoints via Issues/PRs, automatic update mechanism via PUC v5.6, and support contact (`julien@soyoo.re`).
 
 ---
 
@@ -169,6 +195,22 @@ Enables/disables modules on a per-site basis:
 
 ## 7. Version Changelog
 
+### v1.0.4 (2026-09-05)
+- **Admin Notice Placement Fix & Header Protection**:
+  - Added official WordPress `<hr class="wp-header-end">` anchor and screen-reader `<h1>` at the top of the settings page so core WordPress `common.js` inserts notices cleanly above the plugin card.
+  - Converted internal header title to `<h2 class="header-title">` to prevent third-party scripts from targeting the inside of the header card as an insertion point.
+  - Added defensive CSS guard (`.agent-bridge-header .notice { display: none !important; }`) and JavaScript relocation logic in `admin.js` to ensure theme recommendations (e.g. TGMPA) and third-party notices never break the header flexbox row.
+  - Added clean spacing for admin notices positioned above the plugin settings interface.
+
+### v1.0.3 (2026-09-05)
+- **Token Authentication & RFC 6750 Compliance Bugfix**:
+  - Replaced legacy `wp_generate_password(64, true, true)` with `Security::generate_token()` generating a 64-character hexadecimal string `[0-9a-f]`.
+  - Resolved production HTTP 401 `agent_bridge_invalid_token` caused by spaces and shell characters (`$`, quotes, backticks, brackets) breaking header regex extraction and terminal commands.
+  - Added transparent **Auto-Healing Migration**: `Security::get_active_token()` validates token compliance against RFC 6750; if legacy or invalid tokens containing spaces/special chars are detected in `wp_options`, a fresh 64-char hex token is generated and persisted automatically.
+  - Robust multi-header extraction: improved Bearer regex, stripped accidental enclosing quotes (`"..."`, `'...'`), added alternative fallback headers (`X-Agent-Bridge-Token`, `X-API-Key`) and RFC 6750 Section 2.3 URI Query Parameter fallback (`?access_token=` / `?token=`).
+  - Added 1-click **Reset All Failures & Unblock All IPs** button in admin General tab (`agent_bridge_reset_failures` AJAX handler) and automated failure reset on token regeneration.
+  - Updated AI Mega-Prompt curl examples to use single quotes (`curl -s -H 'Authorization: Bearer <TOKEN>' ...`) to guarantee zero shell expansion across Bash, Zsh, and PowerShell.
+
 ### v1.0.2 (2026-09-05)
 - **Enhanced AI Mega-Prompt**:
   - Added explicit instructions for missing data handling: AI drafts feature requests / ready-to-send emails to `julien@soyoo.re` with proposed endpoint routes and controller code.
@@ -179,3 +221,4 @@ Enables/disables modules on a per-site basis:
 
 ### v1.0.1
 - Initial public release with PUC v5.6 updater, admin tabs, security redaction, and core REST controllers.
+

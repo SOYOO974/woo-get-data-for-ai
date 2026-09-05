@@ -8,17 +8,69 @@ if (!defined('ABSPATH')) {
 class Security {
 
     /**
+     * Generate a cryptographically secure 64-character token.
+     * Generates a 64-character hex string [0-9a-f] that is 100% RFC 6750 compliant,
+     * contains zero spaces, zero shell special characters (no $, `, quotes, brackets),
+     * and is completely safe across all environments and terminals (Bash, Zsh, PowerShell).
+     *
+     * @return string
+     */
+    public static function generate_token() {
+        if (function_exists('random_bytes')) {
+            try {
+                return bin2hex(random_bytes(32));
+            } catch (\Exception $e) {
+                // Fallback below if CSPRNG throws
+            }
+        }
+
+        return wp_generate_password(64, false, false);
+    }
+
+    /**
+     * Validate whether a token matches the strict RFC 6750 Bearer token format without spaces or shell hazards.
+     * Rejects tokens containing spaces, $, `, quotes, <, >, |, &, ;.
+     *
+     * @param mixed $token
+     * @return bool
+     */
+    public static function is_valid_token_format($token) {
+        if (!is_string($token)) {
+            return false;
+        }
+
+        $token = trim($token);
+        $len = strlen($token);
+
+        if ($len < 32 || $len > 128) {
+            return false;
+        }
+
+        // Must only consist of alphanumeric characters, hyphens or underscores (no spaces, no shell vars)
+        return (bool) preg_match('/^[a-zA-Z0-9_\-]+$/', $token);
+    }
+
+    /**
      * Get the active token.
      * Prioritizes WP_AGENT_BRIDGE_TOKEN constant if defined, otherwise uses the DB option.
+     * Automatically heals / regenerates tokens containing spaces or invalid characters.
      *
      * @return string
      */
     public static function get_active_token() {
         if (defined('WP_AGENT_BRIDGE_TOKEN') && !empty(WP_AGENT_BRIDGE_TOKEN)) {
-            return (string) WP_AGENT_BRIDGE_TOKEN;
+            return trim((string) WP_AGENT_BRIDGE_TOKEN);
         }
 
-        return (string) get_option('wp_agent_bridge_token', '');
+        $token = (string) get_option('wp_agent_bridge_token', '');
+
+        // Auto-healing migration: if token is empty or invalid (contains spaces, shell chars, etc.)
+        if (empty($token) || !self::is_valid_token_format($token)) {
+            $token = self::generate_token();
+            update_option('wp_agent_bridge_token', $token, false);
+        }
+
+        return trim($token);
     }
 
     /**
@@ -165,6 +217,32 @@ class Security {
     }
 
     /**
+     * Reset all active IP lockouts and clear the locked IPs registry.
+     *
+     * @return int Number of cleared locks.
+     */
+    public static function reset_all_lockouts_and_failures() {
+        $locked_ips = (array) get_option('wp_agent_bridge_locked_ips', []);
+        $count = count($locked_ips);
+
+        foreach (array_keys($locked_ips) as $ip) {
+            $ip_hash = md5($ip);
+            delete_transient('agent_bridge_lock_' . $ip_hash);
+            delete_transient('agent_bridge_fail_' . $ip_hash);
+        }
+
+        // Also purge any current client IP fail transient
+        $current_ip = self::get_client_ip();
+        $cur_hash = md5($current_ip);
+        delete_transient('agent_bridge_lock_' . $cur_hash);
+        delete_transient('agent_bridge_fail_' . $cur_hash);
+
+        update_option('wp_agent_bridge_locked_ips', [], false);
+
+        return max($count, 1);
+    }
+
+    /**
      * Retrieve active locked IPs with cleanup of expired ones.
      *
      * @return array
@@ -241,7 +319,7 @@ class Security {
             }
         }
 
-        $active_token = self::get_active_token();
+        $active_token = trim((string) self::get_active_token());
         if (empty($active_token)) {
             return new \WP_Error(
                 'agent_bridge_no_token',
@@ -250,7 +328,10 @@ class Security {
             );
         }
 
-        // 4. Extract Authorization header
+        // 4. Extract token from Authorization header (Bearer), alternative headers, or URI param
+        $provided_token = '';
+
+        // Priority 1: Authorization header (RFC 6750 Bearer)
         $auth_header = '';
         if ($request->get_header('authorization')) {
             $auth_header = $request->get_header('authorization');
@@ -267,7 +348,38 @@ class Security {
             }
         }
 
-        if (empty($auth_header) || !preg_match('/Bearer\s+(\S+)/i', $auth_header, $matches)) {
+        if (!empty($auth_header) && preg_match('/Bearer\s+(.+)$/i', trim($auth_header), $matches)) {
+            $provided_token = trim($matches[1]);
+        }
+
+        // Priority 2: Alternative HTTP Headers (if Authorization was stripped by web server / proxy)
+        if (empty($provided_token)) {
+            if ($request->get_header('x-agent-bridge-token')) {
+                $provided_token = trim((string) $request->get_header('x-agent-bridge-token'));
+            } elseif (!empty($_SERVER['HTTP_X_AGENT_BRIDGE_TOKEN'])) {
+                $provided_token = trim(sanitize_text_field(wp_unslash($_SERVER['HTTP_X_AGENT_BRIDGE_TOKEN'])));
+            } elseif ($request->get_header('x-api-key')) {
+                $provided_token = trim((string) $request->get_header('x-api-key'));
+            } elseif (!empty($_SERVER['HTTP_X_API_KEY'])) {
+                $provided_token = trim(sanitize_text_field(wp_unslash($_SERVER['HTTP_X_API_KEY'])));
+            }
+        }
+
+        // Priority 3: RFC 6750 Section 2.3 URI Query Parameter fallback
+        if (empty($provided_token)) {
+            if ($request->get_param('access_token')) {
+                $provided_token = trim((string) $request->get_param('access_token'));
+            } elseif ($request->get_param('token')) {
+                $provided_token = trim((string) $request->get_param('token'));
+            }
+        }
+
+        // Strip any accidental enclosing quotes (e.g. from curl or config)
+        if (!empty($provided_token)) {
+            $provided_token = trim($provided_token, "\"'");
+        }
+
+        if (empty($provided_token)) {
             self::record_failed_attempt($client_ip);
             return new \WP_Error(
                 'agent_bridge_unauthorized',
@@ -275,8 +387,6 @@ class Security {
                 ['status' => 401]
             );
         }
-
-        $provided_token = $matches[1];
 
         // 5. Timing-attack safe comparison
         if (!hash_equals($active_token, $provided_token)) {
