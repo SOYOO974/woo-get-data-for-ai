@@ -5,7 +5,8 @@
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
 > **Updates**: Integrated `plugin-update-checker` (PUC v5.6) configured for GitHub branch `main` and release assets.  
-> **Security Mandate**: 100% Read-Only (`GET` requests only). Zero hardcoded secrets, tokens, or credentials.
+> **Security Mandate**: 100% Read-Only (`GET` requests only). Zero hardcoded secrets, tokens, or credentials.  
+> **PUBLIC REPOSITORY PRIVACY WARNING**: This file is tracked in a public GitHub repository so the developer can access it across workstations. **It must NEVER contain sensitive, private, or confidential information** (no client domains, real store URLs, live API tokens, passwords, database dumps, or customer PII).
 
 ---
 
@@ -18,6 +19,14 @@
 
 ### A. Public GitHub & Zero-Secret Architecture
 - The entire codebase is hosted publicly on GitHub (`https://github.com/SOYOO974/woo-get-data-for-ai`).
+- **MANDATORY PRIVACY & DATA LEAK PREVENTION (CRITICAL FOR DEVELOPERS & AI AGENTS)**:
+  - This repository and this document (`PROJECT_CONTEXT.md`) are public to facilitate cross-machine synchronization and open development.
+  - **NEVER insert or commit any sensitive, private, or proprietary data**:
+    - ❌ **NO real client site URLs, staging domains, or production hostnames** (always use `https://example.com` or `https://your-site.com`).
+    - ❌ **NO live Bearer tokens, API keys, passwords, salts, or encryption secrets**.
+    - ❌ **NO customer personally identifiable information (PII)**, real order data, or unredacted log excerpts from production sites.
+    - ❌ **NO internal server IPs, private paths, or database credentials**.
+  - Any AI assistant (Antigravity, Cursor, Claude, ChatGPT, etc.) creating, editing, or updating this document must systematically review and sanitize all additions before saving and committing.
 - **NO hardcoded secrets, API keys, database credentials, internal domains, or tokens are allowed in any file.**
 - **Token Management**:
   - The access token is generated on-demand inside the WordPress admin panel using `wp_generate_password(64, true, true)`.
