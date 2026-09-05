@@ -15,3 +15,7 @@ synced-site-data/
 Thumbs.db
 .vscode/
 .idea/
+
+# Archives & Releases
+*.zip
+
