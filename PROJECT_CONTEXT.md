@@ -139,7 +139,7 @@ Located under **WordPress Admin > Settings > Agent Bridge**:
 
 ### Tab 2: Granular Permissions Matrix
 Enables/disables modules on a per-site basis:
-- `[x] System & Server Environment` (`/system`, `/ping`)
+- `[x] System & Server Environment` (`/system`, `/capabilities`, `/ping`)
 - `[x] WooCommerce Diagnosis & Overrides` (`/theme/overrides`, HPOS state)
 - `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`)
 - `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`)
@@ -150,17 +150,16 @@ Enables/disables modules on a per-site basis:
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
-### Tab 3: AI Onboarding & Mega-Prompt Generator
-- One-click "Copy AI Prompt" widget.
-- Dynamically generates a ready-to-use prompt for Antigravity/Claude/Cursor containing:
+### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
+- One-click "Copy Mega-Prompt for AI" widget.
+- Dynamically generates a lightweight, future-proof Bootstrap Prompt for Antigravity/Claude/Cursor containing:
   - Active site name and REST Base URL.
   - Active Bearer Token.
-  - List of active endpoints according to the permissions matrix.
-  - Usage examples with `curl -s`, parameter options (`filter`, `lines`, `status`, `target`).
-  - Full instructions for the AI to interact with the site or generate an automated Skill (`SKILL.md`).
-  - Status handling rules (HTTP 403, 429).
-  - Missing data & plugin evolution protocol (instructs AI to draft a feature request / email to `julien@soyoo.re`).
-  - Strict read-only & write prohibition alarm: AI must display a clear warning/alarm and refuse any requested evolution that would allow writing to or modifying the target site.
+  - **Dynamic Discovery Protocol**: Instructs the AI to run `GET /capabilities` on startup to discover all active modules, endpoints, and supported query parameters.
+  - **Auto-updating Skill Guidance**: AI is instructed to create/update `.agents/skills/wp-agent-bridge/SKILL.md` from the live `/capabilities` output and re-check it regularly to detect plugin updates without manual prompt re-copying.
+  - **Phase 2 Live Freshness Check**: Query live API before designing code or modifying custom snippets/forms.
+  - **WPCode direct admin edit links rule**.
+  - **Strict read-only & write prohibition alarm**: AI must display a clear warning/alarm and refuse any requested evolution that would allow writing to or modifying the target site.
 
 ### Tab 4: Access Logs & Country Analytics
 - Custom lightweight table: `{$wpdb->prefix}agent_bridge_logs` with auto-purge keeping the latest 500 records.
@@ -193,6 +192,7 @@ Enables/disables modules on a per-site basis:
 | Endpoint | Method | Purpose |
 | :--- | :--- | :--- |
 | `GET /ping` | GET | Connectivity check, server timestamp, site name |
+| `GET /capabilities` | GET | Dynamic schema and self-describing API catalog (active modules, permissions, endpoints, supported query params) for AI bootstrap |
 | `GET /system` | GET | WP/WC/PHP/MySQL versions, active plugins & updates, HPOS status, Action Scheduler queue |
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
@@ -245,15 +245,30 @@ Enables/disables modules on a per-site basis:
 
 ## 6. Local CLI Client (`cli/sync.js`)
 - Standalone Node.js script supporting `.env` configuration.
-- Commands: `pull:all`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
+- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
 - Optimized for v1.0.4+: `pull:elementor` automatically uses the bulk `/elementor/export-all` endpoint to pull all pages, templates, kit, and forms in 1 HTTP call (with fallback).
 - Optimized for v1.0.5: `pull:flowmattic` automatically uses the bulk `/flowmattic/export-all` endpoint to export all automation workflows locally into `./synced-site-data/flowmattic/workflows/` in native FlowMattic JSON format, plus a Markdown summary table.
 - Optimized for v1.1.0: `pull:analytics` pulls `/analytics/overview?range=last_30_days` and generates an executive Markdown summary (`./synced-site-data/analytics/summary.md`) with KPIs, conversion rates, and top performers.
+- Optimized for v1.2.0: `pull:capabilities` pulls `/capabilities` to export the dynamic API catalog (`./synced-site-data/capabilities.json`) and a Markdown summary table (`./synced-site-data/capabilities.md`).
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.2.0 (2026-09-05)
+- **Dynamic Capabilities Discovery (`GET /capabilities`)**:
+  - Exposes self-describing API catalog containing all modules, their enabled/disabled permission status, full endpoint paths, supported query parameters, and human-readable descriptions.
+  - Implemented `Permissions::get_capabilities_catalog()` to serve as a machine-readable schema for AI development agents (Antigravity, Cursor, Claude).
+- **Streamlined AI Bootstrap Prompt (Tab 3)**:
+  - Replaced the heavy, static 150-line Mega-Prompt with a future-proof, lightweight Bootstrap Prompt.
+  - Decreased token overhead and eliminated prompt desynchronization: instructs the AI to query `GET /capabilities` on startup to automatically generate and maintain its local skill (`.agents/skills/wp-agent-bridge/SKILL.md`).
+  - Instructs the AI to periodically re-query `/capabilities` on new tasks to discover newly added data types after plugin updates without requiring manual prompt copy-pasting.
+- **Local CLI Synchronization Client (`cli/sync.js`)**:
+  - Added `pull:capabilities` command generating `capabilities.json` and a Markdown catalog reference `capabilities.md`.
+  - Integrated `pull:capabilities` into the default `pull:all` command.
+- **In-Plugin Documentation (Tab 5)**:
+  - Updated scope table with `/capabilities`.
 
 ### v1.1.0 (2026-09-05)
 - **Independent Analytics (Visits & Conversion Rates) Integration**:

@@ -49,7 +49,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data');
-    console.log('Commands: pull:all, pull:system, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:logs');
     process.exit(1);
 }
 
@@ -494,6 +494,35 @@ async function pullAnalytics() {
     }
 }
 
+async function pullCapabilities() {
+    console.log('⏳ Pulling Capabilities & Schema Discovery...');
+    try {
+        const data = await makeRequest('/capabilities');
+        writeJson(path.join(outputDir, 'capabilities.json'), data);
+
+        let md = `# API Capabilities & Dynamic Schema for ${siteUrl}\n\n`;
+        md += `**Plugin**: ${data.plugin ? data.plugin.name : 'WP Agent Bridge'} (v${data.plugin ? data.plugin.version : '?'})\n`;
+        md += `**Generated**: ${new Date().toISOString()}\n`;
+        md += `**REST Base**: \`${apiBase}\`\n\n`;
+        md += `## Modules Catalog\n\n`;
+        md += `| Module | Status | Endpoints | Description |\n`;
+        md += `| :--- | :--- | :--- | :--- |\n`;
+
+        if (Array.isArray(data.modules)) {
+            data.modules.forEach(m => {
+                const status = m.enabled ? '✅ Enabled' : '❌ Disabled';
+                const eps = (m.endpoints || []).map(e => `\`${e.path || e}\``).join('<br>');
+                md += `| **${m.label || m.id}** | ${status} | ${eps} | ${m.description || ''} |\n`;
+            });
+        }
+
+        writeText(path.join(outputDir, 'capabilities.md'), md);
+        console.log('✅ Saved Capabilities catalog to ./capabilities.json & capabilities.md');
+    } catch (err) {
+        console.error('❌ Failed to pull capabilities:', err.message);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -502,6 +531,9 @@ async function run() {
     ensureDir(outputDir);
 
     switch (command) {
+        case 'pull:capabilities':
+            await pullCapabilities();
+            break;
         case 'pull:system':
             await pullSystem();
             break;
@@ -525,6 +557,7 @@ async function run() {
             break;
         case 'pull:all':
         default:
+            await pullCapabilities();
             await pullSystem();
             await pullTheme();
             await pullElementor();

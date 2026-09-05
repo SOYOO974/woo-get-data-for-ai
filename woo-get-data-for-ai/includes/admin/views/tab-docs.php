@@ -165,8 +165,8 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
             <tbody>
                 <tr>
                     <td><strong><?php esc_html_e('System & Limits', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/ping</code>, <code>/system</code></td>
-                    <td><?php esc_html_e('WordPress, PHP, MySQL versions, memory limits, active plugins with update status, HPOS state, Action Scheduler queues.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/ping</code>, <code>/capabilities</code>, <code>/system</code></td>
+                    <td><?php esc_html_e('Dynamic capabilities discovery catalog, WordPress, PHP, MySQL versions, memory limits, active plugins with update status, HPOS state, Action Scheduler queues.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WooCommerce & Themes', 'woo-get-data-for-ai'); ?></strong></td>

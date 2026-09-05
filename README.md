@@ -15,8 +15,9 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 
 - **100% Read-Only Security**: All endpoints strictly enforce HTTP `GET` (`WP_REST_Server::READABLE`). No remote write or database modification primitives exist.
 - **Zero-Secret Public Codebase**: Designed for public hosting on GitHub. Tokens are generated on-demand inside WordPress admin, never stored in plugin files.
-- **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, WPCode, Logs) via checkboxes in the admin panel.
-- **2-Click AI Onboarding**: Tab featuring a dynamically generated Mega-Prompt ready to copy-paste directly into your AI chat session, enabling instant diagnosis.
+- **Dynamic AI Discovery (`/capabilities`)**: Self-describing schema endpoint allowing AI assistants to automatically discover available modules, active permissions, and supported parameters.
+- **2-Click AI Onboarding**: Tab featuring a streamlined Bootstrap Prompt that empowers AI agents to auto-generate and maintain their local skill (`SKILL.md`) without prompt bloat.
+- **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, WPCode, Logs, FlowMattic, Analytics) via checkboxes in the admin panel.
 - **Deep WooCommerce Diagnostics**: Audits template overrides in child/parent themes, detects outdated templates, and inspects HPOS (High-Performance Order Storage) status.
 - **Theme Settings Export**: Deep inspection and decoding of **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and child theme `functions.php` / `style.css`.
 - **Sandboxed Code Inspector**: Safely inspects file trees of active plugins and `mu-plugins`, and reads specific PHP/JS/CSS files with strict `realpath` validation.
@@ -85,6 +86,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | Endpoint | Description |
 | :--- | :--- |
 | `GET /ping` | Health check, server time, site name, and plugin version. |
+| `GET /capabilities` | Dynamic discovery catalog & schema: lists all modules, permissions, endpoints, and supported query parameters for AI agents. |
 | `GET /system` | Server limits (PHP, RAM, execution time), WP core info, active plugins with update status, HPOS state, and Action Scheduler queue. |
 | `GET /theme/options` | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options`), and theme mods. |
 | `GET /theme/overrides` | Audit of WooCommerce template overrides with version comparison against core WooCommerce. |
@@ -128,14 +130,15 @@ cp .env.example .env
 # Edit .env with your SITE_URL and AGENT_BRIDGE_TOKEN
 
 # 3. Run synchronization commands
-node sync.js pull:all        # Synchronizes everything into ./synced-site-data
-node sync.js pull:system     # Generates system-report.md
-node sync.js pull:theme      # Dumps Woodmart/Elessi options & WC overrides
-node sync.js pull:elementor  # Dumps Elementor pages, forms, and kits
-node sync.js pull:snippets   # Dumps WPCode snippets to individual .php/.js files
-node sync.js pull:flowmattic # Dumps FlowMattic workflows to native JSON files
-node sync.js pull:analytics  # Dumps Independent Analytics to overview.json & summary.md
-node sync.js pull:logs       # Downloads tail of debug.log & wc-logs
+node sync.js pull:all          # Synchronizes everything into ./synced-site-data
+node sync.js pull:capabilities # Dumps capabilities & schema to capabilities.json & capabilities.md
+node sync.js pull:system       # Generates system-report.md
+node sync.js pull:theme        # Dumps Woodmart/Elessi options & WC overrides
+node sync.js pull:elementor    # Dumps Elementor pages, forms, and kits
+node sync.js pull:snippets     # Dumps WPCode snippets to individual .php/.js files
+node sync.js pull:flowmattic   # Dumps FlowMattic workflows to native JSON files
+node sync.js pull:analytics    # Dumps Independent Analytics to overview.json & summary.md
+node sync.js pull:logs         # Downloads tail of debug.log & wc-logs
 ```
 
 ---

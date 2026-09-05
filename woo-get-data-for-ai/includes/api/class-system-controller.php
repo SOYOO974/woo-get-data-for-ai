@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+use WPAgentBridge\Permissions;
+
 class System_Controller extends Rest_Controller {
 
     public function register_routes() {
@@ -12,6 +14,15 @@ class System_Controller extends Rest_Controller {
         register_rest_route(self::NAMESPACE, '/ping', [
             'methods'             => \WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_ping'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request);
+            },
+        ]);
+
+        // GET /capabilities (Dynamic discovery & self-describing API catalog for AI agents)
+        register_rest_route(self::NAMESPACE, '/capabilities', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_capabilities'],
             'permission_callback' => function ($request) {
                 return $this->check_access($request);
             },
@@ -36,6 +47,31 @@ class System_Controller extends Rest_Controller {
             'timestamp'  => current_time('c'),
             'timezone'   => wp_timezone_string(),
             'version'    => WOO_GET_DATA_AI_VERSION,
+        ]);
+    }
+
+    public function get_capabilities(\WP_REST_Request $request) {
+        $catalog = Permissions::get_capabilities_catalog();
+
+        return $this->response([
+            'plugin' => [
+                'name'      => 'WP Agent Bridge (Data for AI)',
+                'version'   => WOO_GET_DATA_AI_VERSION,
+                'read_only' => true,
+                'docs_url'  => WOO_GET_DATA_AI_GITHUB_REPO,
+            ],
+            'site' => [
+                'name'      => get_bloginfo('name'),
+                'site_url'  => site_url(),
+                'home_url'  => home_url(),
+                'rest_base' => rest_url(self::NAMESPACE),
+            ],
+            'discovery_instructions' => [
+                'purpose'  => 'Dynamic schema and capability discovery for AI development agents (Antigravity, Cursor, Claude).',
+                'workflow' => 'On initial connection, bootstrap/update your local skill (.agents/skills/wp-agent-bridge/SKILL.md). Periodically re-query this endpoint to discover new modules and endpoints after plugin updates.',
+            ],
+            'modules_count' => count($catalog),
+            'modules'       => $catalog,
         ]);
     }
 
