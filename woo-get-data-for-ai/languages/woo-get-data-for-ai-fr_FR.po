@@ -228,3 +228,8 @@ msgstr "Durée en minutes pendant laquelle une IP fautive reste totalement bloqu
 #: includes/admin/views/tab-general.php:181
 msgid "Save Security Settings"
 msgstr "Enregistrer les Réglages de Sécurité"
+
+#: includes/admin/class-admin-settings.php:36
+msgid "Settings"
+msgstr "Réglages"
+

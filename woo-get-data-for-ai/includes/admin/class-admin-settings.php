@@ -20,7 +20,27 @@ class Admin_Settings {
         add_action('wp_ajax_agent_bridge_regenerate_token', [$this, 'ajax_regenerate_token']);
         add_action('wp_ajax_agent_bridge_clear_logs', [$this, 'ajax_clear_logs']);
         add_action('wp_ajax_agent_bridge_unlock_ip', [$this, 'ajax_unlock_ip']);
+
+        // Action links on plugins list page
+        add_filter('plugin_action_links_' . WOO_GET_DATA_AI_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
     }
+
+    /**
+     * Add Settings link under plugin name in Plugins list.
+     *
+     * @param array $links
+     * @return array
+     */
+    public function add_plugin_action_links($links) {
+        $settings_link = sprintf(
+            '<a href="%s">%s</a>',
+            esc_url(admin_url('options-general.php?page=wp-agent-bridge')),
+            esc_html__('Settings', 'woo-get-data-for-ai')
+        );
+        array_unshift($links, $settings_link);
+        return $links;
+    }
+
 
     public function add_menu_page() {
         add_options_page(
