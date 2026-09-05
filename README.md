@@ -143,6 +143,21 @@ node sync.js pull:logs       # Downloads tail of debug.log & wc-logs
 
 ---
 
+## 🔄 Release & Auto-Update Protocol (GitHub)
+
+For WordPress installations to automatically detect and apply updates via `plugin-update-checker`:
+
+1. **Version Bump**: Increment the version in `woo-get-data-for-ai/woo-get-data-for-ai.php` (both the header `Version: X.Y.Z` and the constant `WOO_GET_DATA_AI_VERSION`).
+2. **Commit & Tag**: Commit all changes and create a Git tag matching the version (e.g., `git tag v1.0.1 && git push origin v1.0.1`).
+3. **GitHub Release**:
+   - Go to [GitHub Releases](https://github.com/SOYOO974/woo-get-data-for-ai/releases) and create a **New Release** based on your tag.
+   - Document the release notes and changelog.
+   - Attach the zipped plugin directory (`woo-get-data-for-ai.zip`) to the release assets.
+   - Publish the release.
+
+---
+
 ## 📄 License
 This project is licensed under the GPL-2.0+ License.
 Developed by **SOYOO**.
+

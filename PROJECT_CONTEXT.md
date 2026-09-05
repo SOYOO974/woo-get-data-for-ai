@@ -24,8 +24,19 @@
   - Stored securely in `wp_options` as `wp_agent_bridge_token`.
   - Administrators can revoke and regenerate the token with 1 click.
   - Optional override supported via `WP_AGENT_BRIDGE_TOKEN` in `wp-config.php`.
-- **Automatic Updates**:
-  - Integrated with `plugin-update-checker` (PUC v5.6) configured for GitHub releases/branch tracking.
+- **Automatic Updates & Release Protocol**:
+  - Integrated with `plugin-update-checker` (PUC v5.6) configured for GitHub releases/branch tracking (`enableReleaseAssets()`).
+  - **MANDATORY RELEASE RULE FOR AGENTS & DEVELOPERS**:
+    Every time changes/commits are pushed for a new version:
+    1. **Version Bump**: Increment the version number in both the plugin header (`Version: X.Y.Z`) and the constant `WOO_GET_DATA_AI_VERSION` in `woo-get-data-for-ai/woo-get-data-for-ai.php`.
+    2. **Changelog & Documentation**: Document all new features, bugfixes, and breaking changes in `PROJECT_CONTEXT.md` and `README.md`.
+    3. **Create a GitHub Release**:
+       - Push commits and create a corresponding Git tag (e.g. `v1.0.1` or `1.0.1`).
+       - Draft and publish a formal **GitHub Release** on `https://github.com/SOYOO974/woo-get-data-for-ai/releases`.
+       - Document the release notes clearly on GitHub.
+       - Attach the zipped plugin directory (`woo-get-data-for-ai.zip`) as a Release Asset.
+    > ⚠️ **Without creating a documented GitHub Release with a higher version tag, client WordPress sites will NOT trigger or detect the auto-update.**
+
 
 ### B. Internationalization (i18n)
 - Primary language: **English** (code, PHPDoc, UI strings, documentation).
