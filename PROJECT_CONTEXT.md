@@ -87,7 +87,10 @@ Enables/disables modules on a per-site basis:
   - Active site name and REST Base URL.
   - Active Bearer Token.
   - List of active endpoints according to the permissions matrix.
+  - Usage examples with `curl -s`, parameter options (`filter`, `lines`, `status`, `target`).
   - Full instructions for the AI to interact with the site or generate an automated Skill (`SKILL.md`).
+  - Status handling rules (HTTP 403, 429).
+  - Missing data & plugin evolution protocol (instructs AI to draft a feature request / email to `julien@soyoo.re`).
 
 ### Tab 4: Access Logs & Country Analytics
 - Custom lightweight table: `{$wpdb->prefix}agent_bridge_logs` with auto-purge keeping the latest 500 records.
@@ -152,3 +155,18 @@ Enables/disables modules on a per-site basis:
 - Standalone Node.js script supporting `.env` configuration.
 - Commands: `pull:all`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:logs`.
 - Generates a cleanly structured local export under `./synced-site-data/`.
+
+---
+
+## 7. Version Changelog
+
+### v1.0.2 (2026-09-05)
+- **Enhanced AI Mega-Prompt**:
+  - Added explicit instructions for missing data handling: AI drafts feature requests / ready-to-send emails to `julien@soyoo.re` with proposed endpoint routes and controller code.
+  - Added documentation for query parameters in curl examples (`filter` and custom `lines` up to 1000 in `/logs/view`, `status=active` in `/code/plugins`, `target=all` in `/theme/options`).
+  - Added HTTP status code handling guidance for AI agents (HTTP 403 module permissions, HTTP 429 rate limit / anti-brute-force lockout).
+  - Clarified silent mode `curl -s` and read-only action guidelines.
+  - Increased prompt textarea height in admin settings for better usability.
+
+### v1.0.1
+- Initial public release with PUC v5.6 updater, admin tabs, security redaction, and core REST controllers.
