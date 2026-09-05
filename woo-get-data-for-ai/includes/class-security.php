@@ -419,14 +419,14 @@ class Security {
         // On successful authentication, reset fail counter
         self::reset_failed_attempts($client_ip);
 
-        // 6. Rate Limiting: Max 120 requests/minute per client IP
+        // 6. Rate Limiting: Max 300 requests/minute per client IP for authenticated requests
         $rate_key = 'agent_bridge_rate_' . md5($client_ip);
         $req_count = (int) get_transient($rate_key);
 
-        if ($req_count > 120) {
+        if ($req_count > 300) {
             return new \WP_Error(
                 'agent_bridge_rate_limited',
-                esc_html__('Too many requests. Please throttle your queries (limit: 120/min).', 'woo-get-data-for-ai'),
+                esc_html__('Too many requests. Please throttle your queries (limit: 300/min).', 'woo-get-data-for-ai'),
                 ['status' => 429]
             );
         }

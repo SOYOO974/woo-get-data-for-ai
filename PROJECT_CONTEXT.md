@@ -83,6 +83,47 @@
 - **Cache & Memory**: Flushes runtime cache on heavy reads and disables `SAVEQUERIES`.
 - **Rate Limiting**: Built-in request rate limiting using WordPress Transients API.
 
+### E. Mandatory Checklist for Adding a New Data Source / Inspection Module (CRITICAL FOR AI AGENTS & DEVELOPERS)
+
+Whenever adding capabilities to inspect a new data source (e.g. ACF fields, WooCommerce orders/coupons, MetaSlider, SEO plugins, automation tables, custom post types):
+
+The following **6-step synchronization protocol is strictly mandatory** to maintain system integrity across admin settings, the AI onboarding engine, documentation, and the local CLI client:
+
+1. **Dedicated Read-Only REST Controller (`includes/api/class-*-controller.php`)**:
+   - Implement under namespace `WPAgentBridge\Api`.
+   - Register endpoints strictly with `methods => \WP_REST_Server::READABLE` (`GET` only).
+   - Hook into `rest_api_init` via `includes/class-plugin.php`.
+   - Implement defensive checks (e.g. verify if target plugin is active or database table exists before querying).
+   - Sanitize all outputs and apply secret/PII redaction via `Redaction::sanitize_output()`.
+
+2. **Permissions Matrix Registration & Automatic Checkbox Generation (Tab 2)**:
+   - **Register Module Definition**: Add the module key, localized `label`, localized `description`, and list of `endpoints` to `Permissions::get_module_definitions()` in `includes/class-permissions.php`.
+     > 💡 *The Permissions tab (`includes/admin/views/tab-permissions.php`) automatically generates the UI checkbox and handles POST saving by looping over `Permissions::get_module_definitions()`.*
+   - **Default Enabled**: Add `'<module_key>' => 1` to `$defaults` in `Permissions::get_permissions()`.
+   - **Endpoint Guard**: In the REST controller's `permission_callback`, enforce authorization and check module status via:
+     ```php
+     Security::check_rest_permission($request) && Permissions::check_module_permission('<module_key>')
+     ```
+
+3. **AI Mega-Prompt Generator Integration (Tab 3)**:
+   - In `includes/admin/views/tab-ai-prompt.php`, the list of active endpoints is generated dynamically from enabled permissions. **However, you must manually update the strategic instructions in the prompt**:
+     - **Phase 1: Local Workspace Initialization**: Add explicit guidance on how and where the AI should locally mirror or dump this new data source (e.g. `./<source>/...`).
+     - **Phase 2: Systematic "Live Freshness Check"**: Add explicit guidance detailing under what circumstances the AI must query this live endpoint before modifying code or diagnosing issues.
+     - **Endpoint Catalog & Quick Commands**: Add copy-pasteable `curl -s -H 'Authorization: Bearer {$active_token}' ...` command examples with relevant query parameters.
+
+4. **In-Plugin Documentation & Scope Table (Tab 5)**:
+   - Update `includes/admin/views/tab-docs.php` in **Section 4: Inspectable Technical Data** (`.docs-scope-table-wrap`).
+   - Add a row specifying the technical domain, endpoint paths, and a summary of data returned to the AI.
+
+5. **Local CLI Synchronization Client (`cli/sync.js`)**:
+   - Add a dedicated command `pull:<source>` in `cli/sync.js` to dump the data locally into `./synced-site-data/<source>/`.
+   - Integrate the new command into `pull:all`.
+   - Update the usage help text in `cli/sync.js` and `README.md`.
+
+6. **Repository Documentation & Release Protocol**:
+   - Add the new endpoints to Section 4 ("REST API Endpoint Catalog") in `PROJECT_CONTEXT.md` and the table in `README.md`.
+   - Follow the **Automatic Updates & Release Protocol (Section 2.A)**: increment version in plugin header & constant, document changelog in `PROJECT_CONTEXT.md` and `README.md`, commit, tag, and publish a formal GitHub Release with `woo-get-data-for-ai.zip` attached.
+
 ---
 
 ## 3. Administration Interface (Tabbed Settings)
@@ -105,6 +146,8 @@ Enables/disables modules on a per-site basis:
 - `[x] Elementor Architecture` (`/elementor/list`, `/elementor/forms`, `/elementor/kit`)
 - `[x] WPCode Snippets` (`/wpcode/snippets`)
 - `[x] Error & WooCommerce Logs` (`/logs/sources`, `/logs/view`)
+- `[x] FlowMattic Workflows` (`/flowmattic/export-all`, `/flowmattic/workflows`, `/flowmattic/workflow/{id}`)
+- `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Mega-Prompt Generator
@@ -156,6 +199,7 @@ Enables/disables modules on a per-site basis:
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
 | `GET /code/plugins` | GET | File trees of active plugins and `wp-content/mu-plugins/` |
 | `GET /code/file` | GET | Source code of a specific PHP/JS/CSS file (strictly sandboxed via `realpath()`) |
+| `GET /elementor/export-all` | GET | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request |
 | `GET /elementor/list` | GET | Elementor pages, posts, and templates (`elementor_library`) |
 | `GET /elementor/item/{id}` | GET | Full decoded `_elementor_data` JSON tree and page settings |
 | `GET /elementor/forms` | GET | Inventory of all Elementor forms (field definitions, actions, webhook URLs) |
@@ -164,6 +208,17 @@ Enables/disables modules on a per-site basis:
 | `GET /wpcode/snippet/{id}` | GET | Full source code and configuration of a targeted snippet |
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
+| `GET /flowmattic/export-all` | GET | Bulk export of all FlowMattic workflows in 1 optimized request |
+| `GET /flowmattic/workflows` | GET | List FlowMattic workflows (ID, name, status, trigger, actions, tasks count) |
+| `GET /flowmattic/workflow/{id}` | GET | FlowMattic workflow detail or native importable JSON (`?format=export`) |
+| `GET /analytics/overview` | GET | Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices) |
+| `GET /analytics/summary` | GET | Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth |
+| `GET /analytics/pages` | GET | Performance & conversion rate per page / product (`views`, `visitors`, `orders`, `net_sales`, `conversion_rate`) |
+| `GET /analytics/referrers` | GET | Traffic acquisition sources & referring domains with associated orders, sales, and conversion rates |
+| `GET /analytics/campaigns` | GET | Marketing UTM campaigns ROI tracking (`utm_source`, `utm_medium`, `utm_campaign`, `orders`, `net_sales`) |
+| `GET /analytics/devices` | GET | Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS |
+| `GET /analytics/geo` | GET | Geographic distribution of visitors and orders by country and city |
+| `GET /analytics/conversions` | GET | Recent order and conversion stream with attribution (landing page, country, device, browser, amount) |
 
 ---
 
@@ -174,6 +229,8 @@ Enables/disables modules on a per-site basis:
   - Returns HTTP 429 Too Many Requests with remaining minutes countdown.
   - Active lockouts are monitored in WordPress Admin (Settings > Agent Bridge > General & Status) with a 1-click manual "Unlock IP" action.
   - Counter resets automatically on successful authentication.
+- **Rate Limiting**:
+  - Authenticated requests with valid Bearer token are limited to 300 requests/minute per client IP (using WordPress Transients) to smoothly accommodate bulk export and CLI sync scripts without false positive 429 errors.
 - **Secret Redaction**: Recursively masks sensitive fields before JSON output:
   - Stripe secret/restricted keys (`sk_live_...`, `rk_live_...`)
   - Payment gateway API keys & webhook secrets (Alma, PayPal, Mollie)
@@ -188,19 +245,61 @@ Enables/disables modules on a per-site basis:
 
 ## 6. Local CLI Client (`cli/sync.js`)
 - Standalone Node.js script supporting `.env` configuration.
-- Commands: `pull:all`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:logs`.
+- Commands: `pull:all`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
+- Optimized for v1.0.4+: `pull:elementor` automatically uses the bulk `/elementor/export-all` endpoint to pull all pages, templates, kit, and forms in 1 HTTP call (with fallback).
+- Optimized for v1.0.5: `pull:flowmattic` automatically uses the bulk `/flowmattic/export-all` endpoint to export all automation workflows locally into `./synced-site-data/flowmattic/workflows/` in native FlowMattic JSON format, plus a Markdown summary table.
+- Optimized for v1.1.0: `pull:analytics` pulls `/analytics/overview?range=last_30_days` and generates an executive Markdown summary (`./synced-site-data/analytics/summary.md`) with KPIs, conversion rates, and top performers.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
 
+### v1.1.0 (2026-09-05)
+- **Independent Analytics (Visits & Conversion Rates) Integration**:
+  - Added dedicated REST Controller (`Analytics_Controller`) under `WPAgentBridge\Api`.
+  - Exposes 8 read-only diagnostic and business endpoints under `/wp-json/agent-bridge/v1/analytics/`:
+    - `GET /analytics/overview`: 360° store audit in 1 single HTTP request (summary KPIs, top 10 pages, top 10 referrers, top 10 UTM campaigns, and device breakdowns).
+    - `GET /analytics/summary`: Comprehensive traffic KPIs (visitors, pageviews, sessions, bounce rate, duration) and WooCommerce e-commerce performance (orders, gross sales, refunds, net sales, **conversion rate**, earnings per visitor, AOV) with period-over-period % growth comparisons.
+    - `GET /analytics/pages`: Content & product performance with traffic, bounce rates, and **product-level conversion rates**.
+    - `GET /analytics/referrers`: Traffic acquisition sources and referring domains with their specific conversion rates.
+    - `GET /analytics/campaigns`: Marketing UTM tracking (`utm_source`, `utm_medium`, `utm_campaign`) with revenue attribution.
+    - `GET /analytics/devices`: Device types (Mobile vs Desktop vs Tablet), browsers, and OS comparison to instantly diagnose mobile checkout UX bottlenecks.
+    - `GET /analytics/geo`: Geographic distribution of visitors and orders by country and city.
+    - `GET /analytics/conversions`: Recent conversion and order feed with technical and geographic attribution (zero PII, customer IPs/emails are not exposed).
+  - Robust date range parser supporting standard relative periods (`today`, `yesterday`, `last_7_days`, `last_30_days`, `this_month`, `last_month`, `last_90_days`, `this_year`, `last_year`, `all_time`) or custom exact intervals (`?start=YYYY-MM-DD&end=YYYY-MM-DD`) with automatic site timezone to UTC conversion.
+  - Resilient architecture: Direct read-only `$wpdb` SQL querying calqued on Independent Analytics schemas, ensuring 100% compatibility with both Free and Pro editions across any WordPress setup.
+  - Added `analytics` module to Granular Permissions Matrix in WordPress admin with one-click enable/disable toggle.
+  - Integrated into dynamic AI Mega-Prompt and documentation tab.
+  - Added `pull:analytics` command to `cli/sync.js`.
+- **FlowMattic Workflows Inspection & Native JSON Export**:
+  - Added dedicated REST Controller (`Flowmattic_Controller`) under `WPAgentBridge\Api`.
+  - Added `GET /flowmattic/workflows` to inspect all workflows, their triggers, actions count, status, and executed task counts from `flowmattic_tasks`.
+  - Added `GET /flowmattic/workflow/{id}` supporting `?format=export` (or `?format=raw`) producing the exact JSON structure exported by FlowMattic's native export button (`flowmattic_export_workflow()`), stripped of transient `capturedData` and ready for 1:1 re-import.
+  - Added `GET /flowmattic/export-all` for high-performance bulk workflow exports in 1 request.
+  - Graceful fallback: safely detects if FlowMattic plugin is active or if `{$wpdb->prefix}flowmattic_workflows` table exists, returning clear status messages without errors.
+  - Added `flowmattic` module to Granular Permissions Matrix and admin documentation.
+  - Integrated FlowMattic into AI Mega-Prompt (Phases 1 & 2 workspace initialization and live freshness checks).
+  - Integrated `pull:flowmattic` into `cli/sync.js`.
+
 ### v1.0.4 (2026-09-05)
+- **System Controller Crash 500 Fix**:
+  - Replaced non-existent `OrderUtil::is_custom_order_tables_in_sync()` with container-based `DataSynchronizer::is_sync_in_progress()` inside `try/catch`.
+  - Added defensive `method_exists()` check on `OrderUtil::custom_orders_table_usage_is_enabled()`.
+  - Wrapped Action Scheduler status interrogation in `try/catch` with `method_exists($as_store, 'action_counts')`.
+- **Bulk Elementor Export Route (`GET /elementor/export-all`)**:
+  - Added new high-performance endpoint with pagination (`page`, `per_page` up to 100).
+  - Returns complete decoded JSON widget trees (`_elementor_data`), page settings, global design kit (`kit`), and forms mapping in a single response.
+  - Includes `wp_cache_flush_runtime()` memory cleanup per iteration.
+- **Authenticated Rate-Limiting Increase**:
+  - Increased allowed rate limit from 120 to 300 req/min for authenticated clients, preventing HTTP 429 throttling during local synchronization.
+- **HTML Entity Decoding & Mega-Prompt Onboarding Standard**:
+  - Fixed HTML entities escaping (`&amp;`, `&#039;`) in site title and module labels via `html_entity_decode()`.
+  - Overhauled Mega-Prompt to standard agency onboarding protocol: Workspace initialization (autonomous Skill, WPCode `.php` exports, Elementor structure), systematic Live Freshness Check before tasks, direct WPCode admin edit links (`page=wpcode-snippet-manager&snippet_id=<ID>`), and strict Read-Only alarm directives.
 - **Admin Notice Placement Fix & Header Protection**:
   - Added official WordPress `<hr class="wp-header-end">` anchor and screen-reader `<h1>` at the top of the settings page so core WordPress `common.js` inserts notices cleanly above the plugin card.
   - Converted internal header title to `<h2 class="header-title">` to prevent third-party scripts from targeting the inside of the header card as an insertion point.
   - Added defensive CSS guard (`.agent-bridge-header .notice { display: none !important; }`) and JavaScript relocation logic in `admin.js` to ensure theme recommendations (e.g. TGMPA) and third-party notices never break the header flexbox row.
-  - Added clean spacing for admin notices positioned above the plugin settings interface.
 
 ### v1.0.3 (2026-09-05)
 - **Token Authentication & RFC 6750 Compliance Bugfix**:

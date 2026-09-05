@@ -49,7 +49,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data');
-    console.log('Commands: pull:all, pull:system, pull:theme, pull:elementor, pull:snippets, pull:logs');
+    console.log('Commands: pull:all, pull:system, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:logs');
     process.exit(1);
 }
 
@@ -194,43 +194,93 @@ async function pullTheme() {
 async function pullElementor() {
     console.log('⏳ Pulling Elementor Data...');
     try {
-        // Global Kit
+        let bulkSuccess = false;
         try {
-            const kit = await makeRequest('/elementor/kit');
-            writeJson(path.join(outputDir, 'elementor/global-kit.json'), kit);
-        } catch (e) {}
+            // Attempt bulk export in 1 optimized request (v1.0.4+)
+            const exportAll = await makeRequest('/elementor/export-all?per_page=100');
+            if (exportAll && exportAll.items) {
+                bulkSuccess = true;
+                if (exportAll.kit) {
+                    writeJson(path.join(outputDir, 'elementor/global-kit.json'), exportAll.kit);
+                }
+                if (exportAll.forms && exportAll.forms.forms) {
+                    let formMd = `# Elementor Forms Inventory (${exportAll.forms.total_forms || 0})\n\n`;
+                    (exportAll.forms.forms || []).forEach(f => {
+                        formMd += `### Form: "${f.form_name}" (Page: ${f.post_title})\n`;
+                        formMd += `- **Page URL**: ${f.post_url}\n`;
+                        formMd += `- **Actions**: ${(f.submit_actions || []).join(', ')}\n`;
+                        if (f.webhook_url) formMd += `- **Webhook URL**: \`${f.webhook_url}\`\n`;
+                        if (f.email_to) formMd += `- **Email To**: \`${f.email_to}\`\n`;
+                        formMd += `\n**Fields (${f.fields_count || 0})**:\n`;
+                        (f.fields || []).forEach(fld => {
+                            formMd += `  - \`${fld.id}\` [${fld.type}] "${fld.label}" ${fld.required ? '*(Required)*' : ''}\n`;
+                        });
+                        formMd += `\n---\n\n`;
+                    });
+                    writeText(path.join(outputDir, 'elementor/forms-inventory.md'), formMd);
+                }
 
-        // Forms Inventory
-        try {
-            const formsData = await makeRequest('/elementor/forms');
-            let formMd = `# Elementor Forms Inventory (${formsData.total_forms})\n\n`;
-            (formsData.forms || []).forEach(f => {
-                formMd += `### Form: "${f.form_name}" (Page: ${f.post_title})\n`;
-                formMd += `- **Page URL**: ${f.post_url}\n`;
-                formMd += `- **Actions**: ${f.submit_actions.join(', ')}\n`;
-                if (f.webhook_url) formMd += `- **Webhook URL**: \`${f.webhook_url}\`\n`;
-                if (f.email_to) formMd += `- **Email To**: \`${f.email_to}\`\n`;
-                formMd += `\n**Fields (${f.fields_count})**:\n`;
-                f.fields.forEach(fld => {
-                    formMd += `  - \`${fld.id}\` [${fld.type}] "${fld.label}" ${fld.required ? '*(Required)*' : ''}\n`;
-                });
-                formMd += `\n---\n\n`;
-            });
-            writeText(path.join(outputDir, 'elementor/forms-inventory.md'), formMd);
-        } catch (e) {}
+                console.log(`  Exported ${exportAll.count} of ${exportAll.total} Elementor items via bulk export...`);
+                for (const item of (exportAll.items || [])) {
+                    const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                    const filename = `${item.slug || item.id}.json`;
+                    writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), item);
+                }
 
-        // Pages & Templates list
-        const list = await makeRequest('/elementor/list');
-        console.log(`  Found ${list.total} Elementor items. Downloading details...`);
-
-        for (const item of (list.items || [])) {
-            const itemData = await makeRequest(`/elementor/item/${item.id}`);
-            const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
-            const filename = `${item.slug || item.id}.json`;
-            writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), itemData);
+                // If more pages exist
+                if (exportAll.total_pages > 1) {
+                    for (let p = 2; p <= exportAll.total_pages; p++) {
+                        const nextBatch = await makeRequest(`/elementor/export-all?per_page=100&page=${p}`);
+                        for (const item of (nextBatch.items || [])) {
+                            const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                            const filename = `${item.slug || item.id}.json`;
+                            writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), item);
+                        }
+                    }
+                }
+                console.log('✅ Elementor definitions successfully downloaded via bulk export.');
+            }
+        } catch (bulkErr) {
+            // Bulk endpoint not available or errored, falling back to legacy individual requests
         }
 
-        console.log('✅ Elementor definitions successfully downloaded.');
+        if (!bulkSuccess) {
+            // Legacy individual requests fallback
+            try {
+                const kit = await makeRequest('/elementor/kit');
+                writeJson(path.join(outputDir, 'elementor/global-kit.json'), kit);
+            } catch (e) {}
+
+            try {
+                const formsData = await makeRequest('/elementor/forms');
+                let formMd = `# Elementor Forms Inventory (${formsData.total_forms})\n\n`;
+                (formsData.forms || []).forEach(f => {
+                    formMd += `### Form: "${f.form_name}" (Page: ${f.post_title})\n`;
+                    formMd += `- **Page URL**: ${f.post_url}\n`;
+                    formMd += `- **Actions**: ${f.submit_actions.join(', ')}\n`;
+                    if (f.webhook_url) formMd += `- **Webhook URL**: \`${f.webhook_url}\`\n`;
+                    if (f.email_to) formMd += `- **Email To**: \`${f.email_to}\`\n`;
+                    formMd += `\n**Fields (${f.fields_count})**:\n`;
+                    f.fields.forEach(fld => {
+                        formMd += `  - \`${fld.id}\` [${fld.type}] "${fld.label}" ${fld.required ? '*(Required)*' : ''}\n`;
+                    });
+                    formMd += `\n---\n\n`;
+                });
+                writeText(path.join(outputDir, 'elementor/forms-inventory.md'), formMd);
+            } catch (e) {}
+
+            const list = await makeRequest('/elementor/list');
+            console.log(`  Found ${list.total} Elementor items. Downloading details...`);
+
+            for (const item of (list.items || [])) {
+                const itemData = await makeRequest(`/elementor/item/${item.id}`);
+                const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                const filename = `${item.slug || item.id}.json`;
+                writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), itemData);
+            }
+
+            console.log('✅ Elementor definitions successfully downloaded.');
+        }
     } catch (err) {
         console.error('❌ Failed to pull Elementor:', err.message);
     }
@@ -280,6 +330,170 @@ async function pullLogs() {
     }
 }
 
+async function pullFlowmattic() {
+    console.log('⏳ Pulling FlowMattic Workflows...');
+    try {
+        let bulkSuccess = false;
+        try {
+            // Attempt bulk export in 1 optimized request (v1.0.5+)
+            const exportAll = await makeRequest('/flowmattic/export-all?per_page=100');
+            if (exportAll && exportAll.flowmattic_installed && exportAll.items) {
+                bulkSuccess = true;
+                const items = exportAll.items || [];
+                console.log(`  Found ${exportAll.total} FlowMattic workflows via bulk export...`);
+
+                let summaryMd = `# FlowMattic Workflows (${exportAll.total})\n\n`;
+                summaryMd += `| Workflow ID | Name | Status | Trigger | Actions | Tasks Executed |\n`;
+                summaryMd += `|---|---|---|---|---|---|\n`;
+
+                for (const item of items) {
+                    const statusIcon = item.status === 'on' ? '🟢 On' : '⚪ Off';
+                    summaryMd += `| \`${item.workflow_id}\` | **${item.workflow_name}** | ${statusIcon} | \`${item.trigger}\` | ${item.actions_count} | ${item.task_count} |\n`;
+
+                    // Write native FlowMattic JSON export file
+                    const cleanName = (item.workflow_name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    const filename = `workflow-${item.workflow_id}-${cleanName}.json`;
+                    writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), item.export_data || item);
+                }
+
+                // If more pages exist
+                if (exportAll.total_pages > 1) {
+                    for (let p = 2; p <= exportAll.total_pages; p++) {
+                        const nextBatch = await makeRequest(`/flowmattic/export-all?per_page=100&page=${p}`);
+                        for (const item of (nextBatch.items || [])) {
+                            const statusIcon = item.status === 'on' ? '🟢 On' : '⚪ Off';
+                            summaryMd += `| \`${item.workflow_id}\` | **${item.workflow_name}** | ${statusIcon} | \`${item.trigger}\` | ${item.actions_count} | ${item.task_count} |\n`;
+
+                            const cleanName = (item.workflow_name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                            const filename = `workflow-${item.workflow_id}-${cleanName}.json`;
+                            writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), item.export_data || item);
+                        }
+                    }
+                }
+
+                writeText(path.join(outputDir, 'flowmattic/workflows-summary.md'), summaryMd);
+                console.log(`✅ Saved ${exportAll.total} FlowMattic workflows to ./flowmattic/workflows/`);
+            } else if (exportAll && exportAll.flowmattic_installed === false) {
+                console.log('ℹ️  FlowMattic is not installed or active on the site (skipped).');
+                return;
+            }
+        } catch (bulkErr) {
+            // Bulk endpoint not available, falling back to individual requests
+        }
+
+        if (!bulkSuccess) {
+            const listData = await makeRequest('/flowmattic/workflows');
+            if (listData && listData.flowmattic_installed === false) {
+                console.log('ℹ️  FlowMattic is not installed or active on the site (skipped).');
+                return;
+            }
+
+            const workflows = listData.workflows || [];
+            console.log(`  Found ${workflows.length} FlowMattic workflows. Downloading individual exports...`);
+
+            let summaryMd = `# FlowMattic Workflows (${workflows.length})\n\n`;
+            summaryMd += `| Workflow ID | Name | Status | Trigger | Actions | Tasks Executed |\n`;
+            summaryMd += `|---|---|---|---|---|---|\n`;
+
+            for (const wf of workflows) {
+                const statusIcon = wf.status === 'on' ? '🟢 On' : '⚪ Off';
+                summaryMd += `| \`${wf.workflow_id}\` | **${wf.name}** | ${statusIcon} | \`${wf.trigger}\` | ${wf.actions_count} | ${wf.task_count} |\n`;
+
+                try {
+                    const exportData = await makeRequest(`/flowmattic/workflow/${wf.workflow_id}?format=export`);
+                    const cleanName = (wf.name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                    const filename = `workflow-${wf.workflow_id}-${cleanName}.json`;
+                    writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), exportData);
+                } catch (e) {
+                    console.warn(`  ⚠️ Failed to download workflow ${wf.workflow_id}:`, e.message);
+                }
+            }
+
+            writeText(path.join(outputDir, 'flowmattic/workflows-summary.md'), summaryMd);
+            console.log(`✅ Saved ${workflows.length} FlowMattic workflows to ./flowmattic/workflows/`);
+        }
+    } catch (err) {
+        console.error('❌ Failed to pull FlowMattic:', err.message);
+    }
+}
+
+// Pull Independent Analytics
+async function pullAnalytics() {
+    console.log('📊 Pulling Independent Analytics data...');
+    try {
+        const overview = await makeRequest('/analytics/overview?range=last_30_days');
+        if (overview && overview.installed === false) {
+            console.log('ℹ️  Independent Analytics is not installed on the site (skipped).');
+            return;
+        }
+
+        const analyticsDir = path.join(outputDir, 'analytics');
+        ensureDir(analyticsDir);
+
+        writeJson(path.join(analyticsDir, 'overview.json'), overview);
+
+        // Generate clean markdown executive report
+        const summary = overview.summary || {};
+        const traffic = summary.traffic || {};
+        const ecommerce = summary.ecommerce || {};
+        const growth = overview.growth || {};
+
+        let md = `# Independent Analytics — 30-Day Executive Summary\n\n`;
+        md += `> **Period**: ${overview.period?.label || 'Last 30 Days'} (${overview.period?.start_local || ''} to ${overview.period?.end_local || ''})\n\n`;
+
+        md += `## 🚀 Key Performance Indicators (KPIs)\n\n`;
+        md += `| Metric | Current Value | Growth vs Previous Period |\n`;
+        md += `|---|---|---|\n`;
+        md += `| **Unique Visitors** | ${traffic.visitors?.toLocaleString() || 0} | ${growth.visitors_growth_percent >= 0 ? '+' : ''}${growth.visitors_growth_percent || 0}% |\n`;
+        md += `| **Page Views** | ${traffic.views?.toLocaleString() || 0} | ${growth.views_growth_percent >= 0 ? '+' : ''}${growth.views_growth_percent || 0}% |\n`;
+        md += `| **Total Sessions** | ${traffic.sessions?.toLocaleString() || 0} | ${growth.sessions_growth_percent >= 0 ? '+' : ''}${growth.sessions_growth_percent || 0}% |\n`;
+        md += `| **Bounce Rate** | ${traffic.bounce_rate_percent || 0}% | - |\n`;
+        md += `| **Avg Session Duration** | ${traffic.avg_session_duration_fmt || '0m 00s'} | - |\n`;
+        md += `| **WooCommerce Orders** | ${ecommerce.orders?.toLocaleString() || 0} | ${growth.orders_growth_percent >= 0 ? '+' : ''}${growth.orders_growth_percent || 0}% |\n`;
+        md += `| **Net Sales Revenue** | ${ecommerce.net_sales?.toLocaleString() || 0} ${overview.meta?.currency || ''} | ${growth.net_sales_growth_percent >= 0 ? '+' : ''}${growth.net_sales_growth_percent || 0}% |\n`;
+        md += `| **E-commerce Conversion Rate** | **${ecommerce.conversion_rate_percent || 0}%** | ${growth.conversion_rate_growth_percent >= 0 ? '+' : ''}${growth.conversion_rate_growth_percent || 0}% |\n`;
+        md += `| **Average Order Value (AOV)** | ${ecommerce.average_order_value?.toLocaleString() || 0} ${overview.meta?.currency || ''} | - |\n\n`;
+
+        // Top pages
+        if (overview.top_pages && overview.top_pages.length > 0) {
+            md += `## 📄 Top Pages & Products\n\n`;
+            md += `| Page / Product | Type | Views | Visitors | Orders | Net Sales | Conv. Rate |\n`;
+            md += `|---|---|---|---|---|---|---|\n`;
+            for (const p of overview.top_pages) {
+                md += `| [${p.title || p.url}](${p.url}) | \`${p.page_type || 'page'}\` | ${p.views} | ${p.visitors} | ${p.orders} | ${p.net_sales} | **${p.conversion_rate_percent}%** |\n`;
+            }
+            md += `\n`;
+        }
+
+        // Top referrers
+        if (overview.top_referrers && overview.top_referrers.length > 0) {
+            md += `## 🔗 Top Traffic Sources\n\n`;
+            md += `| Source Domain | Visitors | Sessions | Orders | Net Sales | Conv. Rate |\n`;
+            md += `|---|---|---|---|---|---|\n`;
+            for (const r of overview.top_referrers) {
+                md += `| **${r.domain}** | ${r.visitors} | ${r.sessions} | ${r.orders} | ${r.net_sales} | **${r.conversion_rate_percent}%** |\n`;
+            }
+            md += `\n`;
+        }
+
+        // Device Types
+        if (overview.device_types && overview.device_types.length > 0) {
+            md += `## 📱 Device Performance (Conversion Comparison)\n\n`;
+            md += `| Device Type | Visitors | Sessions | Orders | Net Sales | Conv. Rate | Bounce Rate |\n`;
+            md += `|---|---|---|---|---|---|---|\n`;
+            for (const d of overview.device_types) {
+                md += `| **${d.type}** | ${d.visitors} | ${d.sessions} | ${d.orders} | ${d.net_sales} | **${d.conversion_rate_percent}%** | ${d.bounce_rate_percent}% |\n`;
+            }
+            md += `\n`;
+        }
+
+        writeText(path.join(analyticsDir, 'summary.md'), md);
+        console.log('✅ Saved Independent Analytics data to ./analytics/ (overview.json & summary.md)');
+    } catch (err) {
+        console.error('❌ Failed to pull Independent Analytics:', err.message);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -300,6 +514,12 @@ async function run() {
         case 'pull:snippets':
             await pullSnippets();
             break;
+        case 'pull:flowmattic':
+            await pullFlowmattic();
+            break;
+        case 'pull:analytics':
+            await pullAnalytics();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -309,6 +529,8 @@ async function run() {
             await pullTheme();
             await pullElementor();
             await pullSnippets();
+            await pullFlowmattic();
+            await pullAnalytics();
             await pullLogs();
             break;
     }

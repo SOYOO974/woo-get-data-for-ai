@@ -37,7 +37,7 @@ class Permissions {
             'elementor' => [
                 'label'       => esc_html__('Elementor Architecture', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows reading Elementor page trees, global kit styles, and mapping form widgets with webhooks.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/elementor/list', '/elementor/item/{id}', '/elementor/forms', '/elementor/kit'],
+                'endpoints'   => ['/elementor/export-all', '/elementor/list', '/elementor/item/{id}', '/elementor/forms', '/elementor/kit'],
             ],
             'wpcode' => [
                 'label'       => esc_html__('WPCode Snippets', 'woo-get-data-for-ai'),
@@ -48,6 +48,16 @@ class Permissions {
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows listing and tail-reading debug.log and uploads/wc-logs/*.log with memory protection.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/logs/sources', '/logs/view'],
+            ],
+            'flowmattic' => [
+                'label'       => esc_html__('FlowMattic Workflows', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows listing and exporting FlowMattic workflows, steps, triggers, and configurations in native JSON format.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/flowmattic/export-all', '/flowmattic/workflows', '/flowmattic/workflow/{id}'],
+            ],
+            'analytics' => [
+                'label'       => esc_html__('Independent Analytics (Visits & Conversion Rates)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/analytics/overview', '/analytics/summary', '/analytics/pages', '/analytics/referrers', '/analytics/campaigns', '/analytics/devices', '/analytics/geo', '/analytics/conversions'],
             ],
         ];
     }
@@ -66,6 +76,8 @@ class Permissions {
             'elementor'    => 1,
             'wpcode'       => 1,
             'logs'         => 1,
+            'flowmattic'   => 1,
+            'analytics'    => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);

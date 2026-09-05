@@ -136,10 +136,21 @@ class System_Controller extends Rest_Controller {
 
             // HPOS (High-Performance Order Storage) status
             if (class_exists('\Automattic\WooCommerce\Utilities\OrderUtil')) {
+                $is_syncing = false;
+                try {
+                    if (class_exists('\Automattic\WooCommerce\Database\Migrations\CustomOrderTable\DataSynchronizer') && function_exists('wc_get_container')) {
+                        $sync = wc_get_container()->get(\Automattic\WooCommerce\Database\Migrations\CustomOrderTable\DataSynchronizer::class);
+                        $is_syncing = $sync ? (bool) $sync->is_sync_in_progress() : false;
+                    }
+                } catch (\Throwable $e) {
+                    $is_syncing = false;
+                }
                 $wc_info['hpos'] = [
-                    'enabled'             => \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled(),
-                    'sync_in_progress'    => \Automattic\WooCommerce\Utilities\OrderUtil::is_custom_order_tables_in_sync(),
-                    'authoritative_source'=> get_option('woocommerce_custom_orders_table_enabled', 'no') === 'yes' ? 'custom_orders_table' : 'posts_table',
+                    'enabled'              => method_exists('\Automattic\WooCommerce\Utilities\OrderUtil', 'custom_orders_table_usage_is_enabled')
+                        ? \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()
+                        : false,
+                    'sync_in_progress'     => $is_syncing,
+                    'authoritative_source' => get_option('woocommerce_custom_orders_table_enabled', 'no') === 'yes' ? 'custom_orders_table' : 'posts_table',
                 ];
             }
 
@@ -161,15 +172,23 @@ class System_Controller extends Rest_Controller {
 
         // Action Scheduler status (if present)
         $action_scheduler_info = null;
-        if (class_exists('ActionScheduler')) {
-            $as_store = \ActionScheduler_Store::instance();
-            $action_scheduler_info = [
-                'pending'   => $as_store->get_status_count('pending'),
-                'in-progress' => $as_store->get_status_count('in-progress'),
-                'complete'  => $as_store->get_status_count('complete'),
-                'failed'    => $as_store->get_status_count('failed'),
-                'canceled'  => $as_store->get_status_count('canceled'),
-            ];
+        if (class_exists('ActionScheduler') && class_exists('ActionScheduler_Store')) {
+            try {
+                $as_store = \ActionScheduler_Store::instance();
+                if (method_exists($as_store, 'action_counts')) {
+                    $action_scheduler_info = $as_store->action_counts();
+                } else {
+                    $action_scheduler_info = [
+                        'pending'     => $as_store->get_status_count('pending'),
+                        'in-progress' => $as_store->get_status_count('in-progress'),
+                        'complete'    => $as_store->get_status_count('complete'),
+                        'failed'      => $as_store->get_status_count('failed'),
+                        'canceled'    => $as_store->get_status_count('canceled'),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                $action_scheduler_info = ['error' => $e->getMessage()];
+            }
         }
 
         return $this->response([

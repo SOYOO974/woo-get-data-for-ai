@@ -70,6 +70,8 @@ class Plugin {
             new Api\Elementor_Controller(),
             new Api\Wpcode_Controller(),
             new Api\Logs_Controller(),
+            new Api\Flowmattic_Controller(),
+            new Api\Analytics_Controller(),
         ];
 
         foreach ($controllers as $controller) {

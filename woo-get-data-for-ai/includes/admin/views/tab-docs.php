@@ -180,8 +180,8 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Elementor Architecture', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/elementor/list</code>, <code>/elementor/item/{id}</code>, <code>/elementor/forms</code>, <code>/elementor/kit</code></td>
-                    <td><?php esc_html_e('Elementor page/template listings, complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/elementor/export-all</code>, <code>/elementor/list</code>, <code>/elementor/item/{id}</code>, <code>/elementor/forms</code>, <code>/elementor/kit</code></td>
+                    <td><?php esc_html_e('Bulk export of all pages and templates, complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WPCode Snippets', 'woo-get-data-for-ai'); ?></strong></td>
@@ -192,6 +192,16 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><strong><?php esc_html_e('Logs & Diagnostics', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/logs/sources</code>, <code>/logs/view</code></td>
                     <td><?php esc_html_e('List of available log files (debug.log, uploads/wc-logs/*.log), tail extraction up to 1000 lines, error and fatal filtering.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('FlowMattic Workflows', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/flowmattic/export-all</code>, <code>/flowmattic/workflows</code>, <code>/flowmattic/workflow/{id}</code></td>
+                    <td><?php esc_html_e('Bulk export and inspection of FlowMattic workflows, steps, triggers, action counts, and native importable JSON format.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('Independent Analytics', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/analytics/overview</code>, <code>/analytics/summary</code>, <code>/analytics/pages</code>, <code>/analytics/referrers</code>, <code>/analytics/campaigns</code>, <code>/analytics/devices</code>, <code>/analytics/geo</code>, <code>/analytics/conversions</code></td>
+                    <td><?php esc_html_e('Audience and conversion tracking: visits, views, bounce rate, WooCommerce conversion rate, net sales, top pages, acquisition channels, UTM campaigns, and device breakdowns.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
             </tbody>
         </table>

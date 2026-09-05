@@ -22,7 +22,8 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Sandboxed Code Inspector**: Safely inspects file trees of active plugins and `mu-plugins`, and reads specific PHP/JS/CSS files with strict `realpath` validation.
 - **High-Performance Log Streaming**: Memory-safe reverse file tailing (`fseek`) for `debug.log` and `uploads/wc-logs/*.log` preventing PHP memory exhaustion on heavy production sites.
 - **Automatic Data Redaction**: Real-time regex engine that masks Stripe secret keys (`sk_live_*`), API tokens, passwords, database credentials, and customer email addresses before output.
-- **Access Audit Trail & Country Analytics**: Real-time log table showing IP, country (Cloudflare `CF-IPCountry` or cached GeoIP), endpoints accessed, and status codes.
+- **FlowMattic Automations**: Bulk and targeted export of all workflows, triggers, actions, and execution task stats in native importable JSON format.
+- **Independent Analytics Intelligence**: Complete visibility over site traffic, unique visitors, pageviews, acquisition channels, UTM campaigns, device breakdowns, and WooCommerce **conversion rates**, net sales, and AOV.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -90,6 +91,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /theme/child` | Code and metadata for child theme `functions.php` and `style.css`. |
 | `GET /code/plugins` | File trees for active plugins and `wp-content/mu-plugins/`. |
 | `GET /code/file?path={relative_path}` | Sandboxed code viewer for specific PHP, JS, or CSS files. |
+| `GET /elementor/export-all` | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request. |
 | `GET /elementor/list` | Pages and templates built with Elementor. |
 | `GET /elementor/item/{id}` | Decoded JSON element tree (`_elementor_data`) and page settings. |
 | `GET /elementor/forms` | Inventory of Elementor forms, fields, and submit actions (webhooks, emails). |
@@ -98,6 +100,17 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /wpcode/snippet/{id}` | Source code and metadata of a specific snippet. |
 | `GET /logs/sources` | Available log files (`debug.log`, `uploads/wc-logs/*.log`) with file sizes and dates. |
 | `GET /logs/view?source={file}&lines=200` | Memory-safe tail extraction of the latest log lines. |
+| `GET /flowmattic/export-all` | Bulk export of all FlowMattic automation workflows in 1 optimized request. |
+| `GET /flowmattic/workflows` | List all FlowMattic workflows (ID, name, status, triggers, steps, tasks executed). |
+| `GET /flowmattic/workflow/{id}?format=export` | Download a workflow in FlowMattic's native importable JSON format. |
+| `GET /analytics/overview` | 360° consolidated audit in 1 request (traffic KPIs, conversion rate, top pages, referrers, campaigns, devices). |
+| `GET /analytics/summary?range={range}` | Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, sales, AOV, and % growth. |
+| `GET /analytics/pages?sort=views&limit=25` | Content and product performance with pageviews, visitors, orders, and product conversion rates. |
+| `GET /analytics/referrers` | Traffic sources (domains, search engines, social media) with attributed orders and conversion rates. |
+| `GET /analytics/campaigns` | Marketing UTM tracking (`utm_source`, `utm_medium`, `utm_campaign`) with revenue attribution. |
+| `GET /analytics/devices` | Device types (Mobile vs Desktop vs Tablet), browsers, and OS comparison with conversion rates. |
+| `GET /analytics/geo` | Geographic distribution of visitors and orders by country and city. |
+| `GET /analytics/conversions` | Recent conversion stream (orders, form submissions) with attribution (zero PII). |
 
 ---
 
@@ -120,6 +133,8 @@ node sync.js pull:system     # Generates system-report.md
 node sync.js pull:theme      # Dumps Woodmart/Elessi options & WC overrides
 node sync.js pull:elementor  # Dumps Elementor pages, forms, and kits
 node sync.js pull:snippets   # Dumps WPCode snippets to individual .php/.js files
+node sync.js pull:flowmattic # Dumps FlowMattic workflows to native JSON files
+node sync.js pull:analytics  # Dumps Independent Analytics to overview.json & summary.md
 node sync.js pull:logs       # Downloads tail of debug.log & wc-logs
 ```
 
@@ -132,7 +147,7 @@ node sync.js pull:logs       # Downloads tail of debug.log & wc-logs
 - **Secret Redaction**: Recursively scrubs Stripe keys (`sk_live_...`), passwords, salts, and webhook secrets before sending any JSON payload.
 - **PII Scrubbing**: Replaces client email addresses in logs with masked identifiers (`[REDACTED_EMAIL@...]`).
 - **Path Traversal Protection**: Uses `realpath()` to restrict file reading strictly within `WP_PLUGIN_DIR`, `get_theme_root()`, `WPMU_PLUGIN_DIR`, and `uploads/wc-logs/`. Strictly blocks access to `wp-config.php`, `.env`, `.git`, or `.htaccess`.
-- **Rate Limiting**: Throttles queries to 120 requests/minute per client IP via WordPress Transients.
+- **Rate Limiting**: Throttles queries to 300 requests/minute per client IP for authenticated requests via WordPress Transients.
 - **Lightweight DB Logging**: Logs are stored in a dedicated table (`wp_agent_bridge_logs`) with automatic rotation (default: 500 rows) and cumulative summary metrics to prevent database bloat.
 
 
