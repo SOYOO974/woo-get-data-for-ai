@@ -15,6 +15,20 @@ class Flowmattic_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'flowmattic');
             },
+            'args'                => [
+                'status'   => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'page'     => [
+                    'default'           => 1,
+                    'sanitize_callback' => 'absint',
+                ],
+                'per_page' => [
+                    'default'           => 50,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
         ]);
 
         // GET /flowmattic/workflows (List summaries, status, triggers)
@@ -24,6 +38,24 @@ class Flowmattic_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'flowmattic');
             },
+            'args'                => [
+                'status' => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'search' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'limit'  => [
+                    'default'           => 100,
+                    'sanitize_callback' => 'absint',
+                ],
+                'offset' => [
+                    'default'           => 0,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
         ]);
 
         // GET /flowmattic/workflow/{id} (Targeted workflow detail or export format)
@@ -33,6 +65,12 @@ class Flowmattic_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'flowmattic');
             },
+            'args'                => [
+                'format' => [
+                    'default'           => 'default',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
         ]);
     }
 
@@ -300,14 +338,20 @@ class Flowmattic_Controller extends Rest_Controller {
             $filtered[] = $summary;
         }
 
+        $total_global  = count($rows);
         $total_matched = count($filtered);
-        $paginated = array_slice($filtered, $offset, $limit);
+        $paginated     = array_slice($filtered, $offset, $limit);
+
+        $filter_label = ($status_filter === 'on') ? 'active' : (($status_filter === 'off') ? 'inactive' : 'all');
 
         return $this->response([
             'flowmattic_installed' => true,
-            'total'                => $total_matched,
+            'total'                => $total_global,
             'active_count'         => $active_count,
             'inactive_count'       => $inactive_count,
+            'matched_count'        => $total_matched,
+            'filter'               => $filter_label,
+            'count'                => count($paginated),
             'workflows'            => $paginated,
         ]);
     }
@@ -450,6 +494,7 @@ class Flowmattic_Controller extends Rest_Controller {
             ];
         }
 
+        $total_global  = count($rows);
         $total_matched = count($matched_rows);
         $paginated_slice = array_slice($matched_rows, $offset, $per_page);
 
@@ -488,11 +533,15 @@ class Flowmattic_Controller extends Rest_Controller {
             }
         }
 
+        $filter_label = ($status_filter === 'on') ? 'active' : (($status_filter === 'off') ? 'inactive' : 'all');
+
         return $this->response([
             'flowmattic_installed' => true,
-            'total'                => $total_matched,
+            'total'                => $total_global,
             'active_count'         => $active_count,
             'inactive_count'       => $inactive_count,
+            'matched_count'        => $total_matched,
+            'filter'               => $filter_label,
             'count'                => count($items),
             'page'                 => $page,
             'per_page'             => $per_page,

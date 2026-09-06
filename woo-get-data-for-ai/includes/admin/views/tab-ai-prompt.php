@@ -39,17 +39,26 @@ $mega_prompt .= "### Phase 2: Systematic \"Live Freshness Check\" Before Modifyi
 $mega_prompt .= "Before designing code, debugging an issue, or refactoring a feature:\n";
 $mega_prompt .= "- **DO NOT rely solely on local files** that might be outdated.\n";
 $mega_prompt .= "- **Always inspect the live site first** using the active endpoints discovered via `/capabilities`:\n";
-$mega_prompt .= "  * Modifying custom logic or hooks? -> Check `/wpcode/snippets` to inspect what is currently active in the database.\n";
-$mega_prompt .= "  * Working on forms or page design? -> Check `/elementor/forms` or `/elementor/item/{id}`.\n";
-$mega_prompt .= "  * Working on automations or webhooks? -> Check `/flowmattic/workflows` to inspect active workflow steps and triggers.\n";
+$mega_prompt .= "  * Modifying custom logic or hooks? -> Check `/wpcode/snippets?status=active` to inspect live code executing in production.\n";
+$mega_prompt .= "  * Working on forms or page design? -> Check `/elementor/forms` or `/elementor/item/{id}` (or `/elementor/list?status=publish`).\n";
+$mega_prompt .= "  * Working on automations or webhooks? -> Check `/flowmattic/workflows?status=active` to inspect active workflow steps and triggers.\n";
 $mega_prompt .= "  * Analyzing visits, marketing ROI, or conversion rates? -> Check `/analytics/overview` or `/analytics/summary`.\n";
-$mega_prompt .= "  * Investigating cart/checkout/product bugs? -> Check `/theme/overrides` and latest logs with `/logs/view`.\n";
-$mega_prompt .= "  * Investigating cron or background tasks? -> Check `/system` (HPOS & Action Scheduler queues).\n\n";
+$mega_prompt .= "  * Inspecting custom fields, product specs, or ACF data? -> Check `/meta/fields?post_type=product` (or `/meta/acf` for full field groups and rules, or `/meta/post/{id}` for values on a specific post).\n";
+$mega_prompt .= "  * Investigating WooCommerce products, stock, or variations? -> Check `/woocommerce/products?status=publish` or `/woocommerce/product/{id}`.\n";
+$mega_prompt .= "  * Investigating orders, payment errors, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` or `/woocommerce/order/{id}` (includes payment gateway error logs in order notes, customer PII strictly anonymized).\n";
+$mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings` or `/woocommerce/summary`.\n";
+$mega_prompt .= "  * Investigating cart/checkout/product bugs? -> Check `/theme/overrides` and latest logs with `/logs/view` or specific logs with `/logs/custom?file=...`.\n";
+$mega_prompt .= "  * Investigating cron, background tasks, or sync issues? -> Check `/crons` (WP-Cron schedules & overdue status) and `/action-scheduler` (in-progress, failed, pending tasks and error logs).\n\n";
 
 $mega_prompt .= "### Phase 3: WPCode Snippets Direct Admin Links\n";
 $mega_prompt .= "Whenever you analyze, recommend, or modify a WPCode snippet:\n";
 $mega_prompt .= "- ALWAYS provide the user with a direct, clickable link to edit the snippet in WordPress Admin:\n";
 $mega_prompt .= "  `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n\n";
+
+$mega_prompt .= "### Phase 4: Gestion Stricte Actif vs Inactif (Zéro Faux-Positif)\n";
+$mega_prompt .= "- **Code Vivant (Production)** : Lors de tout débogage ou analyse d'architecture, TOUJOURS interroger en priorité les éléments actifs (`?status=active` ou `?status=publish`). Ne jamais considérer un snippet inactif ou un workflow éteint comme s'exécutant sur le site.\n";
+$mega_prompt .= "- **Archives & Historique** : N'interroger `?status=inactive` que si l'utilisateur demande explicitement d'analyser un ancien code désactivé, de réactiver une fonction passée ou de vérifier un test historique.\n";
+$mega_prompt .= "- **Bonnes Pratiques de Synchronisation Locale** : Si vous synchronisez les données en local, séparez impérativement les éléments actifs et inactifs dans des dossiers distincts (ex: `code-snippets/live/active/` et `code-snippets/live/inactive/`) pour éviter que des recherches textuelles globales (`grep`) ne polluent vos diagnostics avec du code inactif.\n\n";
 
 $mega_prompt .= "---\n\n";
 
@@ -62,6 +71,12 @@ $mega_prompt .= "---\n\n";
 $mega_prompt .= "## ⚡ Quick Start Commands\n";
 $mega_prompt .= "- **Health Check**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/ping`\n";
 $mega_prompt .= "- **Discover Capabilities**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/capabilities`\n";
+$mega_prompt .= "- **WooCommerce Store Summary**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/woocommerce/summary`\n";
+$mega_prompt .= "- **WooCommerce Products**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/products?per_page=5'`\n";
+$mega_prompt .= "- **WooCommerce Orders**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/orders?status=processing&per_page=5'`\n";
+$mega_prompt .= "- **Custom Fields & ACF**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/meta/fields?post_type=product'`\n";
+$mega_prompt .= "- **Active Snippets**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/wpcode/snippets?status=active'`\n";
+$mega_prompt .= "- **Active Workflows**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/flowmattic/workflows?status=active'`\n";
 ?>
 
 <div class="agent-bridge-card">

@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-05  
+> **Last Updated**: 2026-09-06  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -197,19 +197,22 @@ Enables/disables modules on a per-site basis:
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
-| `GET /code/plugins` | GET | File trees of active plugins and `wp-content/mu-plugins/` |
+| `GET /code/plugins` | GET | File trees of active or all plugins and `wp-content/mu-plugins/` (`?status=active|inactive|all`, default: `active`) |
 | `GET /code/file` | GET | Source code of a specific PHP/JS/CSS file (strictly sandboxed via `realpath()`) |
-| `GET /elementor/export-all` | GET | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request |
-| `GET /elementor/list` | GET | Elementor pages, posts, and templates (`elementor_library`) |
+| `GET /elementor/export-all` | GET | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request (`?status=all|publish|draft|active|inactive`, default: `all`) |
+| `GET /elementor/list` | GET | Elementor pages, posts, and templates (`elementor_library`) (`?status=all|publish|draft|active|inactive`, default: `all`) |
 | `GET /elementor/item/{id}` | GET | Full decoded `_elementor_data` JSON tree and page settings |
 | `GET /elementor/forms` | GET | Inventory of all Elementor forms (field definitions, actions, webhook URLs) |
 | `GET /elementor/kit` | GET | Global colors, system fonts, and design tokens from the active Elementor Kit |
-| `GET /wpcode/snippets` | GET | Listing of all WPCode snippets (PHP, JS, CSS, HTML, active state, hooks, source) |
+| `GET /wpcode/snippets` | GET | Listing of all WPCode snippets (`?status=all|active|inactive`, default: `all`, recommended: `active`) with global `active_count` and `inactive_count` |
 | `GET /wpcode/snippet/{id}` | GET | Full source code and configuration of a targeted snippet |
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
-| `GET /flowmattic/export-all` | GET | Bulk export of all FlowMattic workflows in 1 optimized request |
-| `GET /flowmattic/workflows` | GET | List FlowMattic workflows (ID, name, status, trigger, actions, tasks count) |
+| `GET /logs/custom` | GET | Memory-safe tail inspection of specific log files in `wp-content/` with strict path sandboxing (`?file=nom-du-log`) |
+| `GET /crons` | GET | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments |
+| `GET /action-scheduler` | GET | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, and error logs from `actionscheduler_logs` |
+| `GET /flowmattic/export-all` | GET | Bulk export of all FlowMattic workflows in 1 optimized request (`?status=all|active|inactive`, default: `all`) |
+| `GET /flowmattic/workflows` | GET | List FlowMattic workflows with execution stats (`?status=all|active|inactive`, default: `all`) |
 | `GET /flowmattic/workflow/{id}` | GET | FlowMattic workflow detail or native importable JSON (`?format=export`) |
 | `GET /analytics/overview` | GET | Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices) |
 | `GET /analytics/summary` | GET | Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth |
@@ -219,6 +222,9 @@ Enables/disables modules on a per-site basis:
 | `GET /analytics/devices` | GET | Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS |
 | `GET /analytics/geo` | GET | Geographic distribution of visitors and orders by country and city |
 | `GET /analytics/conversions` | GET | Recent order and conversion stream with attribution (landing page, country, device, browser, amount) |
+| `GET /meta/fields` | GET | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (`acf_get_field_groups`), with optional database discovery (`?source=all\|code\|acf\|db`, `?post_type=`, `?object_type=`, `?search=`, `?include_db=true`) |
+| `GET /meta/acf` | GET | Deep ACF inspection: field groups, recursive subfield hierarchy (`repeater`, `flexible_content`, `group`), location rules, and registered Options Pages |
+| `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
 
 ---
 
@@ -245,18 +251,82 @@ Enables/disables modules on a per-site basis:
 
 ## 6. Local CLI Client (`cli/sync.js`)
 - Standalone Node.js script supporting `.env` configuration.
-- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
+- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:scheduler`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
+- Optional status filtering: `--status=active|inactive|all`.
+- Organized local filesystem layout preventing AI false positives during workspace grep:
+  - Snippets segregated into `snippets/active/` and `snippets/inactive/`.
+  - FlowMattic workflows segregated into `flowmattic/workflows/active/` and `flowmattic/workflows/inactive/`.
+  - Elementor definitions segregated into `elementor/pages/published/`, `elementor/pages/draft/`, `elementor/templates/published/`, `elementor/templates/draft/`.
 - Optimized for v1.0.4+: `pull:elementor` automatically uses the bulk `/elementor/export-all` endpoint to pull all pages, templates, kit, and forms in 1 HTTP call (with fallback).
 - Optimized for v1.0.5: `pull:flowmattic` automatically uses the bulk `/flowmattic/export-all` endpoint to export all automation workflows locally into `./synced-site-data/flowmattic/workflows/` in native FlowMattic JSON format, plus a Markdown summary table.
 - Optimized for v1.1.0: `pull:analytics` pulls `/analytics/overview?range=last_30_days` and generates an executive Markdown summary (`./synced-site-data/analytics/summary.md`) with KPIs, conversion rates, and top performers.
 - Optimized for v1.2.0: `pull:capabilities` pulls `/capabilities` to export the dynamic API catalog (`./synced-site-data/capabilities.json`) and a Markdown summary table (`./synced-site-data/capabilities.md`).
+- Optimized for v1.3.0: `pull:scheduler` pulls WP-Cron schedules and Action Scheduler queue diagnostics.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
 
-### v1.2.0 (2026-09-05)
+### v1.4.0 (2026-09-05)
+- **Standardisation du Filtrage Actif / Inactif & Prévention des Faux-Positifs IA** :
+  - **Contrôleur WPCode (`Wpcode_Controller`)** :
+    - Correction du bug `status=inactive` qui renvoyait l'ensemble des snippets sur le CPT `wpcode` et la table SQL `{$wpdb->prefix}snippets`.
+    - Suppression du plafond de 200 snippets (`posts_per_page => -1`) garantissant l'exhaustivité même sur les sites à fort volume (200+ snippets sur Conforama.re).
+    - Compteurs consolidés à la racine du JSON : `total`, `active_count`, `inactive_count`, `filter`, `count`.
+    - Exposition explicite sur chaque snippet de `"status": "active"|"inactive"` et du booléen `"is_active": true|false`.
+    - Ajout du flag `is_active` sur `GET /wpcode/snippet/{id}`.
+  - **Contrôleur FlowMattic (`Flowmattic_Controller`)** :
+    - Standardisation de la racine de réponse sur `GET /flowmattic/workflows` et `GET /flowmattic/export-all` avec `total` (global base), `active_count`, `inactive_count`, `matched_count`, et `filter`.
+    - Maintien du flag booléen `is_active` sur chaque workflow quel que soit le filtre appliqué.
+  - **Contrôleur Elementor (`Elementor_Controller`)** :
+    - Support du filtrage par statut `status=all|publish|draft|active|inactive` sur `GET /elementor/list` et `GET /elementor/export-all`.
+    - Requête d'agrégation rapide sur `$wpdb->posts` exposant à la racine : `total`, `published_count`, `draft_count`, `private_count`, `active_count`, `inactive_count`, et `filter`.
+    - Exposition explicite de `"status"`, `"is_published"`, et `"is_active"` sur chaque page et modèle.
+  - **Contrôleur Code / Plugins (`Code_Controller`)** :
+    - Correction du filtrage `status=inactive` dans `get_plugins_code_tree`.
+    - Compteurs consolidés à la racine : `total`, `active_count`, `inactive_count`, `filter`, `count`.
+    - Exposition de `"status"` et `"is_active"` sur chaque plugin.
+  - **Catalogue Dynamique `/capabilities` (`Permissions`)** :
+    - Documentation détaillée du paramètre `status` et de ses valeurs par défaut sur `/wpcode/snippets`, `/flowmattic/workflows`, `/flowmattic/export-all`, `/elementor/list`, `/elementor/export-all`, et `/code/plugins`.
+  - **Générateur de Mega Prompt Admin (Tab 3)** :
+    - Ajout de la **Phase 4: Gestion Stricte Actif vs Inactif (Zéro Faux-Positif)** instruisant les agents IA (Antigravity, Cursor, Claude) à toujours interroger `?status=active` en priorité pour les diagnostics de production et à séparer les dossiers locaux.
+  - **Client de Synchronisation Locale CLI (`cli/sync.js`)** :
+    - Prise en charge du paramètre CLI `--status=active|inactive|all`.
+    - Séparation automatique des fichiers sur disque : `snippets/active/` vs `snippets/inactive/`, `flowmattic/workflows/active/` vs `flowmattic/workflows/inactive/`, `elementor/pages/published/` vs `elementor/pages/draft/`.
+
+### v1.3.0 (2026-09-05)
+- **Background Process Diagnostics & Schedulers (`Scheduler_Controller`)**:
+  - Added dedicated REST Controller (`Scheduler_Controller`) under `WPAgentBridge\Api`.
+  - Added `GET /agent-bridge/v1/crons`:
+    - Interrogates `_get_cron_array()` and registered schedules via `wp_get_schedules()`.
+    - Returns list of crons with next execution timestamps (GMT & local), `human_diff` countdown, overdue detection (`is_overdue`), recurrence intervals (`hourly`, `twicedaily`, `daily`), and sanitized arguments.
+    - Global system status: `DISABLE_WP_CRON` constant state, `ALTERNATE_WP_CRON`, server time, total registered crons, and overdue count.
+    - Supported parameters: `status` (`all` [default], `overdue`, `future`), `search` (hook name filter), `limit` (default: 100, max: 500).
+  - Added `GET /agent-bridge/v1/action-scheduler`:
+    - Interrogates WooCommerce Action Scheduler database tables (`{$wpdb->prefix}actionscheduler_actions`).
+    - Focuses on actionable/stuck tasks by default: `status=in-progress,failed,pending` (or custom comma-separated list or `all`).
+    - Retrieves action ID, hook name, group slug, status, scheduled date (GMT & local), last attempt, attempts count, claim ID, recurrence, and arguments.
+    - For `failed` and `in-progress` actions, automatically retrieves the latest failure/error messages directly from `{$wpdb->prefix}actionscheduler_logs` to diagnose exceptions, timeouts, and fatal errors instantly.
+    - Summary counts header: pending, in-progress, failed, complete, canceled, and total tracked actions.
+    - Supported parameters: `status`, `hook`, `search`, `group`, `per_page` (default: 50, max: 100), `page` (default: 1).
+  - Added new permission module `scheduler` ("WP-Cron & Action Scheduler") to Granular Permissions Matrix (Tab 2) enabled by default (`1`).
+- **Custom Log Files Inspection (`GET /logs/custom`)**:
+  - Added `GET /agent-bridge/v1/logs/custom?file=nom-du-log`:
+    - Allows tail-reading arbitrary custom log files located in `wp-content/` (e.g. `komela-order-status-sync.log`, `wc-logs/...`) without being restricted to `debug.log`.
+    - Strict path sandboxing: canonical `realpath()` validation strictly within `WP_CONTENT_DIR`, directory traversal prevention (`..`, null bytes), file extension whitelist strictly restricted to `.log` and `.txt`, and blocklist of sensitive configuration files (`wp-config`, `.env`, `.git`).
+    - Memory-safe reverse file streaming via `tail_file()` (`fseek`) reading last $N$ lines from bottom up (default: 200, max: 1000) with optional substring/regex `filter`.
+    - Real-time secret and PII redaction on every output line.
+  - Enhanced `GET /logs/sources` to automatically scan `WP_CONTENT_DIR` for `*.log` files and expose them under `source_type: 'custom'`.
+  - Harmonized `GET /logs/view` to support custom logs via the unified secure path resolver.
+- **Local CLI Synchronization Client (`cli/sync.js`)**:
+  - Added `pull:scheduler` command dumping `./synced-site-data/scheduler/crons.json`, `crons-summary.md`, `action-scheduler.json`, and `action-scheduler-summary.md`.
+  - Enhanced `pullLogs()` to automatically download custom `.log` files discovered in `wp-content/`.
+  - Integrated `pull:scheduler` into default `pull:all` command.
+- **Admin UI & Documentation**:
+  - Updated Tab 2 permissions matrix with `scheduler` module.
+  - Updated Tab 3 AI Bootstrap prompt with `/crons`, `/action-scheduler`, and `/logs/custom` guidelines.
+  - Updated Tab 5 technical scope table.
 - **Dynamic Capabilities Discovery (`GET /capabilities`)**:
   - Exposes self-describing API catalog containing all modules, their enabled/disabled permission status, full endpoint paths, supported query parameters, and human-readable descriptions.
   - Implemented `Permissions::get_capabilities_catalog()` to serve as a machine-readable schema for AI development agents (Antigravity, Cursor, Claude).
@@ -269,6 +339,19 @@ Enables/disables modules on a per-site basis:
   - Integrated `pull:capabilities` into the default `pull:all` command.
 - **In-Plugin Documentation (Tab 5)**:
   - Updated scope table with `/capabilities`.
+
+### v1.5.0 (2026-09-06)
+- **Custom Fields & Meta Inspection Engine (`Meta_Controller`)**:
+  - Added dedicated REST Controller (`WPAgentBridge\Api\Meta_Controller`) registering 3 high-performance read-only endpoints:
+    - `GET /meta/fields`: Unified catalog of all custom fields defined across the site with flexible filtering (`?source=all|code|acf|db`, `?post_type=product`, `?object_type=post|term|user|comment`, `?search=`, `?include_db=true`, `?limit_db=50`).
+    - `GET /meta/acf`: Deep inspection of Advanced Custom Fields ecosystem including field group sources (PHP code `acf_add_local_field_group`, Local JSON `acf-json/`, or DB `acf-field-group`), humanized location rules, complete recursive subfields tree (`repeater`, `group`, `flexible_content` layouts), choices, and registered ACF Options Pages (`acf_add_options_page`).
+    - `GET /meta/post/{id}`: Single post/product/order metadata inspector returning resolved formatted and raw ACF field values, code-registered meta values, and a full categorized breakdown of raw `get_post_meta()` into public custom fields and system/hidden `_` fields with safe deserialization and truncation protection.
+  - **Universal ACF Detection**: Leverages native ACF functions (`acf_get_field_groups()`, `acf_get_fields()`, `acf_get_options_pages()`) when active, with automatic fallback parsing of theme `acf-json/` directory files if ACF is deactivated.
+  - **Core Code-Registered Meta**: Introspects WordPress core global `$wp_meta_keys` and `get_registered_meta_keys()` across all registered post types, taxonomies, users, and comments.
+  - **Database Discovery**: Fast, optimized `$wpdb->postmeta` distinct key discovery excluding core WordPress noise/transients.
+  - **Granular Permissions Matrix**: Registered `'meta'` module in `Permissions::get_module_definitions()`, enabled by default, and exposed in dynamic self-describing `/capabilities` catalog.
+  - **AI Mega-Prompt & Onboarding**: Added live freshness check and quickstart curl command for meta fields in `tab-ai-prompt.php`.
+  - **Local CLI Client Integration**: Added `node sync.js pull:meta` command in `cli/sync.js`, integrated into `pull:all`, generating `fields.json`, `acf.json`, and `meta-summary.md`.
 
 ### v1.1.0 (2026-09-05)
 - **Independent Analytics (Visits & Conversion Rates) Integration**:

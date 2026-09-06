@@ -70,8 +70,11 @@ class Plugin {
             new Api\Elementor_Controller(),
             new Api\Wpcode_Controller(),
             new Api\Logs_Controller(),
+            new Api\Scheduler_Controller(),
             new Api\Flowmattic_Controller(),
             new Api\Analytics_Controller(),
+            new Api\Meta_Controller(),
+            new Api\Woocommerce_Controller(),
         ];
 
         foreach ($controllers as $controller) {

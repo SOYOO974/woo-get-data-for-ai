@@ -20,6 +20,12 @@ class Code_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'code');
             },
+            'args'                => [
+                'status' => [
+                    'default'           => 'active',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
         ]);
 
         // GET /code/file (Sandboxed file reader)
@@ -37,19 +43,38 @@ class Code_Controller extends Rest_Controller {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
         }
 
-        $status = $request->get_param('status') ?: 'active';
-        $all_plugins = get_plugins();
+        $raw_status = strtolower(trim((string) ($request->get_param('status') ?: 'active')));
+        if (in_array($raw_status, ['active', 'enabled', '1'], true)) {
+            $status_filter = 'active';
+        } elseif (in_array($raw_status, ['inactive', 'disabled', '0'], true)) {
+            $status_filter = 'inactive';
+        } else {
+            $status_filter = 'all';
+        }
+
+        $all_plugins    = get_plugins();
         $active_plugins = (array) get_option('active_plugins', []);
 
-        $results = [
-            'plugins'    => [],
-            'mu_plugins' => [],
-        ];
+        $active_count   = 0;
+        $inactive_count = 0;
+        foreach ($all_plugins as $plugin_file => $plugin_data) {
+            if (in_array($plugin_file, $active_plugins, true)) {
+                $active_count++;
+            } else {
+                $inactive_count++;
+            }
+        }
+        $total_plugins = count($all_plugins);
+
+        $plugins = [];
 
         // 1. Standard Plugins
         foreach ($all_plugins as $plugin_file => $plugin_data) {
             $is_active = in_array($plugin_file, $active_plugins, true);
-            if ($status === 'active' && !$is_active) {
+            if ($status_filter === 'active' && !$is_active) {
+                continue;
+            }
+            if ($status_filter === 'inactive' && $is_active) {
                 continue;
             }
 
@@ -66,10 +91,11 @@ class Code_Controller extends Rest_Controller {
                 ];
             }
 
-            $results['plugins'][] = [
+            $plugins[] = [
                 'name'        => $plugin_data['Name'],
                 'plugin_file' => $plugin_file,
                 'version'     => $plugin_data['Version'],
+                'status'      => $is_active ? 'active' : 'inactive',
                 'is_active'   => $is_active,
                 'files_count' => count($file_list),
                 'files'       => $file_list,
@@ -77,10 +103,11 @@ class Code_Controller extends Rest_Controller {
         }
 
         // 2. Must-Use Plugins
-        $mu_plugins = get_mu_plugins();
-        foreach ($mu_plugins as $mu_file => $mu_data) {
+        $mu_plugins_data = get_mu_plugins();
+        $mu_plugins = [];
+        foreach ($mu_plugins_data as $mu_file => $mu_data) {
             $full_path = WPMU_PLUGIN_DIR . '/' . $mu_file;
-            $results['mu_plugins'][] = [
+            $mu_plugins[] = [
                 'name'       => $mu_data['Name'],
                 'file'       => $mu_file,
                 'version'    => $mu_data['Version'],
@@ -88,7 +115,15 @@ class Code_Controller extends Rest_Controller {
             ];
         }
 
-        return $this->response($results);
+        return $this->response([
+            'total'          => $total_plugins,
+            'active_count'   => $active_count,
+            'inactive_count' => $inactive_count,
+            'filter'         => $status_filter,
+            'count'          => count($plugins),
+            'plugins'        => $plugins,
+            'mu_plugins'     => $mu_plugins,
+        ]);
     }
 
     public function get_file_content(\WP_REST_Request $request) {

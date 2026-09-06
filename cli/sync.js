@@ -44,12 +44,13 @@ function getArg(flag, envKey, fallback = '') {
 let siteUrl = getArg('site', 'SITE_URL').replace(/\/+$/, '');
 const token = getArg('token', 'AGENT_BRIDGE_TOKEN');
 const outputDir = path.resolve(process.cwd(), getArg('out', 'OUTPUT_DIR', './synced-site-data'));
+const statusFilter = getArg('status', 'STATUS_FILTER', 'all');
 const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
-    console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data');
-    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:logs');
+    console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all]');
+    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:logs');
     process.exit(1);
 }
 
@@ -195,9 +196,10 @@ async function pullElementor() {
     console.log('⏳ Pulling Elementor Data...');
     try {
         let bulkSuccess = false;
+        const statusParam = statusFilter !== 'all' ? `&status=${encodeURIComponent(statusFilter)}` : '';
         try {
             // Attempt bulk export in 1 optimized request (v1.0.4+)
-            const exportAll = await makeRequest('/elementor/export-all?per_page=100');
+            const exportAll = await makeRequest(`/elementor/export-all?per_page=100${statusParam}`);
             if (exportAll && exportAll.items) {
                 bulkSuccess = true;
                 if (exportAll.kit) {
@@ -220,21 +222,23 @@ async function pullElementor() {
                     writeText(path.join(outputDir, 'elementor/forms-inventory.md'), formMd);
                 }
 
-                console.log(`  Exported ${exportAll.count} of ${exportAll.total} Elementor items via bulk export...`);
+                console.log(`  Exported ${exportAll.count} of ${exportAll.total} Elementor items via bulk export (${exportAll.published_count || 0} published, ${exportAll.draft_count || 0} drafts)...`);
                 for (const item of (exportAll.items || [])) {
-                    const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                    const statusFolder = (item.is_published || item.status === 'publish') ? 'published' : 'draft';
+                    const typeFolder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
                     const filename = `${item.slug || item.id}.json`;
-                    writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), item);
+                    writeJson(path.join(outputDir, `elementor/${typeFolder}/${statusFolder}/${filename}`), item);
                 }
 
                 // If more pages exist
                 if (exportAll.total_pages > 1) {
                     for (let p = 2; p <= exportAll.total_pages; p++) {
-                        const nextBatch = await makeRequest(`/elementor/export-all?per_page=100&page=${p}`);
+                        const nextBatch = await makeRequest(`/elementor/export-all?per_page=100&page=${p}${statusParam}`);
                         for (const item of (nextBatch.items || [])) {
-                            const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                            const statusFolder = (item.is_published || item.status === 'publish') ? 'published' : 'draft';
+                            const typeFolder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
                             const filename = `${item.slug || item.id}.json`;
-                            writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), item);
+                            writeJson(path.join(outputDir, `elementor/${typeFolder}/${statusFolder}/${filename}`), item);
                         }
                     }
                 }
@@ -269,14 +273,16 @@ async function pullElementor() {
                 writeText(path.join(outputDir, 'elementor/forms-inventory.md'), formMd);
             } catch (e) {}
 
-            const list = await makeRequest('/elementor/list');
+            const listQuery = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
+            const list = await makeRequest(`/elementor/list${listQuery}`);
             console.log(`  Found ${list.total} Elementor items. Downloading details...`);
 
             for (const item of (list.items || [])) {
                 const itemData = await makeRequest(`/elementor/item/${item.id}`);
-                const folder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
+                const statusFolder = (item.is_published || item.status === 'publish') ? 'published' : 'draft';
+                const typeFolder = item.post_type === 'elementor_library' ? 'templates' : 'pages';
                 const filename = `${item.slug || item.id}.json`;
-                writeJson(path.join(outputDir, `elementor/${folder}/${filename}`), itemData);
+                writeJson(path.join(outputDir, `elementor/${typeFolder}/${statusFolder}/${filename}`), itemData);
             }
 
             console.log('✅ Elementor definitions successfully downloaded.');
@@ -289,16 +295,28 @@ async function pullElementor() {
 async function pullSnippets() {
     console.log('⏳ Pulling WPCode & Code Snippets...');
     try {
-        const data = await makeRequest('/wpcode/snippets');
+        const query = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
+        const data = await makeRequest(`/wpcode/snippets${query}`);
+        let activeSaved = 0;
+        let inactiveSaved = 0;
+
         (data.snippets || []).forEach(snip => {
             const ext = snip.code_type === 'javascript' || snip.code_type === 'js' ? 'js' : (snip.code_type === 'css' ? 'css' : 'php');
             const cleanTitle = (snip.title || 'snippet').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
             const filename = `${snip.id}-${cleanTitle}.${ext}`;
+            const isAct = (snip.is_active || snip.status === 'active');
+            const subfolder = isAct ? 'active' : 'inactive';
+
+            if (isAct) {
+                activeSaved++;
+            } else {
+                inactiveSaved++;
+            }
 
             let header = `/**\n * Snippet: ${snip.title}\n * Source: ${snip.source_plugin}\n * Status: ${snip.status}\n * Location: ${snip.location}\n * Priority: ${snip.priority}\n * Modified: ${snip.modified_at}\n */\n\n`;
-            writeText(path.join(outputDir, `snippets/${filename}`), header + (snip.code || ''));
+            writeText(path.join(outputDir, `snippets/${subfolder}/${filename}`), header + (snip.code || ''));
         });
-        console.log(`✅ Saved ${data.total} snippets to ./snippets/`);
+        console.log(`✅ Saved ${activeSaved} active snippets to ./snippets/active/ and ${inactiveSaved} inactive snippets to ./snippets/inactive/ (Total: ${data.total || (activeSaved + inactiveSaved)})`);
     } catch (err) {
         console.error('❌ Failed to pull snippets:', err.message);
     }
@@ -324,9 +342,92 @@ async function pullLogs() {
             writeText(path.join(outputDir, `logs/${wcLog.name}`), (logData.lines || []).join('\n'));
         }
 
+        // Pull custom logs found in wp-content/ (e.g. komela-order-status-sync.log)
+        const customLogs = sources.filter(s => s.source_type === 'custom');
+        for (const cLog of customLogs) {
+            try {
+                const logData = await makeRequest(`/logs/custom?file=${encodeURIComponent(cLog.name)}&lines=200`);
+                writeText(path.join(outputDir, `logs/${cLog.name}`), (logData.lines || []).join('\n'));
+            } catch (e) {
+                // Silently skip if custom log read fails
+            }
+        }
+
         console.log('✅ Recent logs downloaded to ./logs/');
     } catch (err) {
         console.error('❌ Failed to pull logs:', err.message);
+    }
+}
+
+async function pullScheduler() {
+    console.log('⏳ Pulling WP-Cron & Action Scheduler...');
+    try {
+        // 1. WP-Cron
+        try {
+            const cronData = await makeRequest('/crons?limit=200');
+            writeJson(path.join(outputDir, 'scheduler/crons.json'), cronData);
+
+            let cronMd = `# WP-Cron Registry (${cronData.summary?.total_registered || 0} registered)\n\n`;
+            cronMd += `**Server Time (Local)**: ${cronData.cron_system?.server_time_local || '-'}\n`;
+            cronMd += `**WP-Cron Enabled**: ${cronData.cron_system?.cron_enabled ? '✅ Yes' : '❌ No (DISABLE_WP_CRON active)'}\n`;
+            cronMd += `**Overdue Jobs**: ${cronData.summary?.overdue_count > 0 ? '⚠️ ' + cronData.summary.overdue_count + ' overdue' : '✅ 0 overdue'}\n\n`;
+
+            cronMd += `| Hook | Next Run | Interval | Overdue? | Arguments |\n`;
+            cronMd += `|---|---|---|---|---|\n`;
+
+            for (const c of (cronData.crons || [])) {
+                const overdueBadge = c.is_overdue ? '🔴 Overdue' : '🟢 Normal';
+                const argsSummary = c.args && (Array.isArray(c.args) ? c.args.length > 0 : Object.keys(c.args).length > 0)
+                    ? `\`${JSON.stringify(c.args)}\``
+                    : '-';
+                cronMd += `| \`${c.hook}\` | ${c.human_diff} (${c.next_run_local}) | ${c.schedule_name} | ${overdueBadge} | ${argsSummary} |\n`;
+            }
+
+            writeText(path.join(outputDir, 'scheduler/crons-summary.md'), cronMd);
+            console.log('  ✅ Saved WP-Cron schedules to ./scheduler/ (crons.json & crons-summary.md)');
+        } catch (e) {
+            console.warn('  ⚠️ Failed to pull crons:', e.message);
+        }
+
+        // 2. Action Scheduler
+        try {
+            const asData = await makeRequest('/action-scheduler?status=in-progress,failed,pending&per_page=100');
+            if (asData && asData.action_scheduler_installed === false) {
+                console.log('  ℹ️  Action Scheduler is not installed or active on the site (skipped).');
+            } else {
+                writeJson(path.join(outputDir, 'scheduler/action-scheduler.json'), asData);
+
+                let asMd = `# Action Scheduler Queue Diagnostic\n\n`;
+                const s = asData.summary || {};
+                asMd += `## Queue Summary\n`;
+                asMd += `- **Pending**: ${s.pending || 0}\n`;
+                asMd += `- **In-Progress**: ${s['in-progress'] || 0}\n`;
+                asMd += `- **Failed**: ${s.failed || 0} ${s.failed > 0 ? '⚠️' : ''}\n`;
+                asMd += `- **Complete**: ${s.complete || 0}\n`;
+                asMd += `- **Canceled**: ${s.canceled || 0}\n`;
+                asMd += `- **Total Tracked**: ${s.total || 0}\n\n`;
+
+                const actions = asData.actions || [];
+                if (actions.length > 0) {
+                    asMd += `## Actions (Showing ${actions.length} actionable jobs)\n\n`;
+                    asMd += `| ID | Status | Hook | Group | Scheduled Local | Attempts | Error / Log |\n`;
+                    asMd += `|---|---|---|---|---|---|---|\n`;
+
+                    for (const a of actions) {
+                        const statusIcon = a.status === 'failed' ? '🔴 Failed' : (a.status === 'in-progress' ? '🟡 Running' : '🔵 Pending');
+                        const latestLog = a.logs && a.logs.length > 0 ? a.logs[0].message.replace(/\|/g, '\\|') : '-';
+                        asMd += `| \`${a.action_id}\` | ${statusIcon} | \`${a.hook}\` | ${a.group || '-'} | ${a.scheduled_date_local || '-'} | ${a.attempts} | ${latestLog} |\n`;
+                    }
+                }
+
+                writeText(path.join(outputDir, 'scheduler/action-scheduler-summary.md'), asMd);
+                console.log('  ✅ Saved Action Scheduler queue to ./scheduler/ (action-scheduler.json & action-scheduler-summary.md)');
+            }
+        } catch (e) {
+            console.warn('  ⚠️ Failed to pull Action Scheduler:', e.message);
+        }
+    } catch (err) {
+        console.error('❌ Failed to pull Scheduler:', err.message);
     }
 }
 
@@ -334,45 +435,57 @@ async function pullFlowmattic() {
     console.log('⏳ Pulling FlowMattic Workflows...');
     try {
         let bulkSuccess = false;
+        const statusParam = statusFilter !== 'all' ? `&status=${encodeURIComponent(statusFilter)}` : '';
         try {
             // Attempt bulk export in 1 optimized request (v1.0.5+)
-            const exportAll = await makeRequest('/flowmattic/export-all?per_page=100');
+            const exportAll = await makeRequest(`/flowmattic/export-all?per_page=100${statusParam}`);
             if (exportAll && exportAll.flowmattic_installed && exportAll.items) {
                 bulkSuccess = true;
                 const items = exportAll.items || [];
-                console.log(`  Found ${exportAll.total} FlowMattic workflows via bulk export...`);
+                console.log(`  Found ${exportAll.total} FlowMattic workflows via bulk export (${exportAll.active_count || 0} active, ${exportAll.inactive_count || 0} inactive)...`);
 
                 let summaryMd = `# FlowMattic Workflows (${exportAll.total})\n\n`;
                 summaryMd += `| Workflow ID | Name | Status | Trigger | Actions | Tasks Executed |\n`;
                 summaryMd += `|---|---|---|---|---|---|\n`;
 
+                let activeSaved = 0;
+                let inactiveSaved = 0;
+
                 for (const item of items) {
-                    const statusIcon = item.status === 'on' ? '🟢 On' : '⚪ Off';
+                    const isAct = (item.is_active || item.status === 'on');
+                    if (isAct) activeSaved++;
+                    else inactiveSaved++;
+                    const statusSubfolder = isAct ? 'active' : 'inactive';
+                    const statusIcon = isAct ? '🟢 On' : '⚪ Off';
                     summaryMd += `| \`${item.workflow_id}\` | **${item.workflow_name}** | ${statusIcon} | \`${item.trigger}\` | ${item.actions_count} | ${item.task_count} |\n`;
 
                     // Write native FlowMattic JSON export file
                     const cleanName = (item.workflow_name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                     const filename = `workflow-${item.workflow_id}-${cleanName}.json`;
-                    writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), item.export_data || item);
+                    writeJson(path.join(outputDir, `flowmattic/workflows/${statusSubfolder}/${filename}`), item.export_data || item);
                 }
 
                 // If more pages exist
                 if (exportAll.total_pages > 1) {
                     for (let p = 2; p <= exportAll.total_pages; p++) {
-                        const nextBatch = await makeRequest(`/flowmattic/export-all?per_page=100&page=${p}`);
+                        const nextBatch = await makeRequest(`/flowmattic/export-all?per_page=100&page=${p}${statusParam}`);
                         for (const item of (nextBatch.items || [])) {
-                            const statusIcon = item.status === 'on' ? '🟢 On' : '⚪ Off';
+                            const isAct = (item.is_active || item.status === 'on');
+                            if (isAct) activeSaved++;
+                            else inactiveSaved++;
+                            const statusSubfolder = isAct ? 'active' : 'inactive';
+                            const statusIcon = isAct ? '🟢 On' : '⚪ Off';
                             summaryMd += `| \`${item.workflow_id}\` | **${item.workflow_name}** | ${statusIcon} | \`${item.trigger}\` | ${item.actions_count} | ${item.task_count} |\n`;
 
                             const cleanName = (item.workflow_name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                             const filename = `workflow-${item.workflow_id}-${cleanName}.json`;
-                            writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), item.export_data || item);
+                            writeJson(path.join(outputDir, `flowmattic/workflows/${statusSubfolder}/${filename}`), item.export_data || item);
                         }
                     }
                 }
 
                 writeText(path.join(outputDir, 'flowmattic/workflows-summary.md'), summaryMd);
-                console.log(`✅ Saved ${exportAll.total} FlowMattic workflows to ./flowmattic/workflows/`);
+                console.log(`✅ Saved ${activeSaved} active workflows to ./flowmattic/workflows/active/ and ${inactiveSaved} inactive workflows to ./flowmattic/workflows/inactive/`);
             } else if (exportAll && exportAll.flowmattic_installed === false) {
                 console.log('ℹ️  FlowMattic is not installed or active on the site (skipped).');
                 return;
@@ -382,7 +495,8 @@ async function pullFlowmattic() {
         }
 
         if (!bulkSuccess) {
-            const listData = await makeRequest('/flowmattic/workflows');
+            const listQuery = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
+            const listData = await makeRequest(`/flowmattic/workflows${listQuery}`);
             if (listData && listData.flowmattic_installed === false) {
                 console.log('ℹ️  FlowMattic is not installed or active on the site (skipped).');
                 return;
@@ -395,22 +509,29 @@ async function pullFlowmattic() {
             summaryMd += `| Workflow ID | Name | Status | Trigger | Actions | Tasks Executed |\n`;
             summaryMd += `|---|---|---|---|---|---|\n`;
 
+            let activeSaved = 0;
+            let inactiveSaved = 0;
+
             for (const wf of workflows) {
-                const statusIcon = wf.status === 'on' ? '🟢 On' : '⚪ Off';
+                const isAct = (wf.is_active || wf.status === 'on');
+                if (isAct) activeSaved++;
+                else inactiveSaved++;
+                const statusSubfolder = isAct ? 'active' : 'inactive';
+                const statusIcon = isAct ? '🟢 On' : '⚪ Off';
                 summaryMd += `| \`${wf.workflow_id}\` | **${wf.name}** | ${statusIcon} | \`${wf.trigger}\` | ${wf.actions_count} | ${wf.task_count} |\n`;
 
                 try {
                     const exportData = await makeRequest(`/flowmattic/workflow/${wf.workflow_id}?format=export`);
                     const cleanName = (wf.name || 'workflow').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                     const filename = `workflow-${wf.workflow_id}-${cleanName}.json`;
-                    writeJson(path.join(outputDir, `flowmattic/workflows/${filename}`), exportData);
+                    writeJson(path.join(outputDir, `flowmattic/workflows/${statusSubfolder}/${filename}`), exportData);
                 } catch (e) {
                     console.warn(`  ⚠️ Failed to download workflow ${wf.workflow_id}:`, e.message);
                 }
             }
 
             writeText(path.join(outputDir, 'flowmattic/workflows-summary.md'), summaryMd);
-            console.log(`✅ Saved ${workflows.length} FlowMattic workflows to ./flowmattic/workflows/`);
+            console.log(`✅ Saved ${activeSaved} active workflows to ./flowmattic/workflows/active/ and ${inactiveSaved} inactive workflows to ./flowmattic/workflows/inactive/`);
         }
     } catch (err) {
         console.error('❌ Failed to pull FlowMattic:', err.message);
@@ -494,6 +615,77 @@ async function pullAnalytics() {
     }
 }
 
+async function pullMeta() {
+    console.log('⏳ Pulling Custom Fields & Meta (ACF & Code)...');
+    try {
+        const metaDir = path.join(outputDir, 'meta');
+        ensureDir(metaDir);
+
+        // 1. Pull /meta/fields
+        const fieldsData = await makeRequest('/meta/fields?source=all&include_db=true');
+        writeJson(path.join(metaDir, 'fields.json'), fieldsData);
+
+        // 2. Pull /meta/acf (deep inspection)
+        try {
+            const acfData = await makeRequest('/meta/acf');
+            writeJson(path.join(metaDir, 'acf.json'), acfData);
+        } catch (acfErr) {
+            console.warn('  ⚠️ Failed to pull /meta/acf:', acfErr.message);
+        }
+
+        // 3. Generate summary markdown
+        let md = `# Custom Fields & Meta Report for ${siteUrl}\n\n`;
+        md += `**Generated**: ${new Date().toISOString()}\n\n`;
+
+        if (fieldsData && fieldsData.summary) {
+            md += `## Overview Summary\n`;
+            md += `- **Code Registered Fields**: ${fieldsData.summary.code_registered_fields_count || 0}\n`;
+            md += `- **ACF Field Groups**: ${fieldsData.summary.acf_field_groups_count || 0}\n`;
+            md += `- **ACF Fields**: ${fieldsData.summary.acf_fields_count || 0}\n`;
+            md += `- **Discovered Database Keys**: ${fieldsData.summary.database_keys_count || 0}\n\n`;
+        }
+
+        // ACF Field Groups Table
+        if (fieldsData && fieldsData.acf && Array.isArray(fieldsData.acf.field_groups) && fieldsData.acf.field_groups.length > 0) {
+            md += `## Advanced Custom Fields (ACF) Groups (${fieldsData.acf.field_groups.length})\n\n`;
+            md += `| Group Key | Title | Source | Fields | Target Post Types | Location Summary |\n`;
+            md += `|---|---|---|---|---|---|\n`;
+            fieldsData.acf.field_groups.forEach(g => {
+                const targets = (g.target_post_types || []).join(', ') || 'Any';
+                md += `| \`${g.key}\` | **${g.title}** | ${g.source} | ${g.fields_count} | \`${targets}\` | ${g.location_summary || '-'} |\n`;
+            });
+            md += `\n`;
+        }
+
+        // Code-Registered Meta Table
+        if (fieldsData && fieldsData.code_registered_meta && Array.isArray(fieldsData.code_registered_meta.fields) && fieldsData.code_registered_meta.fields.length > 0) {
+            md += `## WordPress Code-Registered Meta (${fieldsData.code_registered_meta.count})\n\n`;
+            md += `| Object | Subtype | Meta Key | Type | Single | Description |\n`;
+            md += `|---|---|---|---|---|---|\n`;
+            fieldsData.code_registered_meta.fields.forEach(f => {
+                md += `| \`${f.object_type}\` | \`${f.subtype}\` | \`**${f.meta_key}**\` | \`${f.type}\` | ${f.single ? 'Yes' : 'No'} | ${f.description || '-'} |\n`;
+            });
+            md += `\n`;
+        }
+
+        // Discovered DB keys Table
+        if (fieldsData && fieldsData.database_meta && Array.isArray(fieldsData.database_meta.meta_keys) && fieldsData.database_meta.meta_keys.length > 0) {
+            md += `## Discovered Database Keys (Sampled)\n\n`;
+            md += `| Post Type | Meta Key | Occurrences | Type Hint |\n`;
+            md += `|---|---|---|---|\n`;
+            fieldsData.database_meta.meta_keys.slice(0, 50).forEach(k => {
+                md += `| \`${k.post_type}\` | \`${k.meta_key}\` | ${k.occurrences} | \`${k.type_hint}\` |\n`;
+            });
+            md += `\n`;
+        }
+
+        writeText(path.join(metaDir, 'meta-summary.md'), md);
+        console.log('✅ Saved Custom Fields & Meta to ./meta/ (fields.json, acf.json & meta-summary.md)');
+    } catch (err) {
+        console.error('❌ Failed to pull Meta:', err.message);
+    }
+}
+
 async function pullCapabilities() {
     console.log('⏳ Pulling Capabilities & Schema Discovery...');
     try {
@@ -537,6 +729,9 @@ async function run() {
         case 'pull:system':
             await pullSystem();
             break;
+        case 'pull:scheduler':
+            await pullScheduler();
+            break;
         case 'pull:theme':
             await pullTheme();
             break;
@@ -552,6 +747,9 @@ async function run() {
         case 'pull:analytics':
             await pullAnalytics();
             break;
+        case 'pull:meta':
+            await pullMeta();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -559,11 +757,13 @@ async function run() {
         default:
             await pullCapabilities();
             await pullSystem();
+            await pullScheduler();
             await pullTheme();
             await pullElementor();
             await pullSnippets();
             await pullFlowmattic();
             await pullAnalytics();
+            await pullMeta();
             await pullLogs();
             break;
     }

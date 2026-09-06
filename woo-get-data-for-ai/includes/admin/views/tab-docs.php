@@ -176,32 +176,47 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 <tr>
                     <td><strong><?php esc_html_e('Code & Plugins', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/code/plugins</code>, <code>/code/file</code></td>
-                    <td><?php esc_html_e('File trees of active plugins and mu-plugins, sandboxed reading of specific PHP, JS, or CSS files with strict path validation.', 'woo-get-data-for-ai'); ?></td>
+                    <td><?php esc_html_e('File trees of plugins and mu-plugins (supports ?status=active|inactive|all), sandboxed reading of specific PHP, JS, or CSS files with strict path validation.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Elementor Architecture', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/elementor/export-all</code>, <code>/elementor/list</code>, <code>/elementor/item/{id}</code>, <code>/elementor/forms</code>, <code>/elementor/kit</code></td>
-                    <td><?php esc_html_e('Bulk export of all pages and templates, complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens.', 'woo-get-data-for-ai'); ?></td>
+                    <td><?php esc_html_e('Bulk export and listing of pages and templates with status filter (?status=publish|draft|private|all or active|inactive), complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WPCode Snippets', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/wpcode/snippets</code>, <code>/wpcode/snippet/{id}</code></td>
-                    <td><?php esc_html_e('Inventory of all custom PHP/JS/CSS snippets stored in WPCode, execution location, active state, and full source code.', 'woo-get-data-for-ai'); ?></td>
+                    <td><?php esc_html_e('Inventory of all custom PHP/JS/CSS snippets stored in WPCode with status filter (?status=active|inactive|all), execution location, active state, and full source code.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Logs & Diagnostics', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/logs/sources</code>, <code>/logs/view</code></td>
-                    <td><?php esc_html_e('List of available log files (debug.log, uploads/wc-logs/*.log), tail extraction up to 1000 lines, error and fatal filtering.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/logs/sources</code>, <code>/logs/view</code>, <code>/logs/custom</code></td>
+                    <td><?php esc_html_e('List of available log files (debug.log, uploads/wc-logs/*.log, custom wp-content/ logs), tail extraction up to 1000 lines, custom file reading, error and fatal filtering.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/crons</code>, <code>/action-scheduler</code></td>
+                    <td><?php esc_html_e('Inspection of registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending actions with error failure logs).', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('FlowMattic Workflows', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/flowmattic/export-all</code>, <code>/flowmattic/workflows</code>, <code>/flowmattic/workflow/{id}</code></td>
-                    <td><?php esc_html_e('Bulk export and inspection of FlowMattic workflows, steps, triggers, action counts, and native importable JSON format.', 'woo-get-data-for-ai'); ?></td>
+                    <td><?php esc_html_e('Bulk export and inspection of FlowMattic workflows with status filter (?status=active|inactive|all), steps, triggers, action counts, and native importable JSON format.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Independent Analytics', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/analytics/overview</code>, <code>/analytics/summary</code>, <code>/analytics/pages</code>, <code>/analytics/referrers</code>, <code>/analytics/campaigns</code>, <code>/analytics/devices</code>, <code>/analytics/geo</code>, <code>/analytics/conversions</code></td>
                     <td><?php esc_html_e('Audience and conversion tracking: visits, views, bounce rate, WooCommerce conversion rate, net sales, top pages, acquisition channels, UTM campaigns, and device breakdowns.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('Custom Fields & Meta (ACF & Code)', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/meta/fields</code>, <code>/meta/acf</code>, <code>/meta/post/{id}</code></td>
+                    <td><?php esc_html_e('Unified catalog of custom fields defined in code (register_post_meta) and ACF (groups, recursive subfields, location rules, options pages). Includes single post/product metadata inspection with resolved values.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('WooCommerce Store Data', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code></td>
+                    <td><?php esc_html_e('Store health summary, paginated product catalog with variations and sanitized postmeta, recent orders with strict GDPR/PII anonymization (masked customer details, order notes for gateway diagnostics), active payment gateways and shipping zones.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
             </tbody>
         </table>

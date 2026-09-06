@@ -15,6 +15,12 @@ class Wpcode_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'wpcode');
             },
+            'args'                => [
+                'status' => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
         ]);
 
         // GET /wpcode/snippet/{id}
@@ -28,15 +34,53 @@ class Wpcode_Controller extends Rest_Controller {
     }
 
     public function get_snippets(\WP_REST_Request $request) {
-        $status_filter = $request->get_param('status') ?: 'all';
+        $raw_status = strtolower(trim((string) ($request->get_param('status') ?: 'all')));
+        if (in_array($raw_status, ['active', 'publish', 'enabled', '1'], true)) {
+            $status_filter = 'active';
+        } elseif (in_array($raw_status, ['inactive', 'draft', 'disabled', '0'], true)) {
+            $status_filter = 'inactive';
+        } else {
+            $status_filter = 'all';
+        }
+
+        global $wpdb;
+        $table_snippets = $wpdb->prefix . 'snippets';
+        $has_cs_table   = ($wpdb->get_var("SHOW TABLES LIKE '$table_snippets'") === $table_snippets);
+
+        // 1. Calculate global counts across both WPCode and traditional Code Snippets
+        $wpcode_counts = wp_count_posts('wpcode');
+        $cpt_active    = isset($wpcode_counts->publish) ? (int) $wpcode_counts->publish : 0;
+        $cpt_inactive  = isset($wpcode_counts->draft) ? (int) $wpcode_counts->draft : 0;
+
+        $cs_active   = 0;
+        $cs_inactive = 0;
+        if ($has_cs_table) {
+            $cs_stats = $wpdb->get_row("SELECT SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active_cnt, SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inactive_cnt FROM `$table_snippets`", ARRAY_A);
+            if ($cs_stats) {
+                $cs_active   = (int) ($cs_stats['active_cnt'] ?? 0);
+                $cs_inactive = (int) ($cs_stats['inactive_cnt'] ?? 0);
+            }
+        }
+
+        $global_active   = $cpt_active + $cs_active;
+        $global_inactive = $cpt_inactive + $cs_inactive;
+        $global_total    = $global_active + $global_inactive;
+
         $snippets = [];
 
-        // 1. Check WPCode Custom Post Type ('wpcode')
-        $post_status = ($status_filter === 'active') ? ['publish'] : ['publish', 'draft'];
+        // 2. Fetch WPCode Custom Post Type ('wpcode') matching filter
+        if ($status_filter === 'active') {
+            $post_status = ['publish'];
+        } elseif ($status_filter === 'inactive') {
+            $post_status = ['draft'];
+        } else {
+            $post_status = ['publish', 'draft'];
+        }
+
         $wpcode_posts = get_posts([
             'post_type'      => 'wpcode',
             'post_status'    => $post_status,
-            'posts_per_page' => 200,
+            'posts_per_page' => -1,
             'orderby'        => 'title',
             'order'          => 'ASC',
         ]);
@@ -55,11 +99,14 @@ class Wpcode_Controller extends Rest_Controller {
             $location = get_post_meta($post->ID, '_wpcode_snippet_location', true) ?: get_post_meta($post->ID, 'wpcode_snippet_location', true);
             $priority = get_post_meta($post->ID, '_wpcode_snippet_priority', true) ?: get_post_meta($post->ID, 'wpcode_snippet_priority', true);
 
+            $is_active = ($post->post_status === 'publish');
+
             $snippets[] = [
                 'source_plugin' => 'WPCode',
                 'id'            => $post->ID,
                 'title'         => $post->post_title,
-                'status'        => ($post->post_status === 'publish') ? 'active' : 'inactive',
+                'status'        => $is_active ? 'active' : 'inactive',
+                'is_active'     => $is_active,
                 'code_type'     => $code_type,
                 'location'      => $location ?: 'site-wide',
                 'priority'      => (int) ($priority ?: 10),
@@ -68,19 +115,25 @@ class Wpcode_Controller extends Rest_Controller {
             ];
         }
 
-        // 2. Check traditional "Code Snippets" plugin table if present
-        global $wpdb;
-        $table_snippets = $wpdb->prefix . 'snippets';
-        if ($wpdb->get_var("SHOW TABLES LIKE '$table_snippets'") === $table_snippets) {
-            $where = ($status_filter === 'active') ? 'WHERE active = 1' : '';
-            $rows = $wpdb->get_results("SELECT id, name, code, active, modified FROM $table_snippets $where ORDER BY name ASC", ARRAY_A);
+        // 3. Check traditional "Code Snippets" plugin table if present
+        if ($has_cs_table) {
+            $where = '';
+            if ($status_filter === 'active') {
+                $where = 'WHERE active = 1';
+            } elseif ($status_filter === 'inactive') {
+                $where = 'WHERE active = 0';
+            }
+
+            $rows = $wpdb->get_results("SELECT id, name, code, active, modified FROM `$table_snippets` $where ORDER BY name ASC", ARRAY_A);
             if ($rows) {
                 foreach ($rows as $row) {
+                    $is_active = ((int) $row['active'] === 1);
                     $snippets[] = [
                         'source_plugin' => 'Code Snippets',
                         'id'            => (int) $row['id'],
                         'title'         => $row['name'],
-                        'status'        => ((int) $row['active'] === 1) ? 'active' : 'inactive',
+                        'status'        => $is_active ? 'active' : 'inactive',
+                        'is_active'     => $is_active,
                         'code_type'     => 'php',
                         'location'      => 'run-everywhere',
                         'priority'      => 10,
@@ -92,8 +145,12 @@ class Wpcode_Controller extends Rest_Controller {
         }
 
         return $this->response([
-            'total'    => count($snippets),
-            'snippets' => $snippets,
+            'total'          => $global_total,
+            'active_count'   => $global_active,
+            'inactive_count' => $global_inactive,
+            'filter'         => $status_filter,
+            'count'          => count($snippets),
+            'snippets'       => $snippets,
         ]);
     }
 
@@ -104,12 +161,14 @@ class Wpcode_Controller extends Rest_Controller {
         if ($post && $post->post_type === 'wpcode') {
             $code = get_post_meta($post->ID, '_wpcode_snippet_code', true) ?: get_post_meta($post->ID, 'wpcode_snippet_code', true) ?: $post->post_content;
             $code_type = get_post_meta($post->ID, '_wpcode_snippet_type', true) ?: get_post_meta($post->ID, 'wpcode_snippet_type', true) ?: 'php';
+            $is_active = ($post->post_status === 'publish');
 
             return $this->response([
                 'source'      => 'WPCode',
                 'id'          => $post->ID,
                 'title'       => $post->post_title,
-                'status'      => ($post->post_status === 'publish') ? 'active' : 'inactive',
+                'status'      => $is_active ? 'active' : 'inactive',
+                'is_active'   => $is_active,
                 'code_type'   => $code_type,
                 'code'        => $code,
                 'modified_at' => get_the_modified_date('c', $post),
@@ -120,13 +179,15 @@ class Wpcode_Controller extends Rest_Controller {
         global $wpdb;
         $table_snippets = $wpdb->prefix . 'snippets';
         if ($wpdb->get_var("SHOW TABLES LIKE '$table_snippets'") === $table_snippets) {
-            $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_snippets WHERE id = %d", $id), ARRAY_A);
+            $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM `$table_snippets` WHERE id = %d", $id), ARRAY_A);
             if ($row) {
+                $is_active = ((int) $row['active'] === 1);
                 return $this->response([
                     'source'      => 'Code Snippets',
                     'id'          => (int) $row['id'],
                     'title'       => $row['name'],
-                    'status'      => ((int) $row['active'] === 1) ? 'active' : 'inactive',
+                    'status'      => $is_active ? 'active' : 'inactive',
+                    'is_active'   => $is_active,
                     'code_type'   => 'php',
                     'code'        => $row['code'],
                     'modified_at' => $row['modified'],

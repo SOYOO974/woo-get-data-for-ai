@@ -46,8 +46,13 @@ class Permissions {
             ],
             'logs' => [
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and tail-reading debug.log and uploads/wc-logs/*.log with memory protection.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/logs/sources', '/logs/view'],
+                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom'],
+            ],
+            'scheduler' => [
+                'label'       => esc_html__('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks).', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/crons', '/action-scheduler'],
             ],
             'flowmattic' => [
                 'label'       => esc_html__('FlowMattic Workflows', 'woo-get-data-for-ai'),
@@ -58,6 +63,16 @@ class Permissions {
                 'label'       => esc_html__('Independent Analytics (Visits & Conversion Rates)', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/analytics/overview', '/analytics/summary', '/analytics/pages', '/analytics/referrers', '/analytics/campaigns', '/analytics/devices', '/analytics/geo', '/analytics/conversions'],
+            ],
+            'meta' => [
+                'label'       => esc_html__('Custom Fields & Meta (ACF & Code)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/meta/fields', '/meta/acf', '/meta/post/{id}'],
+            ],
+            'woocommerce' => [
+                'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings'],
             ],
         ];
     }
@@ -76,8 +91,11 @@ class Permissions {
             'elementor'    => 1,
             'wpcode'       => 1,
             'logs'         => 1,
+            'scheduler'    => 1,
             'flowmattic'   => 1,
             'analytics'    => 1,
+            'meta'         => 1,
+            'woocommerce'  => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
@@ -193,8 +211,8 @@ class Permissions {
                     [
                         'path'        => '/code/plugins',
                         'methods'     => ['GET'],
-                        'params'      => ['status (active|all)'],
-                        'description' => esc_html__('Hierarchical directory and file trees of active plugins and wp-content/mu-plugins/.', 'woo-get-data-for-ai'),
+                        'params'      => ['status (active|inactive|all, default: active)'],
+                        'description' => esc_html__('Hierarchical directory and file trees of plugins and wp-content/mu-plugins/.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/code/file',
@@ -213,11 +231,13 @@ class Permissions {
                     [
                         'path'        => '/elementor/export-all',
                         'methods'     => ['GET'],
+                        'params'      => ['status (all|publish|draft|active|inactive, default: all, recommended: publish)', 'type (all|page|elementor_library|post)', 'page', 'per_page'],
                         'description' => esc_html__('Bulk export of all Elementor pages, templates, kit & forms in 1 optimized HTTP request.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/elementor/list',
                         'methods'     => ['GET'],
+                        'params'      => ['status (all|publish|draft|active|inactive, default: all, recommended: publish)', 'type (any|page|post|elementor_library)'],
                         'description' => esc_html__('List all Elementor pages, posts, and saved library templates.', 'woo-get-data-for-ai'),
                     ],
                     [
@@ -246,7 +266,7 @@ class Permissions {
                     [
                         'path'        => '/wpcode/snippets',
                         'methods'     => ['GET'],
-                        'params'      => ['status (all|active|inactive)'],
+                        'params'      => ['status (all|active|inactive, default: all, recommended for diagnostics: active)'],
                         'description' => esc_html__('List all WPCode snippets with full source code, hook targets, type, and execution state.', 'woo-get-data-for-ai'),
                     ],
                     [
@@ -259,7 +279,7 @@ class Permissions {
             [
                 'id'          => 'logs',
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and tail-reading debug.log and uploads/wc-logs/*.log with memory protection.', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
                 'enabled'     => !empty($permissions['logs']),
                 'endpoints'   => [
                     [
@@ -273,6 +293,32 @@ class Permissions {
                         'params'      => ['source (required)', 'lines (default: 100, max: 2000)', 'filter (optional substring filter)'],
                         'description' => esc_html__('Memory-safe reverse tail extraction of last N lines with optional error filtering.', 'woo-get-data-for-ai'),
                     ],
+                    [
+                        'path'        => '/logs/custom',
+                        'methods'     => ['GET'],
+                        'params'      => ['file (required, e.g. komela-order-status-sync.log)', 'lines (default: 200, max: 1000)', 'filter (optional substring filter)'],
+                        'description' => esc_html__('Memory-safe reverse tail extraction of specific log files in wp-content/ with path sandboxing.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'scheduler',
+                'label'       => esc_html__('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks).', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['scheduler']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/crons',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (all|overdue|future)', 'search (hook filter)', 'limit (default: 100, max: 500)'],
+                        'description' => esc_html__('List registered WP-Cron jobs, execution timestamps, overdue detection, recurrence intervals, and hook arguments.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/action-scheduler',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (default: in-progress,failed,pending)', 'hook', 'search', 'group', 'per_page (default: 50)', 'page (default: 1)'],
+                        'description' => esc_html__('Inspect Action Scheduler queue with status summary, scheduled dates, attempts, arguments, and failure log messages.', 'woo-get-data-for-ai'),
+                    ],
                 ],
             ],
             [
@@ -284,11 +330,13 @@ class Permissions {
                     [
                         'path'        => '/flowmattic/export-all',
                         'methods'     => ['GET'],
+                        'params'      => ['status (all|active|inactive, default: all, recommended: active)', 'page', 'per_page'],
                         'description' => esc_html__('Bulk export of all FlowMattic workflows in native importable JSON format in 1 request.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/flowmattic/workflows',
                         'methods'     => ['GET'],
+                        'params'      => ['status (all|active|inactive, default: all, recommended: active)', 'search', 'limit', 'offset'],
                         'description' => esc_html__('List all FlowMattic workflows (ID, name, status, trigger, actions, tasks count).', 'woo-get-data-for-ai'),
                     ],
                     [
@@ -352,6 +400,71 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['range', 'limit (default: 50)'],
                         'description' => esc_html__('Recent order and conversion stream with attribution (landing page, country, device, browser, amount).', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'meta',
+                'label'       => esc_html__('Custom Fields & Meta (ACF & Code)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['meta']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/meta/fields',
+                        'methods'     => ['GET'],
+                        'params'      => ['source (all|code|acf|db, default: all)', 'post_type (e.g. product, post)', 'object_type (all|post|term|user|comment)', 'search', 'include_db (true|false)', 'limit_db (default: 50)'],
+                        'description' => esc_html__('Unified catalog of all declared custom meta fields (WordPress code register_post_meta and ACF plugin field groups/fields).', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/meta/acf',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (all|active|inactive)', 'post_type'],
+                        'description' => esc_html__('Deep ACF inspection: field groups, hierarchy, recursive subfields, location rules, and registered options pages.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/meta/post/{id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta).', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'woocommerce',
+                'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['woocommerce']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/woocommerce/summary',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/products',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (publish|draft|all, default: publish)', 'type (simple|variable|grouped|external|all, default: all)', 'stock_status (instock|outofstock|onbackorder|all, default: all)', 'category (slug)', 'search', 'per_page (default: 20, max: 100)', 'page', 'orderby (default: date)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('Paginated WooCommerce products catalog with SKU, prices, stock, categories, tags, and attributes.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/product/{id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/orders',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (processing|completed|failed|all, default: all)', 'search', 'customer_id', 'per_page (default: 10, max: 50)', 'page', 'orderby (default: date)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, totals, and gateways.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/order/{id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/settings',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

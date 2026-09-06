@@ -25,6 +25,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Automatic Data Redaction**: Real-time regex engine that masks Stripe secret keys (`sk_live_*`), API tokens, passwords, database credentials, and customer email addresses before output.
 - **FlowMattic Automations**: Bulk and targeted export of all workflows, triggers, actions, and execution task stats in native importable JSON format.
 - **Independent Analytics Intelligence**: Complete visibility over site traffic, unique visitors, pageviews, acquisition channels, UTM campaigns, device breakdowns, and WooCommerce **conversion rates**, net sales, and AOV.
+- **Custom Fields & ACF Meta**: Complete discovery of meta fields registered in code (`register_post_meta`), Advanced Custom Fields (ACF) field groups, recursive subfields (repeaters, flexible content), location rules, options pages, and single post metadata inspection.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -91,19 +92,22 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /theme/options` | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options`), and theme mods. |
 | `GET /theme/overrides` | Audit of WooCommerce template overrides with version comparison against core WooCommerce. |
 | `GET /theme/child` | Code and metadata for child theme `functions.php` and `style.css`. |
-| `GET /code/plugins` | File trees for active plugins and `wp-content/mu-plugins/`. |
+| `GET /code/plugins?status={active\|inactive\|all}` | File trees for active or all plugins and `wp-content/mu-plugins/` (default: `active`). |
 | `GET /code/file?path={relative_path}` | Sandboxed code viewer for specific PHP, JS, or CSS files. |
-| `GET /elementor/export-all` | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request. |
-| `GET /elementor/list` | Pages and templates built with Elementor. |
+| `GET /elementor/export-all?status={publish\|draft\|all}` | Bulk export of Elementor pages, templates, kit & forms with status counts and `is_published` flag. |
+| `GET /elementor/list?status={publish\|draft\|all}` | Pages and templates built with Elementor with status filtering (`publish`, `draft`, `all`). |
 | `GET /elementor/item/{id}` | Decoded JSON element tree (`_elementor_data`) and page settings. |
 | `GET /elementor/forms` | Inventory of Elementor forms, fields, and submit actions (webhooks, emails). |
 | `GET /elementor/kit` | Global colors, system fonts, and design tokens from the active Elementor Kit. |
-| `GET /wpcode/snippets` | Custom PHP, JS, and CSS snippets stored in WPCode (or Code Snippets plugin). |
+| `GET /wpcode/snippets?status={active\|inactive\|all}` | Custom PHP, JS, and CSS snippets stored in WPCode with global `active_count` and `inactive_count` (recommended for diagnostics: `active`). |
 | `GET /wpcode/snippet/{id}` | Source code and metadata of a specific snippet. |
-| `GET /logs/sources` | Available log files (`debug.log`, `uploads/wc-logs/*.log`) with file sizes and dates. |
+| `GET /logs/sources` | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom `wp-content/` logs) with file sizes and dates. |
 | `GET /logs/view?source={file}&lines=200` | Memory-safe tail extraction of the latest log lines. |
-| `GET /flowmattic/export-all` | Bulk export of all FlowMattic automation workflows in 1 optimized request. |
-| `GET /flowmattic/workflows` | List all FlowMattic workflows (ID, name, status, triggers, steps, tasks executed). |
+| `GET /logs/custom?file={filename}&lines=200` | Tail inspection of specific custom logs in `wp-content/` (e.g. `komela-order-status-sync.log`). |
+| `GET /crons` | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments. |
+| `GET /action-scheduler` | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, and error logs from `actionscheduler_logs`. |
+| `GET /flowmattic/export-all?status={active\|inactive\|all}` | Bulk export of FlowMattic automation workflows with `active_count` and `inactive_count`. |
+| `GET /flowmattic/workflows?status={active\|inactive\|all}` | List FlowMattic workflows (ID, name, status, triggers, steps, tasks executed). |
 | `GET /flowmattic/workflow/{id}?format=export` | Download a workflow in FlowMattic's native importable JSON format. |
 | `GET /analytics/overview` | 360° consolidated audit in 1 request (traffic KPIs, conversion rate, top pages, referrers, campaigns, devices). |
 | `GET /analytics/summary?range={range}` | Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, sales, AOV, and % growth. |
@@ -113,12 +117,16 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /analytics/devices` | Device types (Mobile vs Desktop vs Tablet), browsers, and OS comparison with conversion rates. |
 | `GET /analytics/geo` | Geographic distribution of visitors and orders by country and city. |
 | `GET /analytics/conversions` | Recent conversion stream (orders, form submissions) with attribution (zero PII). |
+| `GET /meta/fields?post_type={type}` | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (groups, recursive subfields, location rules, options pages), with optional DB discovery. |
+| `GET /meta/acf?status={status}` | Deep inspection of ACF environment, field groups, recursive subfields, location rules, and registered options pages. |
+| `GET /meta/post/{id}` | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta). |
 
 ---
 
 ## 💻 Local CLI Client (`cli/`)
 
 A zero-dependency Node.js client is included to dump and synchronize site data directly into your local workspace.
+It segregates active and inactive elements into distinct local subdirectories (`snippets/active/` vs `snippets/inactive/`, `flowmattic/workflows/active/` vs `flowmattic/workflows/inactive/`, `elementor/pages/published/` vs `elementor/pages/draft/`) to ensure AI code assistants never grep through dead or archived code during diagnostics.
 
 ### Usage
 ```bash
@@ -131,14 +139,17 @@ cp .env.example .env
 
 # 3. Run synchronization commands
 node sync.js pull:all          # Synchronizes everything into ./synced-site-data
+node sync.js pull:all --status=active # Pulls ONLY active elements (production live code)
 node sync.js pull:capabilities # Dumps capabilities & schema to capabilities.json & capabilities.md
 node sync.js pull:system       # Generates system-report.md
+node sync.js pull:scheduler    # Dumps WP-Cron & Action Scheduler to ./scheduler/ (crons & queue)
 node sync.js pull:theme        # Dumps Woodmart/Elessi options & WC overrides
-node sync.js pull:elementor    # Dumps Elementor pages, forms, and kits
-node sync.js pull:snippets     # Dumps WPCode snippets to individual .php/.js files
-node sync.js pull:flowmattic   # Dumps FlowMattic workflows to native JSON files
+node sync.js pull:elementor    # Dumps Elementor pages, forms, and kits (organized by published/draft)
+node sync.js pull:snippets     # Dumps WPCode snippets (organized into snippets/active/ and snippets/inactive/)
+node sync.js pull:flowmattic   # Dumps FlowMattic workflows (organized into active/ and inactive/)
 node sync.js pull:analytics    # Dumps Independent Analytics to overview.json & summary.md
-node sync.js pull:logs         # Downloads tail of debug.log & wc-logs
+node sync.js pull:meta         # Dumps Custom Fields & ACF schemas to ./meta/ (fields.json, acf.json, meta-summary.md)
+node sync.js pull:logs         # Downloads tail of debug.log, wc-logs, and custom logs
 ```
 
 ---
