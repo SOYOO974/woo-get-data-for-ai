@@ -148,6 +148,8 @@ Enables/disables modules on a per-site basis:
 - `[x] Error & WooCommerce Logs` (`/logs/sources`, `/logs/view`)
 - `[x] FlowMattic Workflows` (`/flowmattic/export-all`, `/flowmattic/workflows`, `/flowmattic/workflow/{id}`)
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
+- `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
+- `[x] WooCommerce Store Data (Products, Orders, Settings)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -225,6 +227,12 @@ Enables/disables modules on a per-site basis:
 | `GET /meta/fields` | GET | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (`acf_get_field_groups`), with optional database discovery (`?source=all\|code\|acf\|db`, `?post_type=`, `?object_type=`, `?search=`, `?include_db=true`) |
 | `GET /meta/acf` | GET | Deep ACF inspection: field groups, recursive subfield hierarchy (`repeater`, `flexible_content`, `group`), location rules, and registered Options Pages |
 | `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
+| `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones |
+| `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
+| `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields |
+| `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
+| `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
+| `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods |
 
 ---
 
@@ -251,7 +259,7 @@ Enables/disables modules on a per-site basis:
 
 ## 6. Local CLI Client (`cli/sync.js`)
 - Standalone Node.js script supporting `.env` configuration.
-- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:scheduler`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:logs`.
+- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:scheduler`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:meta`, `pull:woocommerce`, `pull:logs`.
 - Optional status filtering: `--status=active|inactive|all`.
 - Organized local filesystem layout preventing AI false positives during workspace grep:
   - Snippets segregated into `snippets/active/` and `snippets/inactive/`.
@@ -262,11 +270,31 @@ Enables/disables modules on a per-site basis:
 - Optimized for v1.1.0: `pull:analytics` pulls `/analytics/overview?range=last_30_days` and generates an executive Markdown summary (`./synced-site-data/analytics/summary.md`) with KPIs, conversion rates, and top performers.
 - Optimized for v1.2.0: `pull:capabilities` pulls `/capabilities` to export the dynamic API catalog (`./synced-site-data/capabilities.json`) and a Markdown summary table (`./synced-site-data/capabilities.md`).
 - Optimized for v1.3.0: `pull:scheduler` pulls WP-Cron schedules and Action Scheduler queue diagnostics.
+- Optimized for v1.5.0: `pull:meta` dumps custom meta fields and ACF schemas into `./synced-site-data/meta/`.
+- Optimized for v1.6.0: `pull:woocommerce` dumps WooCommerce store summary, e-commerce settings, products catalog, and anonymized recent orders into `./synced-site-data/woocommerce/`.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.6.0 (2026-09-06)
+- **Module d'Inspection Technique WooCommerce (`Woocommerce_Controller`)** :
+  - **Nouveau Contrôleur REST (`class-woocommerce-controller.php`)** en 100% lecture seule (`GET`).
+  - `GET /woocommerce/summary` : Météo globale du store, versions, devise, état HPOS (`authoritative_source`), compteurs produits (statuts, types, ruptures de stock), compteurs commandes, passerelles de paiement actives et zones de livraison.
+  - `GET /woocommerce/products` : Catalogue de produits paginé et filtrable (`status`, `type`, `stock_status`, `category`, `search`), avec SKU, prix, stock, attributs et variations.
+  - `GET /woocommerce/product/{id}` : Fiche détaillée d'un produit avec variations, dimensions, images et ensemble des métadonnées `postmeta` caviardées (champs ACF, identifiants ERP, règles spécifiques).
+  - `GET /woocommerce/orders` : Flux des commandes récentes paginées et filtrables avec **anonymisation stricte RGPD/PII** (noms masqués en `J*** D***`, emails caviardés `[REDACTED_EMAIL@...]`, téléphones et adresses physiques masqués).
+  - `GET /woocommerce/order/{id}` : Diagnostic approfondi d'une commande incluant articles avec métadonnées d'éléments, frais, expédition, codes promos, remboursements, et **historique chronologique des notes de commande (`order notes`)** indispensable pour auditer les retours d'erreurs des passerelles de paiement (Stripe, Alma, etc.).
+  - `GET /woocommerce/settings` : Paramètres généraux e-commerce, règles de taxes, gestion des stocks, passerelles de paiement installées/activées (avec clés de secrets caviardées via `Redaction`), et zones/méthodes de livraison.
+  - **Permissions & Capabilities** : Module `'woocommerce'` intégré à la matrice des permissions (Onglet 2) et auto-documenté dynamiquement dans `/capabilities`.
+  - **AI Mega-Prompt** : Mise à jour de la Phase 2 (Live Freshness Check) et commandes rapides curl pour WooCommerce.
+  - **Client CLI** : Commande `pull:woocommerce` (alias `pull:wc`) intégrée dans `pull:all` avec génération automatique de `summary.md`.
+
+### v1.5.0 (2026-09-06)
+- **Module Découverte Custom Fields & ACF (`Meta_Controller`)** :
+  - Ajout des endpoints `/meta/fields`, `/meta/acf`, et `/meta/post/{id}` pour inspecter les champs personnalisés enregistrés dans le code et les groupes de champs ACF.
+  - Commande CLI `pull:meta` ajoutée.
 
 ### v1.4.0 (2026-09-05)
 - **Standardisation du Filtrage Actif / Inactif & Prévention des Faux-Positifs IA** :

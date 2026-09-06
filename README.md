@@ -26,6 +26,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **FlowMattic Automations**: Bulk and targeted export of all workflows, triggers, actions, and execution task stats in native importable JSON format.
 - **Independent Analytics Intelligence**: Complete visibility over site traffic, unique visitors, pageviews, acquisition channels, UTM campaigns, device breakdowns, and WooCommerce **conversion rates**, net sales, and AOV.
 - **Custom Fields & ACF Meta**: Complete discovery of meta fields registered in code (`register_post_meta`), Advanced Custom Fields (ACF) field groups, recursive subfields (repeaters, flexible content), location rules, options pages, and single post metadata inspection.
+- **WooCommerce Store & Catalog Data**: Read-only access to products, stock status, variations, e-commerce settings, and recent orders with **strict GDPR/PII anonymization** (masked names, redacted emails/phones/addresses) and gateway error diagnostics via order notes.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -120,6 +121,12 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /meta/fields?post_type={type}` | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (groups, recursive subfields, location rules, options pages), with optional DB discovery. |
 | `GET /meta/acf?status={status}` | Deep inspection of ACF environment, field groups, recursive subfields, location rules, and registered options pages. |
 | `GET /meta/post/{id}` | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta). |
+| `GET /woocommerce/summary` | High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones. |
+| `GET /woocommerce/products?status={publish\|draft\|all}` | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations. |
+| `GET /woocommerce/product/{id}` | Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields. |
+| `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |
+| `GET /woocommerce/order/{id}` | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata. |
+| `GET /woocommerce/settings` | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods. |
 
 ---
 
@@ -149,6 +156,7 @@ node sync.js pull:snippets     # Dumps WPCode snippets (organized into snippets/
 node sync.js pull:flowmattic   # Dumps FlowMattic workflows (organized into active/ and inactive/)
 node sync.js pull:analytics    # Dumps Independent Analytics to overview.json & summary.md
 node sync.js pull:meta         # Dumps Custom Fields & ACF schemas to ./meta/ (fields.json, acf.json, meta-summary.md)
+node sync.js pull:woocommerce  # Dumps WooCommerce store data (summary, settings, products, anonymized orders)
 node sync.js pull:logs         # Downloads tail of debug.log, wc-logs, and custom logs
 ```
 
