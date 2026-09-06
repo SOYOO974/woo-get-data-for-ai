@@ -308,13 +308,15 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.3.0: `pull:scheduler` pulls WP-Cron schedules and Action Scheduler queue diagnostics.
 - Optimized for v1.5.0: `pull:meta` dumps custom meta fields and ACF schemas into `./synced-site-data/meta/`.
 - Optimized for v1.6.0: `pull:woocommerce` dumps WooCommerce store summary, e-commerce settings, products catalog, and anonymized recent orders into `./synced-site-data/woocommerce/`.
+- Optimized for v1.7.0: `pull:content` dumps WordPress pages, posts, and executive SEO audit report into `./synced-site-data/content/`.
+- Optimized for v1.9.0: `pull:woocommerce` dumps native sales analytics, top performers, stock valuation, and webhooks inventory; `pull:system` dumps SMTP mail diagnostics and security hardening audit.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
 
-### v1.8.0 (2026-09-06)
+### v1.9.0 (2026-09-06)
 - **Intelligence E-Commerce 100% Native (`Woocommerce_Controller`)** :
   - `GET /woocommerce/analytics/sales` : Rapport commercial autonome sans plugin tiers (CA brut, CA net, volume commandes, panier moyen AOV, remboursements, ventilation quotidienne et pourcentages de croissance vs période N-1 équivalente). Supporte `wc_order_stats`, HPOS `wc_orders` et tables d'agrégation historiques.
   - `GET /woocommerce/analytics/top-performers` : Classement des 10 meilleurs produits par chiffre d'affaires et volume vendu, et analyse des coupons promotionnels les plus utilisés (`wc_order_product_lookup` / `wc_order_coupon_lookup`).
@@ -324,19 +326,23 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   - `GET /system/mail` : Détection automatique du transporteur SMTP actif (**FluentSMTP**, **WP Mail SMTP**, **Post SMTP**, **Easy WP SMTP**), masquage strict des identifiants/mots de passe, extraction des 10 derniers échecs d'envoi et alerte critique si le site utilise PHP `mail()` non authentifié à fort risque de spam.
 - **Audit de Sécurité & Durcissement Système (`System_Controller`)** :
   - `GET /system/security` : Analyse des constantes WordPress (`DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN`, `WP_DEBUG_DISPLAY`), accessibilité `xmlrpc.php`, exposition du tag générateur WordPress, préfixe de base de données, détection des plugins de sécurité actifs (Wordfence, Solid Security, Sucuri, SecuPress, MalCare) et des moteurs de cache (WP Rocket, LiteSpeed, W3TC, Redis Object Cache).
-- **Moteur de Playbooks Procéduraux Dynamiques (`Playbooks`)** :
-  - Intégration de 8 Playbooks d'investigation complets avec signaux clés et déclencheurs d'intention.
+- **Enrichissement des Playbooks Procéduraux (`Playbooks`)** :
   - Enrichissement du Playbook `tech_health_crons` avec la santé base de données (`/system/database`), le durcissement sécurité (`/system/security`) et Crash Watch (`/logs/errors-summary`).
   - Enrichissement du Playbook `ecommerce_troubleshoot` avec le diagnostic SMTP (`/system/mail`) et l'état des webhooks (`/woocommerce/webhooks`).
   - **Nouveau Playbook 7** : `store_sales_stock_audit` (Analyse commerciale, top produits et valorisation du stock).
   - **Nouveau Playbook 8** : `email_webhook_diagnostics` (Résolution des échecs de livraison email et synchronisations ERP/CRM).
-  - Générateur dynamique de skill pour agents IA (`GET /capabilities?format=skill`).
 - **Permissions & Capabilities** :
   - Déclaration de tous les nouveaux endpoints dans `get_module_definitions()` et `get_capabilities_catalog()`.
   - Mise à jour de la documentation d'administration (Onglet 5) et du prompt système d'onboarding (Onglet 3).
 - **Client CLI Local (`cli/sync.js`)** :
   - `pullWooCommerce()` enrichi : téléchargement de `analytics-sales.json`, `top-performers.json`, `stock-analytics.json`, `webhooks.json` et génération de `sales-report.md` et `stock-health.md`.
   - `pullSystem()` enrichi : téléchargement de `mail.json` et `security.json` avec intégration dans `system-report.md`.
+
+### v1.8.0 (2026-09-06)
+- **Moteur de Playbooks Procéduraux Dynamiques (`Playbooks`)** :
+  - Intégration de 6 Playbooks d'investigation initiaux (`seo_content_audit`, `tech_health_crons`, `ecommerce_troubleshoot`, `store_analytics_cro`, `integrations_automations_audit`, `theme_builder_investigation`) avec signaux clés et déclencheurs d'intention.
+  - Exposition de `GET /capabilities?format=skill` : Générateur automatique de compétence (`SKILL.md`) prête à l'emploi pour agents IA (Antigravity, Cursor, Claude).
+  - Restructuration du catalogue `/capabilities` avec section `playbooks`.
 
 ### v1.7.0 (2026-09-06)
 - **Module Pages, Contenu & SEO Unifié (`Content_Controller`)** :
