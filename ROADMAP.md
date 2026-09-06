@@ -9,10 +9,11 @@
 ### Le Pitch
 > *"Fini les demandes d'accès SSH/FTP au client qui prennent 3 jours pour analyser un incident. Auditez, diagnostiquez et résolvez les bugs WordPress & WooCommerce en 30 secondes avec Claude, Cursor et Antigravity, sans aucun risque de casser le site en production."*
 
-### Les 3 Piliers de Confiance Inébranlables
+### Les 4 Piliers Inébranlables (Confiance, Sécurité & Performance)
 1. **100% Lecture Seule (`GET` uniquement)** : Zéro risque de corruption de base de données ou de régression sur les sites clients (responsabilité civile de l'agence protégée).
 2. **Conformité RGPD & Caviardage Automatique** : PII (emails, adresses clients) et secrets API (Stripe, SMTP, salts) masqués avant transmission aux LLMs.
-3. **Protection Mémoire `fseek` & Anti-Brute Force** : Zéro impact sur les performances et zéro risque de crash serveur, même sur des boutiques à fort trafic.
+3. **Protection Mémoire `fseek` & Anti-Brute Force** : Zéro risque d'épuisement mémoire et protection contre les abus de requêtes.
+4. **Sobriété, Haute Efficacité & Zéro "Usine à Gaz"** : Le plugin reste un outil chirurgical, modulaire et ultra-rapide. Zéro tâche de fond lourde, requêtes SQL ciblées et légères, aucun ralentissement pour le site client.
 
 ### 🏆 Récemment Livré (Releases v1.7.0 à v1.9.0)
 - ✅ **Base de Données & Autoload** : `GET /system/database` (taille BDD, top 15 tables, analyse surcharge autoload `wp_options > 800KB`, transients, Redis).

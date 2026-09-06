@@ -14,6 +14,9 @@
 ## 1. Project Mission & Vision
 **WP Agent Bridge** is an enterprise-grade, lightweight, and ultra-secure WordPress & WooCommerce inspection plugin. Its sole purpose is to expose a protected, read-only REST API (`agent-bridge/v1/`) to enable AI coding assistants (Antigravity, Cursor, Claude, ChatGPT) and developers to instantly audit, diagnose bugs, and retrieve technical context from live sites without requiring risky SFTP/SSH access or database credentials.
 
+### Zero-Bloat & Anti-"Usine à Gaz" Vision
+As the plugin expands its diagnostic capabilities, **avoiding feature bloat, over-engineering, and never becoming an "usine à gaz" is an absolute, foundational priority**. The plugin is purposefully engineered as an ultra-lightweight, razor-sharp diagnostic bridge. It does one thing and does it exceptionally well: exposing live WordPress/WooCommerce site context to AI coding assistants with near-zero runtime footprint and zero impact on the host store.
+
 ### Commercial Strategy & Agency Roadmap
 For the strategic and technical product roadmap targeting web agencies and the Black Friday Lifetime Deal (LTD) launch (including licensing infrastructure, white-labeling, multi-tokens governance, form plugins support, MCP server, and LTD packaging), refer directly to [ROADMAP.md](ROADMAP.md).
 
@@ -47,7 +50,7 @@ For the strategic and technical product roadmap targeting web agencies and the B
     3. **Commit & Push**:
        - Push commits to GitHub `main` branch.
     4. **Generate Release Asset**:
-       - Package the clean plugin folder into `woo-get-data-for-ai.zip` (`Compress-Archive -Path woo-get-data-for-ai -DestinationPath woo-get-data-for-ai.zip -Force`).
+       - Package the clean plugin folder into `woo-get-data-for-ai.zip` (`tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai` — CRITICAL: enforce forward slashes for Linux compatibility, do NOT use PowerShell `Compress-Archive`).
     5. **Publish GitHub Release**:
        - Create the official GitHub Release with tag `vX.Y.Z` and attach `woo-get-data-for-ai.zip` via `gh release create`.
     > ⚠️ **CRITICAL WHY**: Client WordPress sites use `plugin-update-checker` (PUC v5.6). Sites will **ONLY** detect and install auto-updates if a formal GitHub Release exists with `woo-get-data-for-ai.zip` attached. Without this, client sites never receive the updates.
@@ -82,17 +85,40 @@ For the strategic and technical product roadmap targeting web agencies and the B
 >    - Refuse to implement write primitives inside this plugin.
 >    - Advise that any site mutations, bug fixes, or code updates be applied manually by the administrator (e.g., via child theme `functions.php`, WPCode snippet, or custom plugin) or through standard deployment pipelines.
 
-### D. High-Performance & Memory Protection
-- Optimized for high-traffic WooCommerce stores.
-- **Log Streaming**: Uses reverse file pointer (`fseek`) to extract the last $N$ lines of log files (`debug.log`, `wc-logs/`) without loading multi-megabyte files into RAM.
-- **Cache & Memory**: Flushes runtime cache on heavy reads and disables `SAVEQUERIES`.
-- **Rate Limiting**: Built-in request rate limiting using WordPress Transients API.
+### D. Zero-Bloat, Anti-"Usine à Gaz" Architecture & High Performance (MANDATORY TOP PRIORITY)
+As endpoints and modules accumulate over time, **preventing the plugin from becoming an "usine à gaz" (a bloated, slow, over-engineered machine) is a permanent, top-priority constraint for all development.**
+
+- **Architectural Simplicity & Anti-Bloat Mandate**:
+  - Keep code paths direct, clean, and idiomatic WordPress/PHP.
+  - Refuse over-engineering, multi-layered abstractions, unnecessary wrappers, or complex design patterns where clean, native WordPress/PHP patterns work best.
+  - Every endpoint must serve a concrete, high-value diagnostic need. Avoid adding endpoints "just in case" or for speculative features.
+- **Ultra-Lean Runtime Footprint**:
+  - **Near-Zero Idle Overhead**: The plugin lives on production e-commerce stores. When no REST request is active, the plugin does nothing: no heavy background crons, no polling loops, no unsolicited external HTTP requests, and no polluting `wp_options` with unnecessary autoloaded bloat.
+  - **Blazing-Fast REST Response**: Endpoints must execute and return in milliseconds with minimal CPU utilization.
+- **Strict Memory Safety & Query Optimization**:
+  - **Log & File Streaming**: Always use reverse file pointers (`fseek`) for `debug.log`, `wc-logs/`, and error summaries. Never load multi-megabyte files into RAM.
+  - **Bounded Database Queries**: Enforce sensible default pagination limits (`limit`, `offset`), select only required columns (`SELECT post_id, meta_key...` instead of `SELECT *`), disable `SAVEQUERIES`, and flush object cache during batch reads.
+  - Never load unbounded collections of orders, products, or posts into PHP memory.
+- **Defensive & Dependency-Free Modularity**:
+  - Every controller under `includes/api/` is standalone and cleanly isolated.
+  - Always verify prerequisites defensively (`class_exists()`, `is_plugin_active()`, or `table_exists`) before querying or running logic.
+  - Zero heavy external Composer/vendor SDKs. The release ZIP remains minimal and fast to install.
+- **Rate Limiting & Protection**:
+  - Built-in request rate limiting using WordPress Transients API to prevent brute force or denial-of-service against the REST API.
 
 ### E. Mandatory Checklist for Adding a New Data Source / Inspection Module (CRITICAL FOR AI AGENTS & DEVELOPERS)
 
 Whenever adding capabilities to inspect a new data source (e.g. ACF fields, WooCommerce orders/coupons, MetaSlider, SEO plugins, automation tables, custom post types):
 
-The following **7-step synchronization protocol is strictly mandatory** to maintain system integrity across admin settings, the AI onboarding engine, documentation, procedural playbooks, and the local CLI client:
+The following **8-step synchronization protocol is strictly mandatory** to maintain system integrity across admin settings, the AI onboarding engine, documentation, procedural playbooks, and the local CLI client:
+
+0. **The Anti-"Usine à Gaz" & Utility Gatekeeper (Preliminary Sanity Check — MANDATORY)**:
+   Before writing code or designing a new endpoint, rigorously evaluate:
+   - *Diagnostic Value*: Does this endpoint deliver essential diagnostic intelligence for AI coding assistants or developers?
+   - *Non-Duplication*: Can this need be fulfilled by an existing endpoint with query parameters (e.g. `?type=`, `?scope=`)?
+   - *Performance & Memory*: Is data extraction fast, indexed, and memory-safe with negligible server footprint?
+   - *Anti-Bloat*: Does the implementation stay simple, clean, and maintainable without adding architectural cruft?
+   *If the answer is no, challenge the feature and do NOT implement it.*
 
 1. **Dedicated Read-Only REST Controller (`includes/api/class-*-controller.php`)**:
    - Implement under namespace `WPAgentBridge\Api`.

@@ -14,6 +14,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 ## 🌟 Key Capabilities
 
 - **100% Read-Only Security**: All endpoints strictly enforce HTTP `GET` (`WP_REST_Server::READABLE`). No remote write or database modification primitives exist.
+- **Zero-Bloat & Ultra-Lean Architecture**: Built with a strict anti-bloat philosophy ("anti-usine à gaz"). Zero idle background overhead, zero heavy background crons, memory-safe streaming queries, lean isolated controllers, and minimal server footprint on live production stores.
 - **Zero-Secret Public Codebase**: Designed for public hosting on GitHub. Tokens are generated on-demand inside WordPress admin, never stored in plugin files.
 - **Dynamic AI Discovery & Playbooks (`/capabilities`)**: Self-describing schema and procedural diagnostic Playbooks allowing AI assistants to discover available modules, active permissions, query parameters, and step-by-step audit recipes.
 - **Auto-Updating Skill Generator (`?format=skill`)**: When queried with `?format=skill`, the API dynamically generates a complete, ready-to-save `SKILL.md` markdown file for Antigravity, Cursor, and Claude agents.
