@@ -50,7 +50,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all]');
-    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:logs');
     process.exit(1);
 }
 
@@ -686,6 +686,79 @@ async function pullMeta() {
     }
 }
 
+async function pullWooCommerce() {
+    console.log('⏳ Pulling WooCommerce Store Data (Summary, Settings, Products, Orders)...');
+    try {
+        const wcDir = path.join(outputDir, 'woocommerce');
+        ensureDir(wcDir);
+
+        // 1. Pull Summary
+        console.log('   📦 Fetching WooCommerce Summary...');
+        const summary = await makeRequest('/woocommerce/summary');
+        writeJson(path.join(wcDir, 'summary.json'), summary);
+
+        // 2. Pull Settings
+        console.log('   ⚙️  Fetching WooCommerce Settings & Gateways...');
+        const settings = await makeRequest('/woocommerce/settings');
+        writeJson(path.join(wcDir, 'settings.json'), settings);
+
+        // 3. Pull Products
+        console.log(`   🛍️  Fetching Products (status: ${statusFilter === 'all' ? 'publish' : statusFilter})...`);
+        const prodStatus = statusFilter === 'all' ? 'publish' : statusFilter;
+        const products = await makeRequest(`/woocommerce/products?status=${encodeURIComponent(prodStatus)}&per_page=50`);
+        writeJson(path.join(wcDir, 'products.json'), products);
+
+        // 4. Pull Recent Orders (anonymized)
+        console.log('   📋 Fetching Recent Orders (anonymized)...');
+        const orders = await makeRequest('/woocommerce/orders?per_page=20');
+        writeJson(path.join(wcDir, 'orders.json'), orders);
+
+        // 5. Generate Markdown Report
+        let md = `# WooCommerce Store Report for ${siteUrl}\n\n`;
+        md += `**Generated**: ${new Date().toISOString()}\n`;
+        md += `**WC Version**: ${summary.woocommerce ? summary.woocommerce.version : 'Unknown'}\n`;
+        md += `**Currency**: ${summary.woocommerce ? summary.woocommerce.currency_symbol + ' (' + summary.woocommerce.currency + ')' : ''}\n`;
+        md += `**HPOS**: ${summary.woocommerce && summary.woocommerce.hpos_enabled ? '✅ Enabled' : '❌ Disabled'} (${summary.woocommerce ? summary.woocommerce.authoritative_source : ''})\n\n`;
+
+        md += `## 📦 Products Overview\n`;
+        md += `- **Total Products**: ${summary.products ? summary.products.total : 0}\n`;
+        if (summary.products && summary.products.by_status) {
+            md += `- **Published**: ${summary.products.by_status.publish || 0} | **Draft**: ${summary.products.by_status.draft || 0} | **Trash**: ${summary.products.by_status.trash || 0}\n`;
+        }
+        if (summary.products && summary.products.by_stock) {
+            md += `- **In Stock**: ${summary.products.by_stock.instock || 0} | **Out of Stock**: ${summary.products.by_stock.outofstock || 0} | **On Backorder**: ${summary.products.by_stock.onbackorder || 0}\n\n`;
+        }
+
+        md += `## 📋 Orders Overview\n`;
+        md += `- **Total Orders**: ${summary.orders ? summary.orders.total : 0}\n`;
+        if (summary.orders && summary.orders.by_status) {
+            md += `\n| Status | Count |\n| :--- | :--- |\n`;
+            Object.keys(summary.orders.by_status).forEach(st => {
+                const item = summary.orders.by_status[st];
+                md += `| **${item.label || st}** | ${item.count} |\n`;
+            });
+            md += `\n`;
+        }
+
+        md += `## 💳 Payment Gateways\n`;
+        if (summary.payment_gateways && Array.isArray(summary.payment_gateways.active_gateways)) {
+            md += `- **Active Gateways (${summary.payment_gateways.active_count}/${summary.payment_gateways.total_installed})**: `;
+            md += summary.payment_gateways.active_gateways.map(g => `\`${g.title || g.id}\``).join(', ') + `\n\n`;
+        }
+
+        md += `## 🚚 Shipping\n`;
+        md += `- **Configured Zones**: ${summary.shipping_zones ? summary.shipping_zones.configured_zones : 0}\n\n`;
+
+        md += `## 👥 Customers\n`;
+        md += `- **Registered Customers**: ${summary.customers ? summary.customers.total_registered : 0}\n`;
+
+        writeText(path.join(wcDir, 'summary.md'), md);
+        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, products.json, orders.json, summary.md)');
+    } catch (err) {
+        console.error('❌ Failed to pull WooCommerce data:', err.message);
+    }
+}
+
 async function pullCapabilities() {
     console.log('⏳ Pulling Capabilities & Schema Discovery...');
     try {
@@ -750,6 +823,10 @@ async function run() {
         case 'pull:meta':
             await pullMeta();
             break;
+        case 'pull:woocommerce':
+        case 'pull:wc':
+            await pullWooCommerce();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -764,6 +841,7 @@ async function run() {
             await pullFlowmattic();
             await pullAnalytics();
             await pullMeta();
+            await pullWooCommerce();
             await pullLogs();
             break;
     }
