@@ -23,12 +23,15 @@ Do not ask the user for permission or wait for them to request it; execute this 
    git push origin main
    ```
 5. **Generate Release Archive**:
-   ```powershell
-   Compress-Archive -Path woo-get-data-for-ai -DestinationPath woo-get-data-for-ai.zip -Force
+   ```bash
+   # CRITICAL: Do NOT use PowerShell Compress-Archive! On Windows, Compress-Archive stores backslashes (\)
+   # which breaks file paths on Linux servers (e.g. conforama.re) during WordPress unzip_file().
+   # Always use standard tar (natively available on Windows 10/11 & Linux) to enforce forward slashes (/):
+   tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai
    ```
 6. **Publish GitHub Release**:
    ```bash
    gh release create vX.Y.Z woo-get-data-for-ai.zip --title "vX.Y.Z - <Summary>" --notes "..."
    ```
 
-> ⚠️ **CRITICAL WHY**: The plugin uses `plugin-update-checker` (PUC v5.6). Client WordPress sites will **ONLY** trigger and install auto-updates if a formal GitHub Release tag exists with the `woo-get-data-for-ai.zip` asset attached. Without this, client sites never receive the updates.
+> ⚠️ **CRITICAL WHY**: The plugin uses `plugin-update-checker` (PUC v5.6). Client WordPress sites will **ONLY** trigger and install auto-updates if a formal GitHub Release tag exists with the `woo-get-data-for-ai.zip` asset attached. Without this, client sites never receive the updates. Also, archives must use forward slashes (`/`) so Linux unzippers don't flatten files or fail class autoloading.

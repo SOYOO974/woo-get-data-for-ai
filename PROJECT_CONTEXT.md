@@ -320,6 +320,13 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.9.1 (2026-09-06)
+- **Correction Critique Autoloader & Dézippage Linux (`Class "System_Controller" not found`)** :
+  - **Résolution de l'incompatibilité de décompression Linux** : Remplacement impératif de PowerShell `Compress-Archive` (qui générait des séparateurs Windows `\` dans les archives ZIP) par l'outil natif universel `tar -a -cf` (garantissant des séparateurs POSIX `/`). Les serveurs Linux (conforama.re / Apache / Nginx / LiteSpeed) décompressent désormais l'arborescence complète des sous-dossiers (`includes/api/`) sans aplatissement de fichiers.
+  - **Mécanisme d'Auto-Réparation (Self-Healing)** au démarrage du plugin : Détection automatique au boot (sur environnements non-Windows) des fichiers résiduels extraits avec des antislashs `\` dans leur nom de fichier, et réorganisation automatique dans leurs sous-dossiers réels.
+  - **Autoloader Résilient & Fallbacks Multi-Niveaux** : Prise en charge des chemins alternatifs avec rétrocompatibilité antislash si un ancien dézippage aplati est présent sur le serveur. Préchargement explicite du contrôleur de base `Rest_Controller`.
+  - **Isolation & Robustesse des Contrôleurs REST (`Plugin::register_rest_routes`)** : Instanciation conditionnelle sécurisée avec `class_exists()` et frontière d'erreur `try / catch (\Throwable $e)`. L'absence éventuelle d'un contrôleur n'entraîne plus d'erreur fatale bloquante pour WordPress et ne perturbe plus les autres endpoints REST du site (ex: `/wp-json/iawp/search` déclenché lors de la navigation visiteur).
+
 ### v1.9.0 (2026-09-06)
 - **Intelligence E-Commerce 100% Native (`Woocommerce_Controller`)** :
   - `GET /woocommerce/analytics/sales` : Rapport commercial autonome sans plugin tiers (CA brut, CA net, volume commandes, panier moyen AOV, remboursements, ventilation quotidienne et pourcentages de croissance vs période N-1 équivalente). Supporte `wc_order_stats`, HPOS `wc_orders` et tables d'agrégation historiques.

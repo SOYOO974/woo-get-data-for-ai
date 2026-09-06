@@ -63,23 +63,32 @@ class Plugin {
      * Register all REST API controllers.
      */
     public function register_rest_routes() {
-        $controllers = [
-            new Api\System_Controller(),
-            new Api\Theme_Controller(),
-            new Api\Code_Controller(),
-            new Api\Elementor_Controller(),
-            new Api\Wpcode_Controller(),
-            new Api\Logs_Controller(),
-            new Api\Scheduler_Controller(),
-            new Api\Flowmattic_Controller(),
-            new Api\Analytics_Controller(),
-            new Api\Meta_Controller(),
-            new Api\Woocommerce_Controller(),
-            new Api\Content_Controller(),
+        $controller_classes = [
+            Api\System_Controller::class,
+            Api\Theme_Controller::class,
+            Api\Code_Controller::class,
+            Api\Elementor_Controller::class,
+            Api\Wpcode_Controller::class,
+            Api\Logs_Controller::class,
+            Api\Scheduler_Controller::class,
+            Api\Flowmattic_Controller::class,
+            Api\Analytics_Controller::class,
+            Api\Meta_Controller::class,
+            Api\Woocommerce_Controller::class,
+            Api\Content_Controller::class,
         ];
 
-        foreach ($controllers as $controller) {
-            $controller->register_routes();
+        foreach ($controller_classes as $class) {
+            try {
+                if (class_exists($class)) {
+                    $controller = new $class();
+                    $controller->register_routes();
+                } else {
+                    error_log(sprintf('[WP Agent Bridge] REST controller class "%s" not found during route registration.', $class));
+                }
+            } catch (\Throwable $e) {
+                error_log(sprintf('[WP Agent Bridge] Failed to initialize REST controller "%s": %s', $class, $e->getMessage()));
+            }
         }
     }
 }

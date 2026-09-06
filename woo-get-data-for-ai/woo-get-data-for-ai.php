@@ -3,7 +3,7 @@
  * Plugin Name:       WP Agent Bridge (Data for AI)
  * Plugin URI:        https://github.com/SOYOO974/woo-get-data-for-ai
  * Description:       Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode snippets, and theme options to AI agents (Antigravity, Claude, Cursor).
- * Version:           1.9.0
+ * Version:           1.9.1
  * Author:            SOYOO
  * Author URI:        https://github.com/SOYOO974
  * License:           GPL-2.0+
@@ -20,12 +20,43 @@ if (!defined('WPINC')) {
 }
 
 // Define Plugin Constants
-define('WOO_GET_DATA_AI_VERSION', '1.9.0');
+define('WOO_GET_DATA_AI_VERSION', '1.9.1');
 
 define('WOO_GET_DATA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WOO_GET_DATA_AI_GITHUB_REPO', 'https://github.com/SOYOO974/woo-get-data-for-ai/');
+
+// Self-healing: On Linux/UNIX environments, repair any files inadvertently extracted with literal Windows backslashes
+if (DIRECTORY_SEPARATOR === '/' && !file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/api/class-system-controller.php')) {
+    $heal_paths = function ($dir, &$heal_paths) {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $items = @scandir($dir);
+        if ($items === false) {
+            return;
+        }
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $full_path = $dir . '/' . $item;
+            if (strpos($item, '\\') !== false) {
+                $target_relative = str_replace('\\', '/', $item);
+                $target_path = $dir . '/' . $target_relative;
+                $target_dir = dirname($target_path);
+                if (!is_dir($target_dir)) {
+                    @mkdir($target_dir, 0755, true);
+                }
+                @rename($full_path, $target_path);
+            } elseif (is_dir($full_path)) {
+                $heal_paths($full_path, $heal_paths);
+            }
+        }
+    };
+    $heal_paths(WOO_GET_DATA_AI_PLUGIN_DIR, $heal_paths);
+}
 
 // Initialize Plugin Update Checker (PUC v5.6)
 if (file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.php')) {
@@ -67,8 +98,29 @@ spl_autoload_register(function ($class) {
 
     if (file_exists($file)) {
         require_once $file;
+        return;
+    }
+
+    // Fallback 1: Literal backslash filename inside includes/ (Linux artifact from Windows-created ZIP)
+    $backslash_sub = !empty($parts) ? strtolower(implode('\\', $parts)) . '\\' : '';
+    $fallback_file = $base_dir . $backslash_sub . $formatted_class_name;
+    if (file_exists($fallback_file)) {
+        require_once $fallback_file;
+        return;
+    }
+
+    // Fallback 2: Root-level flattened backslash filename
+    $root_fallback = WOO_GET_DATA_AI_PLUGIN_DIR . 'includes\\' . $backslash_sub . $formatted_class_name;
+    if (file_exists($root_fallback)) {
+        require_once $root_fallback;
+        return;
     }
 });
+
+// Ensure base REST controller is preloaded if available
+if (file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/api/class-rest-controller.php')) {
+    require_once WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/api/class-rest-controller.php';
+}
 
 // Activation & Deactivation Hooks
 register_activation_hook(__FILE__, function () {
