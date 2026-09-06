@@ -158,7 +158,7 @@ Enables/disables modules on a per-site basis:
 - `[x] FlowMattic Workflows` (`/flowmattic/export-all`, `/flowmattic/workflows`, `/flowmattic/workflow/{id}`)
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
-- `[x] WooCommerce Store Data (Products, Orders, Settings)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`)
+- `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
 - `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
@@ -248,7 +248,8 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
 | `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
-| `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods |
+| `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with geo-locations and Flexible Shipping matrix rules |
+| `GET /woocommerce/shipping` | GET | Dedicated logistics & shipping inspection: zones, geographic locations (postcodes, states, countries), native method parameters, and Flexible Shipping & Flexible Shipping PRO matrix calculation rules (tiers, classes, conditions) |
 | `GET /woocommerce/analytics/sales` | GET | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period (`?range=last_30_days`, `?start_date=`, `?end_date=`) |
 | `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold, and top coupons with discount totals (`?limit=10`, `?range=last_30_days`) |
 | `GET /woocommerce/analytics/stock` | GET | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days) (`?low_stock_threshold=`) |
@@ -266,7 +267,7 @@ Enables/disables modules on a per-site basis:
 To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoints, the plugin features an intelligent **Playbooks Engine**:
 - **Zero-Prompt Stagnation**: Instead of memorizing static endpoint lists, AI agents query `GET /capabilities?format=skill` to instantly generate an up-to-date `.agents/skills/wp-agent-bridge/SKILL.md` workspace skill.
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
-- **Built-in Procedural Playbooks (9 Battle-Tested Investigation Sequences)**:
+- **Built-in Procedural Playbooks (10 Battle-Tested Investigation Sequences)**:
   1. `seo_content_audit`: 360° SEO, meta tags, critical noindex detection on pages/products, OpenGraph coverage, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
   2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, database autoload bloat, security hardening audit, stalled Action Scheduler queues, overdue WP-Crons, and Crash Watch fatal error dashboard (`/system`, `/system/database`, `/system/security`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
   3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, active checkout hooks, SMTP mail delivery check, and WooCommerce webhook health (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
@@ -276,6 +277,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   7. `store_sales_stock_audit`: Native WooCommerce commercial intelligence: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products by revenue/qty, top coupons, and stock valuation & dormant inventory (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/summary`).
   8. `email_webhook_diagnostics`: Transactional email delivery and webhook integration diagnostics: SMTP provider detection (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk, and failing WooCommerce webhooks (`/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, `/logs/view`).
   9. `code_sync_drift_audit`: Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of custom plugins or child themes (`/code/checksums`, `/code/zip`).
+  10. `shipping_logistics_audit`: Comprehensive logistics audit: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), and advanced Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes) (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`).
 
 ---
 
@@ -319,11 +321,27 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.7.0: `pull:content` dumps WordPress pages, posts, and executive SEO audit report into `./synced-site-data/content/`.
 - Optimized for v1.9.0: `pull:woocommerce` dumps native sales analytics, top performers, stock valuation, and webhooks inventory; `pull:system` dumps SMTP mail diagnostics and security hardening audit.
 - Optimized for v1.10.0: `pull:code` dumps plugins and mu-plugins code tree (`./synced-site-data/code/plugins.json` and `plugins.md`), and with `--path=<dir>` computes directory checksum fingerprints (`./synced-site-data/code/checksums.json` and `checksums.md`) for instant local vs remote drift detection.
+- Optimized for v1.11.0: `pull:woocommerce` dumps dedicated shipping logistics (`./synced-site-data/woocommerce/shipping.json`) and enriches `summary.md` with zones, geo-locations, and Flexible Shipping matrix rules.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.11.0 (2026-09-06)
+- **Logistique Avancée WooCommerce & Règles Flexible Shipping PRO (`Woocommerce_Controller`)** :
+  - **Enrichissement des Zones de Livraison** : Extraction des emplacements géographiques (`locations` : codes postaux, états/régions, pays, continents) via `get_zone_locations()`.
+  - **Options d'Instance Natives Enrichies** : Extraction des réglages pour `flat_rate` (`calculation_type`, `cost`), `free_shipping` (`requires`, `min_amount`, `ignore_discounts`), et `local_pickup` (`cost`, `tax_status`).
+  - **Détection & Décodage Flexible Shipping / Flexible Shipping PRO (Octolize / WPDesk)** :
+    - Détection de la version PRO via constantes/classes (`FLEXIBLE_SHIPPING_PRO_VERSION`, `WPDesk_Flexible_Shipping_Pro_Plugin`).
+    - Décodage complet de la matrice de règles conditionnelles (`method_rules`) : tranches de poids, montants de panier, articles, classes de livraison, conditions complexes, coûts par commande, coûts additionnels, et actions spéciales (`none`, `stop`, `cancel`).
+    - Extraction des seuils de gratuité (`method_free_shipping`), labels, visibilité et descriptions.
+  - **Nouvel Endpoint Dédié `GET /woocommerce/shipping`** : Permet l'inspection logistique ciblée (`zones_count`, `zones`) sans recharger l'ensemble des réglages généraux de la boutique.
+  - **Rétrocompatibilité Totale** : Conservation stricte des 5 champs existants (`instance_id`, `id`, `title`, `enabled`, `cost`) au sein de `GET /woocommerce/settings`.
+- **Nouveau Playbook IA Dédié (`Playbooks`)** :
+  - `shipping_logistics_audit` (Playbook 10) : Protocole d'audit logistique automatisé combinant `/woocommerce/shipping`, `/woocommerce/settings` et `/woocommerce/orders`.
+- **Enrichissement Client CLI (`cli/sync.js`)** :
+  - `pull:woocommerce` télécharge désormais `/woocommerce/shipping` dans `./synced-site-data/woocommerce/shipping.json` et génère un tableau détaillé des zones et méthodes dans `summary.md`.
 
 ### v1.10.0 (2026-09-06)
 - **Module Code Avancé : Détection de Dérive (Code Drift) & Export ZIP à la Volée (`Code_Controller`)** :

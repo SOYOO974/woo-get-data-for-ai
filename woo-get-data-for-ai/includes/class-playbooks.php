@@ -487,6 +487,51 @@ class Playbooks {
                     ],
                 ],
             ],
+            [
+                'id'              => 'shipping_logistics_audit',
+                'title'           => esc_html__('Shipping Zones, Methods & Flexible Shipping Rules Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Comprehensive logistics audit: inspects WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), and advanced Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes).', 'woo-get-data-for-ai'),
+                'required_modules'=> ['woocommerce'],
+                'optional_modules'=> ['system'],
+                'intent_triggers' => [
+                    'audit livraison',
+                    'frais de port',
+                    'shipping rules',
+                    'flexible shipping',
+                    'zones de livraison',
+                    'tarifs livraison',
+                    'conditions port gratuit',
+                    'modes de livraison',
+                    'frais dexpédition',
+                    'table rate shipping',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Dedicated Shipping Zones & Matrix Rules Inspection', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/shipping',
+                        'params'      => [],
+                        'description' => esc_html__('Inspects all configured shipping zones, geographic location filters (postcodes, countries, states), native method parameters, and Flexible Shipping matrix rules (conditions, costs, weight/price tiers, and special actions).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['zones[].zone_name', 'zones[].locations', 'zones[].shipping_methods[].id', 'zones[].shipping_methods[].flexible_shipping.rules'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Store Currency & Tax on Shipping Configuration', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/settings',
+                        'params'      => [],
+                        'description' => esc_html__('Verifies tax calculation on shipping (tax_based_on, shipping_tax_class), default shipping country, and currency formatting.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['general.currency', 'general.ship_to_countries', 'tax.shipping_tax_class', 'tax.calc_taxes'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Recent Orders Shipping Method Verification', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/orders',
+                        'params'      => ['per_page' => 10],
+                        'description' => esc_html__('Reviews recent orders to observe which shipping methods and shipping fees were applied in practice.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['orders[].shipping_total', 'orders[].shipping_lines'],
+                    ],
+                ],
+            ],
         ];
     }
 

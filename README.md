@@ -35,7 +35,8 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Crash Watch Fatal Error Dashboard**: Targeted reverse-tail extraction of recent critical PHP fatal errors and exceptions with component attribution for instant bug diagnostics.
 - **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities across pages, blog posts, WooCommerce products, and categories.
 - **Code Drift Fingerprinting & Instant ZIP Export**: Instant cryptographic checksums (`/code/checksums`) for local vs remote code drift detection, and on-the-fly clean ZIP archive downloads (`/code/zip`) with zero `.git` or log clutter.
-- **9 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, and local vs prod code drift.
+- **Advanced WooCommerce Shipping & Flexible Shipping PRO**: Deep logistics extraction across zones, geographic locations (postcodes, regions, countries), native method options (`flat_rate`, `free_shipping`, `local_pickup`), and matrix calculation rules for **Flexible Shipping** and **Flexible Shipping PRO** (`/woocommerce/shipping`).
+- **10 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, local vs prod code drift, and shipping logistics.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -142,7 +143,8 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /woocommerce/product/{id}` | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields. |
 | `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |
 | `GET /woocommerce/order/{id}` | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata. |
-| `GET /woocommerce/settings` | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods. |
+| `GET /woocommerce/settings` | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules. |
+| `GET /woocommerce/shipping` | Dedicated logistics inspection: shipping zones, geo-locations (postcodes, regions, countries), native method parameters, and Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes). |
 | `GET /woocommerce/analytics/sales?range={range}` | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period. |
 | `GET /woocommerce/analytics/top-performers?limit=10` | Top products by net revenue & volume sold, and top coupons with discount totals. |
 | `GET /woocommerce/analytics/stock` | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days). |
@@ -155,7 +157,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 
 ---
 
-## 🎯 Procedural AI Playbooks (9 Automated Investigation Recipes)
+## 🎯 Procedural AI Playbooks (10 Automated Investigation Recipes)
 
 To avoid trial-and-error querying, the plugin includes pre-configured procedural investigation recipes that an AI can trigger based on user intent:
 
@@ -168,6 +170,7 @@ To avoid trial-and-error querying, the plugin includes pre-configured procedural
 7. **Native E-Commerce Sales & Stock Valuation** (`store_sales_stock_audit`): Analyzes `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, and `/woocommerce/summary`.
 8. **Transactional Emails & Webhooks Diagnostics** (`email_webhook_diagnostics`): Investigates delivery failures with `/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, and `/logs/view`.
 9. **Code Drift & Extension Synchronization** (`code_sync_drift_audit`): Fingerprints directory checksums with `/code/checksums` to compare against local workspace files, and downloads complete clean ZIP archives with `/code/zip` in 1 single call.
+10. **Shipping Zones, Methods & Flexible Shipping Rules Audit** (`shipping_logistics_audit`): Comprehensive logistics audit inspecting shipping zones and geo-locations, native method options, and Flexible Shipping PRO matrix calculation rules (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`).
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 

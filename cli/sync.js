@@ -798,6 +798,16 @@ async function pullWooCommerce() {
         const settings = await makeRequest('/woocommerce/settings');
         writeJson(path.join(wcDir, 'settings.json'), settings);
 
+        // 2b. Pull Dedicated Shipping Logistics
+        console.log('   🚚 Fetching Shipping Zones, Locations & Matrix Rules...');
+        let shippingData = null;
+        try {
+            shippingData = await makeRequest('/woocommerce/shipping');
+            writeJson(path.join(wcDir, 'shipping.json'), shippingData);
+        } catch (shipErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/shipping:', shipErr.message);
+        }
+
         // 3. Pull Products
         console.log(`   🛍️  Fetching Products (status: ${statusFilter === 'all' ? 'publish' : statusFilter})...`);
         const prodStatus = statusFilter === 'all' ? 'publish' : statusFilter;
@@ -941,14 +951,32 @@ async function pullWooCommerce() {
             md += summary.payment_gateways.active_gateways.map(g => `\`${g.title || g.id}\``).join(', ') + `\n\n`;
         }
 
-        md += `## 🚚 Shipping\n`;
-        md += `- **Configured Zones**: ${summary.shipping_zones ? summary.shipping_zones.configured_zones : 0}\n\n`;
+        md += `## 🚚 Shipping & Logistics\n`;
+        if (shippingData && Array.isArray(shippingData.zones)) {
+            md += `- **Total Zones**: ${shippingData.zones_count || shippingData.zones.length}\n\n`;
+            md += `| Zone | Locations | Methods | Details |\n|---|---|---|---|\n`;
+            for (const z of shippingData.zones) {
+                const locCount = z.locations_count || (z.locations ? z.locations.length : 0);
+                const locSummary = locCount > 0 ? `${locCount} location(s)` : 'All / Rest of World';
+                const methodsList = (z.shipping_methods || []).map(m => {
+                    let desc = m.title;
+                    if (m.flexible_shipping && m.flexible_shipping.rules_count) {
+                        desc += ` (${m.flexible_shipping.rules_count} matrix rules${m.flexible_shipping.is_pro ? ' [PRO]' : ''})`;
+                    }
+                    return `${m.enabled ? '🟢' : '⚪'} \`${m.id}\`: ${desc}`;
+                }).join('<br>');
+                md += `| **${z.zone_name}** (ID: ${z.id}) | ${locSummary} | ${(z.shipping_methods || []).length} method(s) | ${methodsList || '-'} |\n`;
+            }
+            md += `\n`;
+        } else {
+            md += `- **Configured Zones**: ${summary.shipping_zones ? summary.shipping_zones.configured_zones : 0}\n\n`;
+        }
 
         md += `## 👥 Customers\n`;
         md += `- **Registered Customers**: ${summary.customers ? summary.customers.total_registered : 0}\n`;
 
         writeText(path.join(wcDir, 'summary.md'), md);
-        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, products.json, orders.json, analytics-sales.json, stock-analytics.json, webhooks.json, summary.md, sales-report.md, stock-health.md)');
+        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, shipping.json, products.json, orders.json, analytics-sales.json, stock-analytics.json, webhooks.json, summary.md, sales-report.md, stock-health.md)');
     } catch (err) {
         console.error('❌ Failed to pull WooCommerce data:', err.message);
     }

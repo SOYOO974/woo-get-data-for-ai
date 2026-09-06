@@ -151,6 +151,15 @@ class Woocommerce_Controller extends Rest_Controller {
             },
         ]);
 
+        // GET /woocommerce/shipping (Complete logistics, shipping zones, methods and Flexible Shipping matrix rules)
+        register_rest_route(self::NAMESPACE, '/woocommerce/shipping', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_shipping_details'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+        ]);
+
         // GET /woocommerce/analytics/sales (Native WooCommerce sales performance, revenue, orders, AOV, comparison vs prior period)
         register_rest_route(self::NAMESPACE, '/woocommerce/analytics/sales', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -1051,44 +1060,12 @@ class Woocommerce_Controller extends Rest_Controller {
         if (class_exists('\WC_Shipping_Zones')) {
             $zones = \WC_Shipping_Zones::get_zones();
             foreach ($zones as $zone_data) {
-                $zone_obj = new \WC_Shipping_Zone($zone_data['zone_id']);
-                $methods = [];
-                foreach ($zone_obj->get_shipping_methods() as $instance_id => $method) {
-                    $methods[] = [
-                        'instance_id' => $instance_id,
-                        'id'          => $method->id,
-                        'title'       => $method->get_title(),
-                        'enabled'     => $method->is_enabled(),
-                        'cost'        => isset($method->cost) ? $method->cost : null,
-                    ];
-                }
-
-                $shipping_zones[] = [
-                    'id'               => $zone_data['zone_id'],
-                    'zone_name'        => $zone_data['zone_name'],
-                    'zone_order'       => $zone_data['zone_order'],
-                    'shipping_methods' => $methods,
-                ];
+                $zone_obj         = new \WC_Shipping_Zone($zone_data['zone_id']);
+                $shipping_zones[] = $this->format_shipping_zone($zone_obj, $zone_data['zone_order']);
             }
-
-            // Add Rest of the World zone (zone_id 0)
-            $default_zone = new \WC_Shipping_Zone(0);
-            $default_methods = [];
-            foreach ($default_zone->get_shipping_methods() as $instance_id => $method) {
-                $default_methods[] = [
-                    'instance_id' => $instance_id,
-                    'id'          => $method->id,
-                    'title'       => $method->get_title(),
-                    'enabled'     => $method->is_enabled(),
-                    'cost'        => isset($method->cost) ? $method->cost : null,
-                ];
-            }
-            $shipping_zones[] = [
-                'id'               => 0,
-                'zone_name'        => $default_zone->get_zone_name(),
-                'zone_order'       => 9999,
-                'shipping_methods' => $default_methods,
-            ];
+            // Zone "Reste du monde" (zone_id 0)
+            $default_zone     = new \WC_Shipping_Zone(0);
+            $shipping_zones[] = $this->format_shipping_zone($default_zone, 9999);
         }
 
         return $this->response([
@@ -1098,6 +1075,142 @@ class Woocommerce_Controller extends Rest_Controller {
             'payment_gateways' => $payment_gateways,
             'shipping_zones'   => $shipping_zones,
         ]);
+    }
+
+    /**
+     * Dedicated endpoint for full logistics, shipping zones, geo-locations, and methods inspection.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function get_shipping_details(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', esc_html__('WooCommerce is not active on this site.', 'woo-get-data-for-ai'), 400);
+        }
+
+        $zones = [];
+        if (class_exists('\WC_Shipping_Zones')) {
+            foreach (\WC_Shipping_Zones::get_zones() as $z) {
+                $zones[] = $this->format_shipping_zone(new \WC_Shipping_Zone($z['zone_id']), $z['zone_order']);
+            }
+            $zones[] = $this->format_shipping_zone(new \WC_Shipping_Zone(0), 9999);
+        }
+
+        return $this->response([
+            'zones_count' => count($zones),
+            'zones'       => $zones,
+        ]);
+    }
+
+    /**
+     * Format a WooCommerce shipping zone with its locations and methods.
+     *
+     * @param \WC_Shipping_Zone $zone_obj
+     * @param int $zone_order
+     * @return array
+     */
+    protected function format_shipping_zone(\WC_Shipping_Zone $zone_obj, $zone_order = 0) {
+        $methods = [];
+        foreach ($zone_obj->get_shipping_methods() as $instance_id => $method) {
+            $methods[] = $this->format_shipping_method($method, $instance_id);
+        }
+
+        // Retrieve postcodes, states, countries, or continents
+        $locations = [];
+        if (method_exists($zone_obj, 'get_zone_locations')) {
+            foreach ($zone_obj->get_zone_locations() as $loc) {
+                $code = is_object($loc) ? ($loc->code ?? '') : (is_array($loc) ? ($loc['code'] ?? '') : '');
+                $type = is_object($loc) ? ($loc->type ?? '') : (is_array($loc) ? ($loc['type'] ?? '') : '');
+                $locations[] = [
+                    'code' => $code,
+                    'type' => $type, // 'postcode', 'state', 'country', 'continent'
+                ];
+            }
+        }
+
+        return [
+            'id'               => $zone_obj->get_id(),
+            'zone_name'        => $zone_obj->get_zone_name(),
+            'zone_order'       => $zone_order,
+            'locations_count'  => count($locations),
+            'locations'        => $locations,
+            'shipping_methods' => $methods,
+        ];
+    }
+
+    /**
+     * Format a shipping method with full backwards compatibility and advanced rules extraction.
+     *
+     * @param \WC_Shipping_Method $method
+     * @param int $instance_id
+     * @return array
+     */
+    protected function format_shipping_method(\WC_Shipping_Method $method, $instance_id) {
+        // Base strict existing data (Guaranteed backwards compatibility)
+        $data = [
+            'instance_id' => (int) $instance_id,
+            'id'          => $method->id,
+            'title'       => $method->get_title(),
+            'enabled'     => $method->is_enabled(),
+            'cost'        => isset($method->cost) ? $method->cost : null,
+            'tax_status'  => isset($method->tax_status) ? $method->tax_status : null,
+        ];
+
+        // 1. Native WooCommerce Shipping Method Settings
+        if ('flat_rate' === $method->id) {
+            $data['flat_rate_settings'] = [
+                'calculation_type' => method_exists($method, 'get_instance_option') ? $method->get_instance_option('type', 'class') : 'class',
+                'cost'             => method_exists($method, 'get_instance_option') ? $method->get_instance_option('cost', '') : '',
+            ];
+        } elseif ('free_shipping' === $method->id) {
+            $data['free_shipping_settings'] = [
+                'requires'         => method_exists($method, 'get_instance_option') ? $method->get_instance_option('requires', '') : '',
+                'min_amount'       => method_exists($method, 'get_instance_option') ? $method->get_instance_option('min_amount', 0) : 0,
+                'ignore_discounts' => method_exists($method, 'get_instance_option') ? ('yes' === $method->get_instance_option('ignore_discounts', 'no')) : false,
+            ];
+        } elseif ('local_pickup' === $method->id) {
+            $data['local_pickup_settings'] = [
+                'cost'       => method_exists($method, 'get_instance_option') ? $method->get_instance_option('cost', '') : '',
+                'tax_status' => method_exists($method, 'get_instance_option') ? $method->get_instance_option('tax_status', 'taxable') : 'taxable',
+            ];
+        }
+
+        // 2. Detection and extraction for Flexible Shipping & Flexible Shipping PRO
+        if (in_array($method->id, ['flexible_shipping_single', 'flexible_shipping'], true)) {
+            $raw_rules = method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_rules', []) : [];
+            if (is_string($raw_rules)) {
+                $decoded = json_decode($raw_rules, true);
+                $raw_rules = is_array($decoded) ? $decoded : [];
+            }
+
+            $formatted_rules = [];
+            if (is_array($raw_rules)) {
+                foreach ($raw_rules as $rule_idx => $rule) {
+                    $formatted_rules[] = [
+                        'rule_index'          => $rule_idx,
+                        'conditions'          => isset($rule['conditions']) ? $rule['conditions'] : [],
+                        'cost_per_order'      => isset($rule['cost_per_order']) ? $rule['cost_per_order'] : (isset($rule['cost']) ? $rule['cost'] : 0),
+                        'additional_cost'     => isset($rule['additional_cost']) ? $rule['additional_cost'] : null,
+                        'additional_cost_per' => isset($rule['additional_cost_per']) ? $rule['additional_cost_per'] : null,
+                        'special_action'      => isset($rule['special_action']) ? $rule['special_action'] : 'none',
+                        'description'         => isset($rule['description']) ? $rule['description'] : '',
+                    ];
+                }
+            }
+
+            $data['flexible_shipping'] = [
+                'is_pro'               => defined('FLEXIBLE_SHIPPING_PRO_VERSION') || class_exists('WPDesk_Flexible_Shipping_Pro_Plugin'),
+                'calculation_method'   => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_calculation_method', 'sum') : 'sum',
+                'free_shipping'        => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_free_shipping', '') : '',
+                'free_shipping_label'  => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_free_shipping_label', '') : '',
+                'visibility'           => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_visibility', 'all') : 'all',
+                'method_description'   => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_description', '') : '',
+                'rules_count'          => count($formatted_rules),
+                'rules'                => $formatted_rules,
+            ];
+        }
+
+        return $data;
     }
 
     /**

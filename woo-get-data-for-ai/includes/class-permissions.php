@@ -70,9 +70,9 @@ class Permissions {
                 'endpoints'   => ['/meta/fields', '/meta/acf', '/meta/post/{id}'],
             ],
             'woocommerce' => [
-                'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings)', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
+                'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
