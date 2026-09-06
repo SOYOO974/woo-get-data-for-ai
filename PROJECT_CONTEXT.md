@@ -369,6 +369,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.17.1 (2026-09-06)
+- **Harmonisation du Mega-Prompt IA & de la Documentation Interne (`tab-ai-prompt.php`, `tab-docs.php`, `class-playbooks.php`)** :
+  - **Alignement sur les 7 Grands Piliers MECE** : Mise à jour intégrale des étapes de diagnostic (Phase 1) et des commandes rapides cURL dans le Mega-Prompt affiché en onglet d'administration ("AI Mega-Prompt & Skill") pour référencer exactement les 7 Piliers Stratégiques avec leurs identifiants canoniques.
+  - **Uniformisation Linguistique 100% Anglais** : Traduction intégrale en anglais de la Phase 4 ("Strict Active vs Inactive State Management") qui contenait encore des paragraphes en français, garantissant une cohérence textuelle absolue pour les contextes des LLMs anglophones et multilingues.
+  - **Enrichissement de la Checklist "Live Freshness Check" (Phase 2)** : Intégration des points d'inspection modernes récemment ajoutés : profiler de performance frontend & Core Web Vitals natifs (`/performance/profile`), bloat et options orphelines BDD (`/system/database`), KPIs de ventes et valorisation stock (`/woocommerce/analytics/sales`, `/woocommerce/analytics/stock`), logistique & Flexible Shipping (`/woocommerce/shipping`), diagnostic SMTP (`/system/mail`), et détection de code drift / export ZIP (`/code/checksums`, `/code/zip`).
+  - **Mise à Jour de l'Onglet Documentation (`tab-docs.php`)** : Harmonisation du compteur et du descriptif des playbooks (passage de 12 à 7 Piliers MECE).
+  - **Traduction des Commentaires cURL dans le Générateur de Skill (`class-playbooks.php`)** : Passage de `# Pilier X` à `# Pillar X` pour une homogénéité totale en anglais dans `SKILL.md`.
+
 ### v1.17.0 (2026-09-06)
 - **Consolidation Stratégique des Playbooks en 7 Grands Piliers MECE (`Playbooks`, `includes/class-playbooks.php`)** :
   - **Refonte Architecturale Anti-Dispersion** : Fusion et rationalisation des 12 playbooks historiques en 7 Piliers Stratégiques MECE (Mutually Exclusive, Collectively Exhaustive) afin d'éliminer les collisions sémantiques de triggers et de réduire la dilution cognitive des LLMs de ~45% de tokens dans le `SKILL.md` généré.

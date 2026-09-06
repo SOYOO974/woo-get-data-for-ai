@@ -36,13 +36,15 @@ $mega_prompt .= "1. **Auto-Generate or Refresh Your Local Skill**:\n";
 $mega_prompt .= "   Run this command in your workspace to download the real-time, self-updating skill file containing all active routes and procedural audit playbooks:\n";
 $mega_prompt .= "   `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md`\n";
 $mega_prompt .= "   (If using Cursor or Claude Desktop, you can query `GET {$rest_base_url}/capabilities` to receive the JSON catalog of active modules and playbooks).\n";
-$mega_prompt .= "2. **Follow Battle-Tested Playbooks for Audits**:\n";
-$mega_prompt .= "   The live `/capabilities` feed provides step-by-step diagnostic workflows (Playbooks) adapted to the site's active modules:\n";
-$mega_prompt .= "   - **SEO & Content Audit** -> Follow Playbook `seo_content_audit` (queries `/content/seo-audit` then drill-down to flagged pages).\n";
-$mega_prompt .= "   - **Technical Health & Background Tasks** -> Follow Playbook `tech_health_crons` (queries `/system`, `/action-scheduler`, `/crons`, and `/logs/view`).\n";
-$mega_prompt .= "   - **Checkout & Failed Orders Debugging** -> Follow Playbook `ecommerce_troubleshoot` (queries `/woocommerce/orders`, `/woocommerce/order/{id}` gateway notes, and checkout snippets).\n";
-$mega_prompt .= "   - **Store Performance & Conversion Funnel** -> Follow Playbook `store_analytics_roi` (queries `/analytics/overview`, `/woocommerce/summary`, and `/analytics/campaigns`).\n";
-$mega_prompt .= "   - **Integration & Workflows Mapping** -> Follow Playbook `integration_automation_map` (queries `/elementor/forms`, `/flowmattic/workflows`, and `/meta/fields`).\n";
+$mega_prompt .= "2. **Follow the 7 Strategic MECE Master Playbooks for Audits**:\n";
+$mega_prompt .= "   The live `/capabilities` feed organizes all diagnostics into 7 battle-tested MECE master pillars:\n";
+$mega_prompt .= "   - **Pillar 1: SEO, Content & Visibility** -> Playbook `seo_content_audit` (queries `/content/seo-audit`, `/content/pages`, `/content/page/{id}`).\n";
+$mega_prompt .= "   - **Pillar 2: Performance & Core Web Vitals** -> Playbook `agency_performance_audit` (queries `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).\n";
+$mega_prompt .= "   - **Pillar 3: System Health & Database Bloat Hygiene** -> Playbook `database_system_hygiene` (queries `/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).\n";
+$mega_prompt .= "   - **Pillar 4: Orders, Checkout & Gateway Troubleshooting** -> Playbook `order_checkout_troubleshoot` (queries `/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).\n";
+$mega_prompt .= "   - **Pillar 5: 360° E-Commerce Sales & Analytics** -> Playbook `ecommerce_bi_analytics` (queries `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).\n";
+$mega_prompt .= "   - **Pillar 6: Shipping Logistics & Flexible Shipping** -> Playbook `shipping_logistics_audit` (queries `/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).\n";
+$mega_prompt .= "   - **Pillar 7: Code Architecture & Integrations Map** -> Playbook `code_theme_integrations` (queries `/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/wpcode/snippets`, `/meta/fields`).\n";
 $mega_prompt .= "3. **Plugin Updates & Zero-Prompt-Stagnation**:\n";
 $mega_prompt .= "   The plugin auto-updates via GitHub releases. You do NOT need human prompts to learn new features: periodically re-run `GET {$rest_base_url}/capabilities?format=skill` to discover newly released inspection endpoints and playbooks automatically.\n\n";
 
@@ -53,27 +55,32 @@ $mega_prompt .= "- **Always inspect the live site first** using the active endpo
 $mega_prompt .= "  * Modifying custom logic or hooks? -> Check `/wpcode/snippets?status=active` to inspect live code executing in production.\n";
 $mega_prompt .= "  * Working on forms or page design? -> Check `/elementor/forms` or `/elementor/item/{id}` (or `/elementor/list?status=publish`).\n";
 $mega_prompt .= "  * Working on automations or webhooks? -> Check `/flowmattic/workflows?status=active` to inspect active workflow steps and triggers.\n";
-$mega_prompt .= "  * Analyzing visits, marketing ROI, or conversion rates? -> Check `/analytics/overview` or `/analytics/summary`.\n";
+$mega_prompt .= "  * Auditing frontend performance, TTFB or native Web Vitals? -> Check `/performance/templates-urls` and `/performance/profile?path=/&include_assets=true&include_queries=true`.\n";
+$mega_prompt .= "  * Investigating database size, heavy tables, autoload bloat, or orphaned options? -> Check `/system/database`.\n";
+$mega_prompt .= "  * Investigating store sales KPIs, top products, or inventory valuation? -> Check `/woocommerce/analytics/sales` and `/woocommerce/analytics/stock`.\n";
+$mega_prompt .= "  * Auditing shipping zones, methods, or Flexible Shipping calculation rules? -> Check `/woocommerce/shipping`.\n";
+$mega_prompt .= "  * Comparing local vs remote code drift or downloading clean zip? -> Check `/code/checksums?path=plugins/...` and `/code/zip?path=plugins/...`.\n";
+$mega_prompt .= "  * Auditing transactional email deliverability or SMTP provider? -> Check `/system/mail`.\n";
+$mega_prompt .= "  * Analyzing visits, marketing ROI, or conversion rates? -> Check `/analytics/overview` or `/analytics/campaigns`.\n";
 $mega_prompt .= "  * Inspecting custom fields, product specs, or ACF data? -> Check `/meta/fields?post_type=product` (or `/meta/acf` for full field groups and rules, or `/meta/post/{id}` for values on a specific post).\n";
 $mega_prompt .= "  * Inspecting WordPress pages, hierarchy, or Gutenberg content? -> Check `/content/pages?status=publish` or `/content/page/{id}`.\n";
 $mega_prompt .= "  * Auditing SEO (meta tags, noindex, OpenGraph across Yoast/RankMath/SEOPress)? -> Check `/content/seo-audit` or `/content/page/{id}`.\n";
 $mega_prompt .= "  * Investigating WooCommerce products, stock, or variations? -> Check `/woocommerce/products?status=publish` or `/woocommerce/product/{id}`.\n";
-$mega_prompt .= "  * Investigating orders, payment errors, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` or `/woocommerce/order/{id}` (includes payment gateway error logs in order notes, customer PII strictly anonymized).\n";
-$mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings` or `/woocommerce/summary`.\n";
-$mega_prompt .= "  * Investigating database size, heavy tables, or autoload bottlenecks? -> Check `/system/database`.\n";
+$mega_prompt .= "  * Investigating orders, payment errors, cancellation ratios, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` or `/woocommerce/order/{id}` (includes payment gateway error logs in order notes, customer PII strictly anonymized) and `/woocommerce/summary`.\n";
+$mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings`.\n";
 $mega_prompt .= "  * Investigating recent site crashes or fatal PHP errors? -> Check `/logs/errors-summary` (Crash Watch).\n";
 $mega_prompt .= "  * Investigating cart/checkout/product bugs? -> Check `/theme/overrides` and latest logs with `/logs/view` or specific logs with `/logs/custom?file=...`.\n";
-$mega_prompt .= "  * Investigating cron, background tasks, or sync issues? -> Check `/crons` (WP-Cron schedules & overdue status) and `/action-scheduler` (in-progress, failed, pending tasks and error logs).\n\n";
+$mega_prompt .= "  * Investigating cron, background tasks, or queue backlog? -> Check `/crons` (WP-Cron schedules & overdue status) and `/action-scheduler` (in-progress, failed, complete tasks, retention policy, and error logs).\n\n";
 
 $mega_prompt .= "### Phase 3: WPCode Snippets Direct Admin Links\n";
 $mega_prompt .= "Whenever you analyze, recommend, or modify a WPCode snippet:\n";
 $mega_prompt .= "- ALWAYS provide the user with a direct, clickable link to edit the snippet in WordPress Admin:\n";
 $mega_prompt .= "  `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n\n";
 
-$mega_prompt .= "### Phase 4: Gestion Stricte Actif vs Inactif (Zéro Faux-Positif)\n";
-$mega_prompt .= "- **Code Vivant (Production)** : Lors de tout débogage ou analyse d'architecture, TOUJOURS interroger en priorité les éléments actifs (`?status=active` ou `?status=publish`). Ne jamais considérer un snippet inactif ou un workflow éteint comme s'exécutant sur le site.\n";
-$mega_prompt .= "- **Archives & Historique** : N'interroger `?status=inactive` que si l'utilisateur demande explicitement d'analyser un ancien code désactivé, de réactiver une fonction passée ou de vérifier un test historique.\n";
-$mega_prompt .= "- **Bonnes Pratiques de Synchronisation Locale** : Si vous synchronisez les données en local, séparez impérativement les éléments actifs et inactifs dans des dossiers distincts (ex: `code-snippets/live/active/` et `code-snippets/live/inactive/`) pour éviter que des recherches textuelles globales (`grep`) ne polluent vos diagnostics avec du code inactif.\n\n";
+$mega_prompt .= "### Phase 4: Strict Active vs Inactive State Management (Zero False-Positives)\n";
+$mega_prompt .= "- **Live Production Code**: When debugging or analyzing architecture, ALWAYS query active items first (`?status=active` or `?status=publish`). Never assume an inactive snippet or disabled workflow is executing on the live site.\n";
+$mega_prompt .= "- **Archives & History**: Only query `?status=inactive` when explicitly requested to inspect legacy disabled code, reactivate a previous function, or audit historical tests.\n";
+$mega_prompt .= "- **Local Sync Best Practices**: When synchronizing site data locally, separate active and inactive elements into distinct subdirectories (e.g. `snippets/active/` and `snippets/inactive/`) to avoid global codebase search (`grep`) polluted with inactive code.\n\n";
 
 $mega_prompt .= "---\n\n";
 
@@ -83,17 +90,17 @@ $mega_prompt .= "- The WP Agent Bridge plugin is strictly engineered to READ con
 
 $mega_prompt .= "---\n\n";
 
-$mega_prompt .= "## ⚡ Quick Start Commands\n";
-$mega_prompt .= "- **Bootstrap / Refresh Local AI Skill**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md`\n";
+$mega_prompt .= "## ⚡ Quick Start Commands (The 7 Strategic Master Pillars)\n";
 $mega_prompt .= "- **Health Check**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/ping`\n";
+$mega_prompt .= "- **Bootstrap / Refresh Local AI Skill**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md`\n";
 $mega_prompt .= "- **Discover Capabilities & Playbooks**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/capabilities`\n";
-$mega_prompt .= "- **Run Playbook 1 (SEO Audit)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/content/seo-audit?limit=100'`\n";
-$mega_prompt .= "- **Run Playbook 2 (Tech Health)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/action-scheduler?status=failed,in-progress'`\n";
-$mega_prompt .= "- **Run Playbook 3 (Failed Orders)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/orders?status=failed&per_page=5'`\n";
-$mega_prompt .= "- **Run Playbook 4 (Store 360°)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/analytics/overview`\n";
-$mega_prompt .= "- **Run Playbook 5 (Integrations)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/forms`\n";
-$mega_prompt .= "- **Run Playbook 7 (Native Sales & Stock)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/analytics/sales?range=last_30_days'`\n";
-$mega_prompt .= "- **Run Playbook 8 (SMTP & Webhooks)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/system/mail`\n";
+$mega_prompt .= "- **Pillar 1 (SEO & Content Audit)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/content/seo-audit?limit=100'`\n";
+$mega_prompt .= "- **Pillar 2 (Performance & Core Web Vitals)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/performance/profile?path=/&include_assets=true&include_queries=true'`\n";
+$mega_prompt .= "- **Pillar 3 (System Health & Database Bloat)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/system/database`\n";
+$mega_prompt .= "- **Pillar 4 (Orders & Checkout Troubleshooting)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/orders?status=failed&per_page=5'`\n";
+$mega_prompt .= "- **Pillar 5 (Sales & Analytics 360°)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/analytics/sales?range=last_30_days'`\n";
+$mega_prompt .= "- **Pillar 6 (Shipping & Flexible Rules)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/woocommerce/shipping`\n";
+$mega_prompt .= "- **Pillar 7 (Code Architecture & Overrides)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/theme/overrides`\n";
 ?>
 
 <div class="agent-bridge-card">
