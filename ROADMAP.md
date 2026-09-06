@@ -14,6 +14,15 @@
 2. **Conformité RGPD & Caviardage Automatique** : PII (emails, adresses clients) et secrets API (Stripe, SMTP, salts) masqués avant transmission aux LLMs.
 3. **Protection Mémoire `fseek` & Anti-Brute Force** : Zéro impact sur les performances et zéro risque de crash serveur, même sur des boutiques à fort trafic.
 
+### 🏆 Récemment Livré (Releases v1.7.0 à v1.9.0)
+- ✅ **Base de Données & Autoload** : `GET /system/database` (taille BDD, top 15 tables, analyse surcharge autoload `wp_options > 800KB`, transients, Redis).
+- ✅ **Crash Watch PHP** : `GET /logs/errors-summary` (détection ciblée `fseek` des erreurs fatales dédoublonnées avec attribution de composants).
+- ✅ **Pages & SEO E-commerce** : `GET /content/pages`, `GET /content/seo-audit` (support produits & catégories), injection SEO dans `/woocommerce/product/{id}`.
+- ✅ **Intelligence Commerciale 100% Native** : `GET /woocommerce/analytics/sales`, `/top-performers`, `/stock` (CA, AOV, % croissance N-1, valorisation catalogue, stock dormant sans dépendance tierce).
+- ✅ **Diagnostics SMTP & Webhooks** : `GET /system/mail` (FluentSMTP, WP Mail SMTP, Post SMTP, échecs, alerte PHP mail) et `GET /woocommerce/webhooks` (topics, échecs >= 5).
+- ✅ **Audit Durcissement Sécurité** : `GET /system/security` (constantes, XML-RPC, balise générateur, préfixe DB, plugins sécurité/cache).
+- ✅ **Moteur de 8 Playbooks Procéduraux & Skill Generator** : `GET /capabilities?format=skill` (génération dynamique de `SKILL.md` pour Cursor, Antigravity et Claude).
+
 ---
 
 ## 🚀 Phase 1 : Les Incontournables Agences (Must-Have "Dealbreakers")
@@ -89,11 +98,47 @@ Ces fonctionnalités créent un effet "Whaou" immédiat chez les développeurs u
   - Export sous forme de document exécutif propre (Markdown et HTML imprimable en PDF A4) avec le logo de l'agence.
   - Cas d'usage : Permet à l'agence de livrer un pré-audit complet à un prospect dès la première prise de contact.
 
+
 ### 2.4 Indicateur d'Environnement (Staging / Production / Local)
 - [ ] **Détection `WP_ENVIRONMENT_TYPE`** :
   - Détection automatique et exposition dans `/ping` et `/system`.
   - Badge visuel dans l'admin WordPress (Vert: Production, Orange: Staging, Bleu: Local).
   - Instruction claire à destination des agents IA pour adapter leur niveau de prudence.
+
+---
+
+## 🔬 Phase 2.5 : Diagnostics Techniques & Audits Métier Spécialisés
+
+Ces évolutions fonctionnelles et techniques, identifiées lors de l'audit architectural, renforcent les capacités d'investigation sans aucune dépendance à des plugins tiers :
+
+### 2.5.1 Audit SEO & Contenu Approfondi
+- [ ] **Audit des Images sans Balise `alt` (`GET /content/seo-audit?include_images=true` ou `/content/media-audit`)** :
+  - Calcul du ratio d'images sans texte alternatif dans la bibliothèque de médias (`_wp_attachment_image_alt`).
+  - Détection ciblée des fiches produits WooCommerce dont l'image principale ou la galerie manquent de balise `alt` (pénalisant pour Google Images et non conforme aux standards d'accessibilité RGAA/WCAG).
+- [ ] **Vérification du Sitemap XML et du Robots.txt (`GET /content/sitemap-status`)** :
+  - Contrôle d'accessibilité et code HTTP du sitemap XML (`/wp-sitemap.xml` natif de WordPress ou sitemaps générés par Rank Math, Yoast, SEOPress).
+  - Analyse des directives du `robots.txt` virtuel WordPress pour repérer les blocages accidentels (`Disallow: /` sur un site de production).
+- [ ] **Hiérarchie Sémantique des Titres Hn** :
+  - Enrichissement de `GET /content/page/{id}` et `/content/post/{id}` avec le décompte et l'arborescence des balises `<h1>` à `<h6>`.
+  - Alertes automatiques en cas d'absence de `<h1>`, de `<h1>` multiples, ou de sauts de niveau incohérents (ex: passer directement de `<h2>` à `<h4>`).
+
+### 2.5.2 Performance Frontend & Core Web Vitals
+- [ ] **Cartographie des Assets CSS/JS & Scripts Tiers (`GET /system/assets`)** :
+  - Inspection de `$wp_scripts` et `$wp_styles` pour inventorier tous les fichiers enfilés (*enqueued*).
+  - Détection des scripts bloquants chargés dans le `<head>` (`in_footer == false`) sans attribut `defer` ou `async`.
+  - Recensement des trackers tiers injectés (Google Tag Manager, Pixel Meta, TikTok, scripts WPCode en en-tête) impactant directement le First Contentful Paint (FCP) et le Interaction to Next Paint (INP).
+
+### 2.5.3 Santé Système & Compatibilité PHP Avancée
+- [ ] **Détection des Dépréciations PHP 8.2 / 8.3 (`GET /system/deprecations`)** :
+  - Scan ciblé dans `debug.log` pour extraire les avertissements `E_DEPRECATED` récurrents causés par d'anciens snippets WPCode ou de vieilles extensions lors d'une montée de version PHP.
+
+### 2.5.4 E-Commerce & Intégrations Externes
+- [ ] **Funnel de Panier & Taux d'Abandon (`GET /woocommerce/analytics/cart-funnel`)** :
+  - Analyse des sessions actives dans `{$wpdb->prefix}woocommerce_sessions`.
+  - Décompte des paniers en cours vs commandes finalisées (ratio de déperdition au checkout sans dépendance à GA4).
+  - Détection et extraction des données de plugins de relance de panier répandus (CartBounty, AutomateWoo) si installés.
+- [ ] **Webhooks Entrants & Logs Callbacks API (`GET /woocommerce/api-logs`)** :
+  - Analyse des requêtes entrantes rejetées ou en erreur sur les endpoints `?wc-api=*` et l'API REST (callbacks Stripe, retours d'état transporteurs, synchronisations ERP).
 
 ---
 
