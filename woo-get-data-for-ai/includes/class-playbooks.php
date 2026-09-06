@@ -615,6 +615,61 @@ class Playbooks {
                     ],
                 ],
             ],
+            [
+                'id'              => 'database_bloat_hygiene_audit',
+                'title'           => esc_html__('Database Bloat, Autoload & WooCommerce Hygiene Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Protocol to diagnose database overweight, autoload memory consumption, orphaned plugin options, Action Scheduler accumulation, and abandoned WooCommerce orders.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['system'],
+                'optional_modules'=> ['woocommerce', 'scheduler', 'logs'],
+                'intent_triggers' => [
+                    'audit bdd',
+                    'base de données lourde',
+                    'nettoyer bdd',
+                    'site lent bdd',
+                    'autoload bloat',
+                    'crash mémoire',
+                    'mémoire épuisée',
+                    'nettoyer woocommerce',
+                    'commandes annulées',
+                    'action scheduler plein',
+                    'database bloat',
+                    'clean database',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Database Size & Autoload Inspection', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system/database',
+                        'params'      => [],
+                        'description' => esc_html__('Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options from inactive plugins.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['autoload_health.status', 'autoload_health.total_size', 'autoload_health.top_heavy_options[].is_orphaned_candidate', 'transients_health.expired_transients', 'top_tables[].total_human'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('WooCommerce Orders Volume & Stale Ratio', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/summary',
+                        'params'      => [],
+                        'description' => esc_html__('Audits total orders, cancellation ratio, and estimates stale unpaid abandoned orders older than 1 year cluttering HPOS tables.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['orders.health_analysis.cancelled_ratio_percent', 'orders.health_analysis.alert_high_cancellations', 'orders.health_analysis.cancelled_unpaid_older_than_1y_estimate'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Action Scheduler Queue & Retention Health', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/action-scheduler',
+                        'params'      => ['status' => 'complete,failed,in-progress', 'per_page' => 10],
+                        'description' => esc_html__('Evaluates completed actions accumulation, active retention period in days, cleanup batch size, and bloat alert.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['summary.complete', 'retention.retention_period_days', 'retention.is_default', 'retention.alert_bloat'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('Overdue Crons & Ghost Hooks', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/crons',
+                        'params'      => ['status' => 'overdue'],
+                        'description' => esc_html__('Detects overdue WP-Cron jobs and orphan background hooks that may fail repeatedly or delay maintenance cleanup.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['overdue_count', 'crons[].diff_seconds', 'crons[].hook'],
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -795,7 +850,11 @@ class Playbooks {
         $md .= "# Run Playbook 11: Agency Multi-Template Performance & Native Web Vitals Audit\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/autoload?limit=25'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/autoload?limit=25'\n\n";
+        $md .= "# Run Playbook 12: Database Bloat, Autoload & WooCommerce Hygiene Audit\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/database'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/summary'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=complete&per_page=10'\n";
         $md .= "```\n";
 
         return $md;

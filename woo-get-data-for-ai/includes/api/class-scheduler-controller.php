@@ -378,11 +378,50 @@ class Scheduler_Controller extends Rest_Controller {
         return $this->response([
             'action_scheduler_installed' => true,
             'summary'                    => $summary,
+            'retention'                  => self::get_retention_policy($summary['complete'] ?? 0),
             'total_matching'             => $total_matching,
             'page'                       => $page,
             'per_page'                   => $per_page,
             'total_pages'                => $total_pages,
             'actions'                    => $actions,
         ]);
+    }
+
+    /**
+     * Retrieve Action Scheduler retention policy, batch size and bloat assessment.
+     *
+     * @param int $complete_count
+     * @return array
+     */
+    public static function get_retention_policy($complete_count = 0) {
+        $default_retention_seconds = 30 * (defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400);
+        $retention_seconds = (int) apply_filters('action_scheduler_retention_period', $default_retention_seconds);
+        $day_sec = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+        $retention_days    = round($retention_seconds / $day_sec);
+        $cleanup_batch_size= (int) apply_filters('action_scheduler_cleanup_batch_size', 20);
+        $is_default        = ($retention_seconds === $default_retention_seconds);
+        $alert_bloat       = ($is_default && $complete_count > 25000);
+
+        $recommendation = null;
+        if ($alert_bloat) {
+            $recommendation = sprintf(
+                'More than %s completed actions stored with default %d-day retention period. Consider reducing retention to 7 days via action_scheduler_retention_period filter to significantly reduce database size.',
+                function_exists('number_format_i18n') ? number_format_i18n($complete_count) : number_format($complete_count),
+                $retention_days
+            );
+        } elseif ($is_default) {
+            $recommendation = sprintf('Default %d-day retention period active.', $retention_days);
+        } else {
+            $recommendation = sprintf('Custom retention period of %d days active.', $retention_days);
+        }
+
+        return [
+            'retention_period_days' => (int) $retention_days,
+            'retention_seconds'     => $retention_seconds,
+            'is_default'            => $is_default,
+            'cleanup_batch_size'    => $cleanup_batch_size,
+            'alert_bloat'           => $alert_bloat,
+            'recommendation'        => $recommendation,
+        ];
     }
 }

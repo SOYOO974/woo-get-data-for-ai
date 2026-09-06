@@ -533,12 +533,13 @@ class Performance_Controller extends Rest_Controller {
                 $opt_bytes = (int) $row->size_bytes;
                 $opt_kb    = round($opt_bytes / 1024, 2);
 
-                $top_options[] = [
+                $orphan_data = self::analyze_orphaned_option($row->option_name);
+                $top_options[] = array_merge([
                     'option_name' => $row->option_name,
                     'size_bytes'  => $opt_bytes,
                     'size_kb'     => $opt_kb,
                     'component'   => $comp,
-                ];
+                ], $orphan_data);
 
                 if (!isset($by_component[$comp])) {
                     $by_component[$comp] = [

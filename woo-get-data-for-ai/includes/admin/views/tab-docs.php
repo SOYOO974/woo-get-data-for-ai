@@ -240,7 +240,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
         <?php esc_html_e('Dynamic Procedural Playbooks & AI Skill Generator', 'woo-get-data-for-ai'); ?>
     </h3>
     <p class="description">
-        <?php esc_html_e('WP Agent Bridge is more than raw endpoints: it embeds 8 structured diagnostic Playbooks and dynamically generates ready-to-use AI skills.', 'woo-get-data-for-ai'); ?>
+        <?php esc_html_e('WP Agent Bridge is more than raw endpoints: it embeds 12 structured diagnostic Playbooks and dynamically generates ready-to-use AI skills.', 'woo-get-data-for-ai'); ?>
     </p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">
@@ -257,10 +257,10 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px;">
             <h4 style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 6px;">
                 <span class="dashicons dashicons-randomize"></span>
-                <?php esc_html_e('8 Battle-Tested Audit Playbooks', 'woo-get-data-for-ai'); ?>
+                <?php esc_html_e('12 Battle-Tested Audit Playbooks', 'woo-get-data-for-ai'); ?>
             </h4>
             <p style="font-size: 13px; color: #475569; margin: 0;">
-                <?php esc_html_e('Includes multi-step investigation recipes: 360° SEO Audit, Server & Cron Health, Failed Orders Troubleshoot, Native Store Sales & Stock Valuation, SMTP Mail & Webhooks Diagnostics, Store Performance & UTM Funnel, Integrations Mapping, and Theme Template Compatibility.', 'woo-get-data-for-ai'); ?>
+                <?php esc_html_e('Includes multi-step investigation recipes: Database Bloat & Hygiene, Agency Performance & Native Web Vitals, Shipping Logistics & Flexible Shipping, Code Drift, 360° SEO Audit, Server & Cron Health, Failed Orders Troubleshoot, Native Store Sales & Stock, SMTP Mail & Webhooks, Store Analytics & UTM Funnel, Integrations Mapping, and Theme Template Compatibility.', 'woo-get-data-for-ai'); ?>
             </p>
         </div>
 

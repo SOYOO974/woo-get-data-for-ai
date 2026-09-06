@@ -32,7 +32,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Native WooCommerce Sales & Stock Intelligence**: 100% native commercial reporting without external tracking plugins: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products and coupons, and stock valuation & dormant inventory.
 - **SMTP & Transactional Email Diagnostics**: Provider detection (**FluentSMTP**, **WP Mail SMTP**, **Post SMTP**, **Easy WP SMTP**), credentials sanitization, recent delivery failures, and PHP `mail()` unauthenticated spam risk alert.
 - **Security Hardening & Protection Audit**: Audit of constants (`DISALLOW_FILE_EDIT`, `WP_DEBUG_DISPLAY`), XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.
-- **Database Health & Autoload Analysis**: Audit of SQL table sizes, top heavy tables, transient accumulations, and `wp_options` autoload footprint with performance alerts (> 800 KB threshold).
+- **Database Health, Autoload & Orphaned Options**: Audit of SQL table sizes, top heavy tables, transient accumulations, `wp_options` autoload footprint (> 800 KB threshold), and intelligent detection of orphaned autoloaded options left behind by inactive or uninstalled plugins.
 - **Crash Watch Fatal Error Dashboard**: Targeted reverse-tail extraction of recent critical PHP fatal errors and exceptions with component attribution for instant bug diagnostics.
 - **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities across pages, blog posts, WooCommerce products, and categories.
 - **Code Drift Fingerprinting & Instant ZIP Export**: Instant cryptographic checksums (`/code/checksums`) for local vs remote code drift detection, and on-the-fly clean ZIP archive downloads (`/code/zip`) with zero `.git` or log clutter.
@@ -40,7 +40,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Multi-Template Profiler & Plugin Performance Attribution**: Discovers 5 key e-commerce page archetypes (`/performance/templates-urls`), performs surgical on-demand profiling (`/performance/profile`) measuring TTFB, peak memory, attributing SQL queries and execution duration per plugin via stack backtraces, detecting duplicate/slow queries (>50ms), and auditing enqueued JS/CSS assets per plugin.
 - **100% Native Server-Side Core Web Vitals & Frontend Diagnostics**: Zero external API dependencies, zero quota limits, and sub-100ms response time. Audits DOM size/depth and Elementor node footprint, missing image dimensions (CLS root cause), legacy image formats (.png/.jpg vs modern WebP/AVIF), external Google Fonts display=swap check, WordPress core frontend bloat scripts (emojis, embeds, migrate, dashicons), render-blocking resources, and WooCommerce cart fragments directly inside `/performance/profile`.
 - **Autoload Bloat & Plugin Resource Footprint**: Deep audit of `wp_options` (`alloptions`) against the 800 KB threshold (`/performance/autoload`) grouped by plugin prefix, and consolidated database table size & row volume per active plugin (`/performance/plugins-summary`).
-- **11 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for agency multi-template performance & native Web Vitals, SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, local vs prod code drift, and shipping logistics.
+- **12 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for database bloat & hygiene, agency multi-template performance & native Web Vitals, SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, local vs prod code drift, and shipping logistics.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -104,8 +104,8 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | :--- | :--- |
 | `GET /ping` | Health check, server time, site name, and plugin version. |
 | `GET /capabilities?format={json\|skill\|markdown}` | Dynamic discovery catalog: active modules, endpoints, procedural Playbooks, and ready-to-use Agent `SKILL.md` generator. |
-| `GET /system` | Server limits (PHP, RAM, execution time), WP core info, active plugins with update status, HPOS state, and Action Scheduler queue. |
-| `GET /system/database` | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status. |
+| `GET /system` | Server limits (PHP, RAM, execution time), WP core info, active plugins with update status, HPOS state, Action Scheduler queue, and retention policy. |
+| `GET /system/database` | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, orphaned options analysis from inactive plugins, transient counts, and object cache status. |
 | `GET /system/mail` | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures. |
 | `GET /system/security` | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins. |
 | `GET /theme/options` | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options`), and theme mods. |
@@ -127,7 +127,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /logs/custom?file={filename}&lines=200` | Tail inspection of specific custom logs in `wp-content/` (e.g. `komela-order-status-sync.log`). |
 | `GET /logs/errors-summary?limit=15` | Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from `debug.log` and `wc-logs` with component attribution. |
 | `GET /crons` | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments. |
-| `GET /action-scheduler` | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, and error logs from `actionscheduler_logs`. |
+| `GET /action-scheduler` | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, retention policy in days, bloat alert, and error logs from `actionscheduler_logs`. |
 | `GET /flowmattic/export-all?status={active\|inactive\|all}` | Bulk export of FlowMattic automation workflows with `active_count` and `inactive_count`. |
 | `GET /flowmattic/workflows?status={active\|inactive\|all}` | List FlowMattic workflows (ID, name, status, triggers, steps, tasks executed). |
 | `GET /flowmattic/workflow/{id}?format=export` | Download a workflow in FlowMattic's native importable JSON format. |
@@ -142,7 +142,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /meta/fields?post_type={type}` | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (groups, recursive subfields, location rules, options pages), with optional DB discovery. |
 | `GET /meta/acf?status={status}` | Deep inspection of ACF environment, field groups, recursive subfields, location rules, and registered options pages. |
 | `GET /meta/post/{id}` | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta). |
-| `GET /woocommerce/summary` | High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones. |
+| `GET /woocommerce/summary` | High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones. |
 | `GET /woocommerce/products?status={publish\|draft\|all}` | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations. |
 | `GET /woocommerce/product/{id}` | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields. |
 | `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |
@@ -165,7 +165,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 
 ---
 
-## 🎯 Procedural AI Playbooks (11 Automated Investigation Recipes)
+## 🎯 Procedural AI Playbooks (12 Automated Investigation Recipes)
 
 To avoid trial-and-error querying, the plugin includes pre-configured procedural investigation recipes that an AI can trigger based on user intent:
 
@@ -180,6 +180,7 @@ To avoid trial-and-error querying, the plugin includes pre-configured procedural
 9. **Code Drift & Extension Synchronization** (`code_sync_drift_audit`): Fingerprints directory checksums with `/code/checksums` to compare against local workspace files, and downloads complete clean ZIP archives with `/code/zip` in 1 single call.
 10. **Shipping Zones, Methods & Flexible Shipping Rules Audit** (`shipping_logistics_audit`): Comprehensive logistics audit inspecting shipping zones and geo-locations, native method options, Flexible Shipping PRO matrix calculation rules (including Table Rate on flat rate), and deep order shipping line metadata (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`, `/woocommerce/order/{id}`).
 11. **Agency Performance, Multi-Template TTFB & Native Web Vitals Audit** (`agency_performance_audit`): 6-phase master diagnostic sequence correlating `/performance/templates-urls`, `/performance/profile` across 5 template archetypes with 100% native Core Web Vitals & frontend signals, autoload bloat `/performance/autoload`, `/performance/plugins-summary`, `/action-scheduler`, and `/logs/errors-summary`, with quantified Business Impact Score and ready-to-copy WPCode snippets.
+12. **Database Bloat, Autoload & WooCommerce Hygiene Audit** (`database_bloat_hygiene_audit`): 4-step sequence inspecting total database size, top heavy tables, autoload memory consumption with orphaned options detection from inactive plugins, Action Scheduler accumulation and retention policy, WooCommerce order cancellation ratios with stale unpaid orders > 1 year estimate, and overdue WP-Cron jobs (`/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`).
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 

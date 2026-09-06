@@ -366,7 +366,7 @@ class Woocommerce_Controller extends Rest_Controller {
             }
         }
 
-        // 3. Order Counts by Status
+        // 3. Order Counts by Status & Health Analysis
         $order_statuses = [];
         $registered_order_statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
         $total_orders = 0;
@@ -379,6 +379,54 @@ class Woocommerce_Controller extends Rest_Controller {
             ];
             $total_orders += (int) $count;
         }
+
+        $cancelled_count = (int) ($order_statuses['cancelled']['count'] ?? 0);
+        $failed_count    = (int) ($order_statuses['failed']['count'] ?? 0);
+        $cancelled_ratio = $total_orders > 0 ? round(($cancelled_count / $total_orders) * 100, 1) : 0.0;
+        $failed_ratio    = $total_orders > 0 ? round(($failed_count / $total_orders) * 100, 1) : 0.0;
+
+        // Estimate stale unpaid cancelled orders older than 1 year (database clutter in HPOS / posts)
+        $stale_cancelled_count = 0;
+        if ($cancelled_count > 0) {
+            if ($hpos_enabled) {
+                $stale_cancelled_count = (int) $wpdb->get_var(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders 
+                     WHERE status = 'wc-cancelled' 
+                       AND date_paid_gmt IS NULL 
+                       AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR)"
+                );
+            } else {
+                $stale_cancelled_count = (int) $wpdb->get_var(
+                    "SELECT COUNT(*) FROM {$wpdb->posts} 
+                     WHERE post_type = 'shop_order' 
+                       AND post_status = 'wc-cancelled' 
+                       AND post_date_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR)"
+                );
+            }
+        }
+
+        $alert_high_cancellations = ($cancelled_ratio > 30.0 && $cancelled_count > 500);
+        $order_recommendation = null;
+        if ($alert_high_cancellations) {
+            $order_recommendation = sprintf(
+                '%.1f%% of orders (%s orders) are cancelled. An estimated %s unpaid cancelled orders older than 1 year are cluttering order tables. Consider a scheduled cleanup or archiving policy.',
+                $cancelled_ratio,
+                function_exists('number_format_i18n') ? number_format_i18n($cancelled_count) : number_format($cancelled_count),
+                function_exists('number_format_i18n') ? number_format_i18n($stale_cancelled_count) : number_format($stale_cancelled_count)
+            );
+        } else {
+            $order_recommendation = 'Order cancellation ratio is within standard operational range.';
+        }
+
+        $order_health = [
+            'cancelled_count'                         => $cancelled_count,
+            'cancelled_ratio_percent'                 => $cancelled_ratio,
+            'failed_count'                            => $failed_count,
+            'failed_ratio_percent'                    => $failed_ratio,
+            'alert_high_cancellations'                => $alert_high_cancellations,
+            'cancelled_unpaid_older_than_1y_estimate' => $stale_cancelled_count,
+            'recommendation'                          => $order_recommendation,
+        ];
 
         // 4. Payment Gateways summary
         $gateways_summary = [
@@ -428,8 +476,9 @@ class Woocommerce_Controller extends Rest_Controller {
                 'by_type'      => $product_types,
             ],
             'orders' => [
-                'total'     => $total_orders,
-                'by_status' => $order_statuses,
+                'total'           => $total_orders,
+                'by_status'       => $order_statuses,
+                'health_analysis' => $order_health,
             ],
             'payment_gateways' => $gateways_summary,
             'shipping_zones'   => [

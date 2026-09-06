@@ -503,6 +503,17 @@ async function pullScheduler() {
                 asMd += `- **Canceled**: ${s.canceled || 0}\n`;
                 asMd += `- **Total Tracked**: ${s.total || 0}\n\n`;
 
+                if (asData.retention) {
+                    const ret = asData.retention;
+                    asMd += `## Retention & Hygiene Policy\n`;
+                    asMd += `- **Retention Period**: **${ret.retention_period_days} days** (${ret.is_default ? 'Default' : 'Custom'})\n`;
+                    asMd += `- **Batch Size**: ${ret.cleanup_batch_size} actions / batch\n`;
+                    if (ret.alert_bloat) {
+                        asMd += `- **Bloat Alert**: ⚠️ **HIGH RETENTION BLOAT** — ${ret.recommendation}\n`;
+                    }
+                    asMd += `\n`;
+                }
+
                 const actions = asData.actions || [];
                 if (actions.length > 0) {
                     asMd += `## Actions (Showing ${actions.length} actionable jobs)\n\n`;
@@ -927,6 +938,20 @@ async function pullWooCommerce() {
                 md += `| **${item.label || st}** | ${item.count} |\n`;
             });
             md += `\n`;
+
+            if (summary.orders.health_analysis) {
+                const h = summary.orders.health_analysis;
+                md += `### 🩺 Order Volume & Hygiene Analysis\n\n`;
+                md += `- **Cancelled Orders**: ${h.cancelled_count} (**${h.cancelled_ratio_percent}%** of total)${h.alert_high_cancellations ? ' ⚠️ (High volume)' : ''}\n`;
+                md += `- **Failed Orders**: ${h.failed_count} (${h.failed_ratio_percent}% of total)\n`;
+                if (h.cancelled_unpaid_older_than_1y_estimate > 0) {
+                    md += `- **Stale Abandoned Orders (> 1 year)**: ⚠️ **${h.cancelled_unpaid_older_than_1y_estimate} orders** (cluttering order/HPOS tables)\n`;
+                }
+                if (h.recommendation) {
+                    md += `- **Recommendation**: ${h.recommendation}\n`;
+                }
+                md += `\n`;
+            }
         }
 
         if (webhooksData && webhooksData.summary) {

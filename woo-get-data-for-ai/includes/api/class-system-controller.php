@@ -263,15 +263,16 @@ class System_Controller extends Rest_Controller {
             }
         }
 
-        // Action Scheduler status (if present)
+        // Action Scheduler status & retention policy (if present)
         $action_scheduler_info = null;
         if (class_exists('ActionScheduler') && class_exists('ActionScheduler_Store')) {
             try {
                 $as_store = \ActionScheduler_Store::instance();
+                $counts = [];
                 if (method_exists($as_store, 'action_counts')) {
-                    $action_scheduler_info = $as_store->action_counts();
+                    $counts = $as_store->action_counts();
                 } else {
-                    $action_scheduler_info = [
+                    $counts = [
                         'pending'     => $as_store->get_status_count('pending'),
                         'in-progress' => $as_store->get_status_count('in-progress'),
                         'complete'    => $as_store->get_status_count('complete'),
@@ -279,6 +280,10 @@ class System_Controller extends Rest_Controller {
                         'canceled'    => $as_store->get_status_count('canceled'),
                     ];
                 }
+                $retention = Scheduler_Controller::get_retention_policy($counts['complete'] ?? 0);
+                $action_scheduler_info = array_merge($counts, [
+                    'retention' => $retention,
+                ]);
             } catch (\Throwable $e) {
                 $action_scheduler_info = ['error' => $e->getMessage()];
             }
@@ -364,15 +369,16 @@ class System_Controller extends Rest_Controller {
                 $total_autoload_bytes += $bytes;
             }
 
-            // Top 10 largest autoloaded options
+            // Top 10 largest autoloaded options with orphaned plugin analysis
             $top_slice = array_slice($autoload_query, 0, 10);
             foreach ($top_slice as $opt) {
                 $opt_bytes = (int) ($opt['size_bytes'] ?? 0);
-                $top_autoload_options[] = [
+                $orphan_data = self::analyze_orphaned_option($opt['option_name']);
+                $top_autoload_options[] = array_merge([
                     'option_name' => $opt['option_name'],
                     'size_bytes'  => $opt_bytes,
                     'size_human'  => size_format($opt_bytes),
-                ];
+                ], $orphan_data);
             }
         }
 

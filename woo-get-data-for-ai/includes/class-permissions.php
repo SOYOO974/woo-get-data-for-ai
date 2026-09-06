@@ -183,7 +183,7 @@ class Permissions {
                     [
                         'path'        => '/system/database',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint with 800KB threshold, orphaned options analysis from inactive plugins, transient counts, and object cache status.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/mail',
@@ -362,7 +362,7 @@ class Permissions {
                         'path'        => '/action-scheduler',
                         'methods'     => ['GET'],
                         'params'      => ['status (default: in-progress,failed,pending)', 'hook', 'search', 'group', 'per_page (default: 50)', 'page (default: 1)'],
-                        'description' => esc_html__('Inspect Action Scheduler queue with status summary, scheduled dates, attempts, arguments, and failure log messages.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Inspect Action Scheduler queue with status summary, retention policy in days, scheduled dates, attempts, arguments, and failure log messages.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -482,7 +482,7 @@ class Permissions {
                     [
                         'path'        => '/woocommerce/summary',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/products',
