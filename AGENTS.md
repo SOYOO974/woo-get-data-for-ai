@@ -10,8 +10,9 @@ Do not ask the user for permission or wait for them to request it; execute this 
 
 1. **Version Bump**:
    - Increment the semantic version in `woo-get-data-for-ai/woo-get-data-for-ai.php` (both plugin header `Version: X.Y.Z` and constant `WOO_GET_DATA_AI_VERSION`).
-2. **Synchronize Procedural Playbooks & Skills**:
-   - Whenever adding or changing endpoints or diagnostic capabilities, update `includes/class-playbooks.php` to integrate the endpoint into existing playbooks or create a new dedicated Playbook so AI agents automatically learn how to use it without prompt re-copying.
+2. **Synchronize Procedural Playbooks & Skills (The MECE 7 Master Pillars Principle)**:
+   - Whenever adding or changing endpoints or diagnostic capabilities, integrate the endpoint into one of the **7 Strategic MECE Master Pillars** in `includes/class-playbooks.php`.
+   - **CRITICAL ANTI-PROLIFERATION MANDATE**: Do **NOT** create an 8th or ad-hoc micro-playbook. Every diagnostic capability must naturally fit into one of the 7 MECE pillars to keep LLM context light, avoid prompt dilution, and prevent trigger collisions.
 3. **Update Documentation**:
    - Update `PROJECT_CONTEXT.md` (permissions matrix, endpoint catalog, playbooks list, version).
    - Update `README.md` (capabilities, REST API table, playbooks, CLI usage, version).
@@ -70,4 +71,17 @@ The plugin MUST always remain ultra-efficient, fast, laser-focused, and lightwei
      - *Can existing endpoints or parameters provide this context without adding a new route?*
      - *Is the implementation lightweight, clean, defensive, and lightning fast?*
    - If any answer is unsatisfactory, **challenge the need and do not implement it.**
+
+6. **Playbook Governance & Anti-Proliferation (The 7 MECE Pillars Rule)**:
+   - **Zero Playbook Bloat**: The plugin strictly maintains **only 7 Strategic MECE Master Playbooks**:
+     1. `seo_content_audit` (SEO, Contenus & Visibilité)
+     2. `agency_performance_audit` (Performance Multi-Templates & Core Web Vitals)
+     3. `database_system_hygiene` (Santé Système, BDD Bloat & Hygiène Background)
+     4. `order_checkout_troubleshoot` (Dépannage Commandes, Passerelles, SMTP & Webhooks)
+     5. `ecommerce_bi_analytics` (Analytics Ventes, Produits & CRO 360°)
+     6. `shipping_logistics_audit` (Zones d'expédition, Méthodes & Flexible Shipping)
+     7. `code_theme_integrations` (Architecture Code, Thème, Hooks, Snippets & Automations)
+   - Micro-playbooks (e.g. creating a separate playbook for SMTP, a separate one for database bloat, a separate one for code drift, etc.) dilute the LLM's attention span, bloat generated `SKILL.md` files by thousands of tokens, and cause semantic routing collisions.
+   - Any new or improved endpoint MUST be integrated into one of these 7 master pillars as a step or contextual signal. Never register an 8th top-level playbook without strict architectural justification.
+
 

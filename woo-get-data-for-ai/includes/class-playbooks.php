@@ -21,10 +21,13 @@ class Playbooks {
      */
     public static function get_all() {
         return [
+            // =========================================================================
+            // PILIER 1: SEO, CONTENUS & VISIBILITÉ
+            // =========================================================================
             [
                 'id'              => 'seo_content_audit',
-                'title'           => esc_html__('360° SEO & Content Structure Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Comprehensive audit protocol to identify indexation blockers, missing meta descriptions, title length anomalies, and Gutenberg content structure.', 'woo-get-data-for-ai'),
+                'title'           => esc_html__('360° SEO, Content Hierarchy & Visibility Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Comprehensive audit protocol to identify indexation blockers, critical noindex on products/pages, missing meta descriptions, title anomalies, and Gutenberg content structure.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['content'],
                 'optional_modules'=> ['system'],
                 'intent_triggers' => [
@@ -36,6 +39,7 @@ class Playbooks {
                     'open graph audit',
                     'audit contenu',
                     'noindex check',
+                    'seo ranking',
                 ],
                 'workflow'        => [
                     [
@@ -58,494 +62,22 @@ class Playbooks {
                         'step'        => 3,
                         'action'      => esc_html__('Deep Inspection of Flagged Pages', 'woo-get-data-for-ai'),
                         'endpoint'    => '/content/page/{id}',
-                        'params'      => ['id' => '<targeted_page_id>'],
-                        'description' => esc_html__('For pages flagged in step 1 or 2: inspects full Gutenberg block tree, shortcodes, heading structure, word count, and canonical URL.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['blocks_summary', 'headings_distribution', 'word_count', 'seo_metadata'],
+                        'params'      => ['id' => '<flagged_page_id>'],
+                        'description' => esc_html__('Examines raw vs rendered content, Gutenberg block list, shortcodes, and unified normalized SEO metadata for flagged pages.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['content.blocks_count', 'content.shortcodes', 'seo.meta_title', 'seo.meta_description', 'seo.is_noindex'],
                     ],
                 ],
             ],
-            [
-                'id'              => 'tech_health_crons',
-                'title'           => esc_html__('Technical Health, Crons & Background Tasks Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Audits server environment, PHP/MySQL versions, memory limits, database autoload bloat, security hardening, stalled Action Scheduler queues, overdue WP-Crons, and critical PHP errors.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['system'],
-                'optional_modules'=> ['scheduler', 'logs', 'wc_overrides'],
-                'intent_triggers' => [
-                    'audit technique',
-                    'santé du site',
-                    'site lent',
-                    'cron bloqué',
-                    'action scheduler',
-                    'erreur php',
-                    'fatal error',
-                    'crash wordpress',
-                    'server limits',
-                    'autoload bloat',
-                    'sécurité wordpress',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Server Environment & Outdated Plugins', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system',
-                        'params'      => [],
-                        'description' => esc_html__('Inspects PHP version, memory limits (wp_memory_limit), MySQL version, HPOS status, active plugins list, and pending core/plugin updates.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['environment.php_version', 'environment.wp_memory_limit', 'plugins_with_updates', 'woocommerce.hpos_enabled'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Database Health & Autoload Footprint', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system/database',
-                        'params'      => [],
-                        'description' => esc_html__('Audits total database size, top 15 heaviest tables, autoload options size (alert if >800KB), and expired transients.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['autoload_health.total_size', 'autoload_health.status', 'autoload_health.top_heavy_options', 'transients_health.expired_transients'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Security Hardening & Protection Audit', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system/security',
-                        'params'      => [],
-                        'description' => esc_html__('Audits constants (DISALLOW_FILE_EDIT, WP_DEBUG_DISPLAY), XML-RPC exposure, SSL enforcement, and active caching/security plugins.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['health', 'constants.disallow_file_edit', 'constants.wp_debug_display', 'recommendations'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Action Scheduler Queue Diagnostics', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/action-scheduler',
-                        'params'      => ['status' => 'in-progress,failed,pending', 'per_page' => 30],
-                        'description' => esc_html__('Examines queued background jobs, recurring scheduled tasks (subscriptions, webhooks, inventory sync), and error logs of failed actions.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.failed_count', 'summary.in_progress_count', 'actions[].log_messages'],
-                    ],
-                    [
-                        'step'        => 5,
-                        'action'      => esc_html__('WP-Cron Overdue Detection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/crons',
-                        'params'      => ['status' => 'overdue', 'limit' => 50],
-                        'description' => esc_html__('Checks for overdue WP-Cron events that indicate a stalled or misconfigured cron runner.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['overdue_count', 'crons[].overdue_by_seconds'],
-                    ],
-                    [
-                        'step'        => 6,
-                        'action'      => esc_html__('Crash Watch Fatal Error Dashboard', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/logs/errors-summary',
-                        'params'      => [],
-                        'description' => esc_html__('Scans debug.log memory-safely and clusters recurring Fatal Errors by root cause file, line, and frequency.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['total_fatal_errors', 'grouped_errors[].file', 'grouped_errors[].occurrences', 'grouped_errors[].last_seen'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'ecommerce_troubleshoot',
-                'title'           => esc_html__('Checkout, Failed Orders & Payment Gateway Diagnostics', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Investigates payment failures, abandoned checkouts, coupon glitches, missing confirmation emails, and failing webhooks with complete GDPR PII anonymization.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['woocommerce'],
-                'optional_modules'=> ['system', 'logs', 'wpcode', 'wc_overrides'],
-                'intent_triggers' => [
-                    'commande échouée',
-                    'problème paiement',
-                    'bug checkout',
-                    'panier bloqué',
-                    'failed order',
-                    'erreur stripe',
-                    'erreur paypal',
-                    'diagnostiquer commande',
-                    'email commande non reçu',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Fetch Recent Failed & Processing Orders', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/orders',
-                        'params'      => ['status' => 'failed', 'per_page' => 5],
-                        'description' => esc_html__('Lists recent failed orders with GDPR-masked customer data, total amounts, and payment method used.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders[].id', 'orders[].payment_method', 'orders[].total'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Inspect Targeted Order Notes, Gateway Responses & Shipping Meta', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/order/{id}',
-                        'params'      => ['id' => '<failed_order_id>'],
-                        'description' => esc_html__('Deep inspection of order notes containing raw payment gateway decline reasons, refund logs, coupon lines, sanitized fees, and shipping line metadata (including Flexible Shipping fs_costs base & additional costs).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['order_notes (gateway response messages)', 'coupon_lines', 'fee_lines', 'shipping_lines[].meta_data', 'shipping_lines[].meta_data.fs_costs'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Check WooCommerce Gateway Logs', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/logs/view',
-                        'params'      => ['filter' => 'wc-', 'lines' => 150],
-                        'description' => esc_html__('Inspects WooCommerce upload logs for recent gateway webhook failures or API communication errors.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['log entries from stripe, paypal, or custom gateways'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Audit Active Code Snippets Touching Checkout', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/wpcode/snippets',
-                        'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Scans active WPCode snippets to detect any custom PHP/JS altering woocommerce_checkout_* or woocommerce_payment_* hooks.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['snippets[].code', 'snippets[].location', 'snippets[].tags'],
-                    ],
-                    [
-                        'step'        => 5,
-                        'action'      => esc_html__('SMTP & Order Confirmation Email Diagnostics', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system/mail',
-                        'params'      => [],
-                        'description' => esc_html__('Checks if transactional emails are sent via authenticated SMTP or failing PHP mail, and inspects recent delivery errors.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['health', 'active_plugin', 'transport_provider', 'recent_failures'],
-                    ],
-                    [
-                        'step'        => 6,
-                        'action'      => esc_html__('WooCommerce Webhooks Delivery Health', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/webhooks',
-                        'params'      => [],
-                        'description' => esc_html__('Verifies whether order-triggered webhooks are disabled or accumulating delivery failures.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.failing_count', 'webhooks[].is_failing', 'webhooks[].failure_count'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'store_analytics_roi',
-                'title'           => esc_html__('Store Performance, Sales & Conversion Funnel Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Correlates web traffic, WooCommerce conversion rates, marketing campaign (UTM) ROI, and device behaviors without third-party tracking scripts.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['analytics'],
-                'optional_modules'=> ['woocommerce'],
-                'intent_triggers' => [
-                    'rapport ventes',
-                    'statistiques site',
-                    'taux de conversion',
-                    'roi campagnes',
-                    'analyse trafic',
-                    'store metrics',
-                    'conversion funnel',
-                    'panier moyen',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('360° Traffic & Conversion Executive Overview', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/analytics/overview',
-                        'params'      => ['range' => 'last_30_days'],
-                        'description' => esc_html__('Consolidated overview of total visitors, views, net sales, WooCommerce conversion rate, top pages, referrers, and devices in 1 call.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.conversion_rate', 'summary.net_sales', 'summary.average_order_value', 'summary.growth_percent'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('High-Level Store Inventory & Order Status Health', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/summary',
-                        'params'      => [],
-                        'description' => esc_html__('Total products, stock health (out of stock, backorder), and distribution of orders by status (processing, on-hold, completed).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['stock_breakdown.outofstock', 'orders_by_status.processing', 'orders_by_status.failed'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Marketing Campaigns & Acquisition Channels ROI', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/analytics/campaigns',
-                        'params'      => ['range' => 'last_30_days', 'limit' => 25],
-                        'description' => esc_html__('Attributes visitors, orders, and generated revenue to specific UTM campaigns (source, medium, campaign name).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['campaigns[].orders', 'campaigns[].net_sales', 'campaigns[].conversion_rate'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Mobile vs Desktop Conversion Disparity', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/analytics/devices',
-                        'params'      => ['range' => 'last_30_days'],
-                        'description' => esc_html__('Compares conversion rates between Desktop, Mobile, and Tablet to pinpoint mobile checkout UX friction.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['device_types[].conversion_rate', 'device_types[].visitors'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'integration_automation_map',
-                'title'           => esc_html__('Architecture, Workflows & Custom Fields Mapping', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Maps all site integrations: Elementor forms, active FlowMattic automation recipes, ACF custom field schemas, and custom PHP hooks.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['elementor'],
-                'optional_modules'=> ['flowmattic', 'meta', 'wpcode'],
-                'intent_triggers' => [
-                    'cartographie technique',
-                    'formulaires elementor',
-                    'workflows flowmattic',
-                    'champs personnalisés',
-                    'acf schema',
-                    'webhooks actifs',
-                    'architecture site',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Elementor Forms & Webhook Inventory', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/elementor/forms',
-                        'params'      => [],
-                        'description' => esc_html__('Maps all form widgets, field identifiers, email recipients, and webhook destination URLs across the site.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['forms[].form_name', 'forms[].webhooks', 'forms[].fields'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Active FlowMattic Automation Workflows', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/flowmattic/workflows',
-                        'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Lists all automated business workflows, triggers (WooCommerce order, form submission, webhook), and action chains.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['workflows[].workflow_title', 'workflows[].trigger_type', 'workflows[].actions_count'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Custom Fields & ACF Architecture', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/meta/fields',
-                        'params'      => ['source' => 'all', 'include_db' => 'false'],
-                        'description' => esc_html__('Discovers all metadata fields defined in code (register_post_meta) and in ACF field groups with type declarations.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['fields[].meta_key', 'fields[].source', 'fields[].type', 'fields[].post_types'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Custom Live Code Snippets', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/wpcode/snippets',
-                        'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Audits custom code snippets executing in production, location hooks, and conditional logic.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['snippets[].title', 'snippets[].code_type', 'snippets[].location'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'theme_wc_compatibility',
-                'title'           => esc_html__('Theme Settings & WooCommerce Template Overrides Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Audits child theme code, Woodmart/Elessi theme options, and detects outdated WooCommerce template overrides.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['wc_overrides'],
-                'optional_modules'=> ['theme'],
-                'intent_triggers' => [
-                    'audit theme',
-                    'template overrides',
-                    'templates obsolètes',
-                    'woodmart options',
-                    'elessi options',
-                    'child theme functions',
-                    'incompatibilité woocommerce',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('WooCommerce Template Overrides Version Drift', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/theme/overrides',
-                        'params'      => [],
-                        'description' => esc_html__('Compares active theme template overrides against the installed WooCommerce core templates to pinpoint version mismatches.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['has_outdated', 'outdated_count', 'overrides[].file', 'overrides[].version', 'overrides[].core_version'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Child Theme Code & Custom CSS', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/theme/child',
-                        'params'      => [],
-                        'description' => esc_html__('Fetches active child theme functions.php and style.css source code and metadata.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['functions_php.code', 'style_css.code'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Theme Configuration & Options', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/theme/options',
-                        'params'      => ['target' => 'all'],
-                        'description' => esc_html__('Decoded theme options (Woodmart, Elessi/Redux, Customizer mods) with API keys and secrets redacted.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['theme_type', 'options'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'store_sales_stock_audit',
-                'title'           => esc_html__('Native E-Commerce Sales, Top Performers & Stock Valuation Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('100% native WooCommerce sales reporting, revenue growth vs prior period, top products and coupons, and inventory valuation without external tracking.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['woocommerce'],
-                'optional_modules'=> [],
-                'intent_triggers' => [
-                    'rapport ventes',
-                    'chiffre d affaires',
-                    'top ventes',
-                    'meilleures ventes',
-                    'valorisation stock',
-                    'stock dormant',
-                    'kpis ecommerce',
-                    'panier moyen',
-                    'croissance ventes',
-                    'sales analytics',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Native WooCommerce Sales Performance', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/analytics/sales',
-                        'params'      => ['range' => 'last_30_days'],
-                        'description' => esc_html__('Net sales, gross sales, paid orders count, AOV, refunds, and growth percentages compared to previous 30 days period.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['kpis.net_sales', 'kpis.orders_count', 'kpis.average_order_value', 'growth_vs_previous.net_sales_growth_pct'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Top Performing Products & Coupons', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/analytics/top-performers',
-                        'params'      => ['limit' => 10, 'range' => 'last_30_days'],
-                        'description' => esc_html__('Identifies best-selling catalog items by net revenue and units sold, and most redeemed coupons with discount totals.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['top_products[].net_revenue', 'top_products[].units_sold', 'top_coupons[].total_discount'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Inventory Financial Valuation & Dormant Stock', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/analytics/stock',
-                        'params'      => [],
-                        'description' => esc_html__('Computes total stock valuation, urgent low stock alerts, and capital locked in dormant stock (0 sales in last 90 days).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.total_inventory_value', 'summary.low_stock_count', 'summary.dormant_items_count', 'dormant_stock_90d[].locked_capital'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Catalog & Order Status Distribution', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/summary',
-                        'params'      => [],
-                        'description' => esc_html__('Global catalog breakdown by product type and order pipeline status (processing, on-hold, completed, failed).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders_by_status', 'stock_breakdown'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'email_webhook_diagnostics',
-                'title'           => esc_html__('Transactional Emails & Webhooks Integrations Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Diagnoses order confirmation delivery failures (FluentSMTP, WP Mail SMTP, PHP mail) and automated ERP/CRM webhook integration dropouts.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['system'],
-                'optional_modules'=> ['woocommerce', 'scheduler', 'logs'],
-                'intent_triggers' => [
-                    'problème email',
-                    'email non reçu',
-                    'diagnostic smtp',
-                    'échec webhook',
-                    'webhook woocommerce',
-                    'synchronisation erp',
-                    'mail delivery failed',
-                    'fluent smtp',
-                    'wp mail smtp',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('SMTP Provider & Delivery Failures Diagnostic', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system/mail',
-                        'params'      => [],
-                        'description' => esc_html__('Detects active mail transport provider (FluentSMTP, WP Mail SMTP, Post SMTP), checks for spam-risky unauthenticated PHP mail, and extracts recent delivery errors.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['health', 'transport_provider', 'is_authenticated', 'recent_failures', 'alerts'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('WooCommerce Webhooks Inventory & Failure Count', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/webhooks',
-                        'params'      => [],
-                        'description' => esc_html__('Audits WooCommerce webhook statuses and flags repeated distribution failures (failure count >= 5 or disabled).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.failing_count', 'summary.health', 'webhooks[].delivery_url', 'webhooks[].failure_count'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Action Scheduler Delivery Tasks Queue', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/action-scheduler',
-                        'params'      => ['status' => 'in-progress,failed,pending', 'per_page' => 30],
-                        'description' => esc_html__('Inspects background delivery tasks for webhooks, email queues, and third-party synchronization jobs.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.failed_count', 'actions[].log_messages'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Mail & Webhook Error Logs Inspection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/logs/view',
-                        'params'      => ['filter' => 'mail', 'lines' => 150],
-                        'description' => esc_html__('Streams error logs to isolate exact SMTP error codes, network timeouts, or remote HTTP webhook 4xx/5xx rejection responses.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['lines', 'matched_errors'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'code_sync_drift_audit',
-                'title'           => esc_html__('Code Drift Verification & Extension Synchronization', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of plugins and child themes.', 'woo-get-data-for-ai'),
-                'required_modules'=> ['code'],
-                'optional_modules'=> ['theme'],
-                'intent_triggers' => [
-                    'comparer code local prod',
-                    'verifier derive code',
-                    'code drift',
-                    'telecharger plugin',
-                    'recuperer theme enfant',
-                    'synchroniser extension',
-                    'audit checksums',
-                    'exporter code plugin',
-                    'synchroniser plugin custom',
-                    'sauvegarde plugin',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Fingerprint Directory Checksums (Local vs Remote Drift)', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/code/checksums',
-                        'params'      => ['path' => 'plugins/<plugin_slug>', 'algo' => 'md5'],
-                        'description' => esc_html__('Generates a hash map of all files with modified dates and byte sizes. Compare against local workspace files to detect altered, added, or missing files before any editing.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['checksums.<filename>.hash', 'checksums.<filename>.size_bytes', 'total_files', 'total_size_bytes'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Export Complete Plugin or Child Theme ZIP Archive', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/code/zip',
-                        'params'      => ['path' => 'plugins/<plugin_slug>', 'format' => 'stream'],
-                        'description' => esc_html__('If drift is detected or local files are missing, downloads a complete, clean ZIP archive without .git, logs, or sensitive files directly in 1 single call.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['archive_name', 'size_bytes', 'stream_binary'],
-                    ],
-                ],
-            ],
-            [
-                'id'              => 'shipping_logistics_audit',
-                'title'           => esc_html__('Shipping Zones, Methods & Flexible Shipping Rules Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Comprehensive logistics audit: inspects WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), and advanced Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes).', 'woo-get-data-for-ai'),
-                'required_modules'=> ['woocommerce'],
-                'optional_modules'=> ['system'],
-                'intent_triggers' => [
-                    'audit livraison',
-                    'frais de port',
-                    'shipping rules',
-                    'flexible shipping',
-                    'zones de livraison',
-                    'tarifs livraison',
-                    'conditions port gratuit',
-                    'modes de livraison',
-                    'frais dexpédition',
-                    'table rate shipping',
-                ],
-                'workflow'        => [
-                    [
-                        'step'        => 1,
-                        'action'      => esc_html__('Dedicated Shipping Zones & Matrix Rules Inspection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/shipping',
-                        'params'      => [],
-                        'description' => esc_html__('Inspects all configured shipping zones, geographic location filters (postcodes, countries, states), native method parameters, and Flexible Shipping matrix rules (conditions, costs, weight/price tiers, special actions, and flat_rate table rate extensions).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['zones[].zone_name', 'zones[].locations', 'zones[].shipping_methods[].id', 'zones[].shipping_methods[].flexible_shipping.rules', 'zones[].shipping_methods[].flexible_shipping_table_rate.rules', 'zones[].shipping_methods[].raw_instance_settings'],
-                    ],
-                    [
-                        'step'        => 2,
-                        'action'      => esc_html__('Store Currency & Tax on Shipping Configuration', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/settings',
-                        'params'      => [],
-                        'description' => esc_html__('Verifies tax calculation on shipping (tax_based_on, shipping_tax_class), default shipping country, and currency formatting.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['general.currency', 'general.ship_to_countries', 'tax.shipping_tax_class', 'tax.calc_taxes'],
-                    ],
-                    [
-                        'step'        => 3,
-                        'action'      => esc_html__('Recent Orders Shipping Method Verification', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/orders',
-                        'params'      => ['per_page' => 10],
-                        'description' => esc_html__('Reviews recent orders to observe which shipping methods and shipping fees were applied in practice.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders[].shipping_total', 'orders[].shipping_lines'],
-                    ],
-                    [
-                        'step'        => 4,
-                        'action'      => esc_html__('Order Shipping Line Meta & Granular Cost Breakdown Inspection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/woocommerce/order/{id}',
-                        'params'      => ['id' => '<order_id>'],
-                        'description' => esc_html__('Deep inspection of shipping lines meta_data to audit granular fee calculations (e.g. Flexible Shipping PRO fs_costs base & additional costs, package item weights).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['shipping_lines[].meta_data', 'shipping_lines[].meta_data.fs_costs.base', 'shipping_lines[].meta_data.fs_costs.additional'],
-                    ],
-                ],
-            ],
+
+            // =========================================================================
+            // PILIER 2: PERFORMANCE FRONTEND, TTFB & CORE WEB VITALS
+            // =========================================================================
             [
                 'id'              => 'agency_performance_audit',
-                'title'           => esc_html__('Agency Performance, Multi-Template TTFB & Native Web Vitals Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Comprehensive diagnostic and prescription protocol for agencies and AI agents: audits 5 strategic e-commerce page archetypes (Home, Shop, Category, Product, Cart), attributes SQL queries and enqueued assets per plugin, inspects 100% native Core Web Vitals signals (DOM size, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core script bloat), detects autoload leaks, and formulates quantified Quick Wins with ready-to-use WPCode snippets.', 'woo-get-data-for-ai'),
+                'title'           => esc_html__('Agency Multi-Template Performance & Core Web Vitals Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Front-facing page speed diagnostic benchmarking 5 key e-commerce page archetypes, measuring TTFB, memory peak, SQL queries attributed per plugin, and 100% native Core Web Vitals signals (DOM size, Elementor footprint %, CLS image dimensions, legacy formats, render-blocking scripts).', 'woo-get-data-for-ai'),
                 'required_modules'=> ['performance'],
-                'optional_modules'=> ['system', 'scheduler', 'logs'],
+                'optional_modules'=> ['system'],
                 'intent_triggers' => [
                     'audit performance',
                     'optimiser vitesse',
@@ -557,12 +89,10 @@ class Playbooks {
                     'slow queries',
                     'ameliorer performances',
                     'slow plugin',
-                    'consommation ressources plugins',
                     'page speed woocommerce',
                     'core web vitals',
                     'pagespeed',
                     'quick wins performance',
-                    'audit boutique lente',
                 ],
                 'workflow'        => [
                     [
@@ -591,96 +121,375 @@ class Playbooks {
                     ],
                     [
                         'step'        => 4,
-                        'action'      => esc_html__('Autoload Bloat & Early-Boot Options Audit', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/performance/autoload',
-                        'params'      => ['limit' => 25],
-                        'description' => esc_html__('Audits total wp_options autoload footprint against the 800 KB threshold, lists top 25 heaviest individual options, groups autoload by plugin prefix, and detects expired transients.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['status', 'total_size_kb', 'alert', 'top_heavy_options', 'by_component'],
-                    ],
-                    [
-                        'step'        => 5,
-                        'action'      => esc_html__('Background Cron & Action Scheduler Queue Health', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/action-scheduler',
-                        'params'      => ['status' => 'in-progress,failed,pending', 'per_page' => 30],
-                        'description' => esc_html__('Detects stalled recurring background jobs, failed synchronization queues, or repetitive webhook loops that monopolize server CPU and database locks.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.failed_count', 'summary.in_progress_count', 'actions[].log_messages'],
-                    ],
-                    [
-                        'step'        => 6,
-                        'action'      => esc_html__('Fatal Error & Warning Disk I/O Scan', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/logs/errors-summary',
-                        'params'      => ['limit' => 15],
-                        'description' => esc_html__('Verifies whether recurrent PHP warnings, deprecations, or fatal errors are continuously writing to debug.log and choking disk I/O.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['total_fatal_errors', 'grouped_errors[].file', 'grouped_errors[].occurrences'],
+                        'action'      => esc_html__('Active Plugins Database & Disk Footprint', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/plugins-summary',
+                        'params'      => ['status' => 'active'],
+                        'description' => esc_html__('Inventories database tables, disk storage size (data + index in KB), and row counts per active plugin to isolate bloated extensions.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['plugins[].name', 'plugins[].tables_count', 'plugins[].db_size_kb', 'plugins[].db_rows'],
                     ],
                 ],
             ],
+
+            // =========================================================================
+            // PILIER 3: SANTÉ SYSTÈME, BASE DE DONNÉES & HYGIÈNE DE FOND
+            // =========================================================================
             [
-                'id'              => 'database_bloat_hygiene_audit',
-                'title'           => esc_html__('Database Bloat, Autoload & WooCommerce Hygiene Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Protocol to diagnose database overweight, autoload memory consumption, orphaned plugin options, Action Scheduler accumulation, and abandoned WooCommerce orders.', 'woo-get-data-for-ai'),
+                'id'              => 'database_system_hygiene',
+                'title'           => esc_html__('System Health, Database Bloat & Background Hygiene Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('In-depth technical health and database hygiene check-up: PHP/MySQL limits, security constants, total database size, autoload memory bloat with orphaned options detection from inactive plugins, Action Scheduler queue & retention policy, stale abandoned orders older than 1 year, overdue WP-Cron jobs, and Crash Watch PHP fatal errors.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['system'],
                 'optional_modules'=> ['woocommerce', 'scheduler', 'logs'],
                 'intent_triggers' => [
+                    'santé technique',
+                    'santé système',
                     'audit bdd',
                     'base de données lourde',
                     'nettoyer bdd',
-                    'site lent bdd',
                     'autoload bloat',
                     'crash mémoire',
                     'mémoire épuisée',
-                    'nettoyer woocommerce',
-                    'commandes annulées',
                     'action scheduler plein',
+                    'crons bloqués',
+                    'erreurs fatales',
+                    'crash watch',
+                    'sécurité wordpress',
+                    'nettoyer woocommerce',
                     'database bloat',
                     'clean database',
                 ],
                 'workflow'        => [
                     [
                         'step'        => 1,
-                        'action'      => esc_html__('Database Size & Autoload Inspection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/system/database',
+                        'action'      => esc_html__('Server Limits & Environment Diagnostic', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system',
                         'params'      => [],
-                        'description' => esc_html__('Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options from inactive plugins.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['autoload_health.status', 'autoload_health.total_size', 'autoload_health.top_heavy_options[].is_orphaned_candidate', 'transients_health.expired_transients', 'top_tables[].total_human'],
+                        'description' => esc_html__('Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['system.php_version', 'system.php_memory_limit', 'system.opcache_enabled', 'wordpress.debug_mode', 'security.file_edit_disabled'],
                     ],
                     [
                         'step'        => 2,
-                        'action'      => esc_html__('WooCommerce Orders Volume & Stale Ratio', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('Database Size & Autoload Orphaned Options', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system/database',
+                        'params'      => [],
+                        'description' => esc_html__('Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options left behind by inactive plugins.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['database.total_size', 'autoload_health.status', 'autoload_health.total_size', 'autoload_health.top_heavy_options[].is_orphaned_candidate', 'transients_health.expired_transients', 'top_tables[].total_human'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('WooCommerce Order Volume & Stale Orders Ratio', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/summary',
                         'params'      => [],
                         'description' => esc_html__('Audits total orders, cancellation ratio, and estimates stale unpaid abandoned orders older than 1 year cluttering HPOS tables.', 'woo-get-data-for-ai'),
                         'key_signals' => ['orders.health_analysis.cancelled_ratio_percent', 'orders.health_analysis.alert_high_cancellations', 'orders.health_analysis.cancelled_unpaid_older_than_1y_estimate'],
                     ],
                     [
-                        'step'        => 3,
-                        'action'      => esc_html__('Action Scheduler Queue & Retention Health', 'woo-get-data-for-ai'),
+                        'step'        => 4,
+                        'action'      => esc_html__('Action Scheduler Queue & Retention Policy', 'woo-get-data-for-ai'),
                         'endpoint'    => '/action-scheduler',
-                        'params'      => ['status' => 'complete,failed,in-progress', 'per_page' => 10],
+                        'params'      => ['status' => 'complete,failed,in-progress', 'per_page' => 15],
                         'description' => esc_html__('Evaluates completed actions accumulation, active retention period in days, cleanup batch size, and bloat alert.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['summary.complete', 'retention.retention_period_days', 'retention.is_default', 'retention.alert_bloat'],
+                        'key_signals' => ['summary.complete', 'summary.failed', 'retention.retention_period_days', 'retention.is_default', 'retention.alert_bloat'],
                     ],
                     [
-                        'step'        => 4,
+                        'step'        => 5,
                         'action'      => esc_html__('Overdue Crons & Ghost Hooks', 'woo-get-data-for-ai'),
                         'endpoint'    => '/crons',
                         'params'      => ['status' => 'overdue'],
                         'description' => esc_html__('Detects overdue WP-Cron jobs and orphan background hooks that may fail repeatedly or delay maintenance cleanup.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['overdue_count', 'crons[].diff_seconds', 'crons[].hook'],
+                        'key_signals' => ['summary.overdue_count', 'crons[].diff_seconds', 'crons[].hook'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Crash Watch Fatal Errors Scan', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/logs/errors-summary',
+                        'params'      => ['limit' => 15],
+                        'description' => esc_html__('Verifies whether recurrent PHP fatal errors, memory exhaustions, or exceptions are flooding debug.log and choking disk I/O.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_fatal_errors', 'grouped_errors[].file', 'grouped_errors[].occurrences'],
+                    ],
+                ],
+            ],
+
+            // =========================================================================
+            // PILIER 4: DÉPANNAGE COMMANDES, CHECKOUT & DÉLIVRABILITÉ
+            // =========================================================================
+            [
+                'id'              => 'order_checkout_troubleshoot',
+                'title'           => esc_html__('Orders, Payment Gateways & Delivery Troubleshooting', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['woocommerce'],
+                'optional_modules'=> ['logs', 'wpcode', 'system'],
+                'intent_triggers' => [
+                    'commande échouée',
+                    'problème commande',
+                    'erreur paiement',
+                    'paiement rejeté',
+                    'commande annulée',
+                    'panier bloqué',
+                    'dépannage woocommerce',
+                    'emails non reçus',
+                    'problème smtp',
+                    'webhooks qui échouent',
+                    'order troubleshoot',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Recent Failed Orders Inspection', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/orders',
+                        'params'      => ['status' => 'failed,cancelled', 'per_page' => 10],
+                        'description' => esc_html__('Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, and order totals.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['orders[].status', 'orders[].payment_method', 'orders[].total', 'orders[].date_created'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Deep Order & Gateway Diagnosis', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/order/{id}',
+                        'params'      => ['id' => '<failing_order_id>'],
+                        'description' => esc_html__('Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and coupon lines.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['order_notes[].content', 'order_notes[].customer_note', 'shipping_lines[].meta_data.fs_costs', 'payment_method_title'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Gateway Error Logs Inspection', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/logs/view',
+                        'params'      => ['source' => 'latest_wc_log', 'lines' => 200, 'filter' => 'error'],
+                        'description' => esc_html__('Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['lines', 'file', 'total_lines_scanned'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('Active Custom Checkout Hooks', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/wpcode/snippets',
+                        'params'      => ['status' => 'active'],
+                        'description' => esc_html__('Inventories active custom PHP snippets running on the site to spot buggy hooks attached to woocommerce_checkout_* or order status transitions.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['snippets[].title', 'snippets[].code', 'snippets[].location'],
+                    ],
+                    [
+                        'step'        => 5,
+                        'action'      => esc_html__('SMTP & Email Deliverability Check', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system/mail',
+                        'params'      => [],
+                        'description' => esc_html__('Detects active SMTP provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials status, recent delivery failures, and PHP mail unauthenticated spam risk alert.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['smtp.provider', 'smtp.is_configured', 'spam_risk_alert', 'recent_failures'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('WooCommerce Webhooks Delivery Health', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/webhooks',
+                        'params'      => [],
+                        'description' => esc_html__('Inventories WooCommerce webhooks, topics (e.g. order.created), delivery URLs, and alerts on failure counters (failure_count >= 5).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['summary.total', 'summary.health', 'webhooks[].failure_count', 'summary.alert'],
+                    ],
+                ],
+            ],
+
+            // =========================================================================
+            // PILIER 5: BUSINESS INTELLIGENCE, VENTES & CONVERSIONS 360°
+            // =========================================================================
+            [
+                'id'              => 'ecommerce_bi_analytics',
+                'title'           => esc_html__('360° E-Commerce Sales, Traffic & Conversion Analytics', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Executive commercial report combining native WooCommerce sales KPIs, paid orders, net sales growth %, average order value (AOV), traffic audience, page conversion rates, marketing UTM campaign ROI, top products, top coupons, and inventory valuation with dormant stock alerts.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['woocommerce'],
+                'optional_modules'=> ['analytics'],
+                'intent_triggers' => [
+                    'ventes woocommerce',
+                    'chiffre d affaires',
+                    'chiffre daffaires',
+                    'rapport ventes',
+                    'panier moyen',
+                    'top ventes',
+                    'top produits',
+                    'stocks dormants',
+                    'analytics',
+                    'audience',
+                    'trafic boutique',
+                    'taux de conversion',
+                    'roi campagnes',
+                    'utm analytics',
+                    'bilan e-commerce',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Native WooCommerce Sales KPIs & Growth', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/analytics/sales',
+                        'params'      => ['range' => 'last_30_days'],
+                        'description' => esc_html__('Extracts net sales, gross sales, paid orders count, AOV, refunds, daily trend, and % growth comparison against prior period.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['kpis.net_sales', 'kpis.orders_count', 'kpis.average_order_value', 'growth_vs_previous.net_sales_growth_pct'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Top Performing Products & Coupons', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/analytics/top-performers',
+                        'params'      => ['limit' => 10, 'range' => 'last_30_days'],
+                        'description' => esc_html__('Identifies best-selling products by net revenue and units sold, plus top discount coupons used with totals.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['top_products[].name', 'top_products[].net_revenue', 'top_coupons[].discount_total'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Inventory Valuation & Dormant Stock Alerts', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/analytics/stock',
+                        'params'      => ['low_stock_threshold' => 5],
+                        'description' => esc_html__('Calculates stock financial valuation (cost vs retail value), low stock alerts, and dormant stock (products with 0 sales in last 90 days).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['valuation.total_retail_value', 'low_stock_alerts_count', 'dormant_stock_count', 'dormant_stock_sample'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('Traffic KPIs & Overall Conversion Rate', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/analytics/overview',
+                        'params'      => ['range' => 'last_30_days'],
+                        'description' => esc_html__('Consolidates visitors, sessions, pageviews, bounce rate, device breakdown, and store conversion rate in 1 request.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['summary.conversion_rate', 'summary.unique_visitors', 'top_pages', 'devices'],
+                    ],
+                    [
+                        'step'        => 5,
+                        'action'      => esc_html__('Marketing Campaigns (UTM) ROI Attribution', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/analytics/campaigns',
+                        'params'      => ['range' => 'last_30_days'],
+                        'description' => esc_html__('Tracks marketing campaigns by source and medium (Google Ads, Meta, Newsletters) with direct order and net sales attribution.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['campaigns[].utm_campaign', 'campaigns[].orders', 'campaigns[].net_sales', 'campaigns[].conversion_rate'],
+                    ],
+                ],
+            ],
+
+            // =========================================================================
+            // PILIER 6: LOGISTIQUE, EXPÉDITION & RÈGLES MÉTIER
+            // =========================================================================
+            [
+                'id'              => 'shipping_logistics_audit',
+                'title'           => esc_html__('Shipping Zones, Methods & Flexible Shipping Rules Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Logistics and shipping calculation audit: verifies shipping zones, geographic locations (postcodes, regions, countries), native method configurations (flat rate, free shipping threshold), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (including Table Rate on flat rate), and order shipping metadata.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['woocommerce'],
+                'optional_modules'=> ['system'],
+                'intent_triggers' => [
+                    'frais de port',
+                    'livraison',
+                    'zones de livraison',
+                    'flexible shipping',
+                    'table rate',
+                    'frais de livraison faux',
+                    'calcul livraison',
+                    'shipping audit',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Shipping Zones & Matrix Calculation Rules', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/shipping',
+                        'params'      => [],
+                        'description' => esc_html__('Extracts configured shipping zones, geographic locations (postcodes, regions, countries), native method parameters, and decoded Flexible Shipping matrix calculation rules (including flat_rate table rate).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['zones_count', 'zones[].zone_name', 'zones[].shipping_methods[].flexible_shipping', 'zones[].shipping_methods[].flexible_shipping_table_rate'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('General Store Shipping Settings', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/settings',
+                        'params'      => [],
+                        'description' => esc_html__('Cross-references shipping methods against general store configuration, tax settings, and shipping calculation options.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['shipping_zones', 'taxes_enabled', 'currency'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Recent Orders Shipping Line Metadata', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/order/{id}',
+                        'params'      => ['id' => '<recent_order_id>'],
+                        'description' => esc_html__('Inspects shipping_lines[].meta_data on live orders, including decoded fs_costs (base + additional costs) to verify calculation accuracy.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['shipping_lines[].method_id', 'shipping_lines[].total', 'shipping_lines[].meta_data.fs_costs'],
+                    ],
+                ],
+            ],
+
+            // =========================================================================
+            // PILIER 7: ARCHITECTURE CODE, THÈMES & INTÉGRATIONS
+            // =========================================================================
+            [
+                'id'              => 'code_theme_integrations',
+                'title'           => esc_html__('Code Architecture, Theme Settings & Automations Map', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Technical customization inventory: WooCommerce template overrides drift, child theme functions.php/style.css, Woodmart/Elessi theme options, FlowMattic automation workflows, Elementor forms & webhooks, active WPCode snippets, custom ACF/code meta fields, and local vs production file checksums drift.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['theme'],
+                'optional_modules'=> ['code', 'flowmattic', 'elementor', 'wpcode', 'meta'],
+                'intent_triggers' => [
+                    'overrides woocommerce',
+                    'fichiers obsolètes',
+                    'modifications thème',
+                    'woodmart',
+                    'elessi',
+                    'child theme',
+                    'flowmattic',
+                    'automations',
+                    'formulaires elementor',
+                    'webhooks elementor',
+                    'wpcode',
+                    'snippets actifs',
+                    'champs personnalisés',
+                    'acf',
+                    'drift code',
+                    'diff prod local',
+                    'code integrity',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('WooCommerce Template Overrides Drift', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/theme/overrides',
+                        'params'      => [],
+                        'description' => esc_html__('Identifies overridden WooCommerce PHP templates in active theme and checks for outdated templates requiring updates.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['overrides_count', 'outdated_count', 'overrides[].outdated'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Child Theme Code & Theme Options', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/theme/child',
+                        'params'      => [],
+                        'description' => esc_html__('Inspects active child theme functions.php and style.css, and decodes Woodmart / Elessi theme options via /theme/options.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['functions_php.size', 'theme_options'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Code Drift Verification via Checksums', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/code/checksums',
+                        'params'      => ['path' => 'plugins/<plugin_slug>'],
+                        'description' => esc_html__('Computes cryptographic file hashes (MD5 / SHA256) of local vs production files to detect drift or unversioned hotfixes.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['checksums[].file', 'checksums[].hash', 'checksums[].modified'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('FlowMattic Automation Workflows Map', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/flowmattic/workflows',
+                        'params'      => ['status' => 'active'],
+                        'description' => esc_html__('Lists active FlowMattic automation recipes, triggers (e.g. order placed), action steps, and task execution counts.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['workflows[].workflow_name', 'workflows[].trigger', 'workflows[].steps_count', 'workflows[].tasks_executed'],
+                    ],
+                    [
+                        'step'        => 5,
+                        'action'      => esc_html__('Elementor Forms & Webhook Endpoints', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/elementor/forms',
+                        'params'      => [],
+                        'description' => esc_html__('Maps all Elementor forms across the site, their submit actions, and connected webhook integration URLs.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['forms[].form_name', 'forms[].page_title', 'forms[].actions'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Active Custom WPCode Snippets', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/wpcode/snippets',
+                        'params'      => ['status' => 'active'],
+                        'description' => esc_html__('Inventories active custom PHP/JS/CSS snippets running in production with direct admin edit URLs.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['snippets[].title', 'snippets[].code_type', 'snippets[].location', 'snippets[].admin_edit_url'],
+                    ],
+                    [
+                        'step'        => 7,
+                        'action'      => esc_html__('Custom Fields & ACF Meta Schema', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/meta/fields',
+                        'params'      => ['source' => 'all'],
+                        'description' => esc_html__('Discovers custom meta fields registered in code (register_post_meta) and ACF field groups with recursive subfield hierarchies.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['code_registered_meta.count', 'acf_field_groups.count', 'acf_field_groups.groups[].title'],
                     ],
                 ],
             ],
         ];
     }
 
-    /**
-     * Get active playbooks filtered dynamically by the site's enabled module permissions.
-     *
-     * If a playbook's mandatory required modules are not all enabled, the playbook is excluded.
-     * If optional modules are disabled, the playbook remains included but notes are provided.
-     *
-     * @return array
-     */
     public static function get_active_playbooks() {
         $permissions = Permissions::get_permissions();
         $all_playbooks = self::get_all();
@@ -831,30 +640,33 @@ class Playbooks {
 
         $md .= "---\n\n";
 
-        $md .= "## ⚡ QUICK START cURL EXAMPLES\n\n";
+        $md .= "## ⚡ QUICK START cURL EXAMPLES (THE 7 MASTER PLAYBOOKS)\n\n";
         $md .= "```bash\n";
         $md .= "# Check connection & server time\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' {$rest_base}/ping\n\n";
         $md .= "# Refresh full dynamic skill & active playbooks\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md\n\n";
-        $md .= "# Run Playbook 1: Site-wide SEO Audit\n";
+        $md .= "# Pilier 1: SEO, Contenus & Visibilité\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n\n";
-        $md .= "# Run Playbook 2: Server & Failed Background Actions\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=failed,in-progress'\n\n";
-        $md .= "# Run Playbook 3: Recent Failed Orders (PII Redacted)\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed&per_page=5'\n\n";
-        $md .= "# Run Playbook 8: Verify Plugin Code Drift via Checksums Fingerprint\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/checksums?path=plugins/my-plugin'\n\n";
-        $md .= "# Run Playbook 8: Download Clean Plugin or Child Theme ZIP Archive\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/zip?path=plugins/my-plugin' -o my-plugin.zip\n\n";
-        $md .= "# Run Playbook 11: Agency Multi-Template Performance & Native Web Vitals Audit\n";
+        $md .= "# Pilier 2: Performance Frontend & Core Web Vitals\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/autoload?limit=25'\n\n";
-        $md .= "# Run Playbook 12: Database Bloat, Autoload & WooCommerce Hygiene Audit\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n\n";
+        $md .= "# Pilier 3: Santé Système, Base de Données & Hygiène de Fond\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/database'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/summary'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=complete&per_page=10'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=complete,failed,in-progress&per_page=15'\n\n";
+        $md .= "# Pilier 4: Dépannage Commandes, Checkout & Délivrabilité\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed,cancelled&per_page=10'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/mail'\n\n";
+        $md .= "# Pilier 5: Business Intelligence, Ventes & Conversions 360°\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/sales?range=last_30_days'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/analytics/overview?range=last_30_days'\n\n";
+        $md .= "# Pilier 6: Logistique, Expédition & Règles Métier\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/shipping'\n\n";
+        $md .= "# Pilier 7: Architecture Code, Thèmes & Intégrations\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/overrides'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/flowmattic/workflows?status=active'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/wpcode/snippets?status=active'\n";
         $md .= "```\n";
 
         return $md;

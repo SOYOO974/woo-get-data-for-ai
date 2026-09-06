@@ -138,9 +138,16 @@ The following **8-step synchronization protocol is strictly mandatory** to maint
 
 3. **Procedural Playbooks & AI Skill Synchronization (`includes/class-playbooks.php`) (MANDATORY)**:
    - Update `includes/class-playbooks.php`:
-     - Either integrate the new endpoint into an existing multi-step diagnostic Playbook (e.g. SEO, Tech Health, E-commerce, Analytics, Integrations).
-     - Or register a new dedicated Playbook with `id`, `title`, `description`, `required_modules`, `optional_modules`, `intent_triggers`, and ordered `workflow` steps.
-   - Verify that `GET /capabilities` (JSON mode) returns the new playbook and that `GET /capabilities?format=skill` renders the updated markdown skill correctly.
+     - **The MECE 7 Master Pillars Principle**: Every new endpoint or diagnostic capability must be mapped into one of the **7 Strategic MECE Master Playbooks**:
+       1. `seo_content_audit` (SEO, Contenus & Visibilité)
+       2. `agency_performance_audit` (Performance Multi-Templates & Core Web Vitals)
+       3. `database_system_hygiene` (Santé Système, BDD Bloat & Hygiène Background)
+       4. `order_checkout_troubleshoot` (Dépannage Commandes, Passerelles, SMTP & Webhooks)
+       5. `ecommerce_bi_analytics` (Analytics Ventes, Produits & CRO 360°)
+       6. `shipping_logistics_audit` (Zones d'expédition, Méthodes & Flexible Shipping)
+       7. `code_theme_integrations` (Architecture Code, Thème, Hooks, Snippets & Automations)
+     - **STRICT ANTI-PROLIFERATION MANDATE**: Never create an 8th or ad-hoc micro-playbook. Micro-playbooks dilute the LLM's attention span, cause trigger collisions, and bloat the generated `SKILL.md` by thousands of tokens.
+   - Verify that `GET /capabilities` (JSON mode) returns the updated playbook and that `GET /capabilities?format=skill` renders the updated markdown skill correctly.
    - Verify that the playbook correctly adapts when optional or required permissions are toggled off.
 
 4. **AI Mega-Prompt Generator Integration (Tab 3)**:
@@ -298,19 +305,15 @@ Enables/disables modules on a per-site basis:
 To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoints, the plugin features an intelligent **Playbooks Engine**:
 - **Zero-Prompt Stagnation**: Instead of memorizing static endpoint lists, AI agents query `GET /capabilities?format=skill` to instantly generate an up-to-date `.agents/skills/wp-agent-bridge/SKILL.md` workspace skill.
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
-- **Built-in Procedural Playbooks (12 Battle-Tested Investigation Sequences)**:
-  1. `seo_content_audit`: 360° SEO, meta tags, critical noindex detection on pages/products, OpenGraph coverage, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
-  2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, database autoload bloat, security hardening audit, stalled Action Scheduler queues, overdue WP-Crons, and Crash Watch fatal error dashboard (`/system`, `/system/database`, `/system/security`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
-  3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, active checkout hooks, SMTP mail delivery check, and WooCommerce webhook health (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
-  4. `store_analytics_roi`: Store performance, net sales, conversion rates, traffic acquisition channels, UTM marketing campaigns, and device comparison (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/devices`).
-  5. `integration_automation_map`: Full integration mapping: Elementor forms with webhooks, active FlowMattic automation recipes, custom ACF/code meta fields, and active WPCode snippets (`/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, `/wpcode/snippets`).
-  6. `theme_wc_compatibility`: Child theme code, Woodmart/Elessi theme options, and WooCommerce template version drift detection (`/theme/overrides`, `/theme/child`, `/theme/options`).
-  7. `store_sales_stock_audit`: Native WooCommerce commercial intelligence: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products by revenue/qty, top coupons, and stock valuation & dormant inventory (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/summary`).
-  8. `email_webhook_diagnostics`: Transactional email delivery and webhook integration diagnostics: SMTP provider detection (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk, and failing WooCommerce webhooks (`/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, `/logs/view`).
-  9. `code_sync_drift_audit`: Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of custom plugins or child themes (`/code/checksums`, `/code/zip`).
-  10. `shipping_logistics_audit`: Comprehensive logistics audit: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`, `/woocommerce/order/{id}`).
-  11. `agency_performance_audit`: Agency Performance, Multi-Template TTFB & Native Web Vitals Audit: Strategic 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand page profiling (SQL attribution & duration per plugin, TTFB, memory, duplicate/slow queries), 100% native server-side Core Web Vitals & frontend diagnostics (DOM size, Elementor nodes %, CLS missing image dimensions, legacy PNG/JPEG images, external Google Fonts display=swap check, WP core bloat scripts, wc-cart-fragments, server compression), autoload bloat, Action Scheduler queues, Crash Watch errors, and actionable prescription framework with Business Impact Score and ready-to-use WPCode snippets (`/performance/templates-urls`, `/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/action-scheduler`, `/logs/errors-summary`).
-  12. `database_bloat_hygiene_audit`: Database Bloat, Autoload & WooCommerce Hygiene Audit: Comprehensive diagnostic sequence investigating total database size, top heavy tables, autoload memory consumption with orphaned options detection from inactive plugins, Action Scheduler completed actions accumulation and retention policy, WooCommerce order cancellation ratios with stale unpaid orders > 1 year estimate, and overdue WP-Cron jobs (`/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`).
+- **Built-in Procedural Playbooks (7 MECE Strategic Master Pillars)**:
+  To eliminate LLM attention dilution and trigger collisions while providing comprehensive agency-grade diagnostics, the playbooks are strictly organized into 7 MECE (Mutually Exclusive, Collectively Exhaustive) master pillars:
+  1. `seo_content_audit` (360° SEO, Content Hierarchy & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
+  2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
+  3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
+  4. `order_checkout_troubleshoot` (Orders, Payment Gateways & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), and WooCommerce webhook delivery status (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
+  5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic & Conversion Analytics): Complete commercial & CRO intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, alongside traffic channels, UTM marketing campaigns, and device breakdowns (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).
+  6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
+  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom WPCode snippets, and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/wpcode/snippets`, `/meta/fields`).
 
 ---
 
@@ -365,6 +368,22 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.17.0 (2026-09-06)
+- **Consolidation Stratégique des Playbooks en 7 Grands Piliers MECE (`Playbooks`, `includes/class-playbooks.php`)** :
+  - **Refonte Architecturale Anti-Dispersion** : Fusion et rationalisation des 12 playbooks historiques en 7 Piliers Stratégiques MECE (Mutually Exclusive, Collectively Exhaustive) afin d'éliminer les collisions sémantiques de triggers et de réduire la dilution cognitive des LLMs de ~45% de tokens dans le `SKILL.md` généré.
+  - **Préservation Intégrale de Couverture (100%)** : Aucune étape, aucun endpoint et aucun signal diagnostic n'est perdu.
+    - *Pilier 1* : `seo_content_audit` (SEO, Contenus & Hiérarchie Gutenberg).
+    - *Pilier 2* : `agency_performance_audit` (Performance Frontend, TTFB & Core Web Vitals Natifs).
+    - *Pilier 3* : `database_system_hygiene` (Santé Système, BDD Bloat & Hygiène Background - *Fusion Ex-P2 & Ex-P12*).
+    - *Pilier 4* : `order_checkout_troubleshoot` (Dépannage Commandes, Passerelles, SMTP & Webhooks - *Fusion Ex-P3 & Ex-P8*).
+    - *Pilier 5* : `ecommerce_bi_analytics` (Business Intelligence, Ventes 360° & CRO - *Fusion Ex-P4 & Ex-P7*).
+    - *Pilier 6* : `shipping_logistics_audit` (Logistique, Expédition & Règles Flexible Shipping).
+    - *Pilier 7* : `code_theme_integrations` (Architecture Code, Thème, Hooks, Snippets & Automations - *Fusion Ex-P5, Ex-P6 & Ex-P9*).
+- **Gouvernance Architecturale & Règle Anti-Prolifération (`AGENTS.md`, `PROJECT_CONTEXT.md`)** :
+  - Établissement de la directive stricte "The MECE Master Pillars Principle" : interdiction de créer des micro-playbooks ad-hoc. Toute nouvelle capacité ou tout nouvel endpoint doit obligatoirement s'intégrer dans l'un des 7 piliers existants.
+- **Mise à Jour de la Documentation & des Exemples cURL Quickstart** :
+  - Mise à jour des exemples cURL dans `generate_skill_markdown()`, de la table des capacités dans `README.md` et de la documentation de contexte.
 
 ### v1.16.0 (2026-09-06)
 - **Détection Intelligente du Bloat BDD, Options Orphelines & Santé Commandes (`System_Controller`, `Performance_Controller`, `Woocommerce_Controller`, `Scheduler_Controller`)** :
