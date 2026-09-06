@@ -4,6 +4,7 @@
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
+> **Commercial & LTD Roadmap**: [ROADMAP.md](ROADMAP.md) (Stratégie Agences & Lancement Black Friday)  
 > **Updates**: Integrated `plugin-update-checker` (PUC v5.6) configured for GitHub branch `main` and release assets.  
 > **Security Mandate**: 100% Read-Only (`GET` requests only). Zero hardcoded secrets, tokens, or credentials.  
 > **PUBLIC REPOSITORY PRIVACY WARNING**: This file is tracked in a public GitHub repository so the developer can access it across workstations. **It must NEVER contain sensitive, private, or confidential information** (no client domains, real store URLs, live API tokens, passwords, database dumps, or customer PII).
@@ -12,6 +13,9 @@
 
 ## 1. Project Mission & Vision
 **WP Agent Bridge** is an enterprise-grade, lightweight, and ultra-secure WordPress & WooCommerce inspection plugin. Its sole purpose is to expose a protected, read-only REST API (`agent-bridge/v1/`) to enable AI coding assistants (Antigravity, Cursor, Claude, ChatGPT) and developers to instantly audit, diagnose bugs, and retrieve technical context from live sites without requiring risky SFTP/SSH access or database credentials.
+
+### Commercial Strategy & Agency Roadmap
+For the strategic and technical product roadmap targeting web agencies and the Black Friday Lifetime Deal (LTD) launch (including licensing infrastructure, white-labeling, multi-tokens governance, form plugins support, MCP server, and LTD packaging), refer directly to [ROADMAP.md](ROADMAP.md).
 
 ---
 

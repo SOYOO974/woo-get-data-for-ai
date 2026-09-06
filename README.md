@@ -43,6 +43,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 
 ```
 ├── PROJECT_CONTEXT.md          # Architecture memory and technical specification
+├── ROADMAP.md                  # Commercial & technical roadmap (Agencies & Black Friday LTD)
 ├── README.md                   # Plugin documentation
 ├── .gitignore                  # Git exclusions
 ├── cli/                        # Standalone local synchronization client
