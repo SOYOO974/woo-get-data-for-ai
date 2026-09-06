@@ -504,12 +504,17 @@ class Permissions {
                     [
                         'path'        => '/woocommerce/order/{id}',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Deep order diagnostics: item line metadata, shipping lines with decoded metadata (e.g. Flexible Shipping fs_costs base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/settings',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/shipping',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Dedicated shipping & logistics inspection: zones, geographic locations (postcodes, regions, countries), native method parameters, flat_rate table rate rules, Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and sanitized raw instance settings.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/analytics/sales',

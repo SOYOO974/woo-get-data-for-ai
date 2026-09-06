@@ -890,6 +890,23 @@ class Woocommerce_Controller extends Rest_Controller {
         $shipping_lines = [];
         foreach ($order->get_items('shipping') as $item_id => $item) {
             /** @var \WC_Order_Item_Shipping $item */
+            $shipping_meta = [];
+            foreach ($item->get_meta_data() as $meta) {
+                $meta_data = $meta->get_data();
+                $val       = $meta_data['value'];
+                // Auto-décodage des objets JSON (ex: fs_costs: {"base":59,"additional":10})
+                if (is_string($val) && (strpos($val, '{') === 0 || strpos($val, '[') === 0)) {
+                    $decoded_val = json_decode($val, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $val = $decoded_val;
+                    }
+                }
+                $shipping_meta[] = [
+                    'id'    => $meta_data['id'] ?? null,
+                    'key'   => $meta_data['key'],
+                    'value' => $val,
+                ];
+            }
             $shipping_lines[] = [
                 'id'           => $item_id,
                 'method_title' => $item->get_name(),
@@ -897,6 +914,7 @@ class Woocommerce_Controller extends Rest_Controller {
                 'instance_id'  => $item->get_instance_id(),
                 'total'        => $item->get_total(),
                 'total_tax'    => $item->get_total_tax(),
+                'meta_data'    => $shipping_meta,
             ];
         }
 
@@ -1139,6 +1157,39 @@ class Woocommerce_Controller extends Rest_Controller {
     }
 
     /**
+     * Parse et formate les règles de calcul Flexible Shipping / Table Rate en préservant toutes les données brutes.
+     *
+     * @param mixed $raw_rules
+     * @return array
+     */
+    protected function parse_flexible_shipping_rules($raw_rules) {
+        if (is_string($raw_rules)) {
+            $decoded = json_decode($raw_rules, true);
+            $raw_rules = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($raw_rules)) {
+            return [];
+        }
+        $formatted_rules = [];
+        foreach ($raw_rules as $rule_idx => $rule) {
+            if (!is_array($rule)) {
+                continue;
+            }
+            $formatted_rules[] = [
+                'rule_index'          => $rule_idx,
+                'conditions'          => isset($rule['conditions']) ? $rule['conditions'] : [],
+                'cost_per_order'      => isset($rule['cost_per_order']) ? $rule['cost_per_order'] : (isset($rule['cost']) ? $rule['cost'] : 0),
+                'additional_cost'     => isset($rule['additional_cost']) ? $rule['additional_cost'] : null,
+                'additional_cost_per' => isset($rule['additional_cost_per']) ? $rule['additional_cost_per'] : null,
+                'special_action'      => isset($rule['special_action']) ? $rule['special_action'] : 'none',
+                'description'         => isset($rule['description']) ? $rule['description'] : '',
+                'raw'                 => $rule,
+            ];
+        }
+        return $formatted_rules;
+    }
+
+    /**
      * Format a shipping method with full backwards compatibility and advanced rules extraction.
      *
      * @param \WC_Shipping_Method $method
@@ -1155,13 +1206,44 @@ class Woocommerce_Controller extends Rest_Controller {
             'cost'        => isset($method->cost) ? $method->cost : null,
             'tax_status'  => isset($method->tax_status) ? $method->tax_status : null,
         ];
-
         // 1. Native WooCommerce Shipping Method Settings
         if ('flat_rate' === $method->id) {
+            $calculation_type = method_exists($method, 'get_instance_option') ? $method->get_instance_option('type', 'class') : 'class';
+            $cost             = method_exists($method, 'get_instance_option') ? $method->get_instance_option('cost', '') : '';
+            // Flexible Shipping Table Rate integration in Flat Rate (Flexible Shipping PRO)
+            $fs_enabled_opt = method_exists($method, 'get_instance_option')
+                ? $method->get_instance_option('fs_calculation_enabled', 'no')
+                : ($method->instance_settings['fs_calculation_enabled'] ?? 'no');
+            $fs_calculation_enabled = ('yes' === $fs_enabled_opt);
+            $raw_fs_rules = method_exists($method, 'get_instance_option')
+                ? $method->get_instance_option('fs_method_rules', null)
+                : ($method->instance_settings['fs_method_rules'] ?? null);
+            // Fallback direct sur l'option WordPress si absent de instance_settings
+            if (null === $raw_fs_rules && $instance_id > 0) {
+                $inst_opt = get_option('woocommerce_' . $method->id . '_' . $instance_id . '_settings', []);
+                if (is_array($inst_opt)) {
+                    $raw_fs_rules = $inst_opt['fs_method_rules'] ?? null;
+                    if (!$fs_calculation_enabled && isset($inst_opt['fs_calculation_enabled']) && 'yes' === $inst_opt['fs_calculation_enabled']) {
+                        $fs_calculation_enabled = true;
+                    }
+                }
+            }
+            $formatted_fs_rules = $this->parse_flexible_shipping_rules($raw_fs_rules);
             $data['flat_rate_settings'] = [
-                'calculation_type' => method_exists($method, 'get_instance_option') ? $method->get_instance_option('type', 'class') : 'class',
-                'cost'             => method_exists($method, 'get_instance_option') ? $method->get_instance_option('cost', '') : '',
+                'calculation_type'       => $calculation_type,
+                'cost'                   => $cost,
+                'fs_calculation_enabled' => $fs_calculation_enabled,
+                'fs_method_rules'        => $formatted_fs_rules,
             ];
+            // Si Flexible Shipping Table Rate est configuré sur cette méthode Flat Rate
+            if ($fs_calculation_enabled || !empty($formatted_fs_rules)) {
+                $data['flexible_shipping_table_rate'] = [
+                    'enabled'     => $fs_calculation_enabled,
+                    'is_pro'      => defined('FLEXIBLE_SHIPPING_PRO_VERSION') || class_exists('WPDesk_Flexible_Shipping_Pro_Plugin'),
+                    'rules_count' => count($formatted_fs_rules),
+                    'rules'       => $formatted_fs_rules,
+                ];
+            }
         } elseif ('free_shipping' === $method->id) {
             $data['free_shipping_settings'] = [
                 'requires'         => method_exists($method, 'get_instance_option') ? $method->get_instance_option('requires', '') : '',
@@ -1174,30 +1256,10 @@ class Woocommerce_Controller extends Rest_Controller {
                 'tax_status' => method_exists($method, 'get_instance_option') ? $method->get_instance_option('tax_status', 'taxable') : 'taxable',
             ];
         }
-
-        // 2. Detection and extraction for Flexible Shipping & Flexible Shipping PRO
+        // 2. Detection and extraction for Standalone Flexible Shipping & Flexible Shipping PRO
         if (in_array($method->id, ['flexible_shipping_single', 'flexible_shipping'], true)) {
             $raw_rules = method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_rules', []) : [];
-            if (is_string($raw_rules)) {
-                $decoded = json_decode($raw_rules, true);
-                $raw_rules = is_array($decoded) ? $decoded : [];
-            }
-
-            $formatted_rules = [];
-            if (is_array($raw_rules)) {
-                foreach ($raw_rules as $rule_idx => $rule) {
-                    $formatted_rules[] = [
-                        'rule_index'          => $rule_idx,
-                        'conditions'          => isset($rule['conditions']) ? $rule['conditions'] : [],
-                        'cost_per_order'      => isset($rule['cost_per_order']) ? $rule['cost_per_order'] : (isset($rule['cost']) ? $rule['cost'] : 0),
-                        'additional_cost'     => isset($rule['additional_cost']) ? $rule['additional_cost'] : null,
-                        'additional_cost_per' => isset($rule['additional_cost_per']) ? $rule['additional_cost_per'] : null,
-                        'special_action'      => isset($rule['special_action']) ? $rule['special_action'] : 'none',
-                        'description'         => isset($rule['description']) ? $rule['description'] : '',
-                    ];
-                }
-            }
-
+            $formatted_rules = $this->parse_flexible_shipping_rules($raw_rules);
             $data['flexible_shipping'] = [
                 'is_pro'               => defined('FLEXIBLE_SHIPPING_PRO_VERSION') || class_exists('WPDesk_Flexible_Shipping_Pro_Plugin'),
                 'calculation_method'   => method_exists($method, 'get_instance_option') ? $method->get_instance_option('method_calculation_method', 'sum') : 'sum',
@@ -1209,7 +1271,17 @@ class Woocommerce_Controller extends Rest_Controller {
                 'rules'                => $formatted_rules,
             ];
         }
-
+        // 3. Extraction brute sécurisée des options de l'instance
+        if (isset($method->instance_settings) && is_array($method->instance_settings)) {
+            $sanitized_settings = [];
+            foreach ($method->instance_settings as $s_k => $s_v) {
+                if (preg_match('/(password|secret|key|token)/i', $s_k)) {
+                    continue;
+                }
+                $sanitized_settings[$s_k] = $s_v;
+            }
+            $data['raw_instance_settings'] = $sanitized_settings;
+        }
         return $data;
     }
 

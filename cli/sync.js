@@ -960,8 +960,9 @@ async function pullWooCommerce() {
                 const locSummary = locCount > 0 ? `${locCount} location(s)` : 'All / Rest of World';
                 const methodsList = (z.shipping_methods || []).map(m => {
                     let desc = m.title;
-                    if (m.flexible_shipping && m.flexible_shipping.rules_count) {
-                        desc += ` (${m.flexible_shipping.rules_count} matrix rules${m.flexible_shipping.is_pro ? ' [PRO]' : ''})`;
+                    const fs = m.flexible_shipping || m.flexible_shipping_table_rate;
+                    if (fs && fs.rules_count) {
+                        desc += ` (${fs.rules_count} matrix rules${fs.is_pro ? ' [PRO]' : ''})`;
                     }
                     return `${m.enabled ? '🟢' : '⚪'} \`${m.id}\`: ${desc}`;
                 }).join('<br>');
