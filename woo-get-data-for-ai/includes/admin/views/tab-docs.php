@@ -218,6 +218,11 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code></td>
                     <td><?php esc_html_e('Store health summary, paginated product catalog with variations and sanitized postmeta, recent orders with strict GDPR/PII anonymization (masked customer details, order notes for gateway diagnostics), active payment gateways and shipping zones.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('Pages, Content & SEO', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/content/pages</code>, <code>/content/page/{id}</code>, <code>/content/posts</code>, <code>/content/post/{id}</code>, <code>/content/seo-audit</code></td>
+                    <td><?php esc_html_e('WordPress pages and blog posts hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, page templates, and unified SEO audit & metadata normalized across Yoast, Rank Math, SEOPress, and All in One SEO.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
             </tbody>
         </table>
     </div>

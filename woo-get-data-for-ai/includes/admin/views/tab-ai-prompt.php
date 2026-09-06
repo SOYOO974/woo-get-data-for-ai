@@ -44,6 +44,8 @@ $mega_prompt .= "  * Working on forms or page design? -> Check `/elementor/forms
 $mega_prompt .= "  * Working on automations or webhooks? -> Check `/flowmattic/workflows?status=active` to inspect active workflow steps and triggers.\n";
 $mega_prompt .= "  * Analyzing visits, marketing ROI, or conversion rates? -> Check `/analytics/overview` or `/analytics/summary`.\n";
 $mega_prompt .= "  * Inspecting custom fields, product specs, or ACF data? -> Check `/meta/fields?post_type=product` (or `/meta/acf` for full field groups and rules, or `/meta/post/{id}` for values on a specific post).\n";
+$mega_prompt .= "  * Inspecting WordPress pages, hierarchy, or Gutenberg content? -> Check `/content/pages?status=publish` or `/content/page/{id}`.\n";
+$mega_prompt .= "  * Auditing SEO (meta tags, noindex, OpenGraph across Yoast/RankMath/SEOPress)? -> Check `/content/seo-audit` or `/content/page/{id}`.\n";
 $mega_prompt .= "  * Investigating WooCommerce products, stock, or variations? -> Check `/woocommerce/products?status=publish` or `/woocommerce/product/{id}`.\n";
 $mega_prompt .= "  * Investigating orders, payment errors, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` or `/woocommerce/order/{id}` (includes payment gateway error logs in order notes, customer PII strictly anonymized).\n";
 $mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings` or `/woocommerce/summary`.\n";
@@ -71,6 +73,8 @@ $mega_prompt .= "---\n\n";
 $mega_prompt .= "## ⚡ Quick Start Commands\n";
 $mega_prompt .= "- **Health Check**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/ping`\n";
 $mega_prompt .= "- **Discover Capabilities**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/capabilities`\n";
+$mega_prompt .= "- **Pages & Content**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/content/pages?per_page=5'`\n";
+$mega_prompt .= "- **Site-wide SEO Audit**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/content/seo-audit`\n";
 $mega_prompt .= "- **WooCommerce Store Summary**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/woocommerce/summary`\n";
 $mega_prompt .= "- **WooCommerce Products**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/products?per_page=5'`\n";
 $mega_prompt .= "- **WooCommerce Orders**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/orders?status=processing&per_page=5'`\n";

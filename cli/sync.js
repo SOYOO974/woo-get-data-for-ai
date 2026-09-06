@@ -50,7 +50,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all]');
-    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
     process.exit(1);
 }
 
@@ -759,6 +759,98 @@ async function pullWooCommerce() {
     }
 }
 
+async function pullContent() {
+    console.log('⏳ Pulling WordPress Pages, Content & SEO...');
+    try {
+        const contentDir = path.join(outputDir, 'content');
+        ensureDir(contentDir);
+
+        // 1. Pull SEO Audit
+        try {
+            const seoAudit = await makeRequest('/content/seo-audit?include_posts=true');
+            writeJson(path.join(contentDir, 'seo-audit.json'), seoAudit);
+
+            let seoMd = `# SEO Audit Report for ${siteUrl}\n\n`;
+            seoMd += `**Generated**: ${seoAudit.generated_at || new Date().toISOString()}\n`;
+            seoMd += `**SEO Provider**: ${seoAudit.seo_provider ? seoAudit.seo_provider.label + ' (' + seoAudit.seo_provider.provider + ')' : 'Native'}\n`;
+            if (seoAudit.site_visibility) {
+                seoMd += `**Site Visibility**: ${seoAudit.site_visibility.is_public ? '🟢 Public (Indexable)' : '🔴 Discouraged (Hidden from search engines)'}\n`;
+                if (seoAudit.site_visibility.alert) {
+                    seoMd += `> ⚠️ **${seoAudit.site_visibility.alert}**\n\n`;
+                }
+            }
+            if (seoAudit.summary) {
+                seoMd += `\n## 📊 Summary Metrics\n`;
+                seoMd += `- **Total Items Audited**: ${seoAudit.summary.total_audited}\n`;
+                seoMd += `- **Meta Description Coverage**: ${seoAudit.summary.meta_description_coverage}\n`;
+                seoMd += `- **OpenGraph Image Coverage**: ${seoAudit.summary.og_image_coverage}\n`;
+                seoMd += `- **Pages with Noindex**: ${seoAudit.summary.noindex_count}\n`;
+                seoMd += `- **Missing Meta Description**: ${seoAudit.summary.missing_meta_desc_count}\n`;
+                seoMd += `- **Weak or Missing Titles**: ${seoAudit.summary.weak_titles_count}\n`;
+                seoMd += `- **Thin Content Pages**: ${seoAudit.summary.thin_content_count}\n\n`;
+            }
+
+            if (seoAudit.issues && seoAudit.issues.noindex_pages && seoAudit.issues.noindex_pages.length > 0) {
+                seoMd += `### 🚫 Pages marked as Noindex\n\n`;
+                seoMd += `| ID | Type | Title | Slug | Critical Warning |\n|---|---|---|---|---|\n`;
+                seoAudit.issues.noindex_pages.forEach(p => {
+                    seoMd += `| ${p.id} | ${p.post_type} | ${p.title} | \`${p.slug}\` | ${p.critical_warning || '-'} |\n`;
+                });
+                seoMd += `\n`;
+            }
+
+            writeText(path.join(contentDir, 'seo-audit.md'), seoMd);
+        } catch (seoErr) {
+            console.warn('  ⚠️ Failed to pull /content/seo-audit:', seoErr.message);
+        }
+
+        // 2. Pull Pages list
+        const pagesData = await makeRequest('/content/pages?status=all&per_page=100');
+        writeJson(path.join(contentDir, 'pages.json'), pagesData);
+
+        let pagesMd = `# WordPress Pages Catalog (${pagesData.total || (pagesData.pages ? pagesData.pages.length : 0)})\n\n`;
+        pagesMd += `**Generated**: ${new Date().toISOString()}\n`;
+        pagesMd += `**SEO Plugin**: ${pagesData.seo_plugin ? pagesData.seo_plugin.label : 'N/A'}\n\n`;
+        pagesMd += `| ID | Title | Slug | Status | Template | Editor | Roles | SEO Title | Noindex |\n`;
+        pagesMd += `|---|---|---|---|---|---|---|---|---|\n`;
+
+        if (Array.isArray(pagesData.pages)) {
+            const pagesDetailDir = path.join(contentDir, 'pages');
+            ensureDir(pagesDetailDir);
+
+            for (const p of pagesData.pages) {
+                const roles = (p.special_roles || []).map(r => `\`${r}\``).join(' ');
+                const seoTitle = p.seo && p.seo.title ? p.seo.title.replace(/\|/g, '-') : '-';
+                const noindex = p.seo && p.seo.is_noindex ? '🔴 Noindex' : '🟢 Index';
+                pagesMd += `| ${p.id} | [${p.title}](${p.url}) | \`${p.slug}\` | \`${p.status}\` | \`${p.template}\` | ${p.editor_type} | ${roles || '-'} | ${seoTitle} | ${noindex} |\n`;
+
+                // Fetch details for up to 15 key pages or all if under 15
+                if (pagesData.pages.indexOf(p) < 15) {
+                    try {
+                        const detail = await makeRequest(`/content/page/${p.id}`);
+                        writeJson(path.join(pagesDetailDir, `${p.id}-${p.slug}.json`), detail);
+                    } catch (detErr) {
+                        // ignore individual page fetch error
+                    }
+                }
+            }
+        }
+        writeText(path.join(contentDir, 'pages.md'), pagesMd);
+
+        // 3. Pull recent blog posts
+        try {
+            const postsData = await makeRequest('/content/posts?status=publish&per_page=50');
+            writeJson(path.join(contentDir, 'posts.json'), postsData);
+        } catch (postErr) {
+            console.warn('  ⚠️ Failed to pull /content/posts:', postErr.message);
+        }
+
+        console.log('✅ Saved WordPress pages, content trees, and SEO audit to ./content/');
+    } catch (err) {
+        console.error('❌ Failed to pull content & SEO data:', err.message);
+    }
+}
+
 async function pullCapabilities() {
     console.log('⏳ Pulling Capabilities & Schema Discovery...');
     try {
@@ -827,6 +919,11 @@ async function run() {
         case 'pull:wc':
             await pullWooCommerce();
             break;
+        case 'pull:content':
+        case 'pull:pages':
+        case 'pull:seo':
+            await pullContent();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -842,6 +939,7 @@ async function run() {
             await pullAnalytics();
             await pullMeta();
             await pullWooCommerce();
+            await pullContent();
             await pullLogs();
             break;
     }

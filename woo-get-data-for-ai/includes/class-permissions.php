@@ -74,6 +74,11 @@ class Permissions {
                 'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings'],
             ],
+            'content' => [
+                'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO).', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit'],
+            ],
         ];
     }
 
@@ -96,6 +101,7 @@ class Permissions {
             'analytics'    => 1,
             'meta'         => 1,
             'woocommerce'  => 1,
+            'content'      => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
@@ -465,6 +471,42 @@ class Permissions {
                         'path'        => '/woocommerce/settings',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'content',
+                'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO).', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['content']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/content/pages',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (publish|draft|all, default: publish)', 'parent', 'search', 'per_page (default: 20, max: 100)', 'page', 'orderby (menu_order|title|date|modified)', 'order (ASC|DESC)'],
+                        'description' => esc_html__('Lists WordPress pages with hierarchy (parent/child), slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/page/{id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified SEO metadata.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/posts',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (publish|draft|all, default: publish)', 'category', 'tag', 'search', 'per_page (default: 20, max: 100)', 'page', 'orderby (date|title|modified)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('Lists WordPress blog posts with categories, tags, author, editor type, and quick SEO preview.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/post/{id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/seo-audit',
+                        'methods'     => ['GET'],
+                        'params'      => ['include_posts (true|false, default: false)', 'limit (default: 100, max: 300)'],
+                        'description' => esc_html__('Site-wide SEO audit report across all key pages: detected SEO plugin, global search engine visibility, missing meta descriptions, title length issues, noindex warnings on critical conversion pages, and OG image coverage.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

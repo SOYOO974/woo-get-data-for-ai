@@ -27,6 +27,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Independent Analytics Intelligence**: Complete visibility over site traffic, unique visitors, pageviews, acquisition channels, UTM campaigns, device breakdowns, and WooCommerce **conversion rates**, net sales, and AOV.
 - **Custom Fields & ACF Meta**: Complete discovery of meta fields registered in code (`register_post_meta`), Advanced Custom Fields (ACF) field groups, recursive subfields (repeaters, flexible content), location rules, options pages, and single post metadata inspection.
 - **WooCommerce Store & Catalog Data**: Read-only access to products, stock status, variations, e-commerce settings, and recent orders with **strict GDPR/PII anonymization** (masked names, redacted emails/phones/addresses) and gateway error diagnostics via order notes.
+- **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -127,6 +128,11 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |
 | `GET /woocommerce/order/{id}` | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata. |
 | `GET /woocommerce/settings` | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods. |
+| `GET /content/pages?status={status}` | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview. |
+| `GET /content/page/{id}` | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata. |
+| `GET /content/posts?status={status}` | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview. |
+| `GET /content/post/{id}` | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object. |
+| `GET /content/seo-audit?include_posts={bool}` | Site-wide SEO audit report across key pages: detected SEO plugin, global search engine visibility, missing meta descriptions, title length issues, critical noindex warnings, and OG image coverage. |
 
 ---
 
@@ -157,6 +163,7 @@ node sync.js pull:flowmattic   # Dumps FlowMattic workflows (organized into acti
 node sync.js pull:analytics    # Dumps Independent Analytics to overview.json & summary.md
 node sync.js pull:meta         # Dumps Custom Fields & ACF schemas to ./meta/ (fields.json, acf.json, meta-summary.md)
 node sync.js pull:woocommerce  # Dumps WooCommerce store data (summary, settings, products, anonymized orders)
+node sync.js pull:content      # Dumps WordPress pages, Gutenberg trees, and SEO audit to ./content/
 node sync.js pull:logs         # Downloads tail of debug.log, wc-logs, and custom logs
 ```
 

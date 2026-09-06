@@ -36,6 +36,15 @@ class System_Controller extends Rest_Controller {
                 return $this->check_access($request, 'system');
             },
         ]);
+
+        // GET /system/database (Database health, table sizes, autoload analysis, transients)
+        register_rest_route(self::NAMESPACE, '/system/database', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_database_health'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'system');
+            },
+        ]);
     }
 
     public function get_ping(\WP_REST_Request $request) {
@@ -236,6 +245,157 @@ class System_Controller extends Rest_Controller {
             'mu_plugins'       => $mu_list,
             'woocommerce'      => $wc_info,
             'action_scheduler' => $action_scheduler_info,
+        ]);
+    }
+
+    /**
+     * GET /system/database
+     * In-depth database diagnostic: table sizes, top tables, autoload footprint, and transient health.
+     */
+    public function get_database_health(\WP_REST_Request $request) {
+        global $wpdb;
+
+        // 1. Table status & storage breakdown
+        $table_status = $wpdb->get_results("SHOW TABLE STATUS", ARRAY_A);
+        $total_data_bytes  = 0;
+        $total_index_bytes = 0;
+        $total_rows        = 0;
+        $tables            = [];
+
+        if (is_array($table_status)) {
+            foreach ($table_status as $row) {
+                $table_name   = $row['Name'] ?? '';
+                $data_len     = (int) ($row['Data_length'] ?? 0);
+                $index_len    = (int) ($row['Index_length'] ?? 0);
+                $table_bytes  = $data_len + $index_len;
+                $rows_count   = (int) ($row['Rows'] ?? 0);
+                $engine       = $row['Engine'] ?? 'Unknown';
+
+                $total_data_bytes  += $data_len;
+                $total_index_bytes += $index_len;
+                $total_rows        += $rows_count;
+
+                $tables[] = [
+                    'table'        => $table_name,
+                    'engine'       => $engine,
+                    'rows'         => $rows_count,
+                    'data_bytes'   => $data_len,
+                    'index_bytes'  => $index_len,
+                    'total_bytes'  => $table_bytes,
+                    'total_human'  => size_format($table_bytes),
+                    'is_wp_prefix' => (strpos($table_name, $wpdb->prefix) === 0),
+                ];
+            }
+        }
+
+        // Sort tables by size descending
+        usort($tables, function ($a, $b) {
+            return $b['total_bytes'] <=> $a['total_bytes'];
+        });
+
+        $top_tables = array_slice($tables, 0, 15);
+        $total_db_bytes = $total_data_bytes + $total_index_bytes;
+
+        // 2. Autoload Footprint Analysis (Top performance bottleneck in WP)
+        $autoload_query = $wpdb->get_results(
+            "SELECT option_name, LENGTH(option_value) AS size_bytes 
+             FROM {$wpdb->options} 
+             WHERE autoload NOT IN ('no', 'off')
+             ORDER BY size_bytes DESC",
+            ARRAY_A
+        );
+
+        $total_autoload_bytes = 0;
+        $total_autoload_count = 0;
+        $top_autoload_options = [];
+
+        if (is_array($autoload_query)) {
+            $total_autoload_count = count($autoload_query);
+            foreach ($autoload_query as $opt) {
+                $bytes = (int) ($opt['size_bytes'] ?? 0);
+                $total_autoload_bytes += $bytes;
+            }
+
+            // Top 10 largest autoloaded options
+            $top_slice = array_slice($autoload_query, 0, 10);
+            foreach ($top_slice as $opt) {
+                $opt_bytes = (int) ($opt['size_bytes'] ?? 0);
+                $top_autoload_options[] = [
+                    'option_name' => $opt['option_name'],
+                    'size_bytes'  => $opt_bytes,
+                    'size_human'  => size_format($opt_bytes),
+                ];
+            }
+        }
+
+        // Autoload status & thresholds
+        $autoload_status = 'healthy';
+        $autoload_alert  = null;
+        if ($total_autoload_bytes > 1572864) { // > 1.5 MB
+            $autoload_status = 'critical';
+            $autoload_alert  = sprintf(
+                'CRITICAL: Total autoload size is %s across %d options. Autoload exceeding 1 MB significantly degrades TTFB on every single request. Consider disabling autoload for oversized options.',
+                size_format($total_autoload_bytes),
+                $total_autoload_count
+            );
+        } elseif ($total_autoload_bytes > 819200) { // > 800 KB
+            $autoload_status = 'warning';
+            $autoload_alert  = sprintf(
+                'WARNING: Total autoload size is %s across %d options. Optimal threshold is under 800 KB.',
+                size_format($total_autoload_bytes),
+                $total_autoload_count
+            );
+        }
+
+        // 3. Transients Health Check
+        $now = time();
+        $expired_transients_count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value < %d",
+                '_transient_timeout_%',
+                $now
+            )
+        );
+
+        $total_transients_count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s",
+                '_transient_%'
+            )
+        );
+
+        // 4. Object Cache & Database Engine
+        $ext_object_cache = function_exists('wp_using_ext_object_cache') ? wp_using_ext_object_cache() : false;
+
+        return $this->response([
+            'database' => [
+                'server_version' => $wpdb->db_version(),
+                'tables_count'   => count($tables),
+                'total_rows'     => $total_rows,
+                'data_size'      => size_format($total_data_bytes),
+                'index_size'     => size_format($total_index_bytes),
+                'total_size'     => size_format($total_db_bytes),
+                'total_bytes'    => $total_db_bytes,
+            ],
+            'autoload_health' => [
+                'status'               => $autoload_status,
+                'total_size'           => size_format($total_autoload_bytes),
+                'total_bytes'          => $total_autoload_bytes,
+                'total_options_count'  => $total_autoload_count,
+                'recommended_max_size' => '800 KB',
+                'alert'                => $autoload_alert,
+                'top_heavy_options'    => $top_autoload_options,
+            ],
+            'transients_health' => [
+                'total_transients'   => $total_transients_count,
+                'expired_transients' => $expired_transients_count,
+                'alert'              => $expired_transients_count > 200 ? sprintf('Warning: %d expired transients detected in wp_options. Consider running a transient cleanup.', $expired_transients_count) : null,
+            ],
+            'caching' => [
+                'external_object_cache' => $ext_object_cache,
+                'recommendation'        => !$ext_object_cache ? 'External object cache (Redis/Memcached) is not active. Enabling an external object cache will relieve database pressure on high-traffic WooCommerce sites.' : 'External object cache is active.',
+            ],
+            'top_tables' => $top_tables,
         ]);
     }
 }

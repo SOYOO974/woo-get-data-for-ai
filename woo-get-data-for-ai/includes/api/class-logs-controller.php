@@ -50,6 +50,21 @@ class Logs_Controller extends Rest_Controller {
                 ],
             ],
         ]);
+
+        // GET /logs/errors-summary (Crash Watch: aggregated recent PHP fatal errors and exceptions)
+        register_rest_route(self::NAMESPACE, '/logs/errors-summary', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_errors_summary'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'logs');
+            },
+            'args'                => [
+                'limit' => [
+                    'default'           => 15,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
+        ]);
     }
 
     public function get_log_sources(\WP_REST_Request $request) {

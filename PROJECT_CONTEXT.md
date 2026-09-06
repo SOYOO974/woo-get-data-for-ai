@@ -36,16 +36,17 @@
   - Optional override supported via `WP_AGENT_BRIDGE_TOKEN` in `wp-config.php`.
 - **Automatic Updates & Release Protocol**:
   - Integrated with `plugin-update-checker` (PUC v5.6) configured for GitHub releases/branch tracking (`enableReleaseAssets()`).
-  - **MANDATORY RELEASE RULE FOR AGENTS & DEVELOPERS**:
-    Every time changes/commits are pushed for a new version:
+  - **MANDATORY AUTO-RELEASE DIRECTIVE (SYSTEMATIC ON EVERY FEATURE/FIX)**:
+    Whenever work on a new feature, improvement, or bugfix is completed, the agent/developer **MUST SYSTEMATICALLY AND AUTOMATICALLY PUBLISH A NEW GITHUB RELEASE**:
     1. **Version Bump**: Increment the version number in both the plugin header (`Version: X.Y.Z`) and the constant `WOO_GET_DATA_AI_VERSION` in `woo-get-data-for-ai/woo-get-data-for-ai.php`.
     2. **Changelog & Documentation**: Document all new features, bugfixes, and breaking changes in `PROJECT_CONTEXT.md` and `README.md`.
-    3. **Create a GitHub Release**:
-       - Push commits and create a corresponding Git tag (e.g. `v1.0.1` or `1.0.1`).
-       - Draft and publish a formal **GitHub Release** on `https://github.com/SOYOO974/woo-get-data-for-ai/releases`.
-       - Document the release notes clearly on GitHub.
-       - Attach the zipped plugin directory (`woo-get-data-for-ai.zip`) as a Release Asset.
-    > ⚠️ **Without creating a documented GitHub Release with a higher version tag, client WordPress sites will NOT trigger or detect the auto-update.**
+    3. **Commit & Push**:
+       - Push commits to GitHub `main` branch.
+    4. **Generate Release Asset**:
+       - Package the clean plugin folder into `woo-get-data-for-ai.zip` (`Compress-Archive -Path woo-get-data-for-ai -DestinationPath woo-get-data-for-ai.zip -Force`).
+    5. **Publish GitHub Release**:
+       - Create the official GitHub Release with tag `vX.Y.Z` and attach `woo-get-data-for-ai.zip` via `gh release create`.
+    > ⚠️ **CRITICAL WHY**: Client WordPress sites use `plugin-update-checker` (PUC v5.6). Sites will **ONLY** detect and install auto-updates if a formal GitHub Release exists with `woo-get-data-for-ai.zip` attached. Without this, client sites never receive the updates.
 
 
 ### B. Internationalization (i18n)
@@ -150,6 +151,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
 - `[x] WooCommerce Store Data (Products, Orders, Settings)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`)
+- `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -233,6 +235,11 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
 | `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods |
+| `GET /content/pages` | GET | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview (`?status=publish\|draft\|all`, `?parent=`, `?search=`, `?per_page=20`, `?page=1`) |
+| `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
+| `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
+| `GET /content/post/{id}` | GET | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object |
+| `GET /content/seo-audit` | GET | Site-wide SEO audit report across key pages: detected SEO plugin, global search engine visibility, missing meta descriptions, title length issues, critical noindex warnings, and OG image coverage (`?include_posts=true\|false`, `?limit=100`) |
 
 ---
 

@@ -75,6 +75,7 @@ class Plugin {
             new Api\Analytics_Controller(),
             new Api\Meta_Controller(),
             new Api\Woocommerce_Controller(),
+            new Api\Content_Controller(),
         ];
 
         foreach ($controllers as $controller) {
