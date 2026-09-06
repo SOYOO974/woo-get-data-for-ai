@@ -16,8 +16,8 @@ class Permissions {
         return [
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspection of WP, PHP, MySQL versions, active plugins list, server limits, and Action Scheduler crons.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database'],
+                'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, and security hardening.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -71,8 +71,8 @@ class Permissions {
             ],
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings)', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings'],
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
@@ -178,6 +178,16 @@ class Permissions {
                         'path'        => '/system/database',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/mail',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('SMTP & transactional email diagnostic: active mail plugin (FluentSMTP, WP Mail SMTP, Post SMTP), provider, sanitization of secrets, and recent delivery failures.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/security',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -482,6 +492,29 @@ class Permissions {
                         'path'        => '/woocommerce/settings',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/analytics/sales',
+                        'methods'     => ['GET'],
+                        'params'      => ['range (today|yesterday|last_7_days|last_30_days|this_month|last_month|this_year|custom, default: last_30_days)', 'start_date (YYYY-MM-DD)', 'end_date (YYYY-MM-DD)'],
+                        'description' => esc_html__('100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/analytics/top-performers',
+                        'methods'     => ['GET'],
+                        'params'      => ['range (default: last_30_days)', 'limit (default: 10, max: 50)', 'start_date', 'end_date'],
+                        'description' => esc_html__('Top selling products by net revenue and units sold, and top discount coupons with usage counts.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/analytics/stock',
+                        'methods'     => ['GET'],
+                        'params'      => ['low_stock_threshold (optional override)'],
+                        'description' => esc_html__('Stock health and financial valuation: total managed units, total retail valuation, low stock alerts, and dormant stock (0 sales in last 90 days).', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/webhooks',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

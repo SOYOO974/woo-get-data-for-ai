@@ -203,6 +203,8 @@ Enables/disables modules on a per-site basis:
 | `GET /capabilities` | GET | Dynamic schema, active permissions, procedural diagnostic Playbooks, and ready-to-use Agent SKILL.md generator (`?format=skill\|markdown`) |
 | `GET /system` | GET | WP/WC/PHP/MySQL versions, active plugins & updates, HPOS status, Action Scheduler queue |
 | `GET /system/database` | GET | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status |
+| `GET /system/mail` | GET | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures |
+| `GET /system/security` | GET | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins |
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
@@ -241,6 +243,10 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
 | `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods |
+| `GET /woocommerce/analytics/sales` | GET | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period (`?range=last_30_days`, `?start_date=`, `?end_date=`) |
+| `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold, and top coupons with discount totals (`?limit=10`, `?range=last_30_days`) |
+| `GET /woocommerce/analytics/stock` | GET | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days) (`?low_stock_threshold=`) |
+| `GET /woocommerce/webhooks` | GET | WooCommerce webhooks inventory, delivery URLs, topics, and failure counters (`failure_count >= 5`) |
 | `GET /content/pages` | GET | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview (`?status=publish\|draft\|all`, `?parent=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
 | `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
@@ -254,13 +260,15 @@ Enables/disables modules on a per-site basis:
 To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoints, the plugin features an intelligent **Playbooks Engine**:
 - **Zero-Prompt Stagnation**: Instead of memorizing static endpoint lists, AI agents query `GET /capabilities?format=skill` to instantly generate an up-to-date `.agents/skills/wp-agent-bridge/SKILL.md` workspace skill.
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
-- **Built-in Procedural Playbooks**:
+- **Built-in Procedural Playbooks (8 Battle-Tested Investigation Sequences)**:
   1. `seo_content_audit`: 360° SEO, meta tags, critical noindex detection on pages/products, OpenGraph coverage, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
-  2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, stalled Action Scheduler queues, overdue WP-Crons, and memory-safe fatal error log extraction (`/system`, `/crons`, `/action-scheduler`, `/logs/view`).
-  3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, and checkout hook snippets (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`).
-  4. `store_analytics_roi`: Store performance, net sales, conversion rates, traffic acquisition channels, UTM marketing campaigns, and device comparison (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/referrers`, `/analytics/devices`).
+  2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, database autoload bloat, security hardening audit, stalled Action Scheduler queues, overdue WP-Crons, and Crash Watch fatal error dashboard (`/system`, `/system/database`, `/system/security`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
+  3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, active checkout hooks, SMTP mail delivery check, and WooCommerce webhook health (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
+  4. `store_analytics_roi`: Store performance, net sales, conversion rates, traffic acquisition channels, UTM marketing campaigns, and device comparison (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/devices`).
   5. `integration_automation_map`: Full integration mapping: Elementor forms with webhooks, active FlowMattic automation recipes, custom ACF/code meta fields, and active WPCode snippets (`/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, `/wpcode/snippets`).
   6. `theme_wc_compatibility`: Child theme code, Woodmart/Elessi theme options, and WooCommerce template version drift detection (`/theme/overrides`, `/theme/child`, `/theme/options`).
+  7. `store_sales_stock_audit`: Native WooCommerce commercial intelligence: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products by revenue/qty, top coupons, and stock valuation & dormant inventory (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/summary`).
+  8. `email_webhook_diagnostics`: Transactional email delivery and webhook integration diagnostics: SMTP provider detection (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk, and failing WooCommerce webhooks (`/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, `/logs/view`).
 
 ---
 
@@ -307,27 +315,28 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ## 7. Version Changelog
 
 ### v1.8.0 (2026-09-06)
+- **Intelligence E-Commerce 100% Native (`Woocommerce_Controller`)** :
+  - `GET /woocommerce/analytics/sales` : Rapport commercial autonome sans plugin tiers (CA brut, CA net, volume commandes, panier moyen AOV, remboursements, ventilation quotidienne et pourcentages de croissance vs période N-1 équivalente). Supporte `wc_order_stats`, HPOS `wc_orders` et tables d'agrégation historiques.
+  - `GET /woocommerce/analytics/top-performers` : Classement des 10 meilleurs produits par chiffre d'affaires et volume vendu, et analyse des coupons promotionnels les plus utilisés (`wc_order_product_lookup` / `wc_order_coupon_lookup`).
+  - `GET /woocommerce/analytics/stock` : Audit financier et logistique du stock : valorisation totale marchande du catalogue, alertes de stock faible sous le seuil critique, et détection du stock dormant (produits avec unités physiques mais 0 vente sur les 90 derniers jours).
+  - `GET /woocommerce/webhooks` : Cartographie complète des webhooks WooCommerce avec URL de destination caviardée, topic déclencheur, statut et compteurs d'échecs de distribution (`failure_count >= 5`).
+- **Diagnostic SMTP & Transactionnel (`System_Controller`)** :
+  - `GET /system/mail` : Détection automatique du transporteur SMTP actif (**FluentSMTP**, **WP Mail SMTP**, **Post SMTP**, **Easy WP SMTP**), masquage strict des identifiants/mots de passe, extraction des 10 derniers échecs d'envoi et alerte critique si le site utilise PHP `mail()` non authentifié à fort risque de spam.
+- **Audit de Sécurité & Durcissement Système (`System_Controller`)** :
+  - `GET /system/security` : Analyse des constantes WordPress (`DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `FORCE_SSL_ADMIN`, `WP_DEBUG_DISPLAY`), accessibilité `xmlrpc.php`, exposition du tag générateur WordPress, préfixe de base de données, détection des plugins de sécurité actifs (Wordfence, Solid Security, Sucuri, SecuPress, MalCare) et des moteurs de cache (WP Rocket, LiteSpeed, W3TC, Redis Object Cache).
 - **Moteur de Playbooks Procéduraux Dynamiques (`Playbooks`)** :
-  - **Nouvelle classe centrale (`includes/class-playbooks.php`)** : Définit les recettes d'investigation procédurales et les enchaînements d'endpoints optimaux pour résoudre des cas d'usage réels sans tâtonnement ni requêtes redondantes.
-  - **6 Playbooks intégrés avec déclencheurs d'intention (`intent_triggers`) et signaux clés (`key_signals`)** :
-    1. `seo_content_audit` : Audit SEO 360°, détection noindex critique, meta manquantes et arborescence Gutenberg (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
-    2. `tech_health_crons` : Santé technique, versions PHP/MySQL, mémoire, Action Scheduler, WP-Cron et Crash Watch (`/system`, `/action-scheduler`, `/crons`, `/logs/view`).
-    3. `ecommerce_troubleshoot` : Diagnostic commandes échouées, réponses passerelle de paiement, coupons et snippets checkout (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`).
-    4. `store_analytics_roi` : Performance commerciale, taux de conversion, ventes nettes, canaux UTM et comparaison mobile/desktop (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/devices`).
-    5. `integration_automation_map` : Cartographie formulaires Elementor, webhooks, workflows FlowMattic, champs ACF et code custom (`/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, `/wpcode/snippets`).
-    6. `theme_wc_compatibility` : Paramètres thème, surcharge child theme et templates WooCommerce obsolètes (`/theme/overrides`, `/theme/child`, `/theme/options`).
-  - **Filtrage Adaptatif selon les Permissions du Site** :
-    - Si un module obligatoire est désactivé dans l'admin WordPress (ex: WooCommerce), les playbooks associés sont automatiquement exclus du catalogue.
-    - Si un module optionnel est désactivé, les étapes correspondantes sont purgées à la volée du workflow, empêchant tout appel renvoyant un code HTTP `403 Forbidden`.
-- **Générateur Automatique de Skill pour Agents IA (`GET /capabilities?format=skill`)** :
-  - L'endpoint `/capabilities` supporte désormais `?format=skill` (ou `?format=markdown`), renvoyant directement un fichier Markdown complet prêt à l'emploi (`SKILL.md`) avec frontmatter YAML, catalogue dynamique des routes autorisées, playbooks détaillés et directives de sécurité.
-  - En mode JSON standard, injection de la clé `playbooks` et `playbooks_count` aux côtés des modules pour les agents programmatiques.
-- **Mega-Prompt d'Onboarding Allégé & Immuable (Onglet 3)** :
-  - Transformation du prompt copié-collé en contrat immuable résistant aux mises à jour futures : l'IA est instruite d'initialiser son skill local via `curl ... /capabilities?format=skill > .agents/skills/wp-agent-bridge/SKILL.md`.
-  - Zéro obsolescence : l'IA met à jour sa compréhension du site automatiquement lors des futures releases sans intervention humaine.
-  - Ajout des badges dynamiques dans l'UI d'administration (Modules Actifs, Playbooks Disponibles, Protection Read-Only) et du bloc de commande terminal en 1 ligne.
-- **Règle de Synchronisation Obligatoire des Playbooks (Gouvernance & AGENTS.md)** :
-  - Ajout de l'étape 3 ("Procedural Playbooks & AI Skill Synchronization") dans la check-list obligatoire en 7 étapes pour tout futur ajout d'endpoint ou de module.
+  - Intégration de 8 Playbooks d'investigation complets avec signaux clés et déclencheurs d'intention.
+  - Enrichissement du Playbook `tech_health_crons` avec la santé base de données (`/system/database`), le durcissement sécurité (`/system/security`) et Crash Watch (`/logs/errors-summary`).
+  - Enrichissement du Playbook `ecommerce_troubleshoot` avec le diagnostic SMTP (`/system/mail`) et l'état des webhooks (`/woocommerce/webhooks`).
+  - **Nouveau Playbook 7** : `store_sales_stock_audit` (Analyse commerciale, top produits et valorisation du stock).
+  - **Nouveau Playbook 8** : `email_webhook_diagnostics` (Résolution des échecs de livraison email et synchronisations ERP/CRM).
+  - Générateur dynamique de skill pour agents IA (`GET /capabilities?format=skill`).
+- **Permissions & Capabilities** :
+  - Déclaration de tous les nouveaux endpoints dans `get_module_definitions()` et `get_capabilities_catalog()`.
+  - Mise à jour de la documentation d'administration (Onglet 5) et du prompt système d'onboarding (Onglet 3).
+- **Client CLI Local (`cli/sync.js`)** :
+  - `pullWooCommerce()` enrichi : téléchargement de `analytics-sales.json`, `top-performers.json`, `stock-analytics.json`, `webhooks.json` et génération de `sales-report.md` et `stock-health.md`.
+  - `pullSystem()` enrichi : téléchargement de `mail.json` et `security.json` avec intégration dans `system-report.md`.
 
 ### v1.7.0 (2026-09-06)
 - **Module Pages, Contenu & SEO Unifié (`Content_Controller`)** :

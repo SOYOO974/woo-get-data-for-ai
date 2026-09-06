@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
 
 use WPAgentBridge\Permissions;
 use WPAgentBridge\Playbooks;
+use WPAgentBridge\Redaction;
 
 class System_Controller extends Rest_Controller {
 
@@ -50,6 +51,24 @@ class System_Controller extends Rest_Controller {
         register_rest_route(self::NAMESPACE, '/system/database', [
             'methods'             => \WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_database_health'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'system');
+            },
+        ]);
+
+        // GET /system/mail (SMTP diagnostic, mail transport provider, and recent delivery failures)
+        register_rest_route(self::NAMESPACE, '/system/mail', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_mail_diagnostic'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'system');
+            },
+        ]);
+
+        // GET /system/security (Hardening audit, file editing constants, XML-RPC, security & cache plugins)
+        register_rest_route(self::NAMESPACE, '/system/security', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_security_audit'],
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'system');
             },
@@ -425,6 +444,287 @@ class System_Controller extends Rest_Controller {
                 'recommendation'        => !$ext_object_cache ? 'External object cache (Redis/Memcached) is not active. Enabling an external object cache will relieve database pressure on high-traffic WooCommerce sites.' : 'External object cache is active.',
             ],
             'top_tables' => $top_tables,
+        ]);
+    }
+
+    /**
+     * GET /system/mail
+     * SMTP and transactional email diagnostic report.
+     * Detects transport provider (FluentSMTP, WP Mail SMTP, Post SMTP, Easy WP SMTP),
+     * sanitizes credentials, and inspects recent delivery failures.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_mail_diagnostic(\WP_REST_Request $request) {
+        global $wpdb;
+
+        // 1. Detect Installed & Active Mail Plugins
+        $detected_plugins = [];
+        $active_provider  = 'php_mail'; // Default fallback
+        $active_plugin    = 'WordPress Core (Default)';
+        $config_details   = [];
+        $recent_failures  = [];
+
+        // Check FluentSMTP
+        $has_fluentsmtp = defined('FLUENTMAIL') || class_exists('FluentMail\App\App');
+        if ($has_fluentsmtp) {
+            $detected_plugins[] = 'FluentSMTP';
+            $fluent_settings = get_option('fluentmail-settings');
+            if (!empty($fluent_settings) && is_array($fluent_settings)) {
+                $active_plugin   = 'FluentSMTP';
+                $connections     = $fluent_settings['connections'] ?? [];
+                $active_conn_key = $fluent_settings['active_connection'] ?? key($connections);
+                $active_conn     = $connections[$active_conn_key] ?? [];
+                $active_provider = $active_conn['provider_name'] ?? ($active_conn['provider'] ?? 'fluentsmtp_custom');
+                
+                $config_details = [
+                    'provider'        => $active_provider,
+                    'sender_email'    => $active_conn['sender_email'] ?? get_option('admin_email'),
+                    'sender_name'     => $active_conn['sender_name'] ?? get_bloginfo('name'),
+                    'is_active'       => true,
+                    'logging_enabled' => !empty($fluent_settings['misc']['log_emails']),
+                ];
+
+                // Query FluentSMTP failed log
+                $f_table = $wpdb->prefix . 'fluentmail_log';
+                if ($wpdb->get_var("SHOW TABLES LIKE '{$f_table}'") === $f_table) {
+                    $f_logs = $wpdb->get_results("
+                        SELECT id, `to` as recipient, subject, status, response, created_at
+                        FROM {$f_table}
+                        WHERE status != 'sent'
+                        ORDER BY id DESC
+                        LIMIT 10
+                    ", ARRAY_A);
+                    if (!empty($f_logs)) {
+                        foreach ($f_logs as $f_log) {
+                            $recent_failures[] = [
+                                'id'         => (int) $f_log['id'],
+                                'recipient'  => Redaction::redact_string($f_log['recipient'] ?? '', true),
+                                'subject'    => sanitize_text_field($f_log['subject'] ?? ''),
+                                'status'     => $f_log['status'],
+                                'error'      => sanitize_text_field(substr($f_log['response'] ?? '', 0, 200)),
+                                'date'       => $f_log['created_at'],
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check WP Mail SMTP
+        $has_wp_mail_smtp = defined('WPMS_PLUGIN_VER') || class_exists('WPMailSMTP\Core');
+        if ($has_wp_mail_smtp) {
+            $detected_plugins[] = 'WP Mail SMTP';
+            if ($active_provider === 'php_mail') {
+                $wpms_options = get_option('wp_mail_smtp');
+                if (!empty($wpms_options) && is_array($wpms_options)) {
+                    $active_plugin   = 'WP Mail SMTP';
+                    $mailer          = $wpms_options['mail']['mailer'] ?? 'mail';
+                    $active_provider = $mailer;
+
+                    $config_details = [
+                        'provider'       => $mailer,
+                        'sender_email'   => $wpms_options['mail']['from_email'] ?? get_option('admin_email'),
+                        'sender_name'    => $wpms_options['mail']['from_name'] ?? get_bloginfo('name'),
+                        'is_active'      => $mailer !== 'mail',
+                        'host'           => isset($wpms_options['smtp']['host']) ? $wpms_options['smtp']['host'] : null,
+                        'port'           => isset($wpms_options['smtp']['port']) ? (int) $wpms_options['smtp']['port'] : null,
+                        'encryption'     => isset($wpms_options['smtp']['encryption']) ? $wpms_options['smtp']['encryption'] : null,
+                    ];
+                }
+
+                // Query WP Mail SMTP debug events or logs if available
+                $wpms_debug_table = $wpdb->prefix . 'wpmailsmtp_debug_events';
+                if ($wpdb->get_var("SHOW TABLES LIKE '{$wpms_debug_table}'") === $wpms_debug_table) {
+                    $wpms_logs = $wpdb->get_results("
+                        SELECT id, event_type, content, created_at
+                        FROM {$wpms_debug_table}
+                        WHERE event_type IN (1, 2)
+                        ORDER BY id DESC
+                        LIMIT 10
+                    ", ARRAY_A);
+                    if (!empty($wpms_logs)) {
+                        foreach ($wpms_logs as $w_log) {
+                            $recent_failures[] = [
+                                'id'         => (int) $w_log['id'],
+                                'recipient'  => '',
+                                'subject'    => '',
+                                'status'     => 'failed',
+                                'error'      => sanitize_text_field(substr($w_log['content'] ?? '', 0, 200)),
+                                'date'       => $w_log['created_at'],
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check Post SMTP
+        $has_post_smtp = defined('POST_SMTP_VER') || class_exists('Postman');
+        if ($has_post_smtp) {
+            $detected_plugins[] = 'Post SMTP';
+            if ($active_provider === 'php_mail') {
+                $active_plugin   = 'Post SMTP';
+                $active_provider = 'post_smtp';
+            }
+        }
+
+        // Check Easy WP SMTP
+        $has_easy_wp_smtp = class_exists('EasyWPSmtp');
+        if ($has_easy_wp_smtp) {
+            $detected_plugins[] = 'Easy WP SMTP';
+            if ($active_provider === 'php_mail') {
+                $active_plugin   = 'Easy WP SMTP';
+                $active_provider = 'easy_wp_smtp';
+            }
+        }
+
+        // Default / PHP mail evaluation
+        $is_using_php_mail = ($active_provider === 'php_mail' || $active_provider === 'mail');
+        $health_status     = $is_using_php_mail ? 'warning' : (!empty($recent_failures) ? 'notice' : 'healthy');
+
+        $alerts = [];
+        if ($is_using_php_mail) {
+            $alerts[] = 'CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo.';
+        }
+        if (!empty($recent_failures)) {
+            $alerts[] = sprintf('%d recent email delivery failure(s) recorded in mail log.', count($recent_failures));
+        }
+
+        return $this->response([
+            'health'             => $health_status,
+            'active_plugin'      => $active_plugin,
+            'transport_provider' => $active_provider,
+            'is_authenticated'   => !$is_using_php_mail,
+            'detected_plugins'   => $detected_plugins,
+            'configuration'      => $config_details,
+            'recent_failures'    => $recent_failures,
+            'alerts'             => $alerts,
+        ]);
+    }
+
+    /**
+     * GET /system/security
+     * Security hardening audit, constants, XML-RPC, exposed versions, and security/caching plugins.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_security_audit(\WP_REST_Request $request) {
+        global $wpdb;
+
+        // 1. Core Hardening Constants
+        $disallow_file_edit = defined('DISALLOW_FILE_EDIT') && DISALLOW_FILE_EDIT;
+        $disallow_file_mods = defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS;
+        $force_ssl_admin    = defined('FORCE_SSL_ADMIN') && FORCE_SSL_ADMIN;
+        $wp_debug           = defined('WP_DEBUG') && WP_DEBUG;
+        $wp_debug_display   = defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY;
+        $wp_debug_log       = defined('WP_DEBUG_LOG') && WP_DEBUG_LOG;
+        $script_debug       = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG;
+        $is_ssl             = is_ssl();
+
+        // 2. Database Prefix Security
+        $table_prefix      = $wpdb->prefix;
+        $is_default_prefix = ($table_prefix === 'wp_');
+
+        // 3. XML-RPC & Version Exposure
+        $xmlrpc_enabled    = apply_filters('xmlrpc_enabled', true);
+        $generator_exposed = has_action('wp_head', 'wp_generator') !== false;
+
+        // 4. Detected Security Plugins
+        $security_plugins = [];
+        if (defined('WORDFENCE_VERSION') || class_exists('wordfence')) $security_plugins[] = ['name' => 'Wordfence Security', 'active' => true];
+        if (class_exists('ITSEC_Core')) $security_plugins[] = ['name' => 'Solid Security (iThemes)', 'active' => true];
+        if (defined('SUCURISCAN_INIT')) $security_plugins[] = ['name' => 'Sucuri Security', 'active' => true];
+        if (defined('SECUPRESS_VERSION')) $security_plugins[] = ['name' => 'SecuPress', 'active' => true];
+        if (defined('AIO_WP_SECURITY_VERSION')) $security_plugins[] = ['name' => 'All In One WP Security & Firewall', 'active' => true];
+        if (class_exists('WP_Defender\Controller')) $security_plugins[] = ['name' => 'Defender Security', 'active' => true];
+        if (defined('CERBER_VERSION')) $security_plugins[] = ['name' => 'WP Cerber Security', 'active' => true];
+        if (defined('MALCARE_VERSION')) $security_plugins[] = ['name' => 'MalCare Security', 'active' => true];
+
+        // 5. Detected Caching & Performance Plugins
+        $cache_plugins = [];
+        if (defined('WP_ROCKET_VERSION')) $cache_plugins[] = ['name' => 'WP Rocket', 'version' => WP_ROCKET_VERSION];
+        if (defined('LSCWP_V')) $cache_plugins[] = ['name' => 'LiteSpeed Cache', 'version' => LSCWP_V];
+        if (defined('W3TC')) $cache_plugins[] = ['name' => 'W3 Total Cache', 'version' => true];
+        if (defined('ADVANCEDCACHEPROBLEM') || function_exists('wp_cache_init')) $cache_plugins[] = ['name' => 'WP Super Cache / Page Cache', 'version' => true];
+        if (defined('AUTOPTIMIZE_PLUGIN_VERSION')) $cache_plugins[] = ['name' => 'Autoptimize', 'version' => AUTOPTIMIZE_PLUGIN_VERSION];
+        if (class_exists('RedisObjectCache') || defined('WP_REDIS_VERSION')) $cache_plugins[] = ['name' => 'Redis Object Cache', 'version' => true];
+        if (defined('PERFMATTERS_VERSION')) $cache_plugins[] = ['name' => 'Perfmatters', 'version' => PERFMATTERS_VERSION];
+        if (defined('FLYING_PRESS_VERSION')) $cache_plugins[] = ['name' => 'FlyingPress', 'version' => FLYING_PRESS_VERSION];
+
+        // 6. Security Score & Actionable Recommendations
+        $recommendations = [];
+        if (!$disallow_file_edit) {
+            $recommendations[] = [
+                'severity' => 'medium',
+                'issue'    => 'DISALLOW_FILE_EDIT is not enabled.',
+                'solution' => 'Add define(\'DISALLOW_FILE_EDIT\', true); in wp-config.php to block admin dashboard theme/plugin code editing.',
+            ];
+        }
+        if ($wp_debug_display) {
+            $recommendations[] = [
+                'severity' => 'high',
+                'issue'    => 'WP_DEBUG_DISPLAY is enabled in production.',
+                'solution' => 'Set define(\'WP_DEBUG_DISPLAY\', false); in wp-config.php to prevent sensitive PHP backtraces and database paths from leaking to visitors.',
+            ];
+        }
+        if ($is_default_prefix) {
+            $recommendations[] = [
+                'severity' => 'low',
+                'issue'    => 'Default database prefix "wp_" is used.',
+                'solution' => 'Using standard "wp_" prefix makes automated SQL injection probes easier. Consider renaming prefix on next staging migration.',
+            ];
+        }
+        if ($xmlrpc_enabled) {
+            $recommendations[] = [
+                'severity' => 'low',
+                'issue'    => 'XML-RPC interface is active.',
+                'solution' => 'If not using Jetpack or mobile WP app, disable XML-RPC via filter add_filter(\'xmlrpc_enabled\', \'__return_false\') or web server rules to avoid brute-force attacks.',
+            ];
+        }
+        if (!$is_ssl) {
+            $recommendations[] = [
+                'severity' => 'critical',
+                'issue'    => 'Site is not running over HTTPS (SSL).',
+                'solution' => 'Enable SSL certificate and define(\'FORCE_SSL_ADMIN\', true); immediately.',
+            ];
+        }
+
+        $has_critical_or_high = false;
+        foreach ($recommendations as $rec) {
+            if ($rec['severity'] === 'high' || $rec['severity'] === 'critical') {
+                $has_critical_or_high = true;
+                break;
+            }
+        }
+
+        $security_health = empty($recommendations) ? 'hardened' : ($has_critical_or_high ? 'needs_attention' : 'moderate');
+
+        return $this->response([
+            'health'          => $security_health,
+            'constants'       => [
+                'disallow_file_edit' => $disallow_file_edit,
+                'disallow_file_mods' => $disallow_file_mods,
+                'force_ssl_admin'    => $force_ssl_admin,
+                'wp_debug'           => $wp_debug,
+                'wp_debug_display'   => $wp_debug_display,
+                'wp_debug_log'       => $wp_debug_log,
+                'script_debug'       => $script_debug,
+                'is_ssl'             => $is_ssl,
+            ],
+            'database_hardening' => [
+                'prefix'            => $table_prefix,
+                'is_default_prefix' => $is_default_prefix,
+            ],
+            'attack_surface'     => [
+                'xmlrpc_enabled'    => $xmlrpc_enabled,
+                'generator_exposed' => $generator_exposed,
+            ],
+            'security_plugins'   => $security_plugins,
+            'caching_plugins'    => $cache_plugins,
+            'recommendations'    => $recommendations,
         ]);
     }
 }

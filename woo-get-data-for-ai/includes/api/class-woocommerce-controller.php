@@ -150,6 +150,85 @@ class Woocommerce_Controller extends Rest_Controller {
                 return $this->check_access($request, 'woocommerce');
             },
         ]);
+
+        // GET /woocommerce/analytics/sales (Native WooCommerce sales performance, revenue, orders, AOV, comparison vs prior period)
+        register_rest_route(self::NAMESPACE, '/woocommerce/analytics/sales', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_sales_analytics'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'range'      => [
+                    'default'           => 'last_30_days',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Time window: today, yesterday, last_7_days, last_30_days, this_month, last_month, this_year, custom',
+                ],
+                'start_date' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Start date for custom range (YYYY-MM-DD)',
+                ],
+                'end_date'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'End date for custom range (YYYY-MM-DD)',
+                ],
+            ],
+        ]);
+
+        // GET /woocommerce/analytics/top-performers (Top products by revenue & volume, top coupons)
+        register_rest_route(self::NAMESPACE, '/woocommerce/analytics/top-performers', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_top_performers'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'range'      => [
+                    'default'           => 'last_30_days',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'start_date' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'end_date'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'limit'      => [
+                    'default'           => 10,
+                    'sanitize_callback' => 'absint',
+                    'description'       => 'Max items to return (1-50)',
+                ],
+            ],
+        ]);
+
+        // GET /woocommerce/analytics/stock (Stock financial valuation, low stock alerts, dormant inventory)
+        register_rest_route(self::NAMESPACE, '/woocommerce/analytics/stock', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_stock_analytics'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'low_stock_threshold' => [
+                    'default'           => 0,
+                    'sanitize_callback' => 'absint',
+                    'description'       => 'Optional low stock threshold override (defaults to WooCommerce setting)',
+                ],
+            ],
+        ]);
+
+        // GET /woocommerce/webhooks (Active and failing webhooks inventory)
+        register_rest_route(self::NAMESPACE, '/woocommerce/webhooks', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_webhooks'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+        ]);
     }
 
     /**
@@ -1018,6 +1097,682 @@ class Woocommerce_Controller extends Rest_Controller {
             'stock'            => $stock,
             'payment_gateways' => $payment_gateways,
             'shipping_zones'   => $shipping_zones,
+        ]);
+    }
+
+    /**
+     * Helper to resolve date range into start/end and prior comparison window.
+     *
+     * @param string $range
+     * @param string $custom_start
+     * @param string $custom_end
+     * @return array
+     */
+    protected function resolve_date_range($range, $custom_start = '', $custom_end = '') {
+        $now = current_time('timestamp');
+        $today_start = strtotime('today 00:00:00', $now);
+        $today_end   = strtotime('today 23:59:59', $now);
+
+        switch ($range) {
+            case 'today':
+                $start      = $today_start;
+                $end        = $today_end;
+                $prev_start = strtotime('-1 day', $today_start);
+                $prev_end   = strtotime('-1 day', $today_end);
+                $label      = 'Today vs Yesterday';
+                break;
+
+            case 'yesterday':
+                $start      = strtotime('yesterday 00:00:00', $now);
+                $end        = strtotime('yesterday 23:59:59', $now);
+                $prev_start = strtotime('-2 days 00:00:00', $now);
+                $prev_end   = strtotime('-2 days 23:59:59', $now);
+                $label      = 'Yesterday vs Day Prior';
+                break;
+
+            case 'last_7_days':
+                $start      = strtotime('-6 days 00:00:00', $now);
+                $end        = $today_end;
+                $diff       = $end - $start;
+                $prev_start = $start - $diff - 1;
+                $prev_end   = $start - 1;
+                $label      = 'Last 7 Days vs Previous 7 Days';
+                break;
+
+            case 'this_month':
+                $start      = strtotime(date('Y-m-01 00:00:00', $now));
+                $end        = $today_end;
+                $diff       = $end - $start;
+                $prev_start = strtotime('-1 month', $start);
+                $prev_end   = $prev_start + $diff;
+                $label      = 'This Month to Date vs Prior Month';
+                break;
+
+            case 'last_month':
+                $start      = strtotime('first day of last month 00:00:00', $now);
+                $end        = strtotime('last day of last month 23:59:59', $now);
+                $diff       = $end - $start;
+                $prev_start = $start - $diff - 1;
+                $prev_end   = $start - 1;
+                $label      = 'Last Month vs Prior Month';
+                break;
+
+            case 'this_year':
+                $start      = strtotime(date('Y-01-01 00:00:00', $now));
+                $end        = $today_end;
+                $prev_start = strtotime('-1 year', $start);
+                $prev_end   = strtotime('-1 year', $end);
+                $label      = 'This Year to Date vs Prior Year';
+                break;
+
+            case 'custom':
+                if (!empty($custom_start) && !empty($custom_end)) {
+                    $start = strtotime($custom_start . ' 00:00:00');
+                    $end   = strtotime($custom_end . ' 23:59:59');
+                    $diff  = $end - $start;
+                    if ($diff < 0) {
+                        $temp  = $start;
+                        $start = $end;
+                        $end   = $temp;
+                        $diff  = abs($diff);
+                    }
+                    $prev_start = $start - $diff - 1;
+                    $prev_end   = $start - 1;
+                    $label      = 'Custom Period vs Prior Period';
+                    break;
+                }
+                // Fallthrough to last_30_days if custom dates invalid
+
+            case 'last_30_days':
+            default:
+                $start      = strtotime('-29 days 00:00:00', $now);
+                $end        = $today_end;
+                $diff       = $end - $start;
+                $prev_start = $start - $diff - 1;
+                $prev_end   = $start - 1;
+                $label      = 'Last 30 Days vs Previous 30 Days';
+                break;
+        }
+
+        return [
+            'start'      => date('Y-m-d H:i:s', $start),
+            'end'        => date('Y-m-d H:i:s', $end),
+            'prev_start' => date('Y-m-d H:i:s', $prev_start),
+            'prev_end'   => date('Y-m-d H:i:s', $prev_end),
+            'label'      => $label,
+        ];
+    }
+
+    /**
+     * Calculate growth percentage between current and previous values.
+     *
+     * @param float|int $current
+     * @param float|int $previous
+     * @return float
+     */
+    protected static function calculate_growth($current, $previous) {
+        if ($previous > 0) {
+            return round((($current - $previous) / $previous) * 100, 2);
+        }
+        return $current > 0 ? 100.0 : 0.0;
+    }
+
+    /**
+     * GET /woocommerce/analytics/sales
+     * 100% Native WooCommerce sales performance report without any external tracking plugins.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_sales_analytics(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', 'WooCommerce is not active on this site.', 404);
+        }
+
+        global $wpdb;
+
+        $range       = sanitize_text_field((string) $request->get_param('range'));
+        $start_date  = sanitize_text_field((string) $request->get_param('start_date'));
+        $end_date    = sanitize_text_field((string) $request->get_param('end_date'));
+        $dates       = $this->resolve_date_range($range, $start_date, $end_date);
+
+        $currency        = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'EUR';
+        $currency_symbol = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol($currency), ENT_QUOTES, 'UTF-8') : '€';
+
+        // Check if wc_order_stats table exists
+        $order_stats_table = $wpdb->prefix . 'wc_order_stats';
+        $has_order_stats   = $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
+
+        $paid_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+        $status_placeholders = implode("','", array_map('esc_sql', $paid_statuses));
+
+        if ($has_order_stats) {
+            // 1. Current Period Aggregates
+            $curr_stats = $wpdb->get_row($wpdb->prepare("
+                SELECT 
+                    COUNT(order_id) as orders_count,
+                    COALESCE(SUM(num_items_sold), 0) as items_sold,
+                    COALESCE(SUM(net_total), 0) as net_sales,
+                    COALESCE(SUM(total_sales), 0) as gross_sales,
+                    COALESCE(SUM(tax_total), 0) as total_tax,
+                    COALESCE(SUM(shipping_total), 0) as total_shipping
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                AND status IN ('{$status_placeholders}')
+            ", $dates['start'], $dates['end']), ARRAY_A);
+
+            // 2. Refunds in Current Period
+            $curr_refunds = $wpdb->get_row($wpdb->prepare("
+                SELECT 
+                    COUNT(order_id) as refunds_count,
+                    COALESCE(SUM(ABS(net_total)), 0) as refunded_amount
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                AND (status IN ('wc-refunded', 'refunded') OR net_total < 0)
+            ", $dates['start'], $dates['end']), ARRAY_A);
+
+            // 3. Previous Period Aggregates for Growth Comparison
+            $prev_stats = $wpdb->get_row($wpdb->prepare("
+                SELECT 
+                    COUNT(order_id) as orders_count,
+                    COALESCE(SUM(num_items_sold), 0) as items_sold,
+                    COALESCE(SUM(net_total), 0) as net_sales,
+                    COALESCE(SUM(total_sales), 0) as gross_sales
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                AND status IN ('{$status_placeholders}')
+            ", $dates['prev_start'], $dates['prev_end']), ARRAY_A);
+
+            // 4. Daily Time Series Trend
+            $daily_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    DATE(date_created) as date,
+                    COUNT(order_id) as orders,
+                    COALESCE(SUM(net_total), 0) as net_sales,
+                    COALESCE(SUM(total_sales), 0) as gross_sales,
+                    COALESCE(SUM(num_items_sold), 0) as items_sold
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                AND status IN ('{$status_placeholders}')
+                GROUP BY DATE(date_created)
+                ORDER BY date ASC
+            ", $dates['start'], $dates['end']), ARRAY_A);
+
+        } else {
+            // Fallback to wc_orders (HPOS) or wp_posts (legacy)
+            $orders_table = $wpdb->prefix . 'wc_orders';
+            $has_hpos     = $wpdb->get_var("SHOW TABLES LIKE '{$orders_table}'") === $orders_table;
+
+            if ($has_hpos) {
+                $curr_stats = $wpdb->get_row($wpdb->prepare("
+                    SELECT 
+                        COUNT(id) as orders_count,
+                        0 as items_sold,
+                        COALESCE(SUM(total_amount - tax_amount), 0) as net_sales,
+                        COALESCE(SUM(total_amount), 0) as gross_sales,
+                        COALESCE(SUM(tax_amount), 0) as total_tax,
+                        0 as total_shipping
+                    FROM {$orders_table}
+                    WHERE date_created_gmt >= %s AND date_created_gmt <= %s
+                    AND type = 'shop_order'
+                    AND status IN ('{$status_placeholders}')
+                ", $dates['start'], $dates['end']), ARRAY_A);
+
+                $curr_refunds = ['refunds_count' => 0, 'refunded_amount' => 0];
+
+                $prev_stats = $wpdb->get_row($wpdb->prepare("
+                    SELECT 
+                        COUNT(id) as orders_count,
+                        0 as items_sold,
+                        COALESCE(SUM(total_amount - tax_amount), 0) as net_sales,
+                        COALESCE(SUM(total_amount), 0) as gross_sales
+                    FROM {$orders_table}
+                    WHERE date_created_gmt >= %s AND date_created_gmt <= %s
+                    AND type = 'shop_order'
+                    AND status IN ('{$status_placeholders}')
+                ", $dates['prev_start'], $dates['prev_end']), ARRAY_A);
+
+                $daily_rows = $wpdb->get_results($wpdb->prepare("
+                    SELECT 
+                        DATE(date_created_gmt) as date,
+                        COUNT(id) as orders,
+                        COALESCE(SUM(total_amount - tax_amount), 0) as net_sales,
+                        COALESCE(SUM(total_amount), 0) as gross_sales,
+                        0 as items_sold
+                    FROM {$orders_table}
+                    WHERE date_created_gmt >= %s AND date_created_gmt <= %s
+                    AND type = 'shop_order'
+                    AND status IN ('{$status_placeholders}')
+                    GROUP BY DATE(date_created_gmt)
+                    ORDER BY date ASC
+                ", $dates['start'], $dates['end']), ARRAY_A);
+            } else {
+                // Legacy wp_posts + postmeta
+                $curr_stats   = ['orders_count' => 0, 'items_sold' => 0, 'net_sales' => 0, 'gross_sales' => 0, 'total_tax' => 0, 'total_shipping' => 0];
+                $curr_refunds = ['refunds_count' => 0, 'refunded_amount' => 0];
+                $prev_stats   = ['orders_count' => 0, 'items_sold' => 0, 'net_sales' => 0, 'gross_sales' => 0];
+                $daily_rows   = [];
+            }
+        }
+
+        $orders_count   = (int) ($curr_stats['orders_count'] ?? 0);
+        $net_sales      = (float) ($curr_stats['net_sales'] ?? 0);
+        $gross_sales    = (float) ($curr_stats['gross_sales'] ?? 0);
+        $items_sold     = (int) ($curr_stats['items_sold'] ?? 0);
+        $total_tax      = (float) ($curr_stats['total_tax'] ?? 0);
+        $total_shipping = (float) ($curr_stats['total_shipping'] ?? 0);
+
+        $aov = $orders_count > 0 ? round($net_sales / $orders_count, 2) : 0.0;
+
+        $prev_orders_count = (int) ($prev_stats['orders_count'] ?? 0);
+        $prev_net_sales    = (float) ($prev_stats['net_sales'] ?? 0);
+        $prev_gross_sales  = (float) ($prev_stats['gross_sales'] ?? 0);
+        $prev_aov          = $prev_orders_count > 0 ? round($prev_net_sales / $prev_orders_count, 2) : 0.0;
+
+        $refunds_count   = (int) ($curr_refunds['refunds_count'] ?? 0);
+        $refunded_amount = (float) ($curr_refunds['refunded_amount'] ?? 0);
+
+        return $this->response([
+            'engine'          => $has_order_stats ? 'woocommerce_order_stats' : ($has_hpos ? 'woocommerce_hpos' : 'legacy'),
+            'currency'        => $currency,
+            'currency_symbol' => $currency_symbol,
+            'period'          => [
+                'range'             => $range,
+                'label'             => $dates['label'],
+                'current_start'     => $dates['start'],
+                'current_end'       => $dates['end'],
+                'previous_start'    => $dates['prev_start'],
+                'previous_end'      => $dates['prev_end'],
+            ],
+            'kpis'            => [
+                'net_sales'              => round($net_sales, 2),
+                'gross_sales'            => round($gross_sales, 2),
+                'orders_count'           => $orders_count,
+                'items_sold'             => $items_sold,
+                'average_order_value'    => $aov,
+                'total_tax'              => round($total_tax, 2),
+                'total_shipping'         => round($total_shipping, 2),
+                'refunds_count'          => $refunds_count,
+                'refunded_amount'        => round($refunded_amount, 2),
+            ],
+            'growth_vs_previous' => [
+                'net_sales_growth_pct'    => self::calculate_growth($net_sales, $prev_net_sales),
+                'gross_sales_growth_pct'  => self::calculate_growth($gross_sales, $prev_gross_sales),
+                'orders_count_growth_pct' => self::calculate_growth($orders_count, $prev_orders_count),
+                'aov_growth_pct'          => self::calculate_growth($aov, $prev_aov),
+                'previous_net_sales'      => round($prev_net_sales, 2),
+                'previous_gross_sales'    => round($prev_gross_sales, 2),
+                'previous_orders_count'   => $prev_orders_count,
+                'previous_aov'            => $prev_aov,
+            ],
+            'trend'           => array_map(function ($row) {
+                return [
+                    'date'        => $row['date'],
+                    'orders'      => (int) $row['orders'],
+                    'net_sales'   => round((float) $row['net_sales'], 2),
+                    'gross_sales' => round((float) $row['gross_sales'], 2),
+                    'items_sold'  => (int) $row['items_sold'],
+                ];
+            }, $daily_rows),
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/analytics/top-performers
+     * Top selling products by revenue/volume and most used discount coupons.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_top_performers(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', 'WooCommerce is not active on this site.', 404);
+        }
+
+        global $wpdb;
+
+        $range      = sanitize_text_field((string) $request->get_param('range'));
+        $start_date = sanitize_text_field((string) $request->get_param('start_date'));
+        $end_date   = sanitize_text_field((string) $request->get_param('end_date'));
+        $limit      = min(50, max(1, absint($request->get_param('limit')) ?: 10));
+
+        $dates = $this->resolve_date_range($range, $start_date, $end_date);
+
+        $currency        = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'EUR';
+        $currency_symbol = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol($currency), ENT_QUOTES, 'UTF-8') : '€';
+
+        $product_lookup_table = $wpdb->prefix . 'wc_order_product_lookup';
+        $order_stats_table    = $wpdb->prefix . 'wc_order_stats';
+        $coupon_lookup_table  = $wpdb->prefix . 'wc_order_coupon_lookup';
+
+        $has_product_lookup = $wpdb->get_var("SHOW TABLES LIKE '{$product_lookup_table}'") === $product_lookup_table;
+        $has_order_stats    = $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
+        $has_coupon_lookup  = $wpdb->get_var("SHOW TABLES LIKE '{$coupon_lookup_table}'") === $coupon_lookup_table;
+
+        $paid_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+        $status_placeholders = implode("','", array_map('esc_sql', $paid_statuses));
+
+        $top_products = [];
+        if ($has_product_lookup && $has_order_stats) {
+            $product_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    l.product_id,
+                    COALESCE(SUM(l.product_qty), 0) as total_units_sold,
+                    COALESCE(SUM(l.product_net_revenue), 0) as total_net_revenue
+                FROM {$product_lookup_table} l
+                INNER JOIN {$order_stats_table} s ON l.order_id = s.order_id
+                WHERE s.date_created >= %s AND s.date_created <= %s
+                AND s.status IN ('{$status_placeholders}')
+                GROUP BY l.product_id
+                ORDER BY total_net_revenue DESC
+                LIMIT %d
+            ", $dates['start'], $dates['end'], $limit), ARRAY_A);
+
+            foreach ($product_rows as $row) {
+                $pid     = (int) $row['product_id'];
+                $product = function_exists('wc_get_product') ? wc_get_product($pid) : null;
+                $top_products[] = [
+                    'id'            => $pid,
+                    'name'          => $product ? $product->get_name() : get_the_title($pid),
+                    'sku'           => $product ? $product->get_sku() : '',
+                    'price'         => $product ? (float) $product->get_price() : 0.0,
+                    'stock_status'  => $product ? $product->get_stock_status() : 'unknown',
+                    'stock_quantity'=> ($product && $product->managing_stock()) ? $product->get_stock_quantity() : null,
+                    'units_sold'    => (int) $row['total_units_sold'],
+                    'net_revenue'   => round((float) $row['total_net_revenue'], 2),
+                    'edit_url'      => admin_url("post.php?post={$pid}&action=edit"),
+                ];
+            }
+        }
+
+        $top_coupons = [];
+        if ($has_coupon_lookup && $has_order_stats) {
+            $coupon_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    c.coupon_id,
+                    COUNT(c.order_id) as orders_count,
+                    COALESCE(SUM(c.discount_amount), 0) as total_discount
+                FROM {$coupon_lookup_table} c
+                INNER JOIN {$order_stats_table} s ON c.order_id = s.order_id
+                WHERE s.date_created >= %s AND s.date_created <= %s
+                AND s.status IN ('{$status_placeholders}')
+                GROUP BY c.coupon_id
+                ORDER BY total_discount DESC
+                LIMIT %d
+            ", $dates['start'], $dates['end'], $limit), ARRAY_A);
+
+            foreach ($coupon_rows as $row) {
+                $cid   = (int) $row['coupon_id'];
+                $code  = get_the_title($cid);
+                $top_coupons[] = [
+                    'id'             => $cid,
+                    'code'           => !empty($code) ? $code : "coupon_{$cid}",
+                    'orders_count'   => (int) $row['orders_count'],
+                    'total_discount' => round((float) $row['total_discount'], 2),
+                    'edit_url'       => admin_url("post.php?post={$cid}&action=edit"),
+                ];
+            }
+        }
+
+        return $this->response([
+            'period'          => [
+                'range'       => $range,
+                'label'       => $dates['label'],
+                'start'       => $dates['start'],
+                'end'         => $dates['end'],
+            ],
+            'currency'        => $currency,
+            'currency_symbol' => $currency_symbol,
+            'limit'           => $limit,
+            'top_products'    => $top_products,
+            'top_coupons'     => $top_coupons,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/analytics/stock
+     * Stock financial valuation, low stock alerts, and dead/dormant stock inventory.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_stock_analytics(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', 'WooCommerce is not active on this site.', 404);
+        }
+
+        global $wpdb;
+
+        $threshold_param = absint($request->get_param('low_stock_threshold'));
+        $low_threshold   = $threshold_param > 0 ? $threshold_param : (int) get_option('woocommerce_notify_low_stock_amount', 2);
+
+        $currency        = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'EUR';
+        $currency_symbol = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol($currency), ENT_QUOTES, 'UTF-8') : '€';
+
+        // 1. Total Catalog Products Count (Simple + Variable parents)
+        $total_catalog_products = (int) $wpdb->get_var("
+            SELECT COUNT(ID) FROM {$wpdb->posts}
+            WHERE post_type = 'product' AND post_status = 'publish'
+        ");
+
+        // 2. Financial Valuation: Managed Stock in Stock
+        $valuation_row = $wpdb->get_row("
+            SELECT 
+                COUNT(p.ID) as managed_products_count,
+                COALESCE(SUM(CAST(stock_meta.meta_value AS SIGNED)), 0) as total_units_in_stock,
+                COALESCE(SUM(CAST(stock_meta.meta_value AS SIGNED) * CAST(price_meta.meta_value AS DECIMAL(10,2))), 0) as total_inventory_value
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} manage_meta ON (p.ID = manage_meta.post_id AND manage_meta.meta_key = '_manage_stock' AND manage_meta.meta_value = 'yes')
+            INNER JOIN {$wpdb->postmeta} stock_meta ON (p.ID = stock_meta.post_id AND stock_meta.meta_key = '_stock' AND CAST(stock_meta.meta_value AS SIGNED) > 0)
+            LEFT JOIN {$wpdb->postmeta} price_meta ON (p.ID = price_meta.post_id AND price_meta.meta_key = '_price')
+            WHERE p.post_type IN ('product', 'product_variation')
+            AND p.post_status = 'publish'
+        ", ARRAY_A);
+
+        $managed_products_count = (int) ($valuation_row['managed_products_count'] ?? 0);
+        $total_units            = (int) ($valuation_row['total_units_in_stock'] ?? 0);
+        $total_valuation        = (float) ($valuation_row['total_inventory_value'] ?? 0);
+
+        // 3. Out of Stock Items Count
+        $out_of_stock_count = (int) $wpdb->get_var("
+            SELECT COUNT(DISTINCT p.ID)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} status_meta ON (p.ID = status_meta.post_id AND status_meta.meta_key = '_stock_status' AND status_meta.meta_value = 'outofstock')
+            WHERE p.post_type IN ('product', 'product_variation')
+            AND p.post_status = 'publish'
+        ");
+
+        // 4. Low Stock Items (Units > 0 and Units <= threshold)
+        $low_stock_rows = $wpdb->get_results($wpdb->prepare("
+            SELECT 
+                p.ID as product_id,
+                p.post_title,
+                p.post_type,
+                p.post_parent,
+                CAST(stock_meta.meta_value AS SIGNED) as stock_qty,
+                CAST(price_meta.meta_value AS DECIMAL(10,2)) as price
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} manage_meta ON (p.ID = manage_meta.post_id AND manage_meta.meta_key = '_manage_stock' AND manage_meta.meta_value = 'yes')
+            INNER JOIN {$wpdb->postmeta} stock_meta ON (p.ID = stock_meta.post_id AND stock_meta.meta_key = '_stock' AND CAST(stock_meta.meta_value AS SIGNED) > 0 AND CAST(stock_meta.meta_value AS SIGNED) <= %d)
+            LEFT JOIN {$wpdb->postmeta} price_meta ON (p.ID = price_meta.post_id AND price_meta.meta_key = '_price')
+            WHERE p.post_type IN ('product', 'product_variation')
+            AND p.post_status = 'publish'
+            ORDER BY stock_qty ASC
+            LIMIT 20
+        ", $low_threshold), ARRAY_A);
+
+        $low_stock_items = [];
+        foreach ($low_stock_rows as $row) {
+            $pid     = (int) $row['product_id'];
+            $product = function_exists('wc_get_product') ? wc_get_product($pid) : null;
+            $low_stock_items[] = [
+                'id'             => $pid,
+                'name'           => $product ? $product->get_name() : $row['post_title'],
+                'sku'            => $product ? $product->get_sku() : '',
+                'stock_quantity' => (int) $row['stock_qty'],
+                'price'          => (float) $row['price'],
+                'edit_url'       => admin_url("post.php?post={$pid}&action=edit"),
+            ];
+        }
+
+        // 5. Dormant Inventory / Dead Stock (Items with stock > 0, published > 30 days ago, with 0 sales in past 90 days)
+        $dormant_items = [];
+        $product_lookup_table = $wpdb->prefix . 'wc_order_product_lookup';
+        $order_stats_table    = $wpdb->prefix . 'wc_order_stats';
+        $has_analytics_tables = $wpdb->get_var("SHOW TABLES LIKE '{$product_lookup_table}'") === $product_lookup_table
+                             && $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
+
+        $dormant_cutoff_date = date('Y-m-d H:i:s', strtotime('-90 days'));
+        $published_cutoff    = date('Y-m-d H:i:s', strtotime('-30 days'));
+
+        if ($has_analytics_tables) {
+            $dormant_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    p.ID as product_id,
+                    p.post_title,
+                    CAST(stock_meta.meta_value AS SIGNED) as stock_qty,
+                    CAST(price_meta.meta_value AS DECIMAL(10,2)) as price
+                FROM {$wpdb->posts} p
+                INNER JOIN {$wpdb->postmeta} manage_meta ON (p.ID = manage_meta.post_id AND manage_meta.meta_key = '_manage_stock' AND manage_meta.meta_value = 'yes')
+                INNER JOIN {$wpdb->postmeta} stock_meta ON (p.ID = stock_meta.post_id AND stock_meta.meta_key = '_stock' AND CAST(stock_meta.meta_value AS SIGNED) > 0)
+                LEFT JOIN {$wpdb->postmeta} price_meta ON (p.ID = price_meta.post_id AND price_meta.meta_key = '_price')
+                WHERE p.post_type = 'product'
+                AND p.post_status = 'publish'
+                AND p.post_date < %s
+                AND p.ID NOT IN (
+                    SELECT DISTINCT l.product_id 
+                    FROM {$product_lookup_table} l
+                    INNER JOIN {$order_stats_table} s ON l.order_id = s.order_id
+                    WHERE s.date_created >= %s
+                )
+                ORDER BY stock_qty DESC
+                LIMIT 15
+            ", $published_cutoff, $dormant_cutoff_date), ARRAY_A);
+
+            foreach ($dormant_rows as $row) {
+                $pid     = (int) $row['product_id'];
+                $product = function_exists('wc_get_product') ? wc_get_product($pid) : null;
+                $dormant_items[] = [
+                    'id'             => $pid,
+                    'name'           => $product ? $product->get_name() : $row['post_title'],
+                    'sku'            => $product ? $product->get_sku() : '',
+                    'stock_quantity' => (int) $row['stock_qty'],
+                    'price'          => (float) $row['price'],
+                    'locked_capital' => round((int) $row['stock_qty'] * (float) $row['price'], 2),
+                    'edit_url'       => admin_url("post.php?post={$pid}&action=edit"),
+                ];
+            }
+        }
+
+        return $this->response([
+            'currency'        => $currency,
+            'currency_symbol' => $currency_symbol,
+            'summary'         => [
+                'total_catalog_products' => $total_catalog_products,
+                'managed_stock_products' => $managed_products_count,
+                'total_units_in_stock'   => $total_units,
+                'total_inventory_value'  => round($total_valuation, 2),
+                'out_of_stock_count'     => $out_of_stock_count,
+                'low_stock_count'        => count($low_stock_items),
+                'low_stock_threshold'    => $low_threshold,
+                'dormant_items_count'    => count($dormant_items),
+            ],
+            'low_stock_alerts' => $low_stock_items,
+            'dormant_stock_90d'=> $dormant_items,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/webhooks
+     * WooCommerce Webhook inventory, status and delivery failure metrics.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_webhooks(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', 'WooCommerce is not active on this site.', 404);
+        }
+
+        global $wpdb;
+
+        $table_name = $wpdb->prefix . 'wc_webhooks';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") !== $table_name) {
+            return $this->response([
+                'total_webhooks'   => 0,
+                'active_webhooks'  => 0,
+                'failing_webhooks' => 0,
+                'webhooks'         => [],
+                'message'          => 'No WooCommerce webhooks table found.',
+            ]);
+        }
+
+        $rows = $wpdb->get_results("
+            SELECT 
+                webhook_id,
+                status,
+                name,
+                delivery_url,
+                topic,
+                failure_count,
+                date_created,
+                date_modified,
+                api_version
+            FROM {$table_name}
+            ORDER BY failure_count DESC, webhook_id ASC
+        ", ARRAY_A);
+
+        $active_count  = 0;
+        $failing_count = 0;
+        $webhooks      = [];
+
+        foreach ($rows as $row) {
+            $status        = $row['status'];
+            $failure_count = (int) $row['failure_count'];
+            $is_failing    = $failure_count >= 5 || $status === 'disabled';
+
+            if ($status === 'active') {
+                $active_count++;
+            }
+            if ($is_failing) {
+                $failing_count++;
+            }
+
+            // Sanitize delivery URL (preserve destination domain & path, redact query param tokens)
+            $delivery_url = $row['delivery_url'];
+            $parsed_url   = parse_url($delivery_url);
+            $clean_url    = $delivery_url;
+            if (!empty($parsed_url['query'])) {
+                // If query has tokens/secrets, redact them
+                $clean_url = ($parsed_url['scheme'] ?? 'https') . '://' . ($parsed_url['host'] ?? '') . ($parsed_url['path'] ?? '') . '?[redacted-query]';
+            }
+
+            $webhooks[] = [
+                'id'            => (int) $row['webhook_id'],
+                'name'          => $row['name'],
+                'status'        => $status,
+                'topic'         => $row['topic'],
+                'delivery_url'  => $clean_url,
+                'failure_count' => $failure_count,
+                'is_failing'    => $is_failing,
+                'api_version'   => (int) $row['api_version'],
+                'created_at'    => $row['date_created'],
+                'updated_at'    => $row['date_modified'],
+                'edit_url'      => admin_url("admin.php?page=wc-settings&tab=advanced&section=webhooks&edit-webhook={$row['webhook_id']}"),
+            ];
+        }
+
+        return $this->response([
+            'summary' => [
+                'total'         => count($webhooks),
+                'active'        => $active_count,
+                'paused'        => count(array_filter($webhooks, function ($w) { return $w['status'] === 'paused'; })),
+                'disabled'      => count(array_filter($webhooks, function ($w) { return $w['status'] === 'disabled'; })),
+                'failing_count' => $failing_count,
+                'health'        => $failing_count > 0 ? 'warning' : 'healthy',
+                'alert'         => $failing_count > 0 ? sprintf('%d webhook(s) have failed repeatedly (failure count >= 5 or disabled). Integrations with external ERP/CRM may be broken.', $failing_count) : null,
+            ],
+            'webhooks' => $webhooks,
         ]);
     }
 }

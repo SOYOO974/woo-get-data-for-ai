@@ -165,8 +165,8 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
             <tbody>
                 <tr>
                     <td><strong><?php esc_html_e('System & Limits', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/ping</code>, <code>/capabilities</code> (<code>?format=skill</code>), <code>/system</code>, <code>/system/database</code></td>
-                    <td><?php esc_html_e('Dynamic capabilities discovery catalog, ready-to-use SKILL.md generator (?format=skill), WordPress, PHP, MySQL versions, memory limits, active plugins with update status, database health with autoload footprint analysis, HPOS state, Action Scheduler queues.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/ping</code>, <code>/capabilities</code> (<code>?format=skill</code>), <code>/system</code>, <code>/system/database</code>, <code>/system/mail</code>, <code>/system/security</code></td>
+                    <td><?php esc_html_e('Dynamic capabilities discovery catalog, ready-to-use SKILL.md generator (?format=skill), WordPress, PHP, MySQL versions, memory limits, active plugins with update status, database health with autoload footprint analysis, transactional SMTP mail diagnostic, security hardening audit, HPOS state, and Action Scheduler queues.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WooCommerce & Themes', 'woo-get-data-for-ai'); ?></strong></td>
@@ -215,8 +215,8 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WooCommerce Store Data', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code></td>
-                    <td><?php esc_html_e('Store health summary, paginated product catalog with variations, unified SEO object, and sanitized postmeta, recent orders with strict GDPR/PII anonymization (masked customer details, order notes for gateway diagnostics), active payment gateways and shipping zones.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code>, <code>/woocommerce/analytics/sales</code>, <code>/woocommerce/analytics/top-performers</code>, <code>/woocommerce/analytics/stock</code>, <code>/woocommerce/webhooks</code></td>
+                    <td><?php esc_html_e('Store health summary, paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Pages, Content & SEO', 'woo-get-data-for-ai'); ?></strong></td>
@@ -235,7 +235,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
         <?php esc_html_e('Dynamic Procedural Playbooks & AI Skill Generator', 'woo-get-data-for-ai'); ?>
     </h3>
     <p class="description">
-        <?php esc_html_e('WP Agent Bridge is more than raw endpoints: it embeds structured diagnostic Playbooks and dynamically generates ready-to-use AI skills.', 'woo-get-data-for-ai'); ?>
+        <?php esc_html_e('WP Agent Bridge is more than raw endpoints: it embeds 8 structured diagnostic Playbooks and dynamically generates ready-to-use AI skills.', 'woo-get-data-for-ai'); ?>
     </p>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-top: 15px;">
@@ -252,10 +252,10 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px;">
             <h4 style="margin-top: 0; color: #059669; display: flex; align-items: center; gap: 6px;">
                 <span class="dashicons dashicons-randomize"></span>
-                <?php esc_html_e('Battle-Tested Audit Playbooks', 'woo-get-data-for-ai'); ?>
+                <?php esc_html_e('8 Battle-Tested Audit Playbooks', 'woo-get-data-for-ai'); ?>
             </h4>
             <p style="font-size: 13px; color: #475569; margin: 0;">
-                <?php esc_html_e('Includes multi-step investigation recipes: 360° SEO Audit, Server & Cron Health, Failed Orders Troubleshoot, Store Performance & UTM Funnel, Integrations Mapping, and Theme Template Compatibility.', 'woo-get-data-for-ai'); ?>
+                <?php esc_html_e('Includes multi-step investigation recipes: 360° SEO Audit, Server & Cron Health, Failed Orders Troubleshoot, Native Store Sales & Stock Valuation, SMTP Mail & Webhooks Diagnostics, Store Performance & UTM Funnel, Integrations Mapping, and Theme Template Compatibility.', 'woo-get-data-for-ai'); ?>
             </p>
         </div>
 

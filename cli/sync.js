@@ -131,6 +131,24 @@ async function pullSystem() {
             console.warn('  ⚠️ Could not fetch /system/database:', dbErr.message);
         }
 
+        // Fetch Mail Diagnostic
+        let mailData = null;
+        try {
+            mailData = await makeRequest('/system/mail');
+            writeJson(path.join(sysDir, 'mail.json'), mailData);
+        } catch (mailErr) {
+            console.warn('  ⚠️ Could not fetch /system/mail:', mailErr.message);
+        }
+
+        // Fetch Security Audit
+        let secData = null;
+        try {
+            secData = await makeRequest('/system/security');
+            writeJson(path.join(sysDir, 'security.json'), secData);
+        } catch (secErr) {
+            console.warn('  ⚠️ Could not fetch /system/security:', secErr.message);
+        }
+
         // Generate Markdown summary
         let md = `# System Report for ${siteUrl}\n\n`;
         md += `**Generated**: ${new Date().toISOString()}\n\n`;
@@ -164,6 +182,42 @@ async function pullSystem() {
                 md += `| Option Name | Size |\n|---|---|\n`;
                 dbData.autoload_health.top_heavy_options.slice(0, 8).forEach(o => {
                     md += `| \`${o.option_name}\` | ${o.size_human} |\n`;
+                });
+                md += `\n`;
+            }
+        }
+
+        if (mailData) {
+            md += `## 📧 Transactional Emails & SMTP\n`;
+            md += `- **Active Plugin**: ${mailData.active_plugin}\n`;
+            md += `- **Transport Provider**: \`${mailData.transport_provider}\` (${mailData.is_authenticated ? '🟢 Authenticated' : '🔴 Unauthenticated'})\n`;
+            md += `- **Health**: ${mailData.health === 'healthy' ? '🟢 Healthy' : (mailData.health === 'warning' ? '🔴 Warning' : '🟡 Notice')}\n`;
+            if (mailData.alerts && mailData.alerts.length > 0) {
+                mailData.alerts.forEach(al => {
+                    md += `> ⚠️ **${al}**\n\n`;
+                });
+            }
+            if (mailData.recent_failures && mailData.recent_failures.length > 0) {
+                md += `### Recent Delivery Failures\n\n`;
+                md += `| ID | Date | Recipient | Error |\n|---|---|---|---|\n`;
+                mailData.recent_failures.slice(0, 5).forEach(f => {
+                    md += `| ${f.id} | ${f.date} | \`${f.recipient || '-'}\` | ${f.error || '-'} |\n`;
+                });
+                md += `\n`;
+            }
+        }
+
+        if (secData) {
+            md += `## 🛡️ Security Hardening Audit\n`;
+            md += `- **Health Status**: ${secData.health === 'hardened' ? '🟢 Hardened' : (secData.health === 'needs_attention' ? '🔴 Needs Attention' : '🟡 Moderate')}\n`;
+            md += `- **DISALLOW_FILE_EDIT**: ${secData.constants && secData.constants.disallow_file_edit ? '🟢 Enabled' : '🔴 Disabled'}\n`;
+            md += `- **WP_DEBUG_DISPLAY**: ${secData.constants && secData.constants.wp_debug_display ? '🔴 Enabled (Risk in production)' : '🟢 Disabled'}\n`;
+            md += `- **SSL Enforcement**: ${secData.constants && secData.constants.is_ssl ? '🟢 HTTPS Active' : '🔴 No SSL'}\n`;
+            md += `- **XML-RPC**: ${secData.attack_surface && secData.attack_surface.xmlrpc_enabled ? '🟡 Active' : '🟢 Disabled'}\n`;
+            if (secData.recommendations && secData.recommendations.length > 0) {
+                md += `\n### Security Recommendations\n`;
+                secData.recommendations.forEach(r => {
+                    md += `- [${r.severity.toUpperCase()}] **${r.issue}**: ${r.solution}\n`;
                 });
                 md += `\n`;
             }
@@ -754,7 +808,90 @@ async function pullWooCommerce() {
         const orders = await makeRequest('/woocommerce/orders?per_page=20');
         writeJson(path.join(wcDir, 'orders.json'), orders);
 
-        // 5. Generate Markdown Report
+        // 5. Pull Sales Analytics
+        console.log('   📈 Fetching WooCommerce Native Sales Analytics...');
+        let salesData = null;
+        try {
+            salesData = await makeRequest('/woocommerce/analytics/sales?range=last_30_days');
+            writeJson(path.join(wcDir, 'analytics-sales.json'), salesData);
+
+            if (salesData && salesData.kpis) {
+                let salesMd = `# WooCommerce Sales Performance Report (${salesData.period ? salesData.period.label : 'Last 30 Days'})\n\n`;
+                salesMd += `**Currency**: ${salesData.currency_symbol} (${salesData.currency})  \n`;
+                salesMd += `**Engine**: \`${salesData.engine}\`  \n\n`;
+                salesMd += `## 📊 Executive KPIs\n\n`;
+                salesMd += `| KPI | Current Period | Previous Period | Growth % |\n|---|---|---|---|\n`;
+                const g = salesData.growth_vs_previous || {};
+                salesMd += `| **Net Sales** | **${salesData.kpis.net_sales} ${salesData.currency_symbol}** | ${g.previous_net_sales || 0} ${salesData.currency_symbol} | ${g.net_sales_growth_pct >= 0 ? '+' : ''}${g.net_sales_growth_pct}% |\n`;
+                salesMd += `| **Gross Sales** | ${salesData.kpis.gross_sales} ${salesData.currency_symbol} | ${g.previous_gross_sales || 0} ${salesData.currency_symbol} | ${g.gross_sales_growth_pct >= 0 ? '+' : ''}${g.gross_sales_growth_pct}% |\n`;
+                salesMd += `| **Paid Orders** | **${salesData.kpis.orders_count}** | ${g.previous_orders_count || 0} | ${g.orders_count_growth_pct >= 0 ? '+' : ''}${g.orders_count_growth_pct}% |\n`;
+                salesMd += `| **Average Order Value (AOV)** | **${salesData.kpis.average_order_value} ${salesData.currency_symbol}** | ${g.previous_aov || 0} ${salesData.currency_symbol} | ${g.aov_growth_pct >= 0 ? '+' : ''}${g.aov_growth_pct}% |\n`;
+                salesMd += `| **Items Sold** | ${salesData.kpis.items_sold} units | - | - |\n`;
+                salesMd += `| **Refunds** | ${salesData.kpis.refunds_count} (${salesData.kpis.refunded_amount} ${salesData.currency_symbol}) | - | - |\n\n`;
+
+                writeText(path.join(wcDir, 'sales-report.md'), salesMd);
+            }
+        } catch (salesErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/analytics/sales:', salesErr.message);
+        }
+
+        // 6. Pull Top Performers
+        console.log('   🏆 Fetching Top Selling Products & Coupons...');
+        try {
+            const topData = await makeRequest('/woocommerce/analytics/top-performers?limit=15&range=last_30_days');
+            writeJson(path.join(wcDir, 'top-performers.json'), topData);
+        } catch (topErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/analytics/top-performers:', topErr.message);
+        }
+
+        // 7. Pull Stock Analytics
+        console.log('   📊 Fetching Stock Valuation & Inventory Health...');
+        try {
+            const stockData = await makeRequest('/woocommerce/analytics/stock');
+            writeJson(path.join(wcDir, 'stock-analytics.json'), stockData);
+
+            if (stockData && stockData.summary) {
+                let stockMd = `# WooCommerce Stock & Inventory Valuation Report\n\n`;
+                stockMd += `**Total Inventory Value**: **${stockData.summary.total_inventory_value} ${stockData.currency_symbol}**  \n`;
+                stockMd += `**Total Units in Stock**: ${(stockData.summary.total_units_in_stock || 0).toLocaleString()} units across ${stockData.summary.managed_stock_products} managed products  \n`;
+                stockMd += `**Out of Stock Count**: ${stockData.summary.out_of_stock_count} products  \n`;
+                stockMd += `**Low Stock Alerts**: ${stockData.summary.low_stock_count} products (threshold: <= ${stockData.summary.low_stock_threshold})  \n\n`;
+
+                if (stockData.low_stock_alerts && stockData.low_stock_alerts.length > 0) {
+                    stockMd += `### ⚠️ Low Stock Alerts (Action Required)\n\n`;
+                    stockMd += `| Product | SKU | Units Remaining | Price |\n|---|---|---|---|\n`;
+                    stockData.low_stock_alerts.forEach(p => {
+                        stockMd += `| [${p.name}](${p.edit_url}) | \`${p.sku || '-'}\` | **${p.stock_quantity}** | ${p.price} ${stockData.currency_symbol} |\n`;
+                    });
+                    stockMd += `\n`;
+                }
+
+                if (stockData.dormant_stock_90d && stockData.dormant_stock_90d.length > 0) {
+                    stockMd += `### 💤 Dormant Stock (0 sales in last 90 days)\n\n`;
+                    stockMd += `| Product | SKU | Stock Qty | Locked Capital |\n|---|---|---|---|\n`;
+                    stockData.dormant_stock_90d.forEach(p => {
+                        stockMd += `| [${p.name}](${p.edit_url}) | \`${p.sku || '-'}\` | ${p.stock_quantity} | **${p.locked_capital} ${stockData.currency_symbol}** |\n`;
+                    });
+                    stockMd += `\n`;
+                }
+
+                writeText(path.join(wcDir, 'stock-health.md'), stockMd);
+            }
+        } catch (stockErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/analytics/stock:', stockErr.message);
+        }
+
+        // 8. Pull Webhooks
+        console.log('   🔗 Fetching WooCommerce Webhooks...');
+        let webhooksData = null;
+        try {
+            webhooksData = await makeRequest('/woocommerce/webhooks');
+            writeJson(path.join(wcDir, 'webhooks.json'), webhooksData);
+        } catch (whErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/webhooks:', whErr.message);
+        }
+
+        // 9. Generate Markdown Report
         let md = `# WooCommerce Store Report for ${siteUrl}\n\n`;
         md += `**Generated**: ${new Date().toISOString()}\n`;
         md += `**WC Version**: ${summary.woocommerce ? summary.woocommerce.version : 'Unknown'}\n`;
@@ -781,6 +918,22 @@ async function pullWooCommerce() {
             md += `\n`;
         }
 
+        if (webhooksData && webhooksData.summary) {
+            md += `## 🔗 Webhooks Integration Health\n`;
+            md += `- **Total Webhooks**: ${webhooksData.summary.total} (Active: ${webhooksData.summary.active}, Disabled: ${webhooksData.summary.disabled})\n`;
+            md += `- **Health Status**: ${webhooksData.summary.health === 'healthy' ? '🟢 Healthy' : '🔴 Warning'}\n`;
+            if (webhooksData.summary.alert) {
+                md += `> ⚠️ **${webhooksData.summary.alert}**\n\n`;
+            }
+            if (webhooksData.webhooks && webhooksData.webhooks.length > 0) {
+                md += `| Name | Status | Topic | Failure Count |\n|---|---|---|---|\n`;
+                webhooksData.webhooks.forEach(w => {
+                    md += `| ${w.name} | ${w.status === 'active' ? '🟢 Active' : '⚪ ' + w.status} | \`${w.topic}\` | ${w.failure_count > 0 ? '⚠️ ' + w.failure_count : 0} |\n`;
+                });
+                md += `\n`;
+            }
+        }
+
         md += `## 💳 Payment Gateways\n`;
         if (summary.payment_gateways && Array.isArray(summary.payment_gateways.active_gateways)) {
             md += `- **Active Gateways (${summary.payment_gateways.active_count}/${summary.payment_gateways.total_installed})**: `;
@@ -794,7 +947,7 @@ async function pullWooCommerce() {
         md += `- **Registered Customers**: ${summary.customers ? summary.customers.total_registered : 0}\n`;
 
         writeText(path.join(wcDir, 'summary.md'), md);
-        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, products.json, orders.json, summary.md)');
+        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, products.json, orders.json, analytics-sales.json, stock-analytics.json, webhooks.json, summary.md, sales-report.md, stock-health.md)');
     } catch (err) {
         console.error('❌ Failed to pull WooCommerce data:', err.message);
     }

@@ -28,9 +28,13 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Independent Analytics Intelligence**: Complete visibility over site traffic, unique visitors, pageviews, acquisition channels, UTM campaigns, device breakdowns, and WooCommerce **conversion rates**, net sales, and AOV.
 - **Custom Fields & ACF Meta**: Complete discovery of meta fields registered in code (`register_post_meta`), Advanced Custom Fields (ACF) field groups, recursive subfields (repeaters, flexible content), location rules, options pages, and single post metadata inspection.
 - **WooCommerce Store & Catalog Data**: Read-only access to products, stock status, variations, e-commerce settings, and recent orders with **strict GDPR/PII anonymization** (masked names, redacted emails/phones/addresses) and gateway error diagnostics via order notes.
+- **Native WooCommerce Sales & Stock Intelligence**: 100% native commercial reporting without external tracking plugins: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products and coupons, and stock valuation & dormant inventory.
+- **SMTP & Transactional Email Diagnostics**: Provider detection (**FluentSMTP**, **WP Mail SMTP**, **Post SMTP**, **Easy WP SMTP**), credentials sanitization, recent delivery failures, and PHP `mail()` unauthenticated spam risk alert.
+- **Security Hardening & Protection Audit**: Audit of constants (`DISALLOW_FILE_EDIT`, `WP_DEBUG_DISPLAY`), XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.
 - **Database Health & Autoload Analysis**: Audit of SQL table sizes, top heavy tables, transient accumulations, and `wp_options` autoload footprint with performance alerts (> 800 KB threshold).
 - **Crash Watch Fatal Error Dashboard**: Targeted reverse-tail extraction of recent critical PHP fatal errors and exceptions with component attribution for instant bug diagnostics.
 - **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities across pages, blog posts, WooCommerce products, and categories.
+- **8 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, and theme compatibility.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -95,6 +99,8 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /capabilities?format={json\|skill\|markdown}` | Dynamic discovery catalog: active modules, endpoints, procedural Playbooks, and ready-to-use Agent `SKILL.md` generator. |
 | `GET /system` | Server limits (PHP, RAM, execution time), WP core info, active plugins with update status, HPOS state, and Action Scheduler queue. |
 | `GET /system/database` | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status. |
+| `GET /system/mail` | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures. |
+| `GET /system/security` | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins. |
 | `GET /theme/options` | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options`), and theme mods. |
 | `GET /theme/overrides` | Audit of WooCommerce template overrides with version comparison against core WooCommerce. |
 | `GET /theme/child` | Code and metadata for child theme `functions.php` and `style.css`. |
@@ -133,6 +139,10 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |
 | `GET /woocommerce/order/{id}` | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata. |
 | `GET /woocommerce/settings` | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods. |
+| `GET /woocommerce/analytics/sales?range={range}` | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period. |
+| `GET /woocommerce/analytics/top-performers?limit=10` | Top products by net revenue & volume sold, and top coupons with discount totals. |
+| `GET /woocommerce/analytics/stock` | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days). |
+| `GET /woocommerce/webhooks` | WooCommerce webhooks inventory, delivery URLs, topics, and failure counters (`failure_count >= 5`). |
 | `GET /content/pages?status={status}` | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview. |
 | `GET /content/page/{id}` | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata. |
 | `GET /content/posts?status={status}` | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview. |
@@ -141,16 +151,18 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 
 ---
 
-## 🎯 Procedural AI Playbooks (Automated Investigation Recipes)
+## 🎯 Procedural AI Playbooks (8 Automated Investigation Recipes)
 
 To avoid trial-and-error querying, the plugin includes pre-configured procedural investigation recipes that an AI can trigger based on user intent:
 
 1. **360° SEO & Content Audit** (`seo_content_audit`): Runs `/content/seo-audit`, analyzes `/content/pages`, and inspects `/content/page/{id}` for flagged URLs.
-2. **Technical Health & Background Tasks** (`tech_health_crons`): Correlates `/system`, `/action-scheduler`, `/crons`, and `/logs/view` to detect memory leaks, blocked queues, and fatal errors.
-3. **Failed Orders & Checkout Troubleshooting** (`ecommerce_troubleshoot`): Queries `/woocommerce/orders`, inspects gateway response notes in `/woocommerce/order/{id}`, checks `/logs/view`, and verifies active checkout hooks in `/wpcode/snippets`.
+2. **Technical Health & Background Tasks** (`tech_health_crons`): Correlates `/system`, `/system/database`, `/system/security`, `/action-scheduler`, `/crons`, and `/logs/errors-summary` (Crash Watch).
+3. **Failed Orders & Checkout Troubleshooting** (`ecommerce_troubleshoot`): Queries `/woocommerce/orders`, inspects `/woocommerce/order/{id}`, gateway logs `/logs/view`, active checkout hooks `/wpcode/snippets`, SMTP delivery `/system/mail`, and webhook health `/woocommerce/webhooks`.
 4. **Store Performance & UTM Marketing Funnel** (`store_analytics_roi`): Combines `/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, and `/analytics/devices`.
 5. **Integration & Automations Mapping** (`integration_automation_map`): Maps `/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, and `/wpcode/snippets`.
 6. **Theme & WooCommerce Compatibility** (`theme_wc_compatibility`): Checks template drift with `/theme/overrides`, child theme code with `/theme/child`, and options with `/theme/options`.
+7. **Native E-Commerce Sales & Stock Valuation** (`store_sales_stock_audit`): Analyzes `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, and `/woocommerce/summary`.
+8. **Transactional Emails & Webhooks Diagnostics** (`email_webhook_diagnostics`): Investigates delivery failures with `/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, and `/logs/view`.
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 

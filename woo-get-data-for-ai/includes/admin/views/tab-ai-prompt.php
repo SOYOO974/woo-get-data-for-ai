@@ -92,6 +92,8 @@ $mega_prompt .= "- **Run Playbook 2 (Tech Health)**: `curl -s -H 'Authorization:
 $mega_prompt .= "- **Run Playbook 3 (Failed Orders)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/orders?status=failed&per_page=5'`\n";
 $mega_prompt .= "- **Run Playbook 4 (Store 360°)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/analytics/overview`\n";
 $mega_prompt .= "- **Run Playbook 5 (Integrations)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/elementor/forms`\n";
+$mega_prompt .= "- **Run Playbook 7 (Native Sales & Stock)**: `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_base_url}/woocommerce/analytics/sales?range=last_30_days'`\n";
+$mega_prompt .= "- **Run Playbook 8 (SMTP & Webhooks)**: `curl -s -H 'Authorization: Bearer {$active_token}' {$rest_base_url}/system/mail`\n";
 ?>
 
 <div class="agent-bridge-card">
