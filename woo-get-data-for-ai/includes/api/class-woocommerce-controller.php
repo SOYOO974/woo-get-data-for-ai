@@ -602,6 +602,16 @@ class Woocommerce_Controller extends Rest_Controller {
             }
         }
 
+        // Unified SEO data extraction if Content_Controller is available
+        $seo_data = null;
+        if (class_exists('WPAgentBridge\Api\Content_Controller')) {
+            try {
+                $seo_data = Content_Controller::get_post_seo_data($product->get_id());
+            } catch (\Throwable $e) {
+                $seo_data = null;
+            }
+        }
+
         return $this->response([
             'id'                => $product->get_id(),
             'name'              => $product->get_name(),
@@ -639,6 +649,7 @@ class Woocommerce_Controller extends Rest_Controller {
             'total_sales'       => (int) $product->get_total_sales(),
             'date_created'      => $product->get_date_created() ? $product->get_date_created()->date('Y-m-d H:i:s') : null,
             'date_modified'     => $product->get_date_modified() ? $product->get_date_modified()->date('Y-m-d H:i:s') : null,
+            'seo'               => $seo_data,
             'metadata'          => $metadata,
         ]);
     }

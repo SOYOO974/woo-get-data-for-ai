@@ -17,7 +17,7 @@ class Permissions {
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspection of WP, PHP, MySQL versions, active plugins list, server limits, and Action Scheduler crons.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system'],
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -47,7 +47,7 @@ class Permissions {
             'logs' => [
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom'],
+                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom', '/logs/errors-summary'],
             ],
             'scheduler' => [
                 'label'       => esc_html__('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'),
@@ -173,6 +173,11 @@ class Permissions {
                         'path'        => '/system',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Comprehensive server, WordPress, theme, active plugins & updates, WooCommerce environment, and Action Scheduler status.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/database',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -304,6 +309,12 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['file (required, e.g. komela-order-status-sync.log)', 'lines (default: 200, max: 1000)', 'filter (optional substring filter)'],
                         'description' => esc_html__('Memory-safe reverse tail extraction of specific log files in wp-content/ with path sandboxing.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/logs/errors-summary',
+                        'methods'     => ['GET'],
+                        'params'      => ['limit (default: 15, max: 50)'],
+                        'description' => esc_html__('Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from debug.log and wc-logs.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -505,8 +516,8 @@ class Permissions {
                     [
                         'path'        => '/content/seo-audit',
                         'methods'     => ['GET'],
-                        'params'      => ['include_posts (true|false, default: false)', 'limit (default: 100, max: 300)'],
-                        'description' => esc_html__('Site-wide SEO audit report across all key pages: detected SEO plugin, global search engine visibility, missing meta descriptions, title length issues, noindex warnings on critical conversion pages, and OG image coverage.', 'woo-get-data-for-ai'),
+                        'params'      => ['include_posts (true|false, default: false)', 'include_products (true|false, default: false)', 'include_categories (true|false, default: false)', 'limit (default: 100, max: 300)', 'limit_products (default: 50, max: 200)'],
+                        'description' => esc_html__('Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

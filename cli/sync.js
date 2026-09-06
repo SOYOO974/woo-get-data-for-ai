@@ -50,7 +50,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all]');
-    console.log('Commands: pull:all, pull:capabilities, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
     process.exit(1);
 }
 
@@ -114,10 +114,22 @@ function writeText(filePath, text) {
 
 // Subcommands
 async function pullSystem() {
-    console.log('⏳ Pulling System & Environment...');
+    console.log('⏳ Pulling System & Environment (including Database Health)...');
     try {
+        const sysDir = path.join(outputDir, 'system');
+        ensureDir(sysDir);
+
         const data = await makeRequest('/system');
-        writeJson(path.join(outputDir, 'system/system.json'), data);
+        writeJson(path.join(sysDir, 'system.json'), data);
+
+        // Fetch Database Health
+        let dbData = null;
+        try {
+            dbData = await makeRequest('/system/database');
+            writeJson(path.join(sysDir, 'database.json'), dbData);
+        } catch (dbErr) {
+            console.warn('  ⚠️ Could not fetch /system/database:', dbErr.message);
+        }
 
         // Generate Markdown summary
         let md = `# System Report for ${siteUrl}\n\n`;
@@ -127,6 +139,35 @@ async function pullSystem() {
         md += `- **Web Server**: ${data.system.web_server}\n`;
         md += `- **MySQL**: ${data.system.mysql_version}\n`;
         md += `- **Memory Limit**: ${data.system.memory_limit} (WP: ${data.system.wp_memory_limit})\n\n`;
+
+        if (dbData) {
+            md += `## 🗄️ Database Health & Autoload\n`;
+            md += `- **Total DB Size**: ${dbData.database ? dbData.database.total_size : 'Unknown'} (${dbData.database ? dbData.database.tables_count : 0} tables)\n`;
+            md += `- **Autoload Size**: ${dbData.autoload_health ? dbData.autoload_health.total_size : 'Unknown'} across ${dbData.autoload_health ? dbData.autoload_health.total_options_count : 0} options\n`;
+            md += `- **Autoload Status**: ${dbData.autoload_health && dbData.autoload_health.status === 'healthy' ? '🟢 Healthy (< 800 KB)' : '🔴 ' + (dbData.autoload_health ? dbData.autoload_health.status.toUpperCase() : '')}\n`;
+            if (dbData.autoload_health && dbData.autoload_health.alert) {
+                md += `> ⚠️ **${dbData.autoload_health.alert}**\n\n`;
+            }
+            if (dbData.caching) {
+                md += `- **Object Cache**: ${dbData.caching.external_object_cache ? '🟢 Active' : '⚪ Not Active'}\n`;
+            }
+            if (dbData.top_tables && dbData.top_tables.length > 0) {
+                md += `\n### Top Heavy Tables\n\n`;
+                md += `| Table | Rows | Total Size | Engine |\n|---|---|---|---|\n`;
+                dbData.top_tables.slice(0, 10).forEach(t => {
+                    md += `| \`${t.table}\` | ${t.rows.toLocaleString()} | ${t.total_human} | ${t.engine} |\n`;
+                });
+                md += `\n`;
+            }
+            if (dbData.autoload_health && dbData.autoload_health.top_heavy_options && dbData.autoload_health.top_heavy_options.length > 0) {
+                md += `### Top Autoloaded Options\n\n`;
+                md += `| Option Name | Size |\n|---|---|\n`;
+                dbData.autoload_health.top_heavy_options.slice(0, 8).forEach(o => {
+                    md += `| \`${o.option_name}\` | ${o.size_human} |\n`;
+                });
+                md += `\n`;
+            }
+        }
 
         md += `## WordPress Core\n`;
         md += `- **Version**: ${data.wordpress.version}\n`;
@@ -149,7 +190,7 @@ async function pullSystem() {
         });
 
         writeText(path.join(outputDir, 'system-report.md'), md);
-        console.log('✅ System report saved to system-report.md');
+        console.log('✅ System & Database health report saved to system-report.md');
     } catch (err) {
         console.error('❌ Failed to pull system:', err.message);
     }
@@ -767,7 +808,7 @@ async function pullContent() {
 
         // 1. Pull SEO Audit
         try {
-            const seoAudit = await makeRequest('/content/seo-audit?include_posts=true');
+            const seoAudit = await makeRequest('/content/seo-audit?include_posts=true&include_products=true&include_categories=true');
             writeJson(path.join(contentDir, 'seo-audit.json'), seoAudit);
 
             let seoMd = `# SEO Audit Report for ${siteUrl}\n\n`;
@@ -781,20 +822,33 @@ async function pullContent() {
             }
             if (seoAudit.summary) {
                 seoMd += `\n## 📊 Summary Metrics\n`;
-                seoMd += `- **Total Items Audited**: ${seoAudit.summary.total_audited}\n`;
+                seoMd += `- **Total Items Audited**: ${seoAudit.summary.total_audited} (Pages, Posts, Products)\n`;
+                if (seoAudit.summary.products_audited_count) {
+                    seoMd += `- **Products Sampled**: ${seoAudit.summary.products_audited_count}\n`;
+                }
                 seoMd += `- **Meta Description Coverage**: ${seoAudit.summary.meta_description_coverage}\n`;
                 seoMd += `- **OpenGraph Image Coverage**: ${seoAudit.summary.og_image_coverage}\n`;
-                seoMd += `- **Pages with Noindex**: ${seoAudit.summary.noindex_count}\n`;
+                seoMd += `- **Pages/Products with Noindex**: ${seoAudit.summary.noindex_count}\n`;
                 seoMd += `- **Missing Meta Description**: ${seoAudit.summary.missing_meta_desc_count}\n`;
                 seoMd += `- **Weak or Missing Titles**: ${seoAudit.summary.weak_titles_count}\n`;
-                seoMd += `- **Thin Content Pages**: ${seoAudit.summary.thin_content_count}\n\n`;
+                seoMd += `- **Thin Content Pages/Products**: ${seoAudit.summary.thin_content_count}\n\n`;
             }
 
             if (seoAudit.issues && seoAudit.issues.noindex_pages && seoAudit.issues.noindex_pages.length > 0) {
-                seoMd += `### 🚫 Pages marked as Noindex\n\n`;
+                seoMd += `### 🚫 Pages & Products marked as Noindex\n\n`;
                 seoMd += `| ID | Type | Title | Slug | Critical Warning |\n|---|---|---|---|---|\n`;
                 seoAudit.issues.noindex_pages.forEach(p => {
                     seoMd += `| ${p.id} | ${p.post_type} | ${p.title} | \`${p.slug}\` | ${p.critical_warning || '-'} |\n`;
+                });
+                seoMd += `\n`;
+            }
+
+            if (seoAudit.categories_audit && seoAudit.categories_audit.missing_descriptions && seoAudit.categories_audit.missing_descriptions.length > 0) {
+                seoMd += `### 🏷️ Categories Missing Description Text\n\n`;
+                seoMd += `| ID | Taxonomy | Category Name | Slug | Products Count | Status |\n|---|---|---|---|---|---|\n`;
+                seoAudit.categories_audit.missing_descriptions.slice(0, 30).forEach(c => {
+                    const status = c.item_count > 0 ? '⚠️ High traffic collection without SEO text' : 'Empty collection';
+                    seoMd += `| ${c.term_id} | \`${c.taxonomy}\` | [${c.name}](${c.url}) | \`${c.slug}\` | ${c.item_count} | ${status} |\n`;
                 });
                 seoMd += `\n`;
             }
@@ -851,8 +905,70 @@ async function pullContent() {
     }
 }
 
+async function pullLogs() {
+    console.log('⏳ Pulling Error Logs & Crash Watch...');
+    try {
+        const logsDir = path.join(outputDir, 'logs');
+        ensureDir(logsDir);
+
+        // 1. Crash Watch: Aggregated recent fatal errors & exceptions
+        try {
+            const errorsData = await makeRequest('/logs/errors-summary?limit=25');
+            writeJson(path.join(logsDir, 'errors-summary.json'), errorsData);
+
+            let errMd = `# Crash Watch — PHP Error Summary for ${siteUrl}\n\n`;
+            errMd += `**Generated**: ${new Date().toISOString()}\n`;
+            errMd += `**Health Status**: ${errorsData.status === 'clean' ? '🟢 Clean (No recent fatal errors detected)' : '🔴 Issues Detected (' + errorsData.unique_issues_count + ' unique crash signatures)'}\n`;
+            errMd += `**Scanned Log Sources**: ${(errorsData.scanned_sources || []).join(', ')}\n\n`;
+
+            if (errorsData.recent_crashes && errorsData.recent_crashes.length > 0) {
+                errMd += `## ⚠️ Recent Critical Crashes & Fatal Errors\n\n`;
+                errMd += `| Component | File & Line | Occurrences | Last Seen | Error Excerpt |\n|---|---|---|---|---|\n`;
+                errorsData.recent_crashes.forEach(e => {
+                    const comp = `**${e.component_type}**: \`${e.component_name}\``;
+                    const fileLoc = `\`${e.file}:${e.line || '?'}\``;
+                    const excerpt = (e.raw_excerpt || '').replace(/\|/g, '-').slice(0, 120);
+                    errMd += `| ${comp} | ${fileLoc} | **${e.occurrences}** | ${e.last_seen} | ${excerpt}... |\n`;
+                });
+                errMd += `\n`;
+            } else {
+                errMd += `> ✨ Zero PHP fatal errors or unhandled exceptions detected in recent logs.\n\n`;
+            }
+
+            writeText(path.join(logsDir, 'errors-summary.md'), errMd);
+        } catch (errSummaryErr) {
+            console.warn('  ⚠️ Failed to pull /logs/errors-summary:', errSummaryErr.message);
+        }
+
+        // 2. Discover available log sources
+        try {
+            const sourcesData = await makeRequest('/logs/sources');
+            writeJson(path.join(logsDir, 'sources.json'), sourcesData);
+
+            // Tail debug.log if available
+            const hasDebugLog = Array.isArray(sourcesData) && sourcesData.some(s => s.source_type === 'wp_debug');
+            if (hasDebugLog) {
+                try {
+                    const debugTail = await makeRequest('/logs/view?source=debug.log&lines=300');
+                    if (debugTail && Array.isArray(debugTail.lines)) {
+                        writeText(path.join(logsDir, 'debug.tail.log'), debugTail.lines.join('\n'));
+                    }
+                } catch (tailErr) {
+                    // Ignore tail error
+                }
+            }
+        } catch (srcErr) {
+            console.warn('  ⚠️ Failed to pull /logs/sources:', srcErr.message);
+        }
+
+        console.log('✅ Saved Logs & Crash Watch report to ./logs/ (errors-summary.md, errors-summary.json, sources.json)');
+    } catch (err) {
+        console.error('❌ Failed to pull logs:', err.message);
+    }
+}
+
 async function pullCapabilities() {
-    console.log('⏳ Pulling Capabilities & Schema Discovery...');
+    console.log('⏳ Pulling Capabilities, Playbooks & Schema Discovery...');
     try {
         const data = await makeRequest('/capabilities');
         writeJson(path.join(outputDir, 'capabilities.json'), data);
@@ -873,10 +989,41 @@ async function pullCapabilities() {
             });
         }
 
+        if (Array.isArray(data.playbooks) && data.playbooks.length > 0) {
+            md += `\n## 🎯 Procedural Audit Playbooks (${data.playbooks.length} Active)\n\n`;
+            data.playbooks.forEach((p, idx) => {
+                md += `### ${idx + 1}. ${p.title}\n`;
+                md += `**Description**: ${p.description}\n`;
+                md += `**Intent Keywords**: \`${(p.intent_triggers || []).join('`, `')}\`\n\n`;
+                md += `| Step | Action | Endpoint | Key Signals |\n`;
+                md += `| :---: | :--- | :--- | :--- |\n`;
+                (p.workflow || []).forEach(s => {
+                    const paramsStr = s.params && Object.keys(s.params).length ? '?' + new URLSearchParams(s.params).toString() : '';
+                    const sigs = s.key_signals ? s.key_signals.join(', ') : '-';
+                    md += `| ${s.step} | **${s.action}** | \`${s.endpoint}${paramsStr}\` | ${sigs} |\n`;
+                });
+                md += `\n`;
+            });
+        }
+
         writeText(path.join(outputDir, 'capabilities.md'), md);
-        console.log('✅ Saved Capabilities catalog to ./capabilities.json & capabilities.md');
+        console.log('✅ Saved Capabilities & Playbooks catalog to ./capabilities.json & capabilities.md');
     } catch (err) {
         console.error('❌ Failed to pull capabilities:', err.message);
+    }
+}
+
+async function pullSkill() {
+    console.log('⏳ Pulling Live AI Skill & Playbooks (.agents/skills/wp-agent-bridge/SKILL.md)...');
+    try {
+        const skillMd = await makeRequest('/capabilities?format=skill');
+        const skillDir = path.join(process.cwd(), '.agents', 'skills', 'wp-agent-bridge');
+        ensureDir(skillDir);
+        writeText(path.join(skillDir, 'SKILL.md'), skillMd);
+        writeText(path.join(outputDir, 'SKILL.md'), skillMd);
+        console.log('✅ Live Skill & Playbooks saved to .agents/skills/wp-agent-bridge/SKILL.md & ./SKILL.md');
+    } catch (err) {
+        console.error('❌ Failed to pull skill:', err.message);
     }
 }
 
@@ -890,6 +1037,10 @@ async function run() {
     switch (command) {
         case 'pull:capabilities':
             await pullCapabilities();
+            break;
+        case 'pull:skill':
+        case 'pull:playbooks':
+            await pullSkill();
             break;
         case 'pull:system':
             await pullSystem();
@@ -930,6 +1081,7 @@ async function run() {
         case 'pull:all':
         default:
             await pullCapabilities();
+            await pullSkill();
             await pullSystem();
             await pullScheduler();
             await pullTheme();

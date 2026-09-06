@@ -10,21 +10,23 @@ Do not ask the user for permission or wait for them to request it; execute this 
 
 1. **Version Bump**:
    - Increment the semantic version in `woo-get-data-for-ai/woo-get-data-for-ai.php` (both plugin header `Version: X.Y.Z` and constant `WOO_GET_DATA_AI_VERSION`).
-2. **Update Documentation**:
-   - Update `PROJECT_CONTEXT.md` (permissions matrix, endpoint catalog, version).
-   - Update `README.md` (capabilities, REST API table, CLI usage, version).
+2. **Synchronize Procedural Playbooks & Skills**:
+   - Whenever adding or changing endpoints or diagnostic capabilities, update `includes/class-playbooks.php` to integrate the endpoint into existing playbooks or create a new dedicated Playbook so AI agents automatically learn how to use it without prompt re-copying.
+3. **Update Documentation**:
+   - Update `PROJECT_CONTEXT.md` (permissions matrix, endpoint catalog, playbooks list, version).
+   - Update `README.md` (capabilities, REST API table, playbooks, CLI usage, version).
    - Update `cli/sync.js` if new endpoints were introduced.
-3. **Commit & Push**:
+4. **Commit & Push**:
    ```bash
    git add .
    git commit -m "feat(<module>): ... (vX.Y.Z)"
    git push origin main
    ```
-4. **Generate Release Archive**:
+5. **Generate Release Archive**:
    ```powershell
    Compress-Archive -Path woo-get-data-for-ai -DestinationPath woo-get-data-for-ai.zip -Force
    ```
-5. **Publish GitHub Release**:
+6. **Publish GitHub Release**:
    ```bash
    gh release create vX.Y.Z woo-get-data-for-ai.zip --title "vX.Y.Z - <Summary>" --notes "..."
    ```

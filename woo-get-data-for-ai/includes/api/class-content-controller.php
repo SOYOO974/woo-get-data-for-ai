@@ -127,7 +127,7 @@ class Content_Controller extends Rest_Controller {
             ],
         ]);
 
-        // GET /content/seo-audit (Site-wide SEO audit report across all key pages and posts)
+        // GET /content/seo-audit (Site-wide SEO audit report across pages, posts, products, and categories)
         register_rest_route(self::NAMESPACE, '/content/seo-audit', [
             'methods'             => \WP_REST_Server::READABLE,
             'callback'            => [$this, 'get_seo_audit'],
@@ -135,12 +135,24 @@ class Content_Controller extends Rest_Controller {
                 return $this->check_access($request, 'content');
             },
             'args'                => [
-                'include_posts' => [
+                'include_posts'      => [
                     'default'           => 'false',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
-                'limit'         => [
+                'include_products'   => [
+                    'default'           => 'false',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'include_categories' => [
+                    'default'           => 'false',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'limit'              => [
                     'default'           => 100,
+                    'sanitize_callback' => 'absint',
+                ],
+                'limit_products'     => [
+                    'default'           => 50,
                     'sanitize_callback' => 'absint',
                 ],
             ],
@@ -480,11 +492,14 @@ class Content_Controller extends Rest_Controller {
 
     /**
      * GET /content/seo-audit
-     * Global site-wide SEO audit report across all published pages and key posts.
+     * Global site-wide SEO audit report across all published pages, blog posts, WooCommerce products, and categories.
      */
     public function get_seo_audit(\WP_REST_Request $request) {
-        $include_posts = filter_var($request->get_param('include_posts'), FILTER_VALIDATE_BOOLEAN);
-        $limit         = min(max(10, (int) ($request->get_param('limit') ?: 100)), 300);
+        $include_posts      = filter_var($request->get_param('include_posts'), FILTER_VALIDATE_BOOLEAN);
+        $include_products   = filter_var($request->get_param('include_products'), FILTER_VALIDATE_BOOLEAN);
+        $include_categories = filter_var($request->get_param('include_categories'), FILTER_VALIDATE_BOOLEAN);
+        $limit              = min(max(10, (int) ($request->get_param('limit') ?: 100)), 300);
+        $limit_products     = min(max(10, (int) ($request->get_param('limit_products') ?: 50)), 200);
 
         $seo_plugin = $this->detect_seo_plugin();
         $is_public  = (int) get_option('blog_public') === 1;
@@ -502,6 +517,20 @@ class Content_Controller extends Rest_Controller {
             'order'          => 'ASC',
         ]);
 
+        // Optional: Include WooCommerce Products in the audit
+        $audited_products_count = 0;
+        if ($include_products && class_exists('WooCommerce')) {
+            $products = get_posts([
+                'post_type'      => 'product',
+                'post_status'    => 'publish',
+                'posts_per_page' => $limit_products,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+            ]);
+            $audited_products_count = count($products);
+            $posts = array_merge($posts, $products);
+        }
+
         $total_audited           = count($posts);
         $missing_meta_desc       = [];
         $weak_or_missing_titles  = [];
@@ -514,8 +543,12 @@ class Content_Controller extends Rest_Controller {
 
         foreach ($posts as $p) {
             $full_seo    = $this->get_full_seo_data($p, $seo_plugin);
+            $is_product  = ($p->post_type === 'product');
             $word_count  = str_word_count(wp_strip_all_tags($p->post_content));
-            $is_critical = ($p->ID === $front_page_id || $this->is_wc_critical_page($p->ID));
+            if ($is_product && !empty($p->post_excerpt)) {
+                $word_count += str_word_count(wp_strip_all_tags($p->post_excerpt));
+            }
+            $is_critical = ($p->ID === $front_page_id || $this->is_wc_critical_page($p->ID) || $is_product);
 
             $item_info = [
                 'id'          => $p->ID,
@@ -541,10 +574,17 @@ class Content_Controller extends Rest_Controller {
                 ]);
             }
 
-            // 3. Noindex detection (CRITICAL alert if on shop/home/cart/checkout)
+            // 3. Noindex detection (CRITICAL alert if on shop/home/cart/checkout/published product)
             if (!empty($full_seo['robots']['noindex'])) {
+                $critical_msg = null;
+                if ($is_product) {
+                    $critical_msg = 'CRITICAL: Published WooCommerce product is set to noindex!';
+                } elseif ($is_critical) {
+                    $critical_msg = 'CRITICAL: Key conversion or homepage page is marked as noindex!';
+                }
+
                 $noindex_items[] = array_merge($item_info, [
-                    'critical_warning' => $is_critical ? 'CRITICAL: Key conversion or homepage page is marked as noindex!' : null,
+                    'critical_warning' => $critical_msg,
                 ]);
             }
 
@@ -553,12 +593,86 @@ class Content_Controller extends Rest_Controller {
                 $missing_og_images[] = $item_info;
             }
 
-            // 5. Thin content check (< 150 words and not a privacy/legal/system page)
-            if ($word_count < 150 && $p->ID !== $privacy_page_id && !$this->is_wc_system_page($p->ID)) {
+            // 5. Thin content check (< 150 words for pages, < 40 words for products)
+            $thin_threshold = $is_product ? 40 : 150;
+            if ($word_count < $thin_threshold && $p->ID !== $privacy_page_id && !$this->is_wc_system_page($p->ID)) {
                 $thin_content_items[] = array_merge($item_info, [
                     'word_count' => $word_count,
+                    'threshold'  => $thin_threshold,
                 ]);
             }
+        }
+
+        // Optional: Categories SEO audit (Missing descriptions & empty taxonomy metas)
+        $categories_audit = null;
+        if ($include_categories) {
+            $taxonomies = ['category'];
+            if (class_exists('WooCommerce')) {
+                $taxonomies[] = 'product_cat';
+            }
+
+            $all_terms = get_terms([
+                'taxonomy'   => $taxonomies,
+                'hide_empty' => false,
+                'number'     => 100,
+            ]);
+
+            $missing_cat_desc    = [];
+            $noindex_categories  = [];
+            $total_cats_audited  = 0;
+
+            if (is_array($all_terms) && !is_wp_error($all_terms)) {
+                $total_cats_audited = count($all_terms);
+                foreach ($all_terms as $term) {
+                    $has_desc   = !empty(trim($term->description));
+                    $term_link  = get_term_link($term);
+                    $term_url   = !is_wp_error($term_link) ? $term_link : '';
+                    $item_count = (int) $term->count;
+
+                    // Inspect term meta for noindex
+                    $term_noindex = false;
+                    if ($seo_plugin['provider'] === 'rank_math') {
+                        $robots = get_term_meta($term->term_id, 'rank_math_robots', true);
+                        $term_noindex = is_array($robots) ? in_array('noindex', $robots, true) : (strpos((string) $robots, 'noindex') !== false);
+                    } elseif ($seo_plugin['provider'] === 'yoast') {
+                        $wpseo_meta = get_option('wpseo_taxonomy_meta');
+                        if (isset($wpseo_meta[$term->taxonomy][$term->term_id]['wpseo_noindex'])) {
+                            $term_noindex = ($wpseo_meta[$term->taxonomy][$term->term_id]['wpseo_noindex'] === 'noindex');
+                        }
+                    }
+
+                    if (!$has_desc) {
+                        $missing_cat_desc[] = [
+                            'term_id'    => $term->term_id,
+                            'taxonomy'   => $term->taxonomy,
+                            'name'       => html_entity_decode($term->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                            'slug'       => $term->slug,
+                            'item_count' => $item_count,
+                            'url'        => $term_url,
+                            'impact'     => ($item_count > 0) ? 'high_traffic_collection_missing_description' : 'empty_category',
+                        ];
+                    }
+
+                    if ($term_noindex) {
+                        $noindex_categories[] = [
+                            'term_id'    => $term->term_id,
+                            'taxonomy'   => $term->taxonomy,
+                            'name'       => html_entity_decode($term->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                            'slug'       => $term->slug,
+                            'item_count' => $item_count,
+                            'url'        => $term_url,
+                        ];
+                    }
+                }
+            }
+
+            $categories_audit = [
+                'total_categories_audited'      => $total_cats_audited,
+                'missing_description_count'     => count($missing_cat_desc),
+                'noindex_categories_count'      => count($noindex_categories),
+                'missing_descriptions'          => $missing_cat_desc,
+                'noindex_categories'            => $noindex_categories,
+            ];
         }
 
         // Calculate scores
@@ -575,6 +689,7 @@ class Content_Controller extends Rest_Controller {
             ],
             'summary'                 => [
                 'total_audited'               => $total_audited,
+                'products_audited_count'      => $audited_products_count,
                 'meta_description_coverage'   => "{$desc_coverage}%",
                 'og_image_coverage'           => "{$og_coverage}%",
                 'missing_meta_desc_count'     => count($missing_meta_desc),
@@ -589,6 +704,7 @@ class Content_Controller extends Rest_Controller {
                 'missing_og_images'      => $missing_og_images,
                 'thin_content'           => $thin_content_items,
             ],
+            'categories_audit'        => $categories_audit,
         ]);
     }
 
@@ -597,9 +713,27 @@ class Content_Controller extends Rest_Controller {
     // ==========================================
 
     /**
+     * Public static helper to extract unified SEO data for any post or product.
+     *
+     * @param \WP_Post|int $post
+     * @return array
+     */
+    public static function get_post_seo_data($post) {
+        if (is_numeric($post)) {
+            $post = get_post($post);
+        }
+        if (!$post) {
+            return [];
+        }
+        $controller = new self();
+        $seo_plugin = $controller->detect_seo_plugin();
+        return $controller->get_full_seo_data($post, $seo_plugin);
+    }
+
+    /**
      * Detects the active SEO plugin on the WordPress installation.
      */
-    protected function detect_seo_plugin() {
+    public function detect_seo_plugin() {
         if (defined('WPSEO_VERSION') || class_exists('WPSEO_Options')) {
             return [
                 'provider' => 'yoast',
@@ -695,7 +829,7 @@ class Content_Controller extends Rest_Controller {
     /**
      * Returns full unified SEO data normalized across SEO plugins.
      */
-    protected function get_full_seo_data($post, array $seo_plugin) {
+    public function get_full_seo_data($post, array $seo_plugin) {
         $post_id  = $post->ID;
         $provider = $seo_plugin['provider'];
 

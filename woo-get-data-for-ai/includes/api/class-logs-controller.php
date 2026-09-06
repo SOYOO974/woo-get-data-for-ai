@@ -380,4 +380,133 @@ class Logs_Controller extends Rest_Controller {
 
         return array_values($lines_array);
     }
+
+    /**
+     * GET /logs/errors-summary
+     * Crash Watch: scans recent log entries to aggregate and deduplicate recent fatal PHP errors and exceptions.
+     */
+    public function get_errors_summary(\WP_REST_Request $request) {
+        $limit = min(50, max(1, (int) ($request->get_param('limit') ?: 15)));
+
+        // 1. Discover target error log files
+        $files_to_scan = [];
+
+        // debug.log
+        $debug_log = WP_CONTENT_DIR . '/debug.log';
+        if (file_exists($debug_log) && is_readable($debug_log)) {
+            $files_to_scan['debug.log'] = $debug_log;
+        }
+
+        // Recent WooCommerce fatal-errors-*.log
+        $upload_dir = wp_upload_dir();
+        $wc_logs_dir = defined('WC_LOG_DIR') ? WC_LOG_DIR : ($upload_dir['basedir'] . '/wc-logs/');
+        if (is_dir($wc_logs_dir)) {
+            $wc_files = glob($wc_logs_dir . 'fatal-errors-*.log');
+            if (!empty($wc_files)) {
+                // Sort by modification time descending
+                usort($wc_files, function ($a, $b) {
+                    return filemtime($b) <=> filemtime($a);
+                });
+                // Take top 2 most recent
+                foreach (array_slice($wc_files, 0, 2) as $f) {
+                    $files_to_scan['wc-logs/' . basename($f)] = $f;
+                }
+            }
+        }
+
+        $aggregated_errors = [];
+        $total_error_lines_matched = 0;
+
+        foreach ($files_to_scan as $label => $filepath) {
+            $raw_lines = $this->tail_file($filepath, 400);
+
+            foreach ($raw_lines as $line) {
+                // Filter for fatal/critical error patterns
+                if (!preg_match('/(Fatal error|Parse error|Uncaught\s+[a-zA-Z0-9_\\\\]+|Allowed memory size|Maximum execution time)/i', $line)) {
+                    continue;
+                }
+
+                $total_error_lines_matched++;
+
+                // Extract timestamp
+                $timestamp = null;
+                if (preg_match('/^\[([0-9A-Za-z\-:\s\+]+)\]/', $line, $time_match)) {
+                    $timestamp = trim($time_match[1]);
+                }
+
+                // Extract error file & line
+                $source_file = '';
+                $source_line = null;
+                if (preg_match('/(?:in\s+)([\S]+)(?:\s+on line\s+)(\d+)/i', $line, $file_match)) {
+                    $source_file = $file_match[1];
+                    $source_line = (int) $file_match[2];
+                }
+
+                // Identify origin component (plugin, theme, core)
+                $component = 'core_or_other';
+                $component_name = '';
+                $norm_file = str_replace('\\', '/', $source_file);
+                if (preg_match('/\/wp-content\/plugins\/([^\/]+)/', $norm_file, $p_match)) {
+                    $component = 'plugin';
+                    $component_name = $p_match[1];
+                } elseif (preg_match('/\/wp-content\/themes\/([^\/]+)/', $norm_file, $t_match)) {
+                    $component = 'theme';
+                    $component_name = $t_match[1];
+                } elseif (preg_match('/\/wp-content\/mu-plugins\/([^\/]+)/', $norm_file, $mu_match)) {
+                    $component = 'mu-plugin';
+                    $component_name = $mu_match[1];
+                }
+
+                // Clean and redact error message
+                $clean_message = Redaction::redact_string(trim($line));
+
+                // Make filepath relative
+                $rel_file = $source_file;
+                if (!empty($source_file) && defined('ABSPATH')) {
+                    $rel_file = str_replace([ABSPATH, WP_CONTENT_DIR], ['', 'wp-content'], $source_file);
+                    $rel_file = ltrim($rel_file, '/\\');
+                }
+
+                // Deduplication hash
+                $error_hash = md5($component . ':' . $component_name . ':' . basename($rel_file) . ':' . $source_line . ':' . substr($clean_message, 0, 80));
+
+                if (!isset($aggregated_errors[$error_hash])) {
+                    $aggregated_errors[$error_hash] = [
+                        'component_type' => $component,
+                        'component_name' => $component_name ?: 'WordPress Core',
+                        'file'           => $rel_file,
+                        'line'           => $source_line,
+                        'source_log'     => $label,
+                        'occurrences'    => 1,
+                        'last_seen'      => $timestamp ?: 'recent',
+                        'first_seen'     => $timestamp ?: 'recent',
+                        'raw_excerpt'    => $clean_message,
+                    ];
+                } else {
+                    $aggregated_errors[$error_hash]['occurrences']++;
+                    if ($timestamp) {
+                        $aggregated_errors[$error_hash]['last_seen'] = $timestamp;
+                    }
+                }
+            }
+        }
+
+        $unique_errors = array_values($aggregated_errors);
+
+        // Sort by occurrences descending, then last seen
+        usort($unique_errors, function ($a, $b) {
+            return $b['occurrences'] <=> $a['occurrences'];
+        });
+
+        $top_errors = array_slice($unique_errors, 0, $limit);
+
+        return $this->response([
+            'status'             => empty($top_errors) ? 'clean' : 'issues_detected',
+            'scanned_sources'    => array_keys($files_to_scan),
+            'matched_lines'      => $total_error_lines_matched,
+            'unique_issues_count'=> count($unique_errors),
+            'reported_count'     => count($top_errors),
+            'recent_crashes'     => $top_errors,
+        ]);
+    }
 }

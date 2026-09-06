@@ -88,7 +88,7 @@
 
 Whenever adding capabilities to inspect a new data source (e.g. ACF fields, WooCommerce orders/coupons, MetaSlider, SEO plugins, automation tables, custom post types):
 
-The following **6-step synchronization protocol is strictly mandatory** to maintain system integrity across admin settings, the AI onboarding engine, documentation, and the local CLI client:
+The following **7-step synchronization protocol is strictly mandatory** to maintain system integrity across admin settings, the AI onboarding engine, documentation, procedural playbooks, and the local CLI client:
 
 1. **Dedicated Read-Only REST Controller (`includes/api/class-*-controller.php`)**:
    - Implement under namespace `WPAgentBridge\Api`.
@@ -106,22 +106,26 @@ The following **6-step synchronization protocol is strictly mandatory** to maint
      Security::check_rest_permission($request) && Permissions::check_module_permission('<module_key>')
      ```
 
-3. **AI Mega-Prompt Generator Integration (Tab 3)**:
-   - In `includes/admin/views/tab-ai-prompt.php`, the list of active endpoints is generated dynamically from enabled permissions. **However, you must manually update the strategic instructions in the prompt**:
-     - **Phase 1: Local Workspace Initialization**: Add explicit guidance on how and where the AI should locally mirror or dump this new data source (e.g. `./<source>/...`).
-     - **Phase 2: Systematic "Live Freshness Check"**: Add explicit guidance detailing under what circumstances the AI must query this live endpoint before modifying code or diagnosing issues.
-     - **Endpoint Catalog & Quick Commands**: Add copy-pasteable `curl -s -H 'Authorization: Bearer {$active_token}' ...` command examples with relevant query parameters.
+3. **Procedural Playbooks & AI Skill Synchronization (`includes/class-playbooks.php`) (MANDATORY)**:
+   - Update `includes/class-playbooks.php`:
+     - Either integrate the new endpoint into an existing multi-step diagnostic Playbook (e.g. SEO, Tech Health, E-commerce, Analytics, Integrations).
+     - Or register a new dedicated Playbook with `id`, `title`, `description`, `required_modules`, `optional_modules`, `intent_triggers`, and ordered `workflow` steps.
+   - Verify that `GET /capabilities` (JSON mode) returns the new playbook and that `GET /capabilities?format=skill` renders the updated markdown skill correctly.
+   - Verify that the playbook correctly adapts when optional or required permissions are toggled off.
 
-4. **In-Plugin Documentation & Scope Table (Tab 5)**:
+4. **AI Mega-Prompt Generator Integration (Tab 3)**:
+   - In `includes/admin/views/tab-ai-prompt.php`, ensure the strategic instructions and quickstart command examples include the new capability or playbook reference.
+
+5. **In-Plugin Documentation & Scope Table (Tab 5)**:
    - Update `includes/admin/views/tab-docs.php` in **Section 4: Inspectable Technical Data** (`.docs-scope-table-wrap`).
    - Add a row specifying the technical domain, endpoint paths, and a summary of data returned to the AI.
 
-5. **Local CLI Synchronization Client (`cli/sync.js`)**:
+6. **Local CLI Synchronization Client (`cli/sync.js`)**:
    - Add a dedicated command `pull:<source>` in `cli/sync.js` to dump the data locally into `./synced-site-data/<source>/`.
    - Integrate the new command into `pull:all`.
    - Update the usage help text in `cli/sync.js` and `README.md`.
 
-6. **Repository Documentation & Release Protocol**:
+7. **Repository Documentation & Release Protocol**:
    - Add the new endpoints to Section 4 ("REST API Endpoint Catalog") in `PROJECT_CONTEXT.md` and the table in `README.md`.
    - Follow the **Automatic Updates & Release Protocol (Section 2.A)**: increment version in plugin header & constant, document changelog in `PROJECT_CONTEXT.md` and `README.md`, commit, tag, and publish a formal GitHub Release with `woo-get-data-for-ai.zip` attached.
 
@@ -196,8 +200,9 @@ Enables/disables modules on a per-site basis:
 | Endpoint | Method | Purpose |
 | :--- | :--- | :--- |
 | `GET /ping` | GET | Connectivity check, server timestamp, site name |
-| `GET /capabilities` | GET | Dynamic schema and self-describing API catalog (active modules, permissions, endpoints, supported query params) for AI bootstrap |
+| `GET /capabilities` | GET | Dynamic schema, active permissions, procedural diagnostic Playbooks, and ready-to-use Agent SKILL.md generator (`?format=skill\|markdown`) |
 | `GET /system` | GET | WP/WC/PHP/MySQL versions, active plugins & updates, HPOS status, Action Scheduler queue |
+| `GET /system/database` | GET | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, transient counts, and object cache status |
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
@@ -213,6 +218,7 @@ Enables/disables modules on a per-site basis:
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
 | `GET /logs/custom` | GET | Memory-safe tail inspection of specific log files in `wp-content/` with strict path sandboxing (`?file=nom-du-log`) |
+| `GET /logs/errors-summary` | GET | Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from `debug.log` and `wc-logs` with component attribution (`?limit=15`) |
 | `GET /crons` | GET | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments |
 | `GET /action-scheduler` | GET | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, and error logs from `actionscheduler_logs` |
 | `GET /flowmattic/export-all` | GET | Bulk export of all FlowMattic workflows in 1 optimized request (`?status=all|active|inactive`, default: `all`) |
@@ -231,7 +237,7 @@ Enables/disables modules on a per-site basis:
 | `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
 | `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order counts by status, HPOS state, active payment gateways, and shipping zones |
 | `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
-| `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields |
+| `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
 | `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping, fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
 | `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods |
@@ -239,7 +245,22 @@ Enables/disables modules on a per-site basis:
 | `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
 | `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
 | `GET /content/post/{id}` | GET | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object |
-| `GET /content/seo-audit` | GET | Site-wide SEO audit report across key pages: detected SEO plugin, global search engine visibility, missing meta descriptions, title length issues, critical noindex warnings, and OG image coverage (`?include_posts=true\|false`, `?limit=100`) |
+| `GET /content/seo-audit` | GET | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`, `?limit=100`, `?limit_products=50`) |
+
+---
+
+### 4.B Procedural AI Playbooks & Self-Updating Skills System (`includes/class-playbooks.php`)
+
+To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoints, the plugin features an intelligent **Playbooks Engine**:
+- **Zero-Prompt Stagnation**: Instead of memorizing static endpoint lists, AI agents query `GET /capabilities?format=skill` to instantly generate an up-to-date `.agents/skills/wp-agent-bridge/SKILL.md` workspace skill.
+- **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
+- **Built-in Procedural Playbooks**:
+  1. `seo_content_audit`: 360° SEO, meta tags, critical noindex detection on pages/products, OpenGraph coverage, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
+  2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, stalled Action Scheduler queues, overdue WP-Crons, and memory-safe fatal error log extraction (`/system`, `/crons`, `/action-scheduler`, `/logs/view`).
+  3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, and checkout hook snippets (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`).
+  4. `store_analytics_roi`: Store performance, net sales, conversion rates, traffic acquisition channels, UTM marketing campaigns, and device comparison (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/referrers`, `/analytics/devices`).
+  5. `integration_automation_map`: Full integration mapping: Elementor forms with webhooks, active FlowMattic automation recipes, custom ACF/code meta fields, and active WPCode snippets (`/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, `/wpcode/snippets`).
+  6. `theme_wc_compatibility`: Child theme code, Woodmart/Elessi theme options, and WooCommerce template version drift detection (`/theme/overrides`, `/theme/child`, `/theme/options`).
 
 ---
 
@@ -284,6 +305,58 @@ Enables/disables modules on a per-site basis:
 ---
 
 ## 7. Version Changelog
+
+### v1.8.0 (2026-09-06)
+- **Moteur de Playbooks Procéduraux Dynamiques (`Playbooks`)** :
+  - **Nouvelle classe centrale (`includes/class-playbooks.php`)** : Définit les recettes d'investigation procédurales et les enchaînements d'endpoints optimaux pour résoudre des cas d'usage réels sans tâtonnement ni requêtes redondantes.
+  - **6 Playbooks intégrés avec déclencheurs d'intention (`intent_triggers`) et signaux clés (`key_signals`)** :
+    1. `seo_content_audit` : Audit SEO 360°, détection noindex critique, meta manquantes et arborescence Gutenberg (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
+    2. `tech_health_crons` : Santé technique, versions PHP/MySQL, mémoire, Action Scheduler, WP-Cron et Crash Watch (`/system`, `/action-scheduler`, `/crons`, `/logs/view`).
+    3. `ecommerce_troubleshoot` : Diagnostic commandes échouées, réponses passerelle de paiement, coupons et snippets checkout (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`).
+    4. `store_analytics_roi` : Performance commerciale, taux de conversion, ventes nettes, canaux UTM et comparaison mobile/desktop (`/analytics/overview`, `/woocommerce/summary`, `/analytics/campaigns`, `/analytics/devices`).
+    5. `integration_automation_map` : Cartographie formulaires Elementor, webhooks, workflows FlowMattic, champs ACF et code custom (`/elementor/forms`, `/flowmattic/workflows`, `/meta/fields`, `/wpcode/snippets`).
+    6. `theme_wc_compatibility` : Paramètres thème, surcharge child theme et templates WooCommerce obsolètes (`/theme/overrides`, `/theme/child`, `/theme/options`).
+  - **Filtrage Adaptatif selon les Permissions du Site** :
+    - Si un module obligatoire est désactivé dans l'admin WordPress (ex: WooCommerce), les playbooks associés sont automatiquement exclus du catalogue.
+    - Si un module optionnel est désactivé, les étapes correspondantes sont purgées à la volée du workflow, empêchant tout appel renvoyant un code HTTP `403 Forbidden`.
+- **Générateur Automatique de Skill pour Agents IA (`GET /capabilities?format=skill`)** :
+  - L'endpoint `/capabilities` supporte désormais `?format=skill` (ou `?format=markdown`), renvoyant directement un fichier Markdown complet prêt à l'emploi (`SKILL.md`) avec frontmatter YAML, catalogue dynamique des routes autorisées, playbooks détaillés et directives de sécurité.
+  - En mode JSON standard, injection de la clé `playbooks` et `playbooks_count` aux côtés des modules pour les agents programmatiques.
+- **Mega-Prompt d'Onboarding Allégé & Immuable (Onglet 3)** :
+  - Transformation du prompt copié-collé en contrat immuable résistant aux mises à jour futures : l'IA est instruite d'initialiser son skill local via `curl ... /capabilities?format=skill > .agents/skills/wp-agent-bridge/SKILL.md`.
+  - Zéro obsolescence : l'IA met à jour sa compréhension du site automatiquement lors des futures releases sans intervention humaine.
+  - Ajout des badges dynamiques dans l'UI d'administration (Modules Actifs, Playbooks Disponibles, Protection Read-Only) et du bloc de commande terminal en 1 ligne.
+- **Règle de Synchronisation Obligatoire des Playbooks (Gouvernance & AGENTS.md)** :
+  - Ajout de l'étape 3 ("Procedural Playbooks & AI Skill Synchronization") dans la check-list obligatoire en 7 étapes pour tout futur ajout d'endpoint ou de module.
+
+### v1.7.0 (2026-09-06)
+- **Module Pages, Contenu & SEO Unifié (`Content_Controller`)** :
+  - **Nouveau Contrôleur REST (`class-content-controller.php`)** en 100% lecture seule (`GET`).
+  - `GET /content/pages` : Catalogue des pages WordPress avec hiérarchie (parent/enfant), slug, statut, template PHP, type d'éditeur (Gutenberg, Elementor, Classic), rôles spéciaux (accueil, blog, privacy, boutique, panier, checkout) et aperçu SEO rapide.
+  - `GET /content/page/{id}` : Fiche détaillée de page avec contenu brut et rendu HTML (`the_content`), arborescence des blocs Gutenberg, shortcodes détectés, word count, hiérarchie parent/enfants et métadonnées SEO complètes.
+  - `GET /content/posts` : Liste paginée des articles de blog avec catégories, étiquettes, auteur, word count et aperçu SEO.
+  - `GET /content/post/{id}` : Diagnostic approfondi d'un article ou CPT avec contenu complet, taxonomies et objet SEO unifié.
+  - `GET /content/seo-audit` : Audit SEO exhaustif du site avec détection automatique du plugin actif (**Rank Math**, **Yoast SEO**, **SEOPress**, **All in One SEO** ou moteur natif WP), visibilité publique (`blog_public`), couverture des méta-descriptions, analyse de longueur des balises title (< 30 ou > 65 caractères), détection des balises `noindex` critiques, couverture des images OpenGraph et détection du thin content (< 150 mots).
+  - **Extension E-commerce de l'Audit SEO** : Support de `include_products=true` (audit des fiches produits avec alerte critique immédiate si un produit publié est en noindex) et `include_categories=true` (détection des catégories WooCommerce `product_cat` sans texte descriptif ou orphelines de balises SEO).
+- **Enrichissement SEO WooCommerce (`Woocommerce_Controller`)** :
+  - `GET /woocommerce/product/{id}` : Intégration automatique du bloc `seo` unifié (titre personnalisé, méta-description, noindex, image OpenGraph, type de schéma) pour chaque produit inspecté.
+- **Audit Santé Base de Données & Autoload (`System_Controller`)** :
+  - `GET /system/database` : Diagnostic en temps réel de l'infrastructure SQL :
+    - Volume total de la base (données + index) et classement des 15 plus grosses tables avec nombre de lignes et moteur de stockage.
+    - **Autoload Footprint Analysis** : Calcul du poids total des données chargées automatiquement dans `wp_options` (`autoload != 'no'`), seuil d'alerte configuré à 800 Ko (cause n°1 de dégradation du TTFB sur WordPress) et top 10 des options les plus lourdes.
+    - Comptage des transients expirés orphelins non nettoyés.
+    - Détection de la présence d'un cache objet externe (`wp_using_ext_object_cache()`, Redis / Memcached).
+- **Crash Watch — Dashboard des Erreurs Fatales PHP (`Logs_Controller`)** :
+  - `GET /logs/errors-summary` : Détection ciblée et agrégation sans surcharge mémoire (via reverse tailing `fseek`) des 15 dernières erreurs critiques (`PHP Fatal error`, `Uncaught Exception`, `Parse error`, `Allowed memory size`, `Maximum execution time`) depuis `debug.log` et les logs récents WooCommerce (`fatal-errors-*.log`).
+  - Dédoublonnage intelligent avec horodatage de première et dernière occurrence, nombre de répétitions, fichier source et attribution automatique au composant incriminé (plugin, thème, coeur WP).
+- **Permissions & Capabilities** :
+  - Enregistrement du module `'content'` dans la matrice des permissions (Onglet 2) activé par défaut (`1`).
+  - Auto-documentation complète de `/content/*`, `/system/database` et `/logs/errors-summary` dans le catalogue machine-readable `/capabilities`.
+- **Client CLI Local (`cli/sync.js`)** :
+  - Commande `pull:content` (alias `pull:pages`, `pull:seo`) intégrant le téléchargement des pages, des articles et la génération du rapport exécutif Markdown `seo-audit.md`.
+  - Commande `pull:system` enrichie avec l'export de `database.json` et la section BDD/Autoload dans `system-report.md`.
+  - Commande `pull:logs` implémentée avec génération de `errors-summary.md` (Crash Watch), `sources.json` et extraction du tail `debug.log`.
+  - Intégration dans la commande globale `pull:all`.
 
 ### v1.6.0 (2026-09-06)
 - **Module d'Inspection Technique WooCommerce (`Woocommerce_Controller`)** :

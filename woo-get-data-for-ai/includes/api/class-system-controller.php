@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 use WPAgentBridge\Permissions;
+use WPAgentBridge\Playbooks;
 
 class System_Controller extends Rest_Controller {
 
@@ -26,6 +27,14 @@ class System_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request);
             },
+            'args'                => [
+                'format' => [
+                    'type'        => 'string',
+                    'enum'        => ['json', 'skill', 'markdown'],
+                    'default'     => 'json',
+                    'description' => 'Response format: "json" for structured data or "skill"/"markdown" for ready-to-use Agent SKILL.md.',
+                ],
+            ],
         ]);
 
         // GET /system (Comprehensive server & environment status)
@@ -60,7 +69,29 @@ class System_Controller extends Rest_Controller {
     }
 
     public function get_capabilities(\WP_REST_Request $request) {
-        $catalog = Permissions::get_capabilities_catalog();
+        $catalog   = Permissions::get_capabilities_catalog();
+        $playbooks = Playbooks::get_active_playbooks();
+
+        $site_info = [
+            'name'           => get_bloginfo('name'),
+            'site_url'       => site_url(),
+            'home_url'       => home_url(),
+            'rest_base'      => rest_url(self::NAMESPACE),
+            'plugin_version' => WOO_GET_DATA_AI_VERSION,
+        ];
+
+        $format = strtolower(trim((string) $request->get_param('format')));
+
+        // Direct ready-to-use Agent SKILL.md generator
+        if ($format === 'skill' || $format === 'markdown') {
+            $markdown = Playbooks::generate_skill_markdown($site_info, $catalog, $playbooks);
+            $response = new \WP_REST_Response($markdown, 200);
+            $response->set_headers([
+                'Content-Type'        => 'text/markdown; charset=UTF-8',
+                'Content-Disposition' => 'inline; filename="SKILL.md"',
+            ]);
+            return $response;
+        }
 
         return $this->response([
             'plugin' => [
@@ -69,18 +100,16 @@ class System_Controller extends Rest_Controller {
                 'read_only' => true,
                 'docs_url'  => WOO_GET_DATA_AI_GITHUB_REPO,
             ],
-            'site' => [
-                'name'      => get_bloginfo('name'),
-                'site_url'  => site_url(),
-                'home_url'  => home_url(),
-                'rest_base' => rest_url(self::NAMESPACE),
-            ],
+            'site' => $site_info,
             'discovery_instructions' => [
-                'purpose'  => 'Dynamic schema and capability discovery for AI development agents (Antigravity, Cursor, Claude).',
-                'workflow' => 'On initial connection, bootstrap/update your local skill (.agents/skills/wp-agent-bridge/SKILL.md). Periodically re-query this endpoint to discover new modules and endpoints after plugin updates.',
+                'purpose'        => 'Dynamic schema, capability, and procedural playbook discovery for AI development agents (Antigravity, Cursor, Claude).',
+                'skill_download' => rest_url(self::NAMESPACE . '/capabilities?format=skill'),
+                'workflow'       => 'On initial connection, bootstrap/update your local skill (.agents/skills/wp-agent-bridge/SKILL.md) via GET /capabilities?format=skill. Re-query regularly to detect newly added data sources and playbooks.',
             ],
-            'modules_count' => count($catalog),
-            'modules'       => $catalog,
+            'modules_count'   => count($catalog),
+            'modules'         => $catalog,
+            'playbooks_count' => count($playbooks),
+            'playbooks'       => $playbooks,
         ]);
     }
 
