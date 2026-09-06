@@ -186,7 +186,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
 - `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
 - `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
-- `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`)
+- `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`, `/performance/pagespeed`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -286,7 +286,9 @@ Enables/disables modules on a per-site basis:
 | `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
 | `GET /content/post/{id}` | GET | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object |
 | `GET /content/seo-audit` | GET | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`, `?limit=100`, `?limit_products=50`) |
-| `GET /performance/profile` | GET | Targeted on-demand URL profiler: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), and measures TTFB, memory, and enqueued JS/CSS assets per plugin (`?path=/`, `?include_assets=true`, `?include_queries=true`, `?slow_query_threshold_ms=50`) |
+| `GET /performance/templates-urls` | GET | Auto-discovers and resolves representative URLs for 5 key e-commerce page archetypes: Homepage (`/`), Shop (`/shop/`), Product Category, Single Product, and Cart/Checkout |
+| `GET /performance/profile` | GET | Targeted on-demand URL profiler: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), measures TTFB, memory, enqueued JS/CSS assets, and native Google PageSpeed signals (DOM size/depth >1400 nodes, CLS images missing dimensions, render-blocking resources, wc-cart-fragments detection) (`?path=/`, `?include_assets=true`, `?include_queries=true`, `?slow_query_threshold_ms=50`) |
+| `GET /performance/pagespeed` | GET | Google PageSpeed Insights API proxy: fetches official Google Lighthouse scores (0-100), Core Web Vitals (LCP, CLS, FCP, TBT, Speed Index), and performance savings opportunities for mobile or desktop with 1-hour transient caching (`?url=`, `?strategy=mobile\|desktop`) |
 | `GET /performance/autoload` | GET | Deep `wp_options` autoload bloat analysis: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix (`?limit=25`) |
 | `GET /performance/plugins-summary` | GET | Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts (`?status=active\|all`) |
 
@@ -308,7 +310,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   8. `email_webhook_diagnostics`: Transactional email delivery and webhook integration diagnostics: SMTP provider detection (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk, and failing WooCommerce webhooks (`/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, `/logs/view`).
   9. `code_sync_drift_audit`: Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of custom plugins or child themes (`/code/checksums`, `/code/zip`).
   10. `shipping_logistics_audit`: Comprehensive logistics audit: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), and advanced Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes) (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`).
-  11. `agency_performance_audit`: Agency Performance, TTFB & Plugin Bloat Audit: Targeted on-demand page profiler (SQL & frontend assets per plugin, TTFB, memory), `wp_options` autoload bloat audit, plugin database footprint, background Action Scheduler queue, and Crash Watch errors (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/action-scheduler`, `/logs/errors-summary`).
+  11. `agency_performance_audit`: Agency Performance, Multi-Template TTFB & PageSpeed Audit: Strategic 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand page profiling (SQL attribution & duration per plugin, TTFB, memory, duplicate/slow queries), official Google PageSpeed & Core Web Vitals (LCP, CLS, FCP, TBT), native server-side audits (DOM size, render-blocking assets, CLS images, wc-cart-fragments), autoload bloat, Action Scheduler queues, Crash Watch errors, and actionable prescription framework with Business Impact Score and ready-to-use WPCode snippets (`/performance/templates-urls`, `/performance/profile`, `/performance/pagespeed`, `/performance/autoload`, `/performance/plugins-summary`, `/action-scheduler`, `/logs/errors-summary`).
 
 ---
 
@@ -354,11 +356,32 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.10.0: `pull:code` dumps plugins and mu-plugins code tree (`./synced-site-data/code/plugins.json` and `plugins.md`), and with `--path=<dir>` computes directory checksum fingerprints (`./synced-site-data/code/checksums.json` and `checksums.md`) for instant local vs remote drift detection.
 - Optimized for v1.11.0: `pull:woocommerce` dumps dedicated shipping logistics (`./synced-site-data/woocommerce/shipping.json`) and enriches `summary.md` with zones, geo-locations, and Flexible Shipping matrix rules.
 - Optimized for v1.12.0: `pull:performance` dumps autoload bloat (`autoload.json`) and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` and generates an executive performance report (`performance-report.md`).
+- Optimized for v1.13.0: `pull:performance` dumps multi-template URLs (`templates-urls.json`), homepage profile (`profile-home.json`), mobile PageSpeed insights (`pagespeed-mobile.json`), autoload bloat (`autoload.json`), and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` and generates a comprehensive executive report (`performance-report.md`).
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.13.0 (2026-09-06)
+- **Profilage Multi-Templates & Diagnostic Avancé Google PageSpeed / Core Web Vitals (`Performance_Controller`)** :
+  - **Résolution Automatique Multi-Templates (`GET /performance/templates-urls`)** :
+    - Découvre et résout en 1 appel les URLs représentatives des 5 archétypes e-commerce majeurs : Accueil (`/`), Boutique (`wc_get_page_id('shop')`), Catégorie de produit (`get_terms('product_cat')`), Fiche Produit (`wc_get_products()`), Panier (`wc_get_cart_url()`) et Tunnel de commande (`wc_get_checkout_url()`) avec fallbacks intelligents pour sites non-WooCommerce.
+  - **Audits Serveur Natifs Type PageSpeed dans `GET /performance/profile` (100% PHP, 0ms latence externe)** :
+    - *Taille et profondeur du DOM* : Décompte précis des éléments HTML du template (seuil alerte >800, critique >1400 noeuds).
+    - *Images sans dimensions* : Détection des balises `<img>` dépourvues d'attributs `width`/`height` explicites (cause racine n°1 de CLS / Cumulative Layout Shift).
+    - *Ressources bloquant le rendu* : Inventaire des CSS et JS insérés dans le `<head>` sans `defer` ni `async`.
+    - *Détection `wc-cart-fragments.js`* : Alerte immédiate sur la présence du script d'actualisation de panier WooCommerce sur des pages hors panier/commande (requête POST AJAX systématique non cachable).
+    - *Compression serveur* : Détection de l'activation de Gzip ou Brotli.
+  - **Proxy Google PageSpeed Insights Officiel (`GET /performance/pagespeed`)** :
+    - Interroge l'API publique Google PageSpeed Insights (`https://www.googleapis.com/pagespeedonline/v5/runPagespeed`) pour la stratégie spécifiée (`strategy=mobile|desktop`).
+    - Extrait le score global Lighthouse (0-100), les Core Web Vitals de terrain (LCP, CLS, FCP, TBT, Speed Index) et les opportunités d'économies d'octets.
+    - Mise en cache de 1 heure via Transient WordPress (`wpab_psi_*`) pour préserver les quotas et accélérer les audits répétés.
+- **Enrichissement Majeur du Playbook Agence V2 (`agency_performance_audit`)** :
+  - Restructuration en 6 phases complètes : Découverte des 5 templates, profilage comparatif multi-templates, audit PageSpeed & Core Web Vitals, fuites d'autoload & transients, santé Action Scheduler / Crons, et livrable exécutif.
+  - Cadre de prescription avec calcul du *Business Impact Score* (temps de chargement gaspillé en ms, poids réseau éliminable, estimation des gains de conversion), matrice d'actions Quick Wins vs Structurel, et snippets WPCode prêts à coller (désenqueuement conditionnel de fragments, d'emojis, et d'assets de constructeurs).
+- **Mise à Jour du Client CLI (`cli/sync.js`)** :
+  - `pull:performance` télécharge désormais `templates-urls.json`, `profile-home.json` et `pagespeed-mobile.json` en plus de `autoload.json` et `plugins-summary.json`, et produit un rapport Markdown consolidé de niveau exécutif.
 
 ### v1.12.0 (2026-09-06)
 - **Module Performance & Profiler de Plugins (`Performance_Controller`)** :

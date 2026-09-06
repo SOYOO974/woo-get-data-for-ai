@@ -534,8 +534,8 @@ class Playbooks {
             ],
             [
                 'id'              => 'agency_performance_audit',
-                'title'           => esc_html__('Agency Performance, TTFB & Plugin Bloat Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Complete diagnostic protocol for agencies and AI agents to pinpoint slow plugins, redundant SQL queries, frontend asset bloat, autoload leaks, and background task bottlenecks.', 'woo-get-data-for-ai'),
+                'title'           => esc_html__('Agency Performance, Multi-Template TTFB & PageSpeed Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Comprehensive diagnostic and prescription protocol for agencies and AI agents: audits 5 strategic e-commerce page archetypes (Home, Shop, Category, Product, Cart), attributes SQL queries and enqueued assets per plugin, checks Google PageSpeed Core Web Vitals, detects autoload leaks, and formulates quantified Quick Wins with ready-to-use WPCode snippets.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['performance'],
                 'optional_modules'=> ['system', 'scheduler', 'logs'],
                 'intent_triggers' => [
@@ -551,39 +551,43 @@ class Playbooks {
                     'slow plugin',
                     'consommation ressources plugins',
                     'page speed woocommerce',
+                    'core web vitals',
+                    'pagespeed',
+                    'quick wins performance',
+                    'audit boutique lente',
                 ],
                 'workflow'        => [
                     [
                         'step'        => 1,
-                        'action'      => esc_html__('Targeted Page Profiling (Homepage / Store)', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/performance/profile',
-                        'params'      => ['path' => '/', 'include_assets' => true, 'include_queries' => true, 'slow_query_threshold_ms' => 50],
-                        'description' => esc_html__('Performs an on-demand synthetic benchmark of the target page: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate and slow queries (>50ms), and measures TTFB and peak memory.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['profile.ttfb_ms', 'profile.memory_peak_mb', 'profile.sql.total_queries', 'profile.sql.by_component', 'profile.sql.duplicate_queries', 'profile.sql.slow_queries'],
+                        'action'      => esc_html__('Strategic Multi-Template URLs Discovery', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/templates-urls',
+                        'params'      => [],
+                        'description' => esc_html__('Discovers and resolves representative URLs for 5 key e-commerce page archetypes: Homepage (/), Shop (/shop/), Product Category, Single Product, and Cart/Checkout.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['templates.home.url', 'templates.shop.url', 'templates.category.url', 'templates.product.url', 'templates.cart.url'],
                     ],
                     [
                         'step'        => 2,
-                        'action'      => esc_html__('Frontend Asset Weight & Script Blocker Audit', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('Multi-Template Benchmarking & Plugin SQL Attribution', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/profile',
-                        'params'      => ['path' => '/', 'include_assets' => true, 'include_queries' => false],
-                        'description' => esc_html__('Counts and attributes all enqueued JavaScript files and CSS stylesheets per plugin on the target URL to isolate plugins injecting excessive scripts on pages where they are not needed.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['profile.assets.total_scripts', 'profile.assets.total_styles', 'profile.assets.by_component'],
+                        'params'      => ['path' => '<template_url>', 'include_assets' => true, 'include_queries' => true, 'slow_query_threshold_ms' => 50],
+                        'description' => esc_html__('Profiles each key template archetype: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), and measures TTFB and peak memory.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['profile.ttfb_ms', 'profile.memory_peak_mb', 'profile.sql.total_queries', 'profile.sql.by_component', 'profile.sql.duplicate_queries', 'profile.sql.slow_queries'],
                     ],
                     [
                         'step'        => 3,
-                        'action'      => esc_html__('Autoload Bloat & Early-Boot Options Audit', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/performance/autoload',
-                        'params'      => ['limit' => 25],
-                        'description' => esc_html__('Audits total wp_options autoload footprint against the 800 KB threshold, lists the top 25 heaviest individual options, and groups autoload consumption by plugin prefix.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['status', 'total_size_kb', 'alert', 'top_heavy_options', 'by_component'],
+                        'action'      => esc_html__('Google PageSpeed, Core Web Vitals & Native DOM/CLS Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/pagespeed',
+                        'params'      => ['url' => '<target_url>', 'strategy' => 'mobile'],
+                        'description' => esc_html__('Evaluates official Google Lighthouse performance scores and field Core Web Vitals (LCP, CLS, FCP, TBT, Speed Index) alongside native server-side audits: DOM size (>1400 nodes), render-blocking CSS/JS, images missing dimensions (CLS), and wc-cart-fragments.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['lighthouse_score', 'core_web_vitals.lcp', 'core_web_vitals.cls', 'pagespeed_audits.dom_nodes_count', 'pagespeed_audits.images_missing_dimensions', 'pagespeed_audits.wc_cart_fragments_active'],
                     ],
                     [
                         'step'        => 4,
-                        'action'      => esc_html__('Plugin Resource Footprint & DB Tables', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/performance/plugins-summary',
-                        'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Evaluates active plugins by associated database table counts, total disk space consumed in MySQL, and table row volume.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['plugins[].slug', 'plugins[].tables_count', 'plugins[].db_size_kb', 'plugins[].db_rows'],
+                        'action'      => esc_html__('Autoload Bloat & Early-Boot Options Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/autoload',
+                        'params'      => ['limit' => 25],
+                        'description' => esc_html__('Audits total wp_options autoload footprint against the 800 KB threshold, lists top 25 heaviest individual options, groups autoload by plugin prefix, and detects expired transients.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['status', 'total_size_kb', 'alert', 'top_heavy_options', 'by_component'],
                     ],
                     [
                         'step'        => 5,
@@ -779,7 +783,11 @@ class Playbooks {
         $md .= "# Run Playbook 8: Verify Plugin Code Drift via Checksums Fingerprint\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/checksums?path=plugins/my-plugin'\n\n";
         $md .= "# Run Playbook 8: Download Clean Plugin or Child Theme ZIP Archive\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/zip?path=plugins/my-plugin' -o my-plugin.zip\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/zip?path=plugins/my-plugin' -o my-plugin.zip\n\n";
+        $md .= "# Run Playbook 9: Agency Multi-Template Performance & Google PageSpeed Audit\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/pagespeed?strategy=mobile'\n";
         $md .= "```\n";
 
         return $md;
