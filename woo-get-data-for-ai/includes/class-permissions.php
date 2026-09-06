@@ -79,6 +79,11 @@ class Permissions {
                 'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO).', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit'],
             ],
+            'performance' => [
+                'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, and auditing autoloaded options bloat.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/performance/profile', '/performance/autoload', '/performance/plugins-summary'],
+            ],
         ];
     }
 
@@ -102,6 +107,7 @@ class Permissions {
             'meta'         => 1,
             'woocommerce'  => 1,
             'content'      => 1,
+            'performance'  => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
@@ -563,6 +569,32 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['include_posts (true|false, default: false)', 'include_products (true|false, default: false)', 'include_categories (true|false, default: false)', 'limit (default: 100, max: 300)', 'limit_products (default: 50, max: 200)'],
                         'description' => esc_html__('Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'performance',
+                'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), autoload bloat audit, and plugin resource footprint.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['performance']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/performance/profile',
+                        'methods'     => ['GET'],
+                        'params'      => ['path (default: /)', 'include_assets (true|false, default: true)', 'include_queries (true|false, default: true)', 'slow_query_threshold_ms (default: 50)'],
+                        'description' => esc_html__('Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, and measures frontend JS/CSS assets per plugin.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/performance/autoload',
+                        'methods'     => ['GET'],
+                        'params'      => ['limit (default: 25, max: 100)'],
+                        'description' => esc_html__('Audits wp_options autoload bloat: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/performance/plugins-summary',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (active|all, default: active)'],
+                        'description' => esc_html__('Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

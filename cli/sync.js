@@ -51,7 +51,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:logs');
     process.exit(1);
 }
 
@@ -1272,6 +1272,67 @@ async function pullSkill() {
     }
 }
 
+async function pullPerformance() {
+    console.log('⏳ Pulling Performance & Plugin Footprint Diagnostics...');
+    try {
+        const perfDir = path.join(outputDir, 'performance');
+        ensureDir(perfDir);
+
+        const [autoload, pluginsSummary] = await Promise.all([
+            makeRequest('/performance/autoload?limit=50').catch(e => ({ error: e.message })),
+            makeRequest('/performance/plugins-summary?status=active').catch(e => ({ error: e.message }))
+        ]);
+
+        writeJson(path.join(perfDir, 'autoload.json'), autoload);
+        writeJson(path.join(perfDir, 'plugins-summary.json'), pluginsSummary);
+
+        let md = `# ⚡ Site Performance & Plugin Footprint Report\n\n`;
+
+        if (!autoload.error) {
+            const statusIcon = autoload.status === 'good' ? '🟢' : (autoload.status === 'warning' ? '🟡' : '🔴');
+            md += `## 1. wp_options Autoload Footprint\n\n`;
+            md += `- **Health Status**: ${statusIcon} **${(autoload.status || 'unknown').toUpperCase()}**\n`;
+            md += `- **Total Autoloaded Options**: ${autoload.total_options}\n`;
+            md += `- **Total Autoload Size**: **${autoload.total_size_kb} KB** (Recommended limit: < ${autoload.recommended_max_kb} KB)\n`;
+            if (autoload.alert) {
+                md += `> ⚠️ **Alert**: ${autoload.alert}\n\n`;
+            }
+
+            if (autoload.by_component && Object.keys(autoload.by_component).length > 0) {
+                md += `\n### Autoload by Plugin / Component\n\n`;
+                md += `| Component | Options Count | Total Size (KB) |\n|---|---|---|\n`;
+                Object.entries(autoload.by_component).forEach(([comp, data]) => {
+                    md += `| **${comp}** | ${data.count} | ${data.total_kb} KB |\n`;
+                });
+                md += `\n`;
+            }
+
+            if (Array.isArray(autoload.top_heavy_options) && autoload.top_heavy_options.length > 0) {
+                md += `### Top Heaviest Autoload Options\n\n`;
+                md += `| Option Name | Component | Size (KB) |\n|---|---|---|\n`;
+                autoload.top_heavy_options.slice(0, 15).forEach(opt => {
+                    md += `| \`${opt.option_name}\` | ${opt.component} | ${opt.size_kb} KB |\n`;
+                });
+                md += `\n`;
+            }
+        }
+
+        if (!pluginsSummary.error && Array.isArray(pluginsSummary.plugins)) {
+            md += `## 2. Active Plugins Database Footprint\n\n`;
+            md += `| Plugin | Slug | Version | DB Tables | DB Size (KB) | DB Rows |\n|---|---|---|---|---|---|\n`;
+            pluginsSummary.plugins.forEach(p => {
+                md += `| **${p.name}** | \`${p.slug}\` | v${p.version} | ${p.tables_count} | ${p.db_size_kb} KB | ${p.db_rows.toLocaleString()} |\n`;
+            });
+            md += `\n`;
+        }
+
+        writeText(path.join(perfDir, 'performance-report.md'), md);
+        console.log('✅ Performance & Autoload audit saved to ./performance/performance-report.md');
+    } catch (err) {
+        console.error('❌ Failed to pull performance:', err.message);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -1324,6 +1385,10 @@ async function run() {
         case 'pull:seo':
             await pullContent();
             break;
+        case 'pull:performance':
+        case 'pull:perf':
+            await pullPerformance();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -1342,6 +1407,7 @@ async function run() {
             await pullMeta();
             await pullWooCommerce();
             await pullContent();
+            await pullPerformance();
             await pullLogs();
             break;
     }

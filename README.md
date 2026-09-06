@@ -37,7 +37,9 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities across pages, blog posts, WooCommerce products, and categories.
 - **Code Drift Fingerprinting & Instant ZIP Export**: Instant cryptographic checksums (`/code/checksums`) for local vs remote code drift detection, and on-the-fly clean ZIP archive downloads (`/code/zip`) with zero `.git` or log clutter.
 - **Advanced WooCommerce Shipping & Flexible Shipping PRO**: Deep logistics extraction across zones, geographic locations (postcodes, regions, countries), native method options (`flat_rate`, `free_shipping`, `local_pickup`), and matrix calculation rules for **Flexible Shipping** and **Flexible Shipping PRO** (`/woocommerce/shipping`).
-- **10 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, local vs prod code drift, and shipping logistics.
+- **Targeted URL Profiler & Plugin Performance Attribution**: Surgical on-demand profiling (`/performance/profile`) measuring TTFB, peak memory, attributing SQL queries and execution duration per plugin via stack backtraces, detecting duplicate and slow queries (>50ms), and auditing enqueued JS/CSS assets per plugin.
+- **Autoload Bloat & Plugin Resource Footprint**: Deep audit of `wp_options` (`alloptions`) against the 800 KB threshold (`/performance/autoload`) grouped by plugin prefix, and consolidated database table size & row volume per active plugin (`/performance/plugins-summary`).
+- **11 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for performance & plugin bloat, SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, local vs prod code drift, and shipping logistics.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -155,10 +157,13 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /content/posts?status={status}` | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview. |
 | `GET /content/post/{id}` | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object. |
 | `GET /content/seo-audit` | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`). |
+| `GET /performance/profile?path=/` | Targeted on-demand URL profiler: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), and measures TTFB, memory, and enqueued JS/CSS assets per plugin (`?include_assets=true`, `?include_queries=true`, `?slow_query_threshold_ms=50`). |
+| `GET /performance/autoload` | Deep `wp_options` autoload bloat analysis: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix (`?limit=25`). |
+| `GET /performance/plugins-summary` | Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts (`?status=active\|all`). |
 
 ---
 
-## 🎯 Procedural AI Playbooks (10 Automated Investigation Recipes)
+## 🎯 Procedural AI Playbooks (11 Automated Investigation Recipes)
 
 To avoid trial-and-error querying, the plugin includes pre-configured procedural investigation recipes that an AI can trigger based on user intent:
 
@@ -172,6 +177,7 @@ To avoid trial-and-error querying, the plugin includes pre-configured procedural
 8. **Transactional Emails & Webhooks Diagnostics** (`email_webhook_diagnostics`): Investigates delivery failures with `/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, and `/logs/view`.
 9. **Code Drift & Extension Synchronization** (`code_sync_drift_audit`): Fingerprints directory checksums with `/code/checksums` to compare against local workspace files, and downloads complete clean ZIP archives with `/code/zip` in 1 single call.
 10. **Shipping Zones, Methods & Flexible Shipping Rules Audit** (`shipping_logistics_audit`): Comprehensive logistics audit inspecting shipping zones and geo-locations, native method options, and Flexible Shipping PRO matrix calculation rules (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/orders`).
+11. **Agency Performance, TTFB & Plugin Bloat Audit** (`agency_performance_audit`): Complete diagnostic sequence correlating `/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/action-scheduler`, and `/logs/errors-summary` to pinpoint slow plugins, redundant SQL queries, frontend asset bloat, and autoload leaks.
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 

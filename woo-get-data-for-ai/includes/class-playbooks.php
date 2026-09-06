@@ -532,6 +532,77 @@ class Playbooks {
                     ],
                 ],
             ],
+            [
+                'id'              => 'agency_performance_audit',
+                'title'           => esc_html__('Agency Performance, TTFB & Plugin Bloat Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Complete diagnostic protocol for agencies and AI agents to pinpoint slow plugins, redundant SQL queries, frontend asset bloat, autoload leaks, and background task bottlenecks.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['performance'],
+                'optional_modules'=> ['system', 'scheduler', 'logs'],
+                'intent_triggers' => [
+                    'audit performance',
+                    'optimiser vitesse',
+                    'pourquoi le site est lent',
+                    'site lent',
+                    'plugins qui ralentissent',
+                    'speed audit',
+                    'ttfb eleve',
+                    'slow queries',
+                    'ameliorer performances',
+                    'slow plugin',
+                    'consommation ressources plugins',
+                    'page speed woocommerce',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Targeted Page Profiling (Homepage / Store)', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/profile',
+                        'params'      => ['path' => '/', 'include_assets' => true, 'include_queries' => true, 'slow_query_threshold_ms' => 50],
+                        'description' => esc_html__('Performs an on-demand synthetic benchmark of the target page: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate and slow queries (>50ms), and measures TTFB and peak memory.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['profile.ttfb_ms', 'profile.memory_peak_mb', 'profile.sql.total_queries', 'profile.sql.by_component', 'profile.sql.duplicate_queries', 'profile.sql.slow_queries'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Frontend Asset Weight & Script Blocker Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/profile',
+                        'params'      => ['path' => '/', 'include_assets' => true, 'include_queries' => false],
+                        'description' => esc_html__('Counts and attributes all enqueued JavaScript files and CSS stylesheets per plugin on the target URL to isolate plugins injecting excessive scripts on pages where they are not needed.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['profile.assets.total_scripts', 'profile.assets.total_styles', 'profile.assets.by_component'],
+                    ],
+                    [
+                        'step'        => 3,
+                        'action'      => esc_html__('Autoload Bloat & Early-Boot Options Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/autoload',
+                        'params'      => ['limit' => 25],
+                        'description' => esc_html__('Audits total wp_options autoload footprint against the 800 KB threshold, lists the top 25 heaviest individual options, and groups autoload consumption by plugin prefix.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['status', 'total_size_kb', 'alert', 'top_heavy_options', 'by_component'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('Plugin Resource Footprint & DB Tables', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/plugins-summary',
+                        'params'      => ['status' => 'active'],
+                        'description' => esc_html__('Evaluates active plugins by associated database table counts, total disk space consumed in MySQL, and table row volume.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['plugins[].slug', 'plugins[].tables_count', 'plugins[].db_size_kb', 'plugins[].db_rows'],
+                    ],
+                    [
+                        'step'        => 5,
+                        'action'      => esc_html__('Background Cron & Action Scheduler Queue Health', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/action-scheduler',
+                        'params'      => ['status' => 'in-progress,failed,pending', 'per_page' => 30],
+                        'description' => esc_html__('Detects stalled recurring background jobs, failed synchronization queues, or repetitive webhook loops that monopolize server CPU and database locks.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['summary.failed_count', 'summary.in_progress_count', 'actions[].log_messages'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Fatal Error & Warning Disk I/O Scan', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/logs/errors-summary',
+                        'params'      => ['limit' => 15],
+                        'description' => esc_html__('Verifies whether recurrent PHP warnings, deprecations, or fatal errors are continuously writing to debug.log and choking disk I/O.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_fatal_errors', 'grouped_errors[].file', 'grouped_errors[].occurrences'],
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -600,6 +671,7 @@ class Playbooks {
         if (strpos($endpoint, '/flowmattic') === 0) return 'flowmattic';
         if (strpos($endpoint, '/analytics') === 0) return 'analytics';
         if (strpos($endpoint, '/meta') === 0) return 'meta';
+        if (strpos($endpoint, '/performance') === 0) return 'performance';
 
         return null;
     }

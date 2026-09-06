@@ -35,6 +35,9 @@ class Plugin {
      * Run plugin hooks.
      */
     public function run() {
+        // Intercept synthetic profiling request if token is present (zero idle overhead)
+        Api\Performance_Controller::init_profiling_catcher();
+
         // Load text domain for internationalization (i18n)
         add_action('init', [$this, 'load_textdomain']);
 
@@ -76,6 +79,7 @@ class Plugin {
             Api\Meta_Controller::class,
             Api\Woocommerce_Controller::class,
             Api\Content_Controller::class,
+            Api\Performance_Controller::class,
         ];
 
         foreach ($controller_classes as $class) {
