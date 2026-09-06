@@ -123,7 +123,7 @@ class System_Controller extends Rest_Controller {
             'discovery_instructions' => [
                 'purpose'        => 'Dynamic schema, capability, and procedural playbook discovery for AI development agents (Antigravity, Cursor, Claude).',
                 'skill_download' => rest_url(self::NAMESPACE . '/capabilities?format=skill'),
-                'workflow'       => 'On initial connection, bootstrap/update your local skill (.agents/skills/wp-agent-bridge/SKILL.md) via GET /capabilities?format=skill. Re-query regularly to detect newly added data sources and playbooks.',
+                'workflow'       => 'On initial connection, bootstrap/update your local skill (.agents/skills/wp-agent-bridge/SKILL.md) via GET /capabilities?format=skill. The code module now supports individual inspection (/code/file), directory checksum fingerprinting (/code/checksums), and instant ZIP archive export (/code/zip). Re-query regularly to detect newly added data sources and playbooks.',
             ],
             'modules_count'   => count($catalog),
             'modules'         => $catalog,

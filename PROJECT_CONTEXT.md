@@ -151,7 +151,7 @@ Enables/disables modules on a per-site basis:
 - `[x] System & Server Environment` (`/system`, `/capabilities`, `/ping`)
 - `[x] WooCommerce Diagnosis & Overrides` (`/theme/overrides`, HPOS state)
 - `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`)
-- `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`)
+- `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`, `/code/checksums`, `/code/zip`)
 - `[x] Elementor Architecture` (`/elementor/list`, `/elementor/forms`, `/elementor/kit`)
 - `[x] WPCode Snippets` (`/wpcode/snippets`)
 - `[x] Error & WooCommerce Logs` (`/logs/sources`, `/logs/view`)
@@ -214,6 +214,8 @@ Enables/disables modules on a per-site basis:
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
 | `GET /code/plugins` | GET | File trees of active or all plugins and `wp-content/mu-plugins/` (`?status=active|inactive|all`, default: `active`) |
 | `GET /code/file` | GET | Source code of a specific PHP/JS/CSS file (strictly sandboxed via `realpath()`) |
+| `GET /code/checksums` | GET | Cryptographic file checksum map (MD5 / SHA256), modified timestamps, and byte sizes for instant local vs prod drift verification (`?path=plugins/my-plugin`, `?algo=md5\|sha256`) |
+| `GET /code/zip` | GET | Clean, on-the-fly ZIP archive export of custom plugins or child themes without `.git`, logs, or sensitive files (`?path=plugins/my-plugin`, `?format=stream\|base64`, default: `stream`) |
 | `GET /elementor/export-all` | GET | Bulk export of all Elementor pages, templates, kit & forms in 1 optimized request (`?status=all|publish|draft|active|inactive`, default: `all`) |
 | `GET /elementor/list` | GET | Elementor pages, posts, and templates (`elementor_library`) (`?status=all|publish|draft|active|inactive`, default: `all`) |
 | `GET /elementor/item/{id}` | GET | Full decoded `_elementor_data` JSON tree and page settings |
@@ -264,7 +266,7 @@ Enables/disables modules on a per-site basis:
 To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoints, the plugin features an intelligent **Playbooks Engine**:
 - **Zero-Prompt Stagnation**: Instead of memorizing static endpoint lists, AI agents query `GET /capabilities?format=skill` to instantly generate an up-to-date `.agents/skills/wp-agent-bridge/SKILL.md` workspace skill.
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
-- **Built-in Procedural Playbooks (8 Battle-Tested Investigation Sequences)**:
+- **Built-in Procedural Playbooks (9 Battle-Tested Investigation Sequences)**:
   1. `seo_content_audit`: 360° SEO, meta tags, critical noindex detection on pages/products, OpenGraph coverage, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
   2. `tech_health_crons`: Technical health, PHP/MySQL versions, memory limits, database autoload bloat, security hardening audit, stalled Action Scheduler queues, overdue WP-Crons, and Crash Watch fatal error dashboard (`/system`, `/system/database`, `/system/security`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
   3. `ecommerce_troubleshoot`: Order failure diagnostics, payment gateway error notes, coupon/fee inspection, gateway logs, active checkout hooks, SMTP mail delivery check, and WooCommerce webhook health (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
@@ -273,6 +275,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   6. `theme_wc_compatibility`: Child theme code, Woodmart/Elessi theme options, and WooCommerce template version drift detection (`/theme/overrides`, `/theme/child`, `/theme/options`).
   7. `store_sales_stock_audit`: Native WooCommerce commercial intelligence: gross/net sales, paid orders, AOV, refunds, % growth vs prior period, top products by revenue/qty, top coupons, and stock valuation & dormant inventory (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/summary`).
   8. `email_webhook_diagnostics`: Transactional email delivery and webhook integration diagnostics: SMTP provider detection (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk, and failing WooCommerce webhooks (`/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, `/logs/view`).
+  9. `code_sync_drift_audit`: Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of custom plugins or child themes (`/code/checksums`, `/code/zip`).
 
 ---
 
@@ -299,8 +302,9 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 6. Local CLI Client (`cli/sync.js`)
 - Standalone Node.js script supporting `.env` configuration.
-- Commands: `pull:all`, `pull:capabilities`, `pull:system`, `pull:scheduler`, `pull:theme`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:meta`, `pull:woocommerce`, `pull:logs`.
+- Commands: `pull:all`, `pull:capabilities`, `pull:skill`, `pull:system`, `pull:scheduler`, `pull:theme`, `pull:code`, `pull:checksums`, `pull:elementor`, `pull:snippets`, `pull:flowmattic`, `pull:analytics`, `pull:meta`, `pull:woocommerce`, `pull:content`, `pull:logs`.
 - Optional status filtering: `--status=active|inactive|all`.
+- Optional path targeting for checksums & code inspection: `--path=plugins/<plugin-slug>`.
 - Organized local filesystem layout preventing AI false positives during workspace grep:
   - Snippets segregated into `snippets/active/` and `snippets/inactive/`.
   - FlowMattic workflows segregated into `flowmattic/workflows/active/` and `flowmattic/workflows/inactive/`.
@@ -314,11 +318,26 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.6.0: `pull:woocommerce` dumps WooCommerce store summary, e-commerce settings, products catalog, and anonymized recent orders into `./synced-site-data/woocommerce/`.
 - Optimized for v1.7.0: `pull:content` dumps WordPress pages, posts, and executive SEO audit report into `./synced-site-data/content/`.
 - Optimized for v1.9.0: `pull:woocommerce` dumps native sales analytics, top performers, stock valuation, and webhooks inventory; `pull:system` dumps SMTP mail diagnostics and security hardening audit.
+- Optimized for v1.10.0: `pull:code` dumps plugins and mu-plugins code tree (`./synced-site-data/code/plugins.json` and `plugins.md`), and with `--path=<dir>` computes directory checksum fingerprints (`./synced-site-data/code/checksums.json` and `checksums.md`) for instant local vs remote drift detection.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.10.0 (2026-09-06)
+- **Module Code Avancé : Détection de Dérive (Code Drift) & Export ZIP à la Volée (`Code_Controller`)** :
+  - `GET /code/checksums` : Calcul instantané des empreintes numériques (MD5 / SHA256), des tailles en octets et des dates de modification de tous les fichiers d'une extension ou d'un thème (`wp-content/plugins/`, `wp-content/themes/`). Permet à l'IA de vérifier la dérive de code locale vs serveur avant toute intervention locale en 1 seule requête au lieu de dizaines de requêtes individuelles.
+  - `GET /code/zip` : Génération et streaming à la volée d'une archive ZIP compressée propre d'un plugin personnalisé ou du thème enfant (`format=stream` par défaut ou `format=base64`). Nettoyage automatique immédiat du fichier temporaire sur le serveur.
+- **Garde-fous de Sécurité & Confinement Strict** :
+  - Confinement de chemin impératif par `realpath()` à l'intérieur de `WP_PLUGIN_DIR`, `WPMU_PLUGIN_DIR` et `get_theme_root()`. Interdiction formelle de la racine `ABSPATH`, de `wp-config.php`, de `wp-content/uploads/` et des traversées de dossiers (`..`).
+  - Exclusions automatiques : filtrage systématique de `.git`, `.svn`, `.env*`, `.DS_Store`, dumps `.sql`, archives `.zip`, `.tar`, `.gz`, fichiers de logs `.log`, `node_modules`, `vendor`, `cache`.
+  - Protection DoS/OOM : limitation de sécurité à 1 000 fichiers maximum et 30 Mo maximum décompressés par répertoire inspecté.
+- **Playbook IA Dédié & Découverte (`Playbooks` & `System_Controller`)** :
+  - **Nouveau Playbook 9** : `code_sync_drift_audit` avec triggers d'intention explicites (`"comparer code local prod"`, `"verifier derive code"`, `"code drift"`, `"telecharger plugin"`, `"recuperer theme enfant"`, `"synchroniser extension"`, etc.).
+  - Mise à jour des `discovery_instructions` dans `/capabilities` et intégration dans la génération automatique du skill d'agent (`SKILL.md`).
+- **Client CLI Local (`cli/sync.js`)** :
+  - Nouvelles commandes `pull:code` et `pull:checksums` avec argument `--path=<chemin_relatif>` pour générer localement l'arborescence et le rapport d'empreintes d'intégrité.
 
 ### v1.9.1 (2026-09-06)
 - **Correction Critique Autoloader & Dézippage Linux (`Class "System_Controller" not found`)** :

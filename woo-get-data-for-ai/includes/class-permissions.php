@@ -31,8 +31,8 @@ class Permissions {
             ],
             'code' => [
                 'label'       => esc_html__('Code & Plugin File Inspector', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows browsing active plugins and mu-plugins file structures and reading specific PHP/JS/CSS files in sandbox.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/code/plugins', '/code/file'],
+                'description' => esc_html__('Allows browsing active plugins/mu-plugins structures, reading sandboxed source code, generating directory checksums, and exporting plugin/theme ZIP archives.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/code/plugins', '/code/file', '/code/checksums', '/code/zip'],
             ],
             'elementor' => [
                 'label'       => esc_html__('Elementor Architecture', 'woo-get-data-for-ai'),
@@ -226,7 +226,7 @@ class Permissions {
             [
                 'id'          => 'code',
                 'label'       => esc_html__('Code & Plugin File Inspector', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows browsing active plugins and mu-plugins file structures and reading specific PHP/JS/CSS files in sandbox.', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows browsing active plugins and mu-plugins file structures, reading specific files in sandbox, computing directory checksums, and exporting clean ZIP archives.', 'woo-get-data-for-ai'),
                 'enabled'     => !empty($permissions['code']),
                 'endpoints'   => [
                     [
@@ -240,6 +240,18 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['path (required, e.g. plugins/my-plugin/file.php)'],
                         'description' => esc_html__('Sandboxed source code reader for PHP, JS, and CSS files.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/code/checksums',
+                        'methods'     => ['GET'],
+                        'params'      => ['path (required, e.g. plugins/my-plugin, themes/woodmart-child)', 'algo (md5|sha256, default: md5)'],
+                        'description' => esc_html__('Directory checksum fingerprint map of all code files with modified timestamps and byte sizes for instant local vs prod drift detection.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/code/zip',
+                        'methods'     => ['GET'],
+                        'params'      => ['path (required, e.g. plugins/my-plugin, themes/woodmart-child)', 'format (stream|base64, default: stream)'],
+                        'description' => esc_html__('Generates and streams a clean on-the-fly ZIP archive of a target plugin or child theme directory (excluding .git, logs, and sensitive files).', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

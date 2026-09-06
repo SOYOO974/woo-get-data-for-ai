@@ -34,7 +34,8 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Database Health & Autoload Analysis**: Audit of SQL table sizes, top heavy tables, transient accumulations, and `wp_options` autoload footprint with performance alerts (> 800 KB threshold).
 - **Crash Watch Fatal Error Dashboard**: Targeted reverse-tail extraction of recent critical PHP fatal errors and exceptions with component attribution for instant bug diagnostics.
 - **WordPress Pages, Content & Unified SEO**: Complete inspection of WordPress pages hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, templates, and **unified SEO metadata** normalized across **Yoast SEO**, **Rank Math**, **SEOPress**, and **All in One SEO** with site-wide audit capabilities across pages, blog posts, WooCommerce products, and categories.
-- **8 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, and theme compatibility.
+- **Code Drift Fingerprinting & Instant ZIP Export**: Instant cryptographic checksums (`/code/checksums`) for local vs remote code drift detection, and on-the-fly clean ZIP archive downloads (`/code/zip`) with zero `.git` or log clutter.
+- **9 Battle-Tested Procedural Playbooks**: Multi-step diagnostic sequences for SEO, technical health, failed orders, native sales/stock, SMTP/webhooks, store analytics, integrations, theme compatibility, and local vs prod code drift.
 - **Automatic Updates via GitHub**: Fully integrated with `plugin-update-checker` (PUC v5.6).
 
 ---
@@ -107,6 +108,8 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /theme/child` | Code and metadata for child theme `functions.php` and `style.css`. |
 | `GET /code/plugins?status={active\|inactive\|all}` | File trees for active or all plugins and `wp-content/mu-plugins/` (default: `active`). |
 | `GET /code/file?path={relative_path}` | Sandboxed code viewer for specific PHP, JS, or CSS files. |
+| `GET /code/checksums?path={path}&algo={md5\|sha256}` | Cryptographic file checksum map (MD5 / SHA256), modified dates, and byte sizes for instant local vs prod drift verification. |
+| `GET /code/zip?path={path}&format={stream\|base64}` | Clean, on-the-fly ZIP archive export of plugins or child themes without `.git`, logs, or sensitive files (default: `stream`). |
 | `GET /elementor/export-all?status={publish\|draft\|all}` | Bulk export of Elementor pages, templates, kit & forms with status counts and `is_published` flag. |
 | `GET /elementor/list?status={publish\|draft\|all}` | Pages and templates built with Elementor with status filtering (`publish`, `draft`, `all`). |
 | `GET /elementor/item/{id}` | Decoded JSON element tree (`_elementor_data`) and page settings. |
@@ -152,7 +155,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 
 ---
 
-## 🎯 Procedural AI Playbooks (8 Automated Investigation Recipes)
+## 🎯 Procedural AI Playbooks (9 Automated Investigation Recipes)
 
 To avoid trial-and-error querying, the plugin includes pre-configured procedural investigation recipes that an AI can trigger based on user intent:
 
@@ -164,6 +167,7 @@ To avoid trial-and-error querying, the plugin includes pre-configured procedural
 6. **Theme & WooCommerce Compatibility** (`theme_wc_compatibility`): Checks template drift with `/theme/overrides`, child theme code with `/theme/child`, and options with `/theme/options`.
 7. **Native E-Commerce Sales & Stock Valuation** (`store_sales_stock_audit`): Analyzes `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, and `/woocommerce/summary`.
 8. **Transactional Emails & Webhooks Diagnostics** (`email_webhook_diagnostics`): Investigates delivery failures with `/system/mail`, `/woocommerce/webhooks`, `/action-scheduler`, and `/logs/view`.
+9. **Code Drift & Extension Synchronization** (`code_sync_drift_audit`): Fingerprints directory checksums with `/code/checksums` to compare against local workspace files, and downloads complete clean ZIP archives with `/code/zip` in 1 single call.
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 
@@ -187,9 +191,12 @@ cp .env.example .env
 node sync.js pull:all          # Synchronizes everything into ./synced-site-data
 node sync.js pull:all --status=active # Pulls ONLY active elements (production live code)
 node sync.js pull:capabilities # Dumps capabilities & schema to capabilities.json & capabilities.md
+node sync.js pull:skill        # Dumps ready-to-use live agent SKILL.md
 node sync.js pull:system       # Generates system-report.md
 node sync.js pull:scheduler    # Dumps WP-Cron & Action Scheduler to ./scheduler/ (crons & queue)
 node sync.js pull:theme        # Dumps Woodmart/Elessi options & WC overrides
+node sync.js pull:code         # Dumps plugins & mu-plugins code tree
+node sync.js pull:checksums --path=plugins/my-plugin # Generates integrity checksums fingerprint
 node sync.js pull:elementor    # Dumps Elementor pages, forms, and kits (organized by published/draft)
 node sync.js pull:snippets     # Dumps WPCode snippets (organized into snippets/active/ and snippets/inactive/)
 node sync.js pull:flowmattic   # Dumps FlowMattic workflows (organized into active/ and inactive/)

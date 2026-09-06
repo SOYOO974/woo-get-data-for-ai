@@ -45,12 +45,13 @@ let siteUrl = getArg('site', 'SITE_URL').replace(/\/+$/, '');
 const token = getArg('token', 'AGENT_BRIDGE_TOKEN');
 const outputDir = path.resolve(process.cwd(), getArg('out', 'OUTPUT_DIR', './synced-site-data'));
 const statusFilter = getArg('status', 'STATUS_FILTER', 'all');
+const codePath = getArg('path', 'CODE_PATH', '');
 const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
-    console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
+    console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:logs');
     process.exit(1);
 }
 
@@ -1120,6 +1121,69 @@ async function pullLogs() {
     }
 }
 
+async function pullCode() {
+    console.log('⏳ Pulling Plugins Code Tree & Diagnostics...');
+    try {
+        const codeDir = path.join(outputDir, 'code');
+        ensureDir(codeDir);
+
+        const filterParam = statusFilter !== 'all' ? `?status=${statusFilter}` : '?status=all';
+        const data = await makeRequest(`/code/plugins${filterParam}`);
+        writeJson(path.join(codeDir, 'plugins.json'), data);
+
+        let md = `# Code & Plugins Tree for ${siteUrl}\n\n`;
+        md += `**Generated**: ${new Date().toISOString()}\n`;
+        md += `**Filter**: ${data.filter || statusFilter} (Active: ${data.active_count || 0}, Inactive: ${data.inactive_count || 0}, Total: ${data.total || 0})\n\n`;
+
+        md += `## Standard Plugins (${(data.plugins || []).length})\n\n`;
+        md += `| Plugin Name | Status | Version | File Count | Main File |\n| :--- | :---: | :---: | :---: | :--- |\n`;
+        (data.plugins || []).forEach(p => {
+            const statusBadge = p.is_active ? '🟢 Active' : '⚪ Inactive';
+            md += `| **${p.name}** | ${statusBadge} | \`${p.version || '-'}\` | ${p.files_count || 0} | \`${p.plugin_file}\` |\n`;
+        });
+
+        if (Array.isArray(data.mu_plugins) && data.mu_plugins.length > 0) {
+            md += `\n## Must-Use Plugins (MU-Plugins) (${data.mu_plugins.length})\n\n`;
+            md += `| Name | Version | Size | File |\n| :--- | :---: | :---: | :--- |\n`;
+            data.mu_plugins.forEach(mu => {
+                md += `| **${mu.name}** | \`${mu.version || '-'}\` | ${mu.size_bytes} bytes | \`${mu.file}\` |\n`;
+            });
+        }
+
+        writeText(path.join(codeDir, 'plugins.md'), md);
+        console.log('✅ Saved Code & Plugins tree to ./code/plugins.json & plugins.md');
+
+        // Check if a specific directory path was provided for checksums drift detection
+        if (codePath) {
+            console.log(`⏳ Pulling directory checksums for: ${codePath}...`);
+            try {
+                const checksumsData = await makeRequest(`/code/checksums?path=${encodeURIComponent(codePath)}&algo=md5`);
+                writeJson(path.join(codeDir, 'checksums.json'), checksumsData);
+
+                let cmd = `# Checksums Fingerprint for ${checksumsData.target || codePath}\n\n`;
+                cmd += `**Generated**: ${new Date().toISOString()}\n`;
+                cmd += `**Base Path**: \`${checksumsData.base_path || codePath}\`\n`;
+                cmd += `**Total Files**: ${checksumsData.total_files || 0} (${Math.round((checksumsData.total_size_bytes || 0) / 1024)} KB)\n`;
+                cmd += `**Algorithm**: ${checksumsData.algorithm || 'md5'}\n\n`;
+                cmd += `| Relative File Path | Size | Modified At | Hash (${checksumsData.algorithm || 'md5'}) |\n| :--- | :---: | :---: | :--- |\n`;
+
+                if (checksumsData.checksums) {
+                    Object.entries(checksumsData.checksums).forEach(([file, meta]) => {
+                        cmd += `| \`${file}\` | ${meta.size_bytes} B | ${meta.modified_at} | \`${meta.hash}\` |\n`;
+                    });
+                }
+
+                writeText(path.join(codeDir, 'checksums.md'), cmd);
+                console.log(`✅ Saved checksums fingerprint to ./code/checksums.json & checksums.md`);
+            } catch (csErr) {
+                console.warn(`  ⚠️ Could not fetch /code/checksums:`, csErr.message);
+            }
+        }
+    } catch (err) {
+        console.error('❌ Failed to pull code tree:', err.message);
+    }
+}
+
 async function pullCapabilities() {
     console.log('⏳ Pulling Capabilities, Playbooks & Schema Discovery...');
     try {
@@ -1213,6 +1277,10 @@ async function run() {
         case 'pull:flowmattic':
             await pullFlowmattic();
             break;
+        case 'pull:code':
+        case 'pull:checksums':
+            await pullCode();
+            break;
         case 'pull:analytics':
             await pullAnalytics();
             break;
@@ -1238,6 +1306,7 @@ async function run() {
             await pullSystem();
             await pullScheduler();
             await pullTheme();
+            await pullCode();
             await pullElementor();
             await pullSnippets();
             await pullFlowmattic();

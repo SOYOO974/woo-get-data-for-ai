@@ -450,6 +450,43 @@ class Playbooks {
                     ],
                 ],
             ],
+            [
+                'id'              => 'code_sync_drift_audit',
+                'title'           => esc_html__('Code Drift Verification & Extension Synchronization', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Instant drift detection between local workspace and production site via directory checksum fingerprints, and 1-call clean ZIP archive export of plugins and child themes.', 'woo-get-data-for-ai'),
+                'required_modules'=> ['code'],
+                'optional_modules'=> ['theme'],
+                'intent_triggers' => [
+                    'comparer code local prod',
+                    'verifier derive code',
+                    'code drift',
+                    'telecharger plugin',
+                    'recuperer theme enfant',
+                    'synchroniser extension',
+                    'audit checksums',
+                    'exporter code plugin',
+                    'synchroniser plugin custom',
+                    'sauvegarde plugin',
+                ],
+                'workflow'        => [
+                    [
+                        'step'        => 1,
+                        'action'      => esc_html__('Fingerprint Directory Checksums (Local vs Remote Drift)', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/code/checksums',
+                        'params'      => ['path' => 'plugins/<plugin_slug>', 'algo' => 'md5'],
+                        'description' => esc_html__('Generates a hash map of all files with modified dates and byte sizes. Compare against local workspace files to detect altered, added, or missing files before any editing.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['checksums.<filename>.hash', 'checksums.<filename>.size_bytes', 'total_files', 'total_size_bytes'],
+                    ],
+                    [
+                        'step'        => 2,
+                        'action'      => esc_html__('Export Complete Plugin or Child Theme ZIP Archive', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/code/zip',
+                        'params'      => ['path' => 'plugins/<plugin_slug>', 'format' => 'stream'],
+                        'description' => esc_html__('If drift is detected or local files are missing, downloads a complete, clean ZIP archive without .git, logs, or sensitive files directly in 1 single call.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['archive_name', 'size_bytes', 'stream_binary'],
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -621,7 +658,11 @@ class Playbooks {
         $md .= "# Run Playbook 2: Server & Failed Background Actions\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=failed,in-progress'\n\n";
         $md .= "# Run Playbook 3: Recent Failed Orders (PII Redacted)\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed&per_page=5'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed&per_page=5'\n\n";
+        $md .= "# Run Playbook 8: Verify Plugin Code Drift via Checksums Fingerprint\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/checksums?path=plugins/my-plugin'\n\n";
+        $md .= "# Run Playbook 8: Download Clean Plugin or Child Theme ZIP Archive\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/zip?path=plugins/my-plugin' -o my-plugin.zip\n";
         $md .= "```\n";
 
         return $md;
