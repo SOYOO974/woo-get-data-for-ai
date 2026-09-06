@@ -95,34 +95,6 @@ class Performance_Controller extends Rest_Controller {
             },
         ]);
 
-        // GET /performance/pagespeed (Official Google PageSpeed Insights & Core Web Vitals proxy with 1-hour cache)
-        register_rest_route(self::NAMESPACE, '/performance/pagespeed', [
-            'methods'             => \WP_REST_Server::READABLE,
-            'callback'            => [$this, 'get_pagespeed'],
-            'permission_callback' => function ($request) {
-                return $this->check_access($request, 'performance');
-            },
-            'args'                => [
-                'url' => [
-                    'type'              => 'string',
-                    'default'           => '',
-                    'sanitize_callback' => 'esc_url_raw',
-                    'description'       => 'Target URL to test with Google PageSpeed Insights (default: homepage).',
-                ],
-                'strategy' => [
-                    'type'              => 'string',
-                    'default'           => 'mobile',
-                    'enum'              => ['mobile', 'desktop'],
-                    'description'       => 'Analysis strategy: "mobile" (default) or "desktop".',
-                ],
-                'key' => [
-                    'type'              => 'string',
-                    'default'           => '',
-                    'sanitize_callback' => 'sanitize_text_field',
-                    'description'       => 'Optional Google API key for higher rate limits.',
-                ],
-            ],
-        ]);
     }
 
     /**
@@ -760,11 +732,14 @@ class Performance_Controller extends Rest_Controller {
     private static function analyze_html_pagespeed_signals($html, $response) {
         if (empty($html) || !is_string($html)) {
             return [
-                'html_size_kb'             => 0,
-                'compression'              => ['is_enabled' => false, 'encoding' => 'none'],
-                'dom_health'               => ['total_nodes' => 0, 'status' => 'unknown', 'alert' => null],
-                'cls_image_dimensions'     => ['total_images' => 0, 'missing_dimensions_count' => 0, 'status' => 'good', 'sample_missing' => []],
-                'render_blocking_in_head'  => ['stylesheets_count' => 0, 'scripts_count' => 0, 'total_blocking' => 0],
+                'html_size_kb'               => 0,
+                'compression'                => ['is_enabled' => false, 'encoding' => 'none'],
+                'dom_health'                 => ['total_nodes' => 0, 'elementor_nodes_count' => 0, 'elementor_percent' => 0, 'status' => 'unknown', 'alert' => null],
+                'cls_image_dimensions'       => ['total_images' => 0, 'missing_dimensions_count' => 0, 'status' => 'good', 'sample_missing' => []],
+                'image_formats'              => ['legacy_formats_count' => 0, 'modern_formats_count' => 0, 'sample_legacy_images' => [], 'status' => 'good'],
+                'google_fonts'               => ['detected' => false, 'missing_swap' => false, 'font_urls' => [], 'status' => 'good'],
+                'core_bloat'                 => ['detected_scripts' => [], 'count' => 0, 'status' => 'good', 'recommendations' => []],
+                'render_blocking_in_head'    => ['stylesheets_count' => 0, 'scripts_count' => 0, 'total_blocking' => 0],
                 'woocommerce_cart_fragments' => ['is_active' => false],
             ];
         }
@@ -772,7 +747,7 @@ class Performance_Controller extends Rest_Controller {
         $html_bytes = strlen($html);
         $html_kb    = round($html_bytes / 1024, 2);
 
-        // 1. DOM Size & Depth
+        // 1. DOM Size & Depth + Elementor Node Footprint
         preg_match_all('/<([a-z0-9]+)\b/i', $html, $tag_matches);
         $dom_nodes_count = count($tag_matches[0] ?? []);
         $dom_status = 'good';
@@ -785,13 +760,23 @@ class Performance_Controller extends Rest_Controller {
             $dom_alert  = sprintf('High DOM size (%d nodes > 800). Exceeds Lighthouse recommended threshold.', $dom_nodes_count);
         }
 
+        preg_match_all('/class=["\'][^"\']*\b(elementor-element|elementor-widget|elementor-container)\b[^"\']*["\']/i', $html, $elem_matches);
+        $elementor_nodes_count = count($elem_matches[0] ?? []);
+        $elementor_percent = $dom_nodes_count > 0 ? round(($elementor_nodes_count / $dom_nodes_count) * 100, 1) : 0;
+
         // 2. Images Missing Explicit Dimensions (CLS Root Cause)
         preg_match_all('/<img\b([^>]*)>/i', $html, $img_matches);
         $missing_dims_count = 0;
         $sample_missing_images = [];
 
+        // 3. Image Formats Audit (Legacy PNG/JPG vs Modern WebP/AVIF)
+        $legacy_images = [];
+        $modern_images_count = 0;
+        $legacy_images_count = 0;
+
         if (!empty($img_matches[1])) {
             foreach ($img_matches[1] as $attrs) {
+                // Check missing width / height
                 $has_width  = preg_match('/\bwidth\s*=\s*["\']?[0-9]+/i', $attrs);
                 $has_height = preg_match('/\bheight\s*=\s*["\']?[0-9]+/i', $attrs);
 
@@ -803,18 +788,43 @@ class Performance_Controller extends Rest_Controller {
                         }
                     }
                 }
+
+                // Check file format extensions
+                if (preg_match('/\bsrc\s*=\s*["\']([^"\']+\.(jpg|jpeg|png))(?:\?[^"\']*)?["\']/i', $attrs, $src_m)) {
+                    $legacy_images_count++;
+                    if (count($legacy_images) < 5) {
+                        $legacy_images[] = basename($src_m[1]);
+                    }
+                } elseif (preg_match('/\bsrc\s*=\s*["\']([^"\']+\.(webp|avif|svg))(?:\?[^"\']*)?["\']/i', $attrs)) {
+                    $modern_images_count++;
+                }
             }
         }
 
-        // 3. Render-Blocking Resources in <head>
+        // 4. Render-Blocking Resources in <head>
         $css_blocking_count = 0;
         $js_blocking_count  = 0;
+        $google_fonts_detected = false;
+        $google_fonts_missing_swap = false;
+        $google_font_urls = [];
+
         if (preg_match('/<head\b[^>]*>(.*?)<\/head>/is', $html, $head_match)) {
             $head_content = $head_match[1];
 
             // Stylesheets
             preg_match_all('/<link\b[^>]*rel=["\']stylesheet["\'][^>]*>/i', $head_content, $css_matches);
             $css_blocking_count = count($css_matches[0] ?? []);
+
+            // Google Fonts display=swap check
+            if (preg_match_all('/<link\b[^>]*href=["\']([^"\']*fonts\.googleapis\.com[^"\']*)["\'][^>]*>/i', $head_content, $gf_matches)) {
+                $google_fonts_detected = true;
+                foreach ($gf_matches[1] as $gf_url) {
+                    $google_font_urls[] = $gf_url;
+                    if (stripos($gf_url, 'display=swap') === false) {
+                        $google_fonts_missing_swap = true;
+                    }
+                }
+            }
 
             // Scripts without defer/async
             preg_match_all('/<script\b([^>]*)>/i', $head_content, $script_matches);
@@ -829,10 +839,31 @@ class Performance_Controller extends Rest_Controller {
             }
         }
 
-        // 4. WooCommerce Cart Fragments Detection
+        // 5. WordPress Core Frontend Bloat Scripts Audit
+        $core_bloat_detected = [];
+        $core_bloat_recommendations = [];
+
+        if (stripos($html, 'wp-emoji-release.min.js') !== false || stripos($html, 'window._wpemojiSettings') !== false) {
+            $core_bloat_detected[] = 'wp-emoji';
+            $core_bloat_recommendations['wp-emoji'] = 'WP Emojis script loaded on frontend. Disable via remove_action("wp_head", "print_emoji_detection_script") to save ~15 KB and 1 HTTP request.';
+        }
+        if (stripos($html, 'wp-embed.min.js') !== false) {
+            $core_bloat_detected[] = 'wp-embed';
+            $core_bloat_recommendations['wp-embed'] = 'WP Embed script loaded on frontend. Dequeue wp-embed if not embedding external WP posts to save 1 HTTP request.';
+        }
+        if (stripos($html, 'jquery-migrate.min.js') !== false || stripos($html, 'jquery-migrate.js') !== false) {
+            $core_bloat_detected[] = 'jquery-migrate';
+            $core_bloat_recommendations['jquery-migrate'] = 'jQuery Migrate loaded on frontend. Dequeue on modern themes/plugins to save ~10 KB.';
+        }
+        if (stripos($html, 'dashicons.min.css') !== false && !is_user_logged_in()) {
+            $core_bloat_detected[] = 'dashicons';
+            $core_bloat_recommendations['dashicons'] = 'Dashicons stylesheet loaded for logged-out visitors. Dequeue on frontend to save ~30 KB.';
+        }
+
+        // 6. WooCommerce Cart Fragments Detection
         $cart_fragments_detected = (stripos($html, 'wc-cart-fragments') !== false || stripos($html, 'cart-fragments') !== false);
 
-        // 5. Compression Check
+        // 7. Compression Check
         $encoding = wp_remote_retrieve_header($response, 'content-encoding');
         $is_compressed = in_array(strtolower((string) $encoding), ['gzip', 'br', 'deflate'], true);
 
@@ -843,10 +874,12 @@ class Performance_Controller extends Rest_Controller {
                 'encoding'   => $encoding ?: 'none',
             ],
             'dom_health'               => [
-                'total_nodes'    => $dom_nodes_count,
-                'status'         => $dom_status,
-                'alert'          => $dom_alert,
-                'recommendation' => $dom_nodes_count > 800 ? 'Excessive DOM size (>800 nodes). Simplify Elementor nested sections or reduce widgets on this template.' : 'DOM node count is optimal.',
+                'total_nodes'           => $dom_nodes_count,
+                'elementor_nodes_count' => $elementor_nodes_count,
+                'elementor_percent'     => $elementor_percent,
+                'status'                => $dom_status,
+                'alert'                 => $dom_alert,
+                'recommendation'        => $dom_nodes_count > 800 ? 'Excessive DOM size (>800 nodes). Simplify Elementor nested sections or reduce widgets on this template.' : 'DOM node count is optimal.',
             ],
             'cls_image_dimensions'     => [
                 'total_images'             => count($img_matches[0] ?? []),
@@ -854,6 +887,28 @@ class Performance_Controller extends Rest_Controller {
                 'status'                   => $missing_dims_count === 0 ? 'good' : 'warning',
                 'sample_missing'           => $sample_missing_images,
                 'recommendation'           => $missing_dims_count > 0 ? sprintf('%d image(s) lack explicit width and height attributes, causing layout shifts (CLS).', $missing_dims_count) : 'All images have explicit dimensions.',
+            ],
+            'image_formats'            => [
+                'legacy_formats_count' => $legacy_images_count,
+                'modern_formats_count' => $modern_images_count,
+                'sample_legacy_images' => $legacy_images,
+                'status'               => $legacy_images_count === 0 ? 'good' : 'warning',
+                'recommendation'       => $legacy_images_count > 0 ? sprintf('%d legacy image(s) (.png/.jpg) found. Converting to WebP/AVIF can reduce image payload by 30%%-70%%.', $legacy_images_count) : 'Modern image formats (.webp/.avif) are being used.',
+            ],
+            'google_fonts'             => [
+                'detected'       => $google_fonts_detected,
+                'missing_swap'   => $google_fonts_missing_swap,
+                'font_urls'      => array_slice($google_font_urls, 0, 3),
+                'status'         => $google_fonts_missing_swap ? 'warning' : 'good',
+                'recommendation' => $google_fonts_missing_swap
+                    ? 'Google Fonts loaded without &display=swap parameter. This can cause FOIT (Flash of Invisible Text) and penalize FCP/LCP.'
+                    : ($google_fonts_detected ? 'Google Fonts correctly loaded with display=swap.' : 'No external Google Fonts detected in HTML head.'),
+            ],
+            'core_bloat'               => [
+                'detected_scripts' => $core_bloat_detected,
+                'count'            => count($core_bloat_detected),
+                'status'           => empty($core_bloat_detected) ? 'good' : 'warning',
+                'recommendations'  => $core_bloat_recommendations,
             ],
             'render_blocking_in_head'  => [
                 'stylesheets_count' => $css_blocking_count,
@@ -1001,173 +1056,5 @@ class Performance_Controller extends Rest_Controller {
             'templates_count'    => count($templates),
             'templates'          => $templates,
         ]);
-    }
-
-    /**
-     * GET /performance/pagespeed
-     *
-     * Official Google PageSpeed Insights & Core Web Vitals proxy with 1-hour cache.
-     *
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function get_pagespeed(\WP_REST_Request $request) {
-        $url = trim((string) $request->get_param('url'));
-        $strategy = strtolower(trim((string) $request->get_param('strategy')));
-
-        if (empty($url)) {
-            $url = home_url('/');
-        }
-
-        if (!in_array($strategy, ['mobile', 'desktop'], true)) {
-            $strategy = 'mobile';
-        }
-
-        // Check transient cache (1 hour)
-        $cache_key = 'wpab_psi_' . md5($url . '_' . $strategy);
-        $cached = get_transient($cache_key);
-        if ($cached && is_array($cached)) {
-            $cached['cached'] = true;
-            return $this->response($cached);
-        }
-
-        // Build Google API request
-        $api_endpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-        $params = [
-            'url'      => $url,
-            'strategy' => $strategy,
-            'category' => 'performance',
-        ];
-
-        // Check for custom API key if defined
-        if (defined('GOOGLE_PAGESPEED_API_KEY') && GOOGLE_PAGESPEED_API_KEY) {
-            $params['key'] = GOOGLE_PAGESPEED_API_KEY;
-        } elseif ($request->get_param('key')) {
-            $params['key'] = sanitize_text_field(wp_unslash($request->get_param('key')));
-        }
-
-        $request_url = add_query_arg($params, $api_endpoint);
-
-        $response = wp_remote_get($request_url, [
-            'timeout'    => 45,
-            'user-agent' => 'WP-Agent-Bridge/' . WOO_GET_DATA_AI_VERSION,
-        ]);
-
-        if (is_wp_error($response)) {
-            return $this->response([
-                'status'  => 'error',
-                'message' => 'Failed to reach Google PageSpeed Insights API: ' . $response->get_error_message(),
-                'notice'  => 'Google PageSpeed Insights requires the site URL to be publicly accessible from Google servers (cannot test local/intranet domains). Use native audits from /performance/profile for local testing.',
-                'url'     => $url,
-            ], 200);
-        }
-
-        $status_code = wp_remote_retrieve_response_code($response);
-        $body_raw    = wp_remote_retrieve_body($response);
-        $json        = json_decode($body_raw, true);
-
-        if ($status_code !== 200 || empty($json['lighthouseResult'])) {
-            $error_detail = $json['error']['message'] ?? 'Unknown Google API error (HTTP ' . $status_code . ')';
-            return $this->response([
-                'status'      => 'error',
-                'http_status' => $status_code,
-                'message'     => $error_detail,
-                'notice'      => 'Google PageSpeed Insights requires the target URL to be publicly accessible without authentication. For local or staging environments, use /performance/profile.',
-                'url'         => $url,
-            ], 200);
-        }
-
-        $lh = $json['lighthouseResult'];
-        $audits = $lh['audits'] ?? [];
-
-        // Extract Core Web Vitals & Key Lighthouse Metrics
-        $performance_score = isset($lh['categories']['performance']['score'])
-            ? round($lh['categories']['performance']['score'] * 100)
-            : null;
-
-        $metrics = [
-            'fcp' => [
-                'title'    => 'First Contentful Paint (FCP)',
-                'value_ms' => isset($audits['first-contentful-paint']['numericValue']) ? round($audits['first-contentful-paint']['numericValue']) : null,
-                'display'  => $audits['first-contentful-paint']['displayValue'] ?? null,
-                'score'    => $audits['first-contentful-paint']['score'] ?? null,
-            ],
-            'lcp' => [
-                'title'    => 'Largest Contentful Paint (LCP)',
-                'value_ms' => isset($audits['largest-contentful-paint']['numericValue']) ? round($audits['largest-contentful-paint']['numericValue']) : null,
-                'display'  => $audits['largest-contentful-paint']['displayValue'] ?? null,
-                'score'    => $audits['largest-contentful-paint']['score'] ?? null,
-            ],
-            'cls' => [
-                'title'    => 'Cumulative Layout Shift (CLS)',
-                'value'    => isset($audits['cumulative-layout-shift']['numericValue']) ? round($audits['cumulative-layout-shift']['numericValue'], 3) : null,
-                'display'  => $audits['cumulative-layout-shift']['displayValue'] ?? null,
-                'score'    => $audits['cumulative-layout-shift']['score'] ?? null,
-            ],
-            'tbt' => [
-                'title'    => 'Total Blocking Time (TBT)',
-                'value_ms' => isset($audits['total-blocking-time']['numericValue']) ? round($audits['total-blocking-time']['numericValue']) : null,
-                'display'  => $audits['total-blocking-time']['displayValue'] ?? null,
-                'score'    => $audits['total-blocking-time']['score'] ?? null,
-            ],
-            'speed_index' => [
-                'title'    => 'Speed Index (SI)',
-                'value_ms' => isset($audits['speed-index']['numericValue']) ? round($audits['speed-index']['numericValue']) : null,
-                'display'  => $audits['speed-index']['displayValue'] ?? null,
-                'score'    => $audits['speed-index']['score'] ?? null,
-            ],
-        ];
-
-        // Extract Top Optimization Opportunities
-        $opportunities = [];
-        $opp_keys = [
-            'render-blocking-resources',
-            'unused-javascript',
-            'unused-css-rules',
-            'modern-image-formats',
-            'uses-optimized-images',
-            'unminified-javascript',
-            'unminified-css',
-            'efficient-animated-content',
-            'duplicated-javascript',
-            'server-response-time',
-        ];
-
-        foreach ($opp_keys as $key) {
-            if (!empty($audits[$key]) && isset($audits[$key]['score']) && $audits[$key]['score'] < 0.9) {
-                $opportunities[] = [
-                    'id'           => $key,
-                    'title'        => $audits[$key]['title'] ?? $key,
-                    'display'      => $audits[$key]['displayValue'] ?? null,
-                    'score'        => $audits[$key]['score'],
-                    'wasted_ms'    => isset($audits[$key]['details']['overallSavingsMs']) ? round($audits[$key]['details']['overallSavingsMs']) : null,
-                    'wasted_bytes' => isset($audits[$key]['details']['overallSavingsBytes']) ? round($audits[$key]['details']['overallSavingsBytes']) : null,
-                    'description'  => wp_strip_all_tags($audits[$key]['description'] ?? ''),
-                ];
-            }
-        }
-
-        // Sort opportunities by highest wasted time or bytes
-        usort($opportunities, function ($a, $b) {
-            return ($b['wasted_ms'] ?? 0) <=> ($a['wasted_ms'] ?? 0);
-        });
-
-        $result = [
-            'status'            => 'success',
-            'source'            => 'google_pagespeed_insights_api',
-            'tested_url'        => $url,
-            'strategy'          => $strategy,
-            'performance_score' => $performance_score,
-            'lighthouse_version'=> $lh['lighthouseVersion'] ?? null,
-            'fetched_at'        => current_time('c'),
-            'core_web_vitals'   => $metrics,
-            'opportunities'     => $opportunities,
-            'cached'            => false,
-        ];
-
-        // Cache for 1 hour
-        set_transient($cache_key, $result, HOUR_IN_SECONDS);
-
-        return $this->response($result);
     }
 }

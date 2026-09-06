@@ -186,7 +186,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
 - `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
 - `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
-- `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`, `/performance/pagespeed`)
+- `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -356,14 +356,15 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.11.0: `pull:woocommerce` dumps dedicated shipping logistics (`./synced-site-data/woocommerce/shipping.json`) and enriches `summary.md` with zones, geo-locations, and Flexible Shipping matrix rules.
 - Optimized for v1.12.0: `pull:performance` dumps autoload bloat (`autoload.json`) and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` and generates an executive performance report (`performance-report.md`).
 - Optimized for v1.13.0: `pull:performance` dumps multi-template URLs (`templates-urls.json`), homepage profile (`profile-home.json`), mobile PageSpeed insights (`pagespeed-mobile.json`), autoload bloat (`autoload.json`), and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` and generates a comprehensive executive report (`performance-report.md`).
-- Optimized for v1.14.0: `pull:performance` dumps multi-template URLs (`templates-urls.json`), homepage profile with 100% native Web Vitals (`profile-home.json`), autoload bloat (`autoload.json`), and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` with zero external API dependencies.
+- Optimized for v1.14.0: `pull:woocommerce` extracts Table Rate rules on flat_rate and order shipping lines meta_data.
+- Optimized for v1.15.0: `pull:performance` dumps multi-template URLs (`templates-urls.json`), homepage profile with 100% native Web Vitals (`profile-home.json`), autoload bloat (`autoload.json`), and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` with zero external API dependencies.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
 
-### v1.14.0 (2026-09-06)
+### v1.15.0 (2026-09-06)
 - **Audit Web Vitals & Signaux Frontend 100% Natifs & Zéro Dépendance Externe (`Performance_Controller`)** :
   - **Suppression Complète de l'Endpoint Proxy Google PageSpeed (`GET /performance/pagespeed`)** :
     - Élimination intégrale du proxy Google PageSpeed Insights afin de supprimer les blocages de quota public Google (`429 Quota Exceeded`), supprimer l'obligation de configurer une clé d'API (`GOOGLE_PAGESPEED_API_KEY`) et éliminer 15-20s de latence réseau externe bloquante pour le serveur.
@@ -373,6 +374,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
     - *Audit Google Fonts & FOIT* (`google_fonts`) : Détection des polices Google Fonts externes dans `<head>` et contrôle de la présence du paramètre `display=swap` pour éliminer le risque de Flash of Invisible Text sur mobile pénalisant le LCP.
     - *Détection des scripts superflus du coeur WP sur le Frontend* (`core_bloat`) : Détection de `wp-emoji`, `wp-embed`, `jquery-migrate`, et `dashicons` (visiteurs non connectés) avec snippets de désenqueuement WPCode prêts à l'emploi.
     - *Empreinte DOM Elementor* (`dom_health.elementor_nodes_count`) : Décompte précis des conteneurs et widgets Elementor avec calcul du pourcentage de l'arborescence HTML globale pour isoler le surpoids de constructeur de page.
+- **Playbooks Procéduraux Synchronisés (`Playbooks`)** :
+  - `agency_performance_audit` (Playbook 11) : Étape 3 mise à jour pour s'appuyer sur l'audit 100% natif Web Vitals de `/performance/profile` au lieu de l'API externe Google PageSpeed.
+- **Client CLI Local (`cli/sync.js`)** :
+  - `pullPerformance()` : Suppression de l'appel `/performance/pagespeed` et génération de `performance-report.md` enrichie des signaux natifs Core Web Vitals (formats d'images, Google Fonts swap, bloat du coeur WP).
+
+### v1.14.0 (2026-09-06)
 - **Support Flexible Shipping Table Rate sur Flat Rate & Métadonnées Commandes (`Woocommerce_Controller`)** :
   - **Extraction Flexible Shipping PRO Table Rate sur les méthodes `flat_rate`** :
     - Détection et extraction automatique des champs d'instance `fs_calculation_enabled` et `fs_method_rules` pour les méthodes de livraison Forfait (`flat_rate`), complétée par un fallback direct dans `wp_options` (`woocommerce_flat_rate_<instance_id>_settings`).
@@ -385,11 +392,9 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   - **Amélioration du Helper `parse_flexible_shipping_rules()`** :
     - Méthode unifiée protégée pour parser et formater les règles Flexible Shipping qu'elles soient stockées en tableau ou en chaîne JSON.
 - **Playbooks Procéduraux Synchronisés (`Playbooks`)** :
-  - `agency_performance_audit` (Playbook 10) : Étape 3 mise à jour pour s'appuyer sur l'audit 100% natif Web Vitals de `/performance/profile` au lieu de l'API externe Google PageSpeed.
-  - `shipping_logistics_audit` (Playbook 9) enrichi avec les règles Table Rate sur `flat_rate`, les options d'instance brutes, et l'inspection des métadonnées de livraison des commandes (`GET /woocommerce/order/{id}`).
+  - `shipping_logistics_audit` (Playbook 10) enrichi avec les règles Table Rate sur `flat_rate`, les options d'instance brutes, et l'inspection des métadonnées de livraison des commandes (`GET /woocommerce/order/{id}`).
   - `ecommerce_troubleshoot` (Playbook 3) mis à jour pour auditer les frais de livraison via `shipping_lines[].meta_data.fs_costs`.
 - **Client CLI Local (`cli/sync.js`)** :
-  - `pullPerformance()` : Suppression de l'appel `/performance/pagespeed` et génération de `performance-report.md` enrichie des signaux natifs Core Web Vitals (formats d'images, Google Fonts swap, bloat du coeur WP).
   - `pullWooCommerce()` enrichi pour détecter `m.flexible_shipping || m.flexible_shipping_table_rate` et afficher les règles de matrice Flexible Shipping PRO directement dans le rapport Markdown `summary.md`.
 
 ### v1.13.0 (2026-09-06)

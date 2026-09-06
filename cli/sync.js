@@ -1279,17 +1279,15 @@ async function pullPerformance() {
         const perfDir = path.join(outputDir, 'performance');
         ensureDir(perfDir);
 
-        const [templatesUrls, homeProfile, pagespeed, autoload, pluginsSummary] = await Promise.all([
+        const [templatesUrls, homeProfile, autoload, pluginsSummary] = await Promise.all([
             makeRequest('/performance/templates-urls').catch(e => ({ error: e.message })),
             makeRequest('/performance/profile?path=/&include_assets=true&include_queries=true').catch(e => ({ error: e.message })),
-            makeRequest('/performance/pagespeed?strategy=mobile').catch(e => ({ error: e.message })),
             makeRequest('/performance/autoload?limit=50').catch(e => ({ error: e.message })),
             makeRequest('/performance/plugins-summary?status=active').catch(e => ({ error: e.message }))
         ]);
 
         writeJson(path.join(perfDir, 'templates-urls.json'), templatesUrls);
         writeJson(path.join(perfDir, 'profile-home.json'), homeProfile);
-        writeJson(path.join(perfDir, 'pagespeed-mobile.json'), pagespeed);
         writeJson(path.join(perfDir, 'autoload.json'), autoload);
         writeJson(path.join(perfDir, 'plugins-summary.json'), pluginsSummary);
 
@@ -1314,13 +1312,32 @@ async function pullPerformance() {
 
             if (p.pagespeed_audits) {
                 const psa = p.pagespeed_audits;
-                md += `### Native PageSpeed & Core Web Vitals Signals\n\n`;
-                const domIcon = psa.dom_nodes_count > 1400 ? '🔴' : (psa.dom_nodes_count > 800 ? '🟡' : '🟢');
-                md += `- **DOM Elements Count**: ${domIcon} **${psa.dom_nodes_count} nodes** ${psa.dom_nodes_count > 1400 ? '(Critical DOM bloat)' : ''}\n`;
-                md += `- **Missing Image Dimensions (CLS)**: ${psa.images_missing_dimensions > 0 ? `⚠️ **${psa.images_missing_dimensions} images** without width/height attributes` : '✅ All images have dimensions'}\n`;
-                md += `- **Render-Blocking Head Resources**: **${psa.render_blocking_count}** (${psa.render_blocking_resources ? psa.render_blocking_resources.length : 0} items)\n`;
-                md += `- **WooCommerce Cart Fragments**: ${psa.wc_cart_fragments_active ? '⚠️ **ACTIVE** (triggers uncacheable POST admin-ajax.php on page load)' : '✅ Not detected'}\n`;
-                md += `- **Server Compression**: ${psa.compression_enabled ? `✅ **Active** (${psa.compression_type})` : '⚠️ Not detected'}\n\n`;
+                md += `### Native Core Web Vitals & Frontend Signals\n\n`;
+                const domIcon = psa.dom_health ? (psa.dom_health.total_nodes > 1400 ? '🔴' : (psa.dom_health.total_nodes > 800 ? '🟡' : '🟢')) : '🟢';
+                const domNodes = psa.dom_health ? psa.dom_health.total_nodes : (psa.dom_nodes_count || 0);
+                md += `- **DOM Elements Count**: ${domIcon} **${domNodes} nodes** ${domNodes > 1400 ? '(Critical DOM bloat)' : ''}\n`;
+                if (psa.dom_health && psa.dom_health.elementor_nodes_count > 0) {
+                    md += `- **Elementor DOM Footprint**: **${psa.dom_health.elementor_nodes_count} nodes** (${psa.dom_health.elementor_percent}% of total DOM)\n`;
+                }
+                const missingDims = psa.cls_image_dimensions ? psa.cls_image_dimensions.missing_dimensions_count : (psa.images_missing_dimensions || 0);
+                md += `- **Missing Image Dimensions (CLS)**: ${missingDims > 0 ? `⚠️ **${missingDims} images** without width/height attributes` : '✅ All images have dimensions'}\n`;
+                if (psa.image_formats) {
+                    const legacyCount = psa.image_formats.legacy_formats_count || 0;
+                    md += `- **Legacy Image Formats (.png/.jpg)**: ${legacyCount > 0 ? `⚠️ **${legacyCount} legacy images** (recommend WebP/AVIF: ~30-70% bandwidth savings)` : '✅ Modern formats (WebP/AVIF) used'}\n`;
+                }
+                if (psa.google_fonts && psa.google_fonts.detected) {
+                    md += `- **Google Fonts**: ${psa.google_fonts.missing_swap ? '⚠️ **display=swap missing** (risk of FOIT/blank text on mobile)' : '✅ Loaded with display=swap'}\n`;
+                }
+                if (psa.core_bloat && psa.core_bloat.detected_scripts && psa.core_bloat.detected_scripts.length > 0) {
+                    md += `- **WordPress Core Frontend Bloat**: ⚠️ **${psa.core_bloat.detected_scripts.join(', ')}** loaded (can be dequeued via WPCode)\n`;
+                }
+                const blockingCount = psa.render_blocking_in_head ? psa.render_blocking_in_head.total_blocking : (psa.render_blocking_count || 0);
+                md += `- **Render-Blocking Head Resources**: **${blockingCount}**\n`;
+                const cartFragActive = psa.woocommerce_cart_fragments ? psa.woocommerce_cart_fragments.is_active : psa.wc_cart_fragments_active;
+                md += `- **WooCommerce Cart Fragments**: ${cartFragActive ? '⚠️ **ACTIVE** (triggers uncacheable POST admin-ajax.php on page load)' : '✅ Not detected'}\n`;
+                const isCompressed = psa.compression ? psa.compression.is_enabled : psa.compression_enabled;
+                const compType = psa.compression ? psa.compression.encoding : psa.compression_type;
+                md += `- **Server Compression**: ${isCompressed ? `✅ **Active** (${compType})` : '⚠️ Not detected'}\n\n`;
             }
 
             if (p.sql && p.sql.by_component && Object.keys(p.sql.by_component).length > 0) {
@@ -1333,31 +1350,9 @@ async function pullPerformance() {
             }
         }
 
-        if (!pagespeed.error && pagespeed.lighthouse_score !== undefined) {
-            md += `## 3. Official Google PageSpeed Insights (Mobile)\n\n`;
-            const scoreColor = pagespeed.lighthouse_score >= 90 ? '🟢' : (pagespeed.lighthouse_score >= 50 ? '🟡' : '🔴');
-            md += `- **Lighthouse Performance Score**: ${scoreColor} **${pagespeed.lighthouse_score} / 100**\n`;
-            if (pagespeed.core_web_vitals) {
-                const cwv = pagespeed.core_web_vitals;
-                md += `- **LCP (Largest Contentful Paint)**: **${cwv.lcp || '-'}**\n`;
-                md += `- **CLS (Cumulative Layout Shift)**: **${cwv.cls || '-'}**\n`;
-                md += `- **FCP (First Contentful Paint)**: **${cwv.fcp || '-'}**\n`;
-                md += `- **TBT (Total Blocking Time)**: **${cwv.tbt || '-'}**\n`;
-                md += `- **Speed Index**: **${cwv.speed_index || '-'}**\n`;
-            }
-            if (Array.isArray(pagespeed.opportunities) && pagespeed.opportunities.length > 0) {
-                md += `\n### Top PageSpeed Savings Opportunities\n\n`;
-                md += `| Opportunity | Potential Savings | Description |\n|---|---|---|\n`;
-                pagespeed.opportunities.slice(0, 5).forEach(opp => {
-                    md += `| **${opp.title}** | ${opp.display_value || (opp.savings_kb ? opp.savings_kb + ' KB' : '-')} | ${opp.description || ''} |\n`;
-                });
-            }
-            md += `\n`;
-        }
-
         if (!autoload.error) {
             const statusIcon = autoload.status === 'good' ? '🟢' : (autoload.status === 'warning' ? '🟡' : '🔴');
-            md += `## 4. wp_options Autoload Footprint\n\n`;
+            md += `## 3. wp_options Autoload Footprint\n\n`;
             md += `- **Health Status**: ${statusIcon} **${(autoload.status || 'unknown').toUpperCase()}**\n`;
             md += `- **Total Autoloaded Options**: ${autoload.total_options}\n`;
             md += `- **Total Autoload Size**: **${autoload.total_size_kb} KB** (Recommended limit: < ${autoload.recommended_max_kb} KB)\n`;
@@ -1385,7 +1380,7 @@ async function pullPerformance() {
         }
 
         if (!pluginsSummary.error && Array.isArray(pluginsSummary.plugins)) {
-            md += `## 5. Active Plugins Database Footprint\n\n`;
+            md += `## 4. Active Plugins Database Footprint\n\n`;
             md += `| Plugin | Slug | Version | DB Tables | DB Size (KB) | DB Rows |\n|---|---|---|---|---|---|\n`;
             pluginsSummary.plugins.forEach(p => {
                 md += `| **${p.name}** | \`${p.slug}\` | v${p.version} | ${p.tables_count} | ${p.db_size_kb} KB | ${p.db_rows.toLocaleString()} |\n`;

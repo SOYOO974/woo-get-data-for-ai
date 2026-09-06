@@ -542,8 +542,8 @@ class Playbooks {
             ],
             [
                 'id'              => 'agency_performance_audit',
-                'title'           => esc_html__('Agency Performance, Multi-Template TTFB & PageSpeed Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Comprehensive diagnostic and prescription protocol for agencies and AI agents: audits 5 strategic e-commerce page archetypes (Home, Shop, Category, Product, Cart), attributes SQL queries and enqueued assets per plugin, checks Google PageSpeed Core Web Vitals, detects autoload leaks, and formulates quantified Quick Wins with ready-to-use WPCode snippets.', 'woo-get-data-for-ai'),
+                'title'           => esc_html__('Agency Performance, Multi-Template TTFB & Native Web Vitals Audit', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Comprehensive diagnostic and prescription protocol for agencies and AI agents: audits 5 strategic e-commerce page archetypes (Home, Shop, Category, Product, Cart), attributes SQL queries and enqueued assets per plugin, inspects 100% native Core Web Vitals signals (DOM size, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core script bloat), detects autoload leaks, and formulates quantified Quick Wins with ready-to-use WPCode snippets.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['performance'],
                 'optional_modules'=> ['system', 'scheduler', 'logs'],
                 'intent_triggers' => [
@@ -583,11 +583,11 @@ class Playbooks {
                     ],
                     [
                         'step'        => 3,
-                        'action'      => esc_html__('Google PageSpeed, Core Web Vitals & Native DOM/CLS Audit', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/performance/pagespeed',
-                        'params'      => ['url' => '<target_url>', 'strategy' => 'mobile'],
-                        'description' => esc_html__('Evaluates official Google Lighthouse performance scores and field Core Web Vitals (LCP, CLS, FCP, TBT, Speed Index) alongside native server-side audits: DOM size (>1400 nodes), render-blocking CSS/JS, images missing dimensions (CLS), and wc-cart-fragments.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['lighthouse_score', 'core_web_vitals.lcp', 'core_web_vitals.cls', 'pagespeed_audits.dom_nodes_count', 'pagespeed_audits.images_missing_dimensions', 'pagespeed_audits.wc_cart_fragments_active'],
+                        'action'      => esc_html__('Native Web Vitals & Frontend Performance Signals Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/profile',
+                        'params'      => ['path' => '<template_url>', 'include_assets' => true, 'include_queries' => false],
+                        'description' => esc_html__('Performs 100% native server-side Core Web Vitals & frontend diagnostics on the rendered HTML: DOM size & Elementor bloat, images missing dimensions (CLS), legacy PNG/JPEG images (WebP/AVIF recommendation), render-blocking resources, Google Fonts swap status, core script bloat (emojis, embeds, migrate, dashicons), and WooCommerce cart fragments.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['pagespeed_audits.dom_health', 'pagespeed_audits.cls_image_dimensions', 'pagespeed_audits.image_formats', 'pagespeed_audits.render_blocking_in_head', 'pagespeed_audits.google_fonts', 'pagespeed_audits.core_bloat', 'pagespeed_audits.woocommerce_cart_fragments'],
                     ],
                     [
                         'step'        => 4,
@@ -792,10 +792,10 @@ class Playbooks {
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/checksums?path=plugins/my-plugin'\n\n";
         $md .= "# Run Playbook 8: Download Clean Plugin or Child Theme ZIP Archive\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/code/zip?path=plugins/my-plugin' -o my-plugin.zip\n\n";
-        $md .= "# Run Playbook 9: Agency Multi-Template Performance & Google PageSpeed Audit\n";
+        $md .= "# Run Playbook 11: Agency Multi-Template Performance & Native Web Vitals Audit\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/pagespeed?strategy=mobile'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/autoload?limit=25'\n";
         $md .= "```\n";
 
         return $md;

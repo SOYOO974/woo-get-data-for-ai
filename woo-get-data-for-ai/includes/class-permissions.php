@@ -81,8 +81,8 @@ class Permissions {
             ],
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, running official Google PageSpeed Insights, and auditing autoloaded options bloat.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/pagespeed', '/performance/autoload', '/performance/plugins-summary'],
+                'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, and auditing autoloaded options bloat.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary'],
             ],
         ];
     }
@@ -580,7 +580,7 @@ class Permissions {
             [
                 'id'          => 'performance',
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, official Google PageSpeed Insights integration, autoload bloat audit, and plugin resource footprint.', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, 100% native server-side Core Web Vitals checks (DOM size, CLS image dimensions, legacy image formats, render-blocking resources, Google Fonts, WP core bloat scripts, cart fragments), autoload bloat audit, and plugin resource footprint.', 'woo-get-data-for-ai'),
                 'enabled'     => !empty($permissions['performance']),
                 'endpoints'   => [
                     [
@@ -592,13 +592,7 @@ class Permissions {
                         'path'        => '/performance/profile',
                         'methods'     => ['GET'],
                         'params'      => ['path (default: /)', 'include_assets (true|false, default: true)', 'include_queries (true|false, default: true)', 'slow_query_threshold_ms (default: 50)'],
-                        'description' => esc_html__('Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native PageSpeed checks (DOM size, CLS image dimensions, render-blocking in <head>, and WooCommerce cart-fragments detection).', 'woo-get-data-for-ai'),
-                    ],
-                    [
-                        'path'        => '/performance/pagespeed',
-                        'methods'     => ['GET'],
-                        'params'      => ['url (default: homepage)', 'strategy (mobile|desktop, default: mobile)', 'key (optional Google API key)'],
-                        'description' => esc_html__('Official Google PageSpeed Insights & Core Web Vitals proxy: fetches real Lighthouse score (0-100), Core Web Vitals (LCP, CLS, FCP, TBT, Speed Index), and top savings opportunities with 1-hour transient caching.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native Web Vitals checks (DOM size, CLS image dimensions, legacy format PNG/JPEG, render-blocking in <head>, external Google Fonts, core bloat scripts, and WooCommerce cart-fragments detection).', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/performance/autoload',
