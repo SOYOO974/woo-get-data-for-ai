@@ -245,6 +245,28 @@ class System_Controller extends Rest_Controller {
                     'sync_in_progress'     => $is_syncing,
                     'authoritative_source' => get_option('woocommerce_custom_orders_table_enabled', 'no') === 'yes' ? 'custom_orders_table' : 'posts_table',
                 ];
+
+                // Performance & Optimization features
+                $features_util = class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil');
+                $hpos_caching = false;
+                $rate_limit = false;
+                $hpos_fts = false;
+                try {
+                    if ($features_util && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                        $hpos_caching = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('hpos_datastore_caching');
+                        $rate_limit = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('rate_limit_checkout');
+                        $hpos_fts = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('hpos_fts_indexes');
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback to options below
+                }
+
+                $wc_info['performance_features'] = [
+                    'hpos_data_caching'             => (bool) ($hpos_caching || get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes'),
+                    'deferred_transactional_emails' => (bool) apply_filters('woocommerce_defer_transactional_emails', false),
+                    'checkout_rate_limiting'        => (bool) ($rate_limit || get_option('woocommerce_rate_limit_checkout_enabled', 'no') === 'yes' || get_option('woocommerce_feature_rate_limit_checkout_enabled', 'no') === 'yes'),
+                    'hpos_full_text_search'         => (bool) ($hpos_fts || get_option('woocommerce_hpos_fts_indexes_enabled', 'no') === 'yes' || get_option('woocommerce_feature_hpos_fts_indexes_enabled', 'no') === 'yes'),
+                ];
             }
 
             // Payment Gateways (masked credentials)

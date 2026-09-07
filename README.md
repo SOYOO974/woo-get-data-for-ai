@@ -20,7 +20,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Auto-Updating Skill Generator (`?format=skill`)**: When queried with `?format=skill`, the API dynamically generates a complete, ready-to-save `SKILL.md` markdown file for Antigravity, Cursor, and Claude agents.
 - **2-Click AI Onboarding & Smart First-Time Banners**: Prominent, non-intrusive onboarding banners in WP Admin and inside the plugin settings dashboard. Active until the first successful AI connection is recorded, reassuring users with 100% read-only safety, offering 1-click prompt copying, and suggesting high-value performance audit prompts.
 - **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, Snippets, Logs, FlowMattic, Analytics) via checkboxes in the admin panel.
-- **Deep WooCommerce Diagnostics**: Audits template overrides in child/parent themes, detects outdated templates, and inspects HPOS (High-Performance Order Storage) status.
+- **Deep WooCommerce Diagnostics**: Audits template overrides in child/parent themes, detects outdated templates, and inspects HPOS status, HPOS datastore caching, deferred transactional emails, checkout rate limiting, and full-text search indexes.
 - **Theme Settings Export**: Deep inspection and decoding of **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and child theme `functions.php` / `style.css`.
 - **Sandboxed Code Inspector**: Safely inspects file trees of active plugins and `mu-plugins`, and reads specific PHP/JS/CSS files with strict `realpath` validation.
 - **High-Performance Log Streaming**: Memory-safe reverse file tailing (`fseek`) for `debug.log` and `uploads/wc-logs/*.log` preventing PHP memory exhaustion on heavy production sites.
@@ -144,7 +144,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /meta/fields?post_type={type}` | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (groups, recursive subfields, location rules, options pages), with optional DB discovery. |
 | `GET /meta/acf?status={status}` | Deep inspection of ACF environment, field groups, recursive subfields, location rules, and registered options pages. |
 | `GET /meta/post/{id}` | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta). |
-| `GET /woocommerce/summary` | High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones. |
+| `GET /woocommerce/summary` | High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, performance features audit (HPOS datastore caching, deferred transactional emails, checkout rate limiting, HPOS full-text search indexes), active payment gateways, and shipping zones. |
 | `GET /woocommerce/products?status={publish\|draft\|all}` | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations. |
 | `GET /woocommerce/product/{id}` | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields. |
 | `GET /woocommerce/orders?status={status}` | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways. |

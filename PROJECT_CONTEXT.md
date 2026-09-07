@@ -60,7 +60,7 @@ For the strategic and technical product roadmap targeting web agencies and the B
 - Text Domain: `woo-get-data-for-ai`
 - Domain Path: `/languages`
 - Translation-ready for **Loco Translate** and standard WordPress polyglot tools.
-- **100% French Translation Coverage**: Ships with complete master template (`languages/woo-get-data-for-ai.pot`), French PO translation (`languages/woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`languages/woo-get-data-for-ai-fr_FR.mo`) covering 429+ UI, playbook, and API strings.
+- **100% French Translation Coverage**: Ships with complete master template (`languages/woo-get-data-for-ai.pot`), French PO translation (`languages/woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`languages/woo-get-data-for-ai-fr_FR.mo`) covering 439+ UI, playbook, and API strings.
 - **Automated CLI Sync Tool**: `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`) scans all tokens across the plugin, regenerates `.pot`, merges French translations from `cli/translations-fr.php`, and compiles the `.mo` file natively without external binary dependencies. Mandatory before every release.
 - **Zero Raw Strings Mandate**: All PHP strings are wrapped in gettext (`esc_html__()`, `esc_html_e()`, etc.) and JS strings are localized via `wp_localize_script()` in `Admin_Settings::enqueue_assets()`.
 
@@ -376,6 +376,21 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.20.0 (2026-09-07)
+- **Audit des Options de Performance & Checkout WooCommerce (`Woocommerce_Controller`, `System_Controller`, `Playbooks`)** :
+  - **Diagnostic Natif 5 Leviers Clés dans `GET /woocommerce/summary` & `GET /system`** :
+    - *High-Performance Order Storage (HPOS)* (`hpos`) : Détection de l'état actif et de la table autoritaire (`custom_orders_table`).
+    - *Mise en Cache des Données HPOS* (`hpos_data_caching`) : Introspection via `FeaturesUtil::feature_is_enabled('hpos_datastore_caching')` et fallback d'option. Croisement intelligent avec la présence d'un cache objet persistant (`wp_using_ext_object_cache()`, Redis/Memcached) pour recommander l'activation afin de réduire drastiquement les requêtes SQL redondantes sur les commandes.
+    - *E-mails Transactionnels Différés* (`deferred_transactional_emails`) : Détection en temps réel du filtre `apply_filters('woocommerce_defer_transactional_emails', false)` et des extensions spécialisées. Recommandation prioritaire pour éliminer le gel de 2 à 5 secondes sur la page de confirmation de commande dû à la latence SMTP synchrone.
+    - *Limitation du Débit Checkout* (`checkout_rate_limiting`) : Détection de `FeaturesUtil::feature_is_enabled('rate_limit_checkout')` et de l'option correspondante. Recommandation pour protéger la passerelle et la boutique contre le carding et les attaques bots.
+    - *Index de Recherche Plein Texte HPOS* (`hpos_full_text_search`) : Détection de `hpos_fts_indexes` (fonctionnalité expérimentale). Recommandation ciblée pour les boutiques comptant plus de 5 000 commandes avec recherche admin ralentie.
+  - **Recommandations Actionnables Directes** : Tableau structuré `recommendations` dans `woocommerce.performance_features` avec niveau de priorité (`high`, `medium`, `low`), titre et justification technique.
+  - **Synchronisation des Playbooks MECE (Piliers 3 & 4)** :
+    - Pilier 3 (`database_system_hygiene`) : Étape 3 enrichie avec les signaux `woocommerce.performance_features.hpos` et `hpos_data_caching`.
+    - Pilier 4 (`order_checkout_troubleshoot`) : Étape 5 enrichie pour vérifier les e-mails différés et le rate limiting checkout en cas de ralentissements ou d'échecs au checkout.
+    - Générateur de Skill IA (`SKILL.md`) : Ajout de la Directive #5 guidant l'IA sur l'interprétation et les nuances de chaque option.
+  - **Internationalisation & Loco Translate** : 439 chaînes uniques, couverture française maintenue à 100% dans `languages/`.
 
 ### v1.19.1 (2026-09-07)
 - **Synchronisation Complète i18n & Compatibilité Loco Translate 100% (`languages/`, `Admin_Settings`, `admin.js`, `cli/sync-i18n.php`)** :

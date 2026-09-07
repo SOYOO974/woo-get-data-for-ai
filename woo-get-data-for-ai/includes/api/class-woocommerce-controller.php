@@ -459,6 +459,136 @@ class Woocommerce_Controller extends Rest_Controller {
         $customer_counts = count_users();
         $total_customers = $customer_counts['avail_roles']['customer'] ?? 0;
 
+        // 7. WooCommerce Performance Features & Optimization Audit
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $features_util_exists = class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil');
+
+        // HPOS Data Caching
+        $hpos_data_caching = false;
+        try {
+            if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                $hpos_data_caching = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('hpos_datastore_caching');
+            } else {
+                $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes';
+            }
+        } catch (\Throwable $e) {
+            $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes';
+        }
+
+        // Deferred Transactional Emails
+        $deferred_emails = false;
+        try {
+            $deferred_emails = (bool) apply_filters('woocommerce_defer_transactional_emails', false)
+                || is_plugin_active('defer-transactional-emails-for-woocommerce/defer-transactional-emails-for-woocommerce.php')
+                || is_plugin_active('checkout-speedup-for-woocommerce/checkout-speedup-for-woocommerce.php');
+        } catch (\Throwable $e) {
+            $deferred_emails = (bool) apply_filters('woocommerce_defer_transactional_emails', false);
+        }
+
+        // Checkout Rate Limiting
+        $checkout_rate_limiting = false;
+        try {
+            if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                $checkout_rate_limiting = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('rate_limit_checkout');
+            } else {
+                $checkout_rate_limiting = get_option('woocommerce_rate_limit_checkout_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_feature_rate_limit_checkout_enabled', 'no') === 'yes';
+            }
+        } catch (\Throwable $e) {
+            $checkout_rate_limiting = get_option('woocommerce_rate_limit_checkout_enabled', 'no') === 'yes';
+        }
+
+        // HPOS Full-Text Search Indexes (Experimental)
+        $hpos_fts_indexes = false;
+        try {
+            if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                $hpos_fts_indexes = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('hpos_fts_indexes');
+            } else {
+                $hpos_fts_indexes = get_option('woocommerce_hpos_fts_indexes_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_feature_hpos_fts_indexes_enabled', 'no') === 'yes';
+            }
+        } catch (\Throwable $e) {
+            $hpos_fts_indexes = get_option('woocommerce_hpos_fts_indexes_enabled', 'no') === 'yes';
+        }
+
+        $has_ext_object_cache = function_exists('wp_using_ext_object_cache') ? wp_using_ext_object_cache() : false;
+
+        // Actionable Recommendations based on live store signals
+        $feature_recommendations = [];
+        if (!$hpos_enabled) {
+            $feature_recommendations[] = [
+                'feature'     => 'hpos',
+                'priority'    => 'high',
+                'title'       => esc_html__('Enable High-Performance Order Storage (HPOS)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if ($hpos_enabled && !$hpos_data_caching && $has_ext_object_cache) {
+            $feature_recommendations[] = [
+                'feature'     => 'hpos_data_caching',
+                'priority'    => 'medium',
+                'title'       => esc_html__('Enable HPOS Data Caching', 'woo-get-data-for-ai'),
+                'description' => esc_html__('An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if (!$deferred_emails) {
+            $feature_recommendations[] = [
+                'feature'     => 'deferred_transactional_emails',
+                'priority'    => 'high',
+                'title'       => esc_html__('Defer Transactional Emails', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if (!$checkout_rate_limiting) {
+            $feature_recommendations[] = [
+                'feature'     => 'checkout_rate_limiting',
+                'priority'    => 'medium',
+                'title'       => esc_html__('Enable Checkout Rate Limiting', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if ($hpos_enabled && !$hpos_fts_indexes && ($total_orders > 5000)) {
+            $feature_recommendations[] = [
+                'feature'     => 'hpos_fts_indexes',
+                'priority'    => 'low',
+                'title'       => esc_html__('Consider HPOS Full-Text Search Indexes', 'woo-get-data-for-ai'),
+                'description' => esc_html__('With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature).', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        $performance_features = [
+            'hpos' => [
+                'enabled'              => (bool) $hpos_enabled,
+                'authoritative_source' => $authoritative_source,
+                'recommended'          => true,
+            ],
+            'hpos_data_caching' => [
+                'enabled'              => (bool) $hpos_data_caching,
+                'recommended'          => (bool) ($hpos_enabled && $has_ext_object_cache),
+                'requires_hpos'        => true,
+                'object_cache_present' => (bool) $has_ext_object_cache,
+            ],
+            'deferred_transactional_emails' => [
+                'enabled'              => (bool) $deferred_emails,
+                'recommended'          => true,
+                'implementation'       => $deferred_emails ? 'active' : 'filterable (woocommerce_defer_transactional_emails)',
+            ],
+            'checkout_rate_limiting' => [
+                'enabled'              => (bool) $checkout_rate_limiting,
+                'recommended'          => true,
+            ],
+            'hpos_full_text_search' => [
+                'enabled'              => (bool) $hpos_fts_indexes,
+                'is_experimental'      => true,
+                'recommended'          => (bool) ($hpos_enabled && $total_orders > 5000),
+                'requires_hpos'        => true,
+            ],
+            'recommendations' => $feature_recommendations,
+        ];
+
         return $this->response([
             'woocommerce' => [
                 'version'              => defined('WC_VERSION') ? WC_VERSION : 'unknown',
@@ -468,6 +598,7 @@ class Woocommerce_Controller extends Rest_Controller {
                 'authoritative_source' => $authoritative_source,
                 'taxes_enabled'        => function_exists('wc_tax_enabled') ? wc_tax_enabled() : false,
                 'prices_include_tax'   => function_exists('wc_prices_include_tax') ? wc_prices_include_tax() : false,
+                'performance_features' => $performance_features,
             ],
             'products' => [
                 'total'        => $total_products,

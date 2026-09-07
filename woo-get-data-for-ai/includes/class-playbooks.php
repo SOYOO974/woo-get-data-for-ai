@@ -176,11 +176,11 @@ class Playbooks {
                     ],
                     [
                         'step'        => 3,
-                        'action'      => esc_html__('WooCommerce Order Volume & Stale Orders Ratio', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('WooCommerce Order Volume & HPOS Performance Features', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/summary',
                         'params'      => [],
-                        'description' => esc_html__('Audits total orders, cancellation ratio, and estimates stale unpaid abandoned orders older than 1 year cluttering HPOS tables.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders.health_analysis.cancelled_ratio_percent', 'orders.health_analysis.alert_high_cancellations', 'orders.health_analysis.cancelled_unpaid_older_than_1y_estimate'],
+                        'description' => esc_html__('Audits total orders, cancellation ratio, stale unpaid orders older than 1 year, and high-performance order storage (HPOS, HPOS datastore caching, full-text search indexes).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['woocommerce.performance_features.hpos.enabled', 'woocommerce.performance_features.hpos_data_caching.enabled', 'woocommerce.performance_features.hpos_full_text_search.enabled', 'orders.health_analysis.cancelled_ratio_percent', 'orders.health_analysis.alert_high_cancellations'],
                     ],
                     [
                         'step'        => 4,
@@ -266,11 +266,11 @@ class Playbooks {
                     ],
                     [
                         'step'        => 5,
-                        'action'      => esc_html__('SMTP & Email Deliverability Check', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('SMTP, Deferred Emails & Checkout Speedup', 'woo-get-data-for-ai'),
                         'endpoint'    => '/system/mail',
                         'params'      => [],
-                        'description' => esc_html__('Detects active SMTP provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials status, recent delivery failures, and PHP mail unauthenticated spam risk alert.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['smtp.provider', 'smtp.is_configured', 'spam_risk_alert', 'recent_failures'],
+                        'description' => esc_html__('Detects active SMTP provider, credentials status, delivery failures, and verifies with /woocommerce/summary whether deferred transactional emails and checkout rate limiting are enabled to prevent checkout timeouts.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['smtp.provider', 'smtp.is_configured', 'spam_risk_alert', 'recent_failures', 'performance_features.deferred_transactional_emails', 'performance_features.checkout_rate_limiting'],
                     ],
                     [
                         'step'        => 6,
@@ -595,7 +595,14 @@ class Playbooks {
         $md .= "     - Code Snippets: `{$site_url}/wp-admin/admin.php?page=edit-snippet&id=<ID>`\n";
         $md .= "   - Alternatively, use the direct `admin_edit_url` property returned in each snippet object by the API.\n";
         $md .= "4. **DYNAMIC FRESHNESS & REFRESH PROTOCOL**:\n";
-        $md .= "   - Re-query `GET {$rest_base}/capabilities?format=skill` regularly to detect new inspection capabilities after plugin updates.\n\n";
+        $md .= "   - Re-query `GET {$rest_base}/capabilities?format=skill` regularly to detect new inspection capabilities after plugin updates.\n";
+        $md .= "5. **WOOCOMMERCE PERFORMANCE & CHECKOUT OPTIONS AUDIT**:\n";
+        $md .= "   - Inspect `woocommerce.performance_features` in `GET /woocommerce/summary` (or `GET /system`):\n";
+        $md .= "     - **HPOS (`hpos.enabled`)**: Must be active. If false, advise immediate HPOS migration to stop order bloat in `wp_posts`.\n";
+        $md .= "     - **HPOS Data Caching (`hpos_data_caching.enabled`)**: Recommend enabling if `object_cache_present` (Redis/Memcached) is detected to eliminate redundant order SQL queries.\n";
+        $md .= "     - **Deferred Transactional Emails (`deferred_transactional_emails.enabled`)**: If false and checkout is slow, advise adding `add_filter('woocommerce_defer_transactional_emails', '__return_true');` via WPCode to offload SMTP sending to Action Scheduler and make checkout confirmation instant.\n";
+        $md .= "     - **Checkout Rate Limiting (`checkout_rate_limiting.enabled`)**: Must be enabled in production (*WooCommerce > Settings > Advanced > Features*) to prevent card testing bot attacks.\n";
+        $md .= "     - **HPOS Full-Text Search (`hpos_full_text_search.enabled`)**: If store has > 5,000 orders and admin order search is sluggish, recommend testing full-text search indexes with experimental notice.\n\n";
 
         $md .= "---\n\n";
 

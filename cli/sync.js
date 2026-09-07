@@ -923,8 +923,21 @@ async function pullWooCommerce() {
         let md = `# WooCommerce Store Report for ${siteUrl}\n\n`;
         md += `**Generated**: ${new Date().toISOString()}\n`;
         md += `**WC Version**: ${summary.woocommerce ? summary.woocommerce.version : 'Unknown'}\n`;
-        md += `**Currency**: ${summary.woocommerce ? summary.woocommerce.currency_symbol + ' (' + summary.woocommerce.currency + ')' : ''}\n`;
-        md += `**HPOS**: ${summary.woocommerce && summary.woocommerce.hpos_enabled ? '✅ Enabled' : '❌ Disabled'} (${summary.woocommerce ? summary.woocommerce.authoritative_source : ''})\n\n`;
+        md += `**HPOS**: ${summary.woocommerce && summary.woocommerce.hpos_enabled ? '✅ Enabled' : '❌ Disabled'} (${summary.woocommerce ? summary.woocommerce.authoritative_source : ''})\n`;
+        if (summary.woocommerce && summary.woocommerce.performance_features) {
+            const pf = summary.woocommerce.performance_features;
+            md += `- **HPOS Data Caching**: ${pf.hpos_data_caching && pf.hpos_data_caching.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
+            md += `- **Deferred Transactional Emails**: ${pf.deferred_transactional_emails && pf.deferred_transactional_emails.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
+            md += `- **Checkout Rate Limiting**: ${pf.checkout_rate_limiting && pf.checkout_rate_limiting.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
+            md += `- **HPOS Full-Text Search**: ${pf.hpos_full_text_search && pf.hpos_full_text_search.enabled ? '✅ Enabled' : '⚪ Disabled (Experimental)'}\n`;
+            if (pf.recommendations && pf.recommendations.length > 0) {
+                md += `\n> 💡 **Performance Recommendations**:\n`;
+                pf.recommendations.forEach(r => {
+                    md += `> - **[${r.priority.toUpperCase()}] ${r.title}**: ${r.description}\n`;
+                });
+            }
+        }
+        md += `\n`;
 
         md += `## 📦 Products Overview\n`;
         md += `- **Total Products**: ${summary.products ? summary.products.total : 0}\n`;

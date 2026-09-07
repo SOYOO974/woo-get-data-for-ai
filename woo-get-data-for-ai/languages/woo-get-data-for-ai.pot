@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-07 04:37+00:00\n"
+"POT-Creation-Date: 2026-09-07 06:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1014,20 +1014,60 @@ msgstr ""
 
 #: includes/api/class-theme-controller.php:81
 #: includes/api/class-woocommerce-controller.php:307
-#: includes/api/class-woocommerce-controller.php:501
-#: includes/api/class-woocommerce-controller.php:648
-#: includes/api/class-woocommerce-controller.php:802
-#: includes/api/class-woocommerce-controller.php:906
-#: includes/api/class-woocommerce-controller.php:1065
-#: includes/api/class-woocommerce-controller.php:1155
+#: includes/api/class-woocommerce-controller.php:632
+#: includes/api/class-woocommerce-controller.php:779
+#: includes/api/class-woocommerce-controller.php:933
+#: includes/api/class-woocommerce-controller.php:1037
+#: includes/api/class-woocommerce-controller.php:1196
+#: includes/api/class-woocommerce-controller.php:1286
 msgid "WooCommerce is not active on this site."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:655
+#: includes/api/class-woocommerce-controller.php:525
+msgid "Enable High-Performance Order Storage (HPOS)"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:526
+msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:533
+msgid "Enable HPOS Data Caching"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:534
+msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:541
+msgid "Defer Transactional Emails"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:542
+msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:549
+msgid "Enable Checkout Rate Limiting"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:550
+msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:557
+msgid "Consider HPOS Full-Text Search Indexes"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:558
+msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:786
 msgid "Product not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:913
+#: includes/api/class-woocommerce-controller.php:1044
 msgid "Order not found."
 msgstr ""
 
@@ -1513,11 +1553,11 @@ msgid "Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB
 msgstr ""
 
 #: includes/class-playbooks.php:179
-msgid "WooCommerce Order Volume & Stale Orders Ratio"
+msgid "WooCommerce Order Volume & HPOS Performance Features"
 msgstr ""
 
 #: includes/class-playbooks.php:182
-msgid "Audits total orders, cancellation ratio, and estimates stale unpaid abandoned orders older than 1 year cluttering HPOS tables."
+msgid "Audits total orders, cancellation ratio, stale unpaid orders older than 1 year, and high-performance order storage (HPOS, HPOS datastore caching, full-text search indexes)."
 msgstr ""
 
 #: includes/class-playbooks.php:187
@@ -1585,11 +1625,11 @@ msgid "Inventories active custom PHP snippets running on the site (WPCode & Code
 msgstr ""
 
 #: includes/class-playbooks.php:269
-msgid "SMTP & Email Deliverability Check"
+msgid "SMTP, Deferred Emails & Checkout Speedup"
 msgstr ""
 
 #: includes/class-playbooks.php:272
-msgid "Detects active SMTP provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials status, recent delivery failures, and PHP mail unauthenticated spam risk alert."
+msgid "Detects active SMTP provider, credentials status, delivery failures, and verifies with /woocommerce/summary whether deferred transactional emails and checkout rate limiting are enabled to prevent checkout timeouts."
 msgstr ""
 
 #: includes/class-playbooks.php:277
