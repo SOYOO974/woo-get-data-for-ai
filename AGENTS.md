@@ -91,4 +91,32 @@ The plugin MUST always remain ultra-efficient, fast, laser-focused, and lightwei
    - Micro-playbooks (e.g. creating a separate playbook for SMTP, a separate one for database bloat, a separate one for code drift, etc.) dilute the LLM's attention span, bloat generated `SKILL.md` files by thousands of tokens, and cause semantic routing collisions.
    - Any new or improved endpoint MUST be integrated into one of these 7 master pillars as a step or contextual signal. Never register an 8th top-level playbook without strict architectural justification.
 
+---
 
+## 🌐 MANDATORY INTERNATIONALIZATION & LOCO TRANSLATE DIRECTIVE (ANTI-REGRESSION)
+
+To ensure client sites (e.g. conforama.re) and WordPress administrators never see untranslated English strings in the administration interface or experience sync issues with **Loco Translate**:
+
+### 🛡️ Non-Negotiable Translation Rules:
+
+1. **Zero Raw User-Facing Strings in PHP**:
+   - Every single user-facing string (tab title, badge, button, description, table header, settings label, notice, or diagnostic message) MUST be wrapped in standard WordPress gettext functions:
+     - `esc_html__()` or `esc_html_e()` for standard HTML output.
+     - `esc_attr__()` or `esc_attr_e()` for HTML attributes and input values.
+     - `_n()` for plural-dependent numbers.
+     - `_x()` for disambiguated contextual strings.
+   - Text domain MUST strictly be `'woo-get-data-for-ai'`.
+
+2. **Zero Hardcoded Strings in JavaScript**:
+   - In `assets/js/admin.js`, NEVER write raw English strings for alerts, confirmation modals, button states, or error messages.
+   - Pass all dynamic and UI strings through `wp_localize_script('agent-bridge-admin-js', 'agentBridgeData', [...])` in `Admin_Settings::enqueue_assets()`.
+
+3. **Systematic Automated Sync Before Release (`php cli/sync-i18n.php`)**:
+   - Whenever any UI file (`includes/admin/views/*.php`), class (`class-admin-settings.php`, `class-permissions.php`, `class-playbooks.php`), or JS file is touched:
+     - Run `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`).
+     - This script automatically:
+       1. Scans all PHP files for gettext tokens.
+       2. Regenerates the master template `woo-get-data-for-ai/languages/woo-get-data-for-ai.pot`.
+       3. Merges existing translations with `cli/translations-fr.php` into `woo-get-data-for-ai-fr_FR.po`.
+       4. Compiles the binary `woo-get-data-for-ai-fr_FR.mo` file natively.
+     - If any string is reported as untranslated, add its French translation to `cli/translations-fr.php` and re-run the sync until coverage reaches **100%**.

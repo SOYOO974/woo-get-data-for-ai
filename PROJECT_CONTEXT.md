@@ -46,22 +46,23 @@ For the strategic and technical product roadmap targeting web agencies and the B
   - **MANDATORY AUTO-RELEASE DIRECTIVE (SYSTEMATIC ON EVERY FEATURE/FIX)**:
     Whenever work on a new feature, improvement, or bugfix is completed, the agent/developer **MUST SYSTEMATICALLY AND AUTOMATICALLY PUBLISH A NEW GITHUB RELEASE**:
     1. **Version Bump**: Increment the version number in both the plugin header (`Version: X.Y.Z`) and the constant `WOO_GET_DATA_AI_VERSION` in `woo-get-data-for-ai/woo-get-data-for-ai.php`.
-    2. **Changelog & Documentation**: Document all new features, bugfixes, and breaking changes in `PROJECT_CONTEXT.md` and `README.md`.
-    3. **Commit & Push**:
-       - Push commits to GitHub `main` branch.
-    4. **Generate Release Asset**:
-       - Package the clean plugin folder into `woo-get-data-for-ai.zip` (`tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai` — CRITICAL: enforce forward slashes for Linux compatibility, do NOT use PowerShell `Compress-Archive`).
-    5. **Publish GitHub Release**:
-       - Create the official GitHub Release with tag `vX.Y.Z` and attach `woo-get-data-for-ai.zip` via `gh release create`.
-    > ⚠️ **CRITICAL WHY**: Client WordPress sites use `plugin-update-checker` (PUC v5.6). Sites will **ONLY** detect and install auto-updates if a formal GitHub Release exists with `woo-get-data-for-ai.zip` attached. Without this, client sites never receive the updates.
+    2. **Synchronize Procedural Playbooks**: Ensure any added endpoints fit within the 7 Strategic MECE Master Pillars.
+    3. **Synchronize Internationalization (i18n) & Loco Translate (MANDATORY)**: Run `php cli/sync-i18n.php` to regenerate `.pot`, update French `.po`, and compile `.mo` (100% coverage mandatory).
+    4. **Changelog & Documentation**: Document all new features, bugfixes, and breaking changes in `PROJECT_CONTEXT.md` and `README.md`.
+    5. **Commit & Push**: Push commits to GitHub `main` branch.
+    6. **Generate Release Asset**: Package the clean plugin folder into `woo-get-data-for-ai.zip` (`tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai` — CRITICAL: enforce forward slashes for Linux compatibility, do NOT use PowerShell `Compress-Archive`).
+    7. **Publish GitHub Release**: Create the official GitHub Release with tag `vX.Y.Z` and attach `woo-get-data-for-ai.zip` via `gh release create`.
+    > ⚠️ **CRITICAL WHY**: Client WordPress sites use `plugin-update-checker` (PUC v5.6). Sites will **ONLY** detect and install auto-updates if a formal GitHub Release exists with `woo-get-data-for-ai.zip` attached. Without this, client sites never receive the updates. Also, archives must use forward slashes (`/`) so Linux unzippers don't flatten files or fail class autoloading.
 
 
-### B. Internationalization (i18n)
-- Primary language: **English** (code, PHPDoc, UI strings, documentation).
+### B. Internationalization (i18n) & Loco Translate Architecture
+- Primary language: **English** (code, PHPDoc, UI default strings, documentation).
 - Text Domain: `woo-get-data-for-ai`
 - Domain Path: `/languages`
 - Translation-ready for **Loco Translate** and standard WordPress polyglot tools.
-- Includes `languages/woo-get-data-for-ai.pot` and compiled French translations (`woo-get-data-for-ai-fr_FR.po` / `woo-get-data-for-ai-fr_FR.mo`).
+- **100% French Translation Coverage**: Ships with complete master template (`languages/woo-get-data-for-ai.pot`), French PO translation (`languages/woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`languages/woo-get-data-for-ai-fr_FR.mo`) covering 429+ UI, playbook, and API strings.
+- **Automated CLI Sync Tool**: `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`) scans all tokens across the plugin, regenerates `.pot`, merges French translations from `cli/translations-fr.php`, and compiles the `.mo` file natively without external binary dependencies. Mandatory before every release.
+- **Zero Raw Strings Mandate**: All PHP strings are wrapped in gettext (`esc_html__()`, `esc_html_e()`, etc.) and JS strings are localized via `wp_localize_script()` in `Admin_Settings::enqueue_assets()`.
 
 ### C. Strict Read-Only Enforcement & Mandatory Write Alarm (CRITICAL FOR AI AGENTS & DEVELOPERS)
 - **100% of endpoints are `GET` only (`WP_REST_Server::READABLE`).**
@@ -157,12 +158,17 @@ The following **8-step synchronization protocol is strictly mandatory** to maint
    - Update `includes/admin/views/tab-docs.php` in **Section 4: Inspectable Technical Data** (`.docs-scope-table-wrap`).
    - Add a row specifying the technical domain, endpoint paths, and a summary of data returned to the AI.
 
-6. **Local CLI Synchronization Client (`cli/sync.js`)**:
+6. **Internationalization & Loco Translate Synchronization (`cli/sync-i18n.php`) (MANDATORY)**:
+   - Ensure all user-facing strings in the controller, permissions catalog, views, and playbooks are strictly wrapped in gettext functions (`esc_html__()`, `esc_html_e()`, `esc_attr__()`, `_n()`, `_x()`) with domain `'woo-get-data-for-ai'`.
+   - Run `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`) to regenerate `woo-get-data-for-ai.pot`, merge translations into `woo-get-data-for-ai-fr_FR.po`, and compile binary `woo-get-data-for-ai-fr_FR.mo`.
+   - Verify that translation coverage is **100%** and add any new French strings to `cli/translations-fr.php`.
+
+7. **Local CLI Synchronization Client (`cli/sync.js`)**:
    - Add a dedicated command `pull:<source>` in `cli/sync.js` to dump the data locally into `./synced-site-data/<source>/`.
    - Integrate the new command into `pull:all`.
    - Update the usage help text in `cli/sync.js` and `README.md`.
 
-7. **Repository Documentation & Release Protocol**:
+8. **Repository Documentation & Release Protocol**:
    - Add the new endpoints to Section 4 ("REST API Endpoint Catalog") in `PROJECT_CONTEXT.md` and the table in `README.md`.
    - Follow the **Automatic Updates & Release Protocol (Section 2.A)**: increment version in plugin header & constant, document changelog in `PROJECT_CONTEXT.md` and `README.md`, commit, tag, and publish a formal GitHub Release with `woo-get-data-for-ai.zip` attached.
 
@@ -370,6 +376,23 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.19.1 (2026-09-07)
+- **Synchronisation Complète i18n & Compatibilité Loco Translate 100% (`languages/`, `Admin_Settings`, `admin.js`, `cli/sync-i18n.php`)** :
+  - **Couverture de Traduction Française à 100% (429 chaînes)** :
+    - Récupération et traduction intégrale de l'ensemble des 290+ chaînes manquantes ajoutées au fil des versions (onglets Onboarding, Playbooks, Mega-Prompt, Permissions, Documentation, Logs, et contrôleurs REST).
+    - Mise à jour du template maître POT (`woo-get-data-for-ai.pot`, 64 Ko).
+    - Synchronisation du catalogue de traductions PO (`woo-get-data-for-ai-fr_FR.po`, 107 Ko).
+    - Compilation native du fichier binaire MO (`woo-get-data-for-ai-fr_FR.mo`, 86 Ko, 430 entrées) avec vérification d'intégrité par parseur binaire gettext.
+  - **Localisation des Chaînes JavaScript (`admin.js`, `Admin_Settings`)** :
+    - Injection des chaînes d'interface dynamiques (boutons "Show / Hide", alertes de copie, messages d'erreurs réseau, confirmations de réinitialisation) via `wp_localize_script()` dans l'objet global `agentBridgeData`.
+    - Localisation des chaînes de statut dans les vues d'administration (`tab-logs.php`).
+  - **Outil d'Automatisation CLI Autonome (`cli/sync-i18n.php`, `npm run i18n`)** :
+    - Développement d'un outil PHP d'extraction de tokens (`token_get_all`) et de compilation binaire MO native (pack binaire `0x950412de`) sans dépendance vers GNU `msgfmt` ou `gettext`.
+    - Dictionnaire de référence structuré dans `cli/translations-fr.php`.
+    - Commande `npm run i18n` dans `cli/package.json`.
+  - **Directive Anti-Régression Stricte (`AGENTS.md`, `PROJECT_CONTEXT.md`)** :
+    - Établissement de la directive obligatoire : synchronisation i18n systématique (100% de couverture requise) avant toute nouvelle release GitHub.
 
 ### v1.19.0 (2026-09-07)
 - **Support Complet et Unifié Code Snippets & WPCode (`Wpcode_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :

@@ -233,11 +233,12 @@ node sync.js pull:logs         # Downloads tail of debug.log, wc-logs, and custo
 
 ---
 
-## 🌐 Internationalization (i18n)
+## 🌐 Internationalization (i18n) & Loco Translate
 
-- Default language: **English**.
-- Fully compatible with **Loco Translate**.
-- French translations are included in `woo-get-data-for-ai/languages/` (`woo-get-data-for-ai-fr_FR.po` and `.mo`).
+- Default language: **English** (code, PHPDoc, UI default strings).
+- Fully compatible with **Loco Translate** and standard WordPress polyglot tools.
+- **100% French Translations**: Full master template (`woo-get-data-for-ai.pot`), French PO translation (`woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`woo-get-data-for-ai-fr_FR.mo`) included in `woo-get-data-for-ai/languages/` covering 429+ UI, playbook, and API strings.
+- **Automated CLI Sync Tool**: Run `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`) to automatically scan the codebase, regenerate the POT template, merge French translations, and recompile the binary MO file without external gettext dependencies.
 
 ---
 
