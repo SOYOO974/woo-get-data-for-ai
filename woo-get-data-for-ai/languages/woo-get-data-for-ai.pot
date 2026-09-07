@@ -370,3 +370,107 @@ msgstr ""
 #: includes/admin/views/tab-docs.php:235
 msgid "Have questions, ideas, or feedback? You can contact the author directly at:"
 msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "Connect your AI to %s in 2 clicks"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "100% Read-Only & Safe"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "High-value prompt to try with your AI:"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "Copy Prompt"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "Connect My AI in 2 Clicks"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php
+msgid "Onboarding notice dismissed."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Connect Your AI Assistant in 2 Clicks"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "No AI has connected to this site yet. Follow these 2 simple steps to start exploring your site data with your AI."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Awaiting First Connection"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Get Your AI Connection Prompt"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Navigate to the AI Mega-Prompt tab to copy the self-updating skill or ready-made connection prompt."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Open AI Mega-Prompt Tab"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Paste & Ask High-Value Questions"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Paste the prompt into your AI agent (Antigravity, Claude, Cursor, ChatGPT) and try this high-value prompt:"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Copy"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "100% Read-Only"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Zero risk: cannot write, modify, or delete any site data."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Auto-Redacted PII"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Customer data, passwords, and secret keys are automatically masked."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Zero Idle Impact"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Consumes 0 resources when idle; lightning fast on demands."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "AI Agent Connected & Operational"
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "Your site is actively connected with AI agents. You can inspect all authenticated queries, response times, and IP locations anytime in the Connection Logs tab."
+msgstr ""
+
+#: includes/admin/views/tab-general.php
+msgid "View Connection Logs"
+msgstr ""

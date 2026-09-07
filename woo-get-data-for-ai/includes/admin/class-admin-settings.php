@@ -15,12 +15,14 @@ class Admin_Settings {
         add_action('admin_menu', [$this, 'add_menu_page']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('admin_notices', [$this, 'render_onboarding_notice']);
 
         // AJAX handlers
         add_action('wp_ajax_agent_bridge_regenerate_token', [$this, 'ajax_regenerate_token']);
         add_action('wp_ajax_agent_bridge_clear_logs', [$this, 'ajax_clear_logs']);
         add_action('wp_ajax_agent_bridge_unlock_ip', [$this, 'ajax_unlock_ip']);
         add_action('wp_ajax_agent_bridge_reset_failures', [$this, 'ajax_reset_failures']);
+        add_action('wp_ajax_agent_bridge_dismiss_onboarding', [$this, 'ajax_dismiss_onboarding']);
 
         // Action links on plugins list page
         add_filter('plugin_action_links_' . WOO_GET_DATA_AI_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
@@ -100,8 +102,29 @@ class Admin_Settings {
         return $clean;
     }
 
+    public function should_show_onboarding_notice() {
+        if (!current_user_can('manage_options')) {
+            return false;
+        }
+
+        // Hide notice if an AI has already connected to the site
+        if (Access_Logger::has_connected()) {
+            return false;
+        }
+
+        // Hide notice if the administrator explicitly dismissed it
+        if (get_user_meta(get_current_user_id(), 'wp_agent_bridge_onboarding_dismissed', true)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function enqueue_assets($hook) {
-        if ($hook !== 'settings_page_wp-agent-bridge') {
+        $is_plugin_page = ($hook === 'settings_page_wp-agent-bridge');
+        $show_notice    = $this->should_show_onboarding_notice();
+
+        if (!$is_plugin_page && !$show_notice) {
             return;
         }
 
@@ -129,6 +152,74 @@ class Admin_Settings {
             'confirmReset'  => esc_html__('Are you sure you want to reset all lockout counters and unblock all IP addresses?', 'woo-get-data-for-ai'),
             'copiedText'    => esc_html__('Copied to clipboard!', 'woo-get-data-for-ai'),
         ]);
+    }
+
+    /**
+     * Render the first-time onboarding notice in WP Admin.
+     */
+    public function render_onboarding_notice() {
+        if (!$this->should_show_onboarding_notice()) {
+            return;
+        }
+
+        // Avoid showing global notice on the plugin's own dashboard page (which displays the hero card)
+        $current_screen = get_current_screen();
+        if ($current_screen && $current_screen->id === 'settings_page_wp-agent-bridge') {
+            return;
+        }
+
+        $site_name = get_bloginfo('name');
+        $setup_url = admin_url('options-general.php?page=wp-agent-bridge&tab=ai_prompt');
+        $example_prompt = esc_attr__('Audit my site\'s frontend performance, identify slow plugins, and check database bloat to find quick optimization wins.', 'woo-get-data-for-ai');
+        ?>
+        <div class="notice notice-info is-dismissible agent-bridge-onboarding-notice" data-nonce="<?php echo esc_attr(wp_create_nonce('agent_bridge_admin_nonce')); ?>">
+            <div class="agent-bridge-notice-content">
+                <div class="notice-icon-col">
+                    <span class="dashicons dashicons-rest-api notice-main-icon"></span>
+                </div>
+                <div class="notice-body-col">
+                    <div class="notice-header-row">
+                        <h3 class="notice-headline">
+                            <?php
+                            printf(
+                                /* translators: %s: site name */
+                                esc_html__('Connect your AI to %s in 2 clicks', 'woo-get-data-for-ai'),
+                                '<strong>' . esc_html($site_name) . '</strong>'
+                            );
+                            ?>
+                        </h3>
+                        <span class="badge-read-only">
+                            <span class="dashicons dashicons-shield"></span> 
+                            <?php esc_html_e('100% Read-Only & Safe', 'woo-get-data-for-ai'); ?>
+                        </span>
+                    </div>
+                    <p class="notice-description">
+                        <?php esc_html_e('WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders.', 'woo-get-data-for-ai'); ?>
+                    </p>
+                    <div class="notice-prompt-box">
+                        <span class="prompt-box-label">
+                            <span class="dashicons dashicons-lightbulb"></span> 
+                            <strong><?php esc_html_e('High-value prompt to try with your AI:', 'woo-get-data-for-ai'); ?></strong>
+                        </span>
+                        <div class="prompt-box-snippet">
+                            <code>&ldquo;<?php echo esc_html($example_prompt); ?>&rdquo;</code>
+                            <button type="button" class="button button-small btn-copy-prompt" data-prompt="<?php echo esc_attr($example_prompt); ?>">
+                                <span class="dashicons dashicons-clipboard"></span> <?php esc_html_e('Copy Prompt', 'woo-get-data-for-ai'); ?>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="notice-actions-row">
+                        <a href="<?php echo esc_url($setup_url); ?>" class="button button-primary notice-btn-connect">
+                            <span class="dashicons dashicons-admin-plugins"></span> <?php esc_html_e('Connect My AI in 2 Clicks', 'woo-get-data-for-ai'); ?>
+                        </a>
+                        <a href="<?php echo esc_url(admin_url('options-general.php?page=wp-agent-bridge&tab=documentation')); ?>" class="button button-secondary">
+                            <?php esc_html_e('View Documentation', 'woo-get-data-for-ai'); ?>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     public function render_page() {
@@ -275,6 +366,20 @@ class Admin_Settings {
                 esc_html__('IP address %s has been unlocked.', 'woo-get-data-for-ai'),
                 $ip
             ),
+        ]);
+    }
+
+    public function ajax_dismiss_onboarding() {
+        check_ajax_referer('agent_bridge_admin_nonce', 'security');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => esc_html__('Unauthorized.', 'woo-get-data-for-ai')]);
+        }
+
+        update_user_meta(get_current_user_id(), 'wp_agent_bridge_onboarding_dismissed', 1);
+
+        wp_send_json_success([
+            'message' => esc_html__('Onboarding notice dismissed.', 'woo-get-data-for-ai'),
         ]);
     }
 }

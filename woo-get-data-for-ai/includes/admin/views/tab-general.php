@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 use WPAgentBridge\Security;
+use WPAgentBridge\Access_Logger;
 
 $active_token = Security::get_active_token();
 $is_constant = Security::is_token_from_constant();
@@ -13,6 +14,8 @@ $log_retention = get_option('wp_agent_bridge_log_retention', 500);
 $max_attempts = get_option('wp_agent_bridge_max_failed_attempts', 5);
 $lockout_duration = get_option('wp_agent_bridge_lockout_duration', 30);
 $locked_ips = Security::get_locked_ips();
+$has_connected = Access_Logger::has_connected();
+$example_prompt = esc_attr__('Audit my site\'s frontend performance, identify slow plugins, and check database bloat to find quick optimization wins.', 'woo-get-data-for-ai');
 
 if (isset($_POST['agent_bridge_save_general']) && check_admin_referer('agent_bridge_save_general_nonce')) {
     if (isset($_POST['wp_agent_bridge_ip_whitelist'])) {
@@ -36,6 +39,93 @@ if (isset($_POST['agent_bridge_save_general']) && check_admin_referer('agent_bri
     $locked_ips = Security::get_locked_ips();
 }
 ?>
+
+<?php if (!$has_connected) : ?>
+    <div class="agent-bridge-card agent-bridge-onboarding-hero">
+        <div class="onboarding-hero-header">
+            <div class="hero-badge-title">
+                <span class="dashicons dashicons-superhero-alt hero-icon"></span>
+                <div>
+                    <h3><?php esc_html_e('Connect Your AI Assistant in 2 Clicks', 'woo-get-data-for-ai'); ?></h3>
+                    <p class="hero-subtitle">
+                        <?php esc_html_e('No AI has connected to this site yet. Follow these 2 simple steps to start exploring your site data with your AI.', 'woo-get-data-for-ai'); ?>
+                    </p>
+                </div>
+            </div>
+            <div class="badge-waiting">
+                <span class="status-dot-pulse"></span>
+                <?php esc_html_e('Awaiting First Connection', 'woo-get-data-for-ai'); ?>
+            </div>
+        </div>
+
+        <div class="onboarding-steps-grid">
+            <div class="onboarding-step-item">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4><?php esc_html_e('Get Your AI Connection Prompt', 'woo-get-data-for-ai'); ?></h4>
+                    <p><?php esc_html_e('Navigate to the AI Mega-Prompt tab to copy the self-updating skill or ready-made connection prompt.', 'woo-get-data-for-ai'); ?></p>
+                    <a href="<?php echo esc_url(add_query_arg(['page' => 'wp-agent-bridge', 'tab' => 'ai_prompt'], admin_url('options-general.php'))); ?>" class="button button-primary">
+                        <span class="dashicons dashicons-format-aside"></span> <?php esc_html_e('Open AI Mega-Prompt Tab', 'woo-get-data-for-ai'); ?>
+                    </a>
+                </div>
+            </div>
+
+            <div class="onboarding-step-item">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4><?php esc_html_e('Paste & Ask High-Value Questions', 'woo-get-data-for-ai'); ?></h4>
+                    <p><?php esc_html_e('Paste the prompt into your AI agent (Antigravity, Claude, Cursor, ChatGPT) and try this high-value prompt:', 'woo-get-data-for-ai'); ?></p>
+                    <div class="example-prompt-card">
+                        <code>&ldquo;<?php echo esc_html($example_prompt); ?>&rdquo;</code>
+                        <button type="button" class="button button-small btn-copy-prompt" data-prompt="<?php echo esc_attr($example_prompt); ?>">
+                            <span class="dashicons dashicons-clipboard"></span> <?php esc_html_e('Copy', 'woo-get-data-for-ai'); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="onboarding-guarantee-bar">
+            <div class="guarantee-item">
+                <span class="dashicons dashicons-shield-alt"></span>
+                <div>
+                    <strong><?php esc_html_e('100% Read-Only', 'woo-get-data-for-ai'); ?></strong> &mdash; <?php esc_html_e('Zero risk: cannot write, modify, or delete any site data.', 'woo-get-data-for-ai'); ?>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <span class="dashicons dashicons-hidden"></span>
+                <div>
+                    <strong><?php esc_html_e('Auto-Redacted PII', 'woo-get-data-for-ai'); ?></strong> &mdash; <?php esc_html_e('Customer data, passwords, and secret keys are automatically masked.', 'woo-get-data-for-ai'); ?>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <span class="dashicons dashicons-performance"></span>
+                <div>
+                    <strong><?php esc_html_e('Zero Idle Impact', 'woo-get-data-for-ai'); ?></strong> &mdash; <?php esc_html_e('Consumes 0 resources when idle; lightning fast on demands.', 'woo-get-data-for-ai'); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php else : ?>
+    <div class="agent-bridge-card agent-bridge-connected-card">
+        <div class="connected-card-inner">
+            <div class="connected-icon-box">
+                <span class="dashicons dashicons-yes-alt"></span>
+            </div>
+            <div class="connected-text-box">
+                <h4 style="margin: 0 0 4px 0; color: #1e4620; font-size: 15px;">
+                    <?php esc_html_e('AI Agent Connected & Operational', 'woo-get-data-for-ai'); ?>
+                </h4>
+                <p style="margin: 0; color: #2e7d32; font-size: 13px;">
+                    <?php esc_html_e('Your site is actively connected with AI agents. You can inspect all authenticated queries, response times, and IP locations anytime in the Connection Logs tab.', 'woo-get-data-for-ai'); ?>
+                </p>
+            </div>
+            <a href="<?php echo esc_url(add_query_arg(['page' => 'wp-agent-bridge', 'tab' => 'logs'], admin_url('options-general.php'))); ?>" class="button button-secondary">
+                <span class="dashicons dashicons-chart-bar"></span> <?php esc_html_e('View Connection Logs', 'woo-get-data-for-ai'); ?>
+            </a>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="agent-bridge-card">
     <h3><?php esc_html_e('API Connection & Authentication', 'woo-get-data-for-ai'); ?></h3>

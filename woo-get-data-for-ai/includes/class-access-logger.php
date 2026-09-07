@@ -60,6 +60,44 @@ class Access_Logger {
     }
 
     /**
+     * Determine if the plugin has registered at least one successful connection.
+     * Caches result in wp_options for 0ms execution time on subsequent admin page loads.
+     *
+     * @return bool
+     */
+    public static function has_connected() {
+        $connected = get_option('wp_agent_bridge_has_connected', null);
+        if ($connected !== null) {
+            return (bool) $connected;
+        }
+
+        // Fallback check against cumulative summary or existing logs on initial run
+        $summary = get_option('wp_agent_bridge_log_summary', []);
+        if (!empty($summary['total_requests']) && $summary['total_requests'] > 0) {
+            update_option('wp_agent_bridge_has_connected', 1, false);
+            return true;
+        }
+
+        global $wpdb;
+        if (!isset($wpdb) || !is_object($wpdb)) {
+            return false;
+        }
+
+        $table_name = $wpdb->prefix . 'agent_bridge_logs';
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
+        if ($table_exists === $table_name) {
+            $count = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table_name WHERE http_status = 200 LIMIT 1");
+            if ($count > 0) {
+                update_option('wp_agent_bridge_has_connected', 1, false);
+                return true;
+            }
+        }
+
+        update_option('wp_agent_bridge_has_connected', 0, false);
+        return false;
+    }
+
+    /**
      * Log a REST API request.
      *
      * @param string $endpoint
@@ -88,6 +126,11 @@ class Access_Logger {
             ],
             ['%s', '%s', '%s', '%s', '%d', '%s', '%s']
         );
+
+        // Mark as connected on successful 200 OK request
+        if ((int) $http_status === 200 && !get_option('wp_agent_bridge_has_connected', 0)) {
+            update_option('wp_agent_bridge_has_connected', 1, false);
+        }
 
         // Auto-cleaning trigger (1 in 20 requests)
         if (wp_rand(1, 20) === 1) {

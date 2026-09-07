@@ -473,3 +473,107 @@ msgstr "Êtes-vous sûr de vouloir réinitialiser tous les compteurs de blocage 
 msgid "All failed attempts and IP lockouts have been reset successfully."
 msgstr "Toutes les tentatives échouées et blocages IP ont été réinitialisés avec succès."
 
+
+#: includes/admin/class-admin-settings.php
+msgid "Connect your AI to %s in 2 clicks"
+msgstr "Connectez votre IA à %s en 2 clics"
+
+#: includes/admin/class-admin-settings.php
+msgid "100% Read-Only & Safe"
+msgstr "100% Lecture seule & Sécurisé"
+
+#: includes/admin/class-admin-settings.php
+msgid "WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders."
+msgstr "WP Agent Bridge est actif et prêt. Connectez votre assistant IA (Antigravity, Claude, Cursor, ChatGPT) en toute sécurité pour inspecter et diagnostiquer votre site, sans aucun risque pour vos données ou vos commandes."
+
+#: includes/admin/class-admin-settings.php
+msgid "High-value prompt to try with your AI:"
+msgstr "Exemple de question à forte valeur à poser à votre IA :"
+
+#: includes/admin/class-admin-settings.php
+msgid "Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."
+msgstr "Analyse les performances de mon site, identifie les plugins lents et vérifie l'encombrement de la base de données pour trouver des gains d'optimisation rapides."
+
+#: includes/admin/class-admin-settings.php
+msgid "Copy Prompt"
+msgstr "Copier la question"
+
+#: includes/admin/class-admin-settings.php
+msgid "Connect My AI in 2 Clicks"
+msgstr "Connecter mon IA en 2 clics"
+
+#: includes/admin/class-admin-settings.php
+msgid "Onboarding notice dismissed."
+msgstr "Notification de bienvenue masquée."
+
+#: includes/admin/views/tab-general.php
+msgid "Connect Your AI Assistant in 2 Clicks"
+msgstr "Connectez votre assistant IA en 2 clics"
+
+#: includes/admin/views/tab-general.php
+msgid "No AI has connected to this site yet. Follow these 2 simple steps to start exploring your site data with your AI."
+msgstr "Aucune IA ne s'est encore connectée à ce site. Suivez ces 2 étapes simples pour commencer à explorer les données de votre site avec votre IA."
+
+#: includes/admin/views/tab-general.php
+msgid "Awaiting First Connection"
+msgstr "En attente de la 1ère connexion"
+
+#: includes/admin/views/tab-general.php
+msgid "Get Your AI Connection Prompt"
+msgstr "Récupérez votre prompt de connexion IA"
+
+#: includes/admin/views/tab-general.php
+msgid "Navigate to the AI Mega-Prompt tab to copy the self-updating skill or ready-made connection prompt."
+msgstr "Rendez-vous sur l'onglet Mega-Prompt IA pour copier la compétence auto-actualisée ou le prompt de connexion prêt à l'emploi."
+
+#: includes/admin/views/tab-general.php
+msgid "Open AI Mega-Prompt Tab"
+msgstr "Ouvrir l'onglet Mega-Prompt IA"
+
+#: includes/admin/views/tab-general.php
+msgid "Paste & Ask High-Value Questions"
+msgstr "Collez & Posez des questions à forte valeur"
+
+#: includes/admin/views/tab-general.php
+msgid "Paste the prompt into your AI agent (Antigravity, Claude, Cursor, ChatGPT) and try this high-value prompt:"
+msgstr "Collez le prompt dans votre agent IA (Antigravity, Claude, Cursor, ChatGPT) et essayez cette question à forte valeur :"
+
+#: includes/admin/views/tab-general.php
+msgid "Copy"
+msgstr "Copier"
+
+#: includes/admin/views/tab-general.php
+msgid "100% Read-Only"
+msgstr "100% Lecture seule"
+
+#: includes/admin/views/tab-general.php
+msgid "Zero risk: cannot write, modify, or delete any site data."
+msgstr "Zéro risque : aucune écriture, modification ou suppression possible sur votre site."
+
+#: includes/admin/views/tab-general.php
+msgid "Auto-Redacted PII"
+msgstr "Données privées masquées"
+
+#: includes/admin/views/tab-general.php
+msgid "Customer data, passwords, and secret keys are automatically masked."
+msgstr "Les données clients, mots de passe et clés secrètes sont automatiquement masqués."
+
+#: includes/admin/views/tab-general.php
+msgid "Zero Idle Impact"
+msgstr "Zéro impact au repos"
+
+#: includes/admin/views/tab-general.php
+msgid "Consumes 0 resources when idle; lightning fast on demands."
+msgstr "Consomme 0 ressource au repos ; ultra-rapide lors des requêtes."
+
+#: includes/admin/views/tab-general.php
+msgid "AI Agent Connected & Operational"
+msgstr "Agent IA connecté & opérationnel"
+
+#: includes/admin/views/tab-general.php
+msgid "Your site is actively connected with AI agents. You can inspect all authenticated queries, response times, and IP locations anytime in the Connection Logs tab."
+msgstr "Votre site est activement connecté avec des agents IA. Vous pouvez consulter les requêtes authentifiées, temps de réponse et adresses IP à tout moment dans l'onglet Journaux de connexion."
+
+#: includes/admin/views/tab-general.php
+msgid "View Connection Logs"
+msgstr "Voir les journaux de connexion"

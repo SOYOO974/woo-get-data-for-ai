@@ -18,7 +18,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Zero-Secret Public Codebase**: Designed for public hosting on GitHub. Tokens are generated on-demand inside WordPress admin, never stored in plugin files.
 - **Dynamic AI Discovery & Playbooks (`/capabilities`)**: Self-describing schema and procedural diagnostic Playbooks allowing AI assistants to discover available modules, active permissions, query parameters, and step-by-step audit recipes.
 - **Auto-Updating Skill Generator (`?format=skill`)**: When queried with `?format=skill`, the API dynamically generates a complete, ready-to-save `SKILL.md` markdown file for Antigravity, Cursor, and Claude agents.
-- **2-Click AI Onboarding**: Tab featuring a streamlined Bootstrap Prompt that empowers AI agents to auto-generate and maintain their local skill without prompt bloat or stagnation.
+- **2-Click AI Onboarding & Smart First-Time Banners**: Prominent, non-intrusive onboarding banners in WP Admin and inside the plugin settings dashboard. Active until the first successful AI connection is recorded, reassuring users with 100% read-only safety, offering 1-click prompt copying, and suggesting high-value performance audit prompts.
 - **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, WPCode, Logs, FlowMattic, Analytics) via checkboxes in the admin panel.
 - **Deep WooCommerce Diagnostics**: Audits template overrides in child/parent themes, detects outdated templates, and inspects HPOS (High-Performance Order Storage) status.
 - **Theme Settings Export**: Deep inspection and decoding of **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and child theme `functions.php` / `style.css`.

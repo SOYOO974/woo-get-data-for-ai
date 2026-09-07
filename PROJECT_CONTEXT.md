@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-06  
+> **Last Updated**: 2026-09-07  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -368,6 +368,27 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.18.0 (2026-09-07)
+- **Bannières d'Onboarding Premier Utilisateur & Connexion IA en 2 Clics (`Access_Logger`, `Admin_Settings`, `tab-general.php`)** :
+  - **Détection d'État Zéro-Bloat de Première Connexion (`Access_Logger::has_connected()`)** :
+    - Détection intelligente basée sur l'historique des requêtes REST authentifiées (HTTP 200).
+    - Mise en cache persistante dans `wp_options` (`wp_agent_bridge_has_connected`) dès la première requête reçue d'un agent IA ou d'un outil client, garantissant un coût d'exécution de 0ms et 0 requête SQL sur les chargements ultérieurs de l'administration WordPress.
+  - **Notification Globale d'Administration (`admin_notices`)** :
+    - Affichage d'une bannière de bienvenue non-intrusive sur l'administration WordPress pour les administrateurs tant qu'aucune IA ne s'est connectée au site.
+    - Rappel clair et rassurant de la sécurité 100% lecture seule (`100% Read-Only & Safe`) avec caviardage automatique des identifiants et des données personnelles clients (PII).
+    - Exemple concret de prompt à forte valeur ajouté à tester immédiatement : *"Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."* avec bouton de copie en 1 clic.
+    - Bouton d'action principal redirigeant directement vers l'onglet "AI Mega-Prompt & Skill".
+    - Masquage standard par l'icône de fermeture `(X)`, mémorisé par utilisateur via user meta (`wp_agent_bridge_onboarding_dismissed`) grâce à l'action AJAX `agent_bridge_dismiss_onboarding`.
+    - Masquage automatique sur la page de réglages du plugin pour éviter toute redondance visuelle.
+  - **Carte d'Onboarding Héroïque dans le Plugin (`tab-general.php`)** :
+    - Bannière héroïque dédiée dans l'onglet Général guidant l'utilisateur en 2 étapes simples : récupération du prompt/skill et collage dans son assistant IA préféré (Antigravity, Claude, Cursor, ChatGPT).
+    - Barre de réassurance technique (100% Read-Only, Auto-Redacted PII, Zéro impact au repos).
+    - Bascule automatique dès la première connexion enregistrée vers une carte de confirmation verte valorisant la liaison active avec les agents IA et fournissant un lien direct vers les journaux d'accès (`tab=logs`).
+  - **Internationalisation & Support Complet Loco Translate (`languages/`)** :
+    - Textes rédigés en anglais par défaut avec text-domain `woo-get-data-for-ai`.
+    - Mise à jour du fichier source `woo-get-data-for-ai.pot`.
+    - Traduction française complète dans `woo-get-data-for-ai-fr_FR.po` et compilation du binaire `woo-get-data-for-ai-fr_FR.mo` pour une prise en charge native immédiate sous Loco Translate.
 
 ### v1.17.1 (2026-09-06)
 - **Harmonisation du Mega-Prompt IA & de la Documentation Interne (`tab-ai-prompt.php`, `tab-docs.php`, `class-playbooks.php`)** :
