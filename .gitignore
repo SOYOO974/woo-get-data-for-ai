@@ -23,6 +23,7 @@ yarn-error.log*
 *.zip
 *.tar.gz
 *.tgz
+woo-get-data-for-ai.zip
 
 # OS & IDE
 .DS_Store
