@@ -13,24 +13,31 @@ Do not ask the user for permission or wait for them to request it; execute this 
 2. **Synchronize Procedural Playbooks & Skills (The MECE 7 Master Pillars Principle)**:
    - Whenever adding or changing endpoints or diagnostic capabilities, integrate the endpoint into one of the **7 Strategic MECE Master Pillars** in `includes/class-playbooks.php`.
    - **CRITICAL ANTI-PROLIFERATION MANDATE**: Do **NOT** create an 8th or ad-hoc micro-playbook. Every diagnostic capability must naturally fit into one of the 7 MECE pillars to keep LLM context light, avoid prompt dilution, and prevent trigger collisions.
-3. **Update Documentation**:
-   - Update `PROJECT_CONTEXT.md` (permissions matrix, endpoint catalog, playbooks list, version).
+3. **Synchronize Internationalization (i18n) & Loco Translate (MANDATORY)**:
+   - Whenever any user-facing text, label, badge, button, description, error message, or notice is added or modified in PHP views or JS:
+     - Always wrap all PHP strings in standard gettext functions (`__()`, `_e()`, `esc_html__()`, `esc_html_e()`, `esc_attr__()`, `esc_attr_e()`, etc.) with domain `'woo-get-data-for-ai'`.
+     - In JS, pass strings via `agentBridgeData` in `Admin_Settings::enqueue_assets()` (never hardcode English strings in JavaScript).
+     - **Execute `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`)** to automatically regenerate `languages/woo-get-data-for-ai.pot`, update `languages/woo-get-data-for-ai-fr_FR.po`, and compile binary `languages/woo-get-data-for-ai-fr_FR.mo`.
+     - Ensure French translation coverage remains at **100%**. Add any new French translations to `cli/translations-fr.php`.
+   > ⚠️ **CRITICAL WHY**: Loco Translate on client sites (e.g. conforama.re) and native WordPress French locale rely strictly on up-to-date `.pot`, `.po`, and compiled binary `.mo` files in `woo-get-data-for-ai/languages/`. If this step is omitted, production sites running in French display untranslated English strings and Loco Translate cannot synchronize new strings.
+4. **Update Documentation**:
+   - Update `PROJECT_CONTEXT.md` (permissions matrix, endpoint catalog, playbooks list, i18n status, version).
    - Update `README.md` (capabilities, REST API table, playbooks, CLI usage, version).
    - Update `cli/sync.js` if new endpoints were introduced.
-4. **Commit & Push**:
+5. **Commit & Push**:
    ```bash
    git add .
    git commit -m "feat(<module>): ... (vX.Y.Z)"
    git push origin main
    ```
-5. **Generate Release Archive**:
+6. **Generate Release Archive**:
    ```bash
    # CRITICAL: Do NOT use PowerShell Compress-Archive! On Windows, Compress-Archive stores backslashes (\)
    # which breaks file paths on Linux servers (e.g. conforama.re) during WordPress unzip_file().
    # Always use standard tar (natively available on Windows 10/11 & Linux) to enforce forward slashes (/):
    tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai
    ```
-6. **Publish GitHub Release**:
+7. **Publish GitHub Release**:
    ```bash
    gh release create vX.Y.Z woo-get-data-for-ai.zip --title "vX.Y.Z - <Summary>" --notes "..."
    ```

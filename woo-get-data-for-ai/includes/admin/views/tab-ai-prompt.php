@@ -41,10 +41,10 @@ $mega_prompt .= "   The live `/capabilities` feed organizes all diagnostics into
 $mega_prompt .= "   - **Pillar 1: SEO, Content & Visibility** -> Playbook `seo_content_audit` (queries `/content/seo-audit`, `/content/pages`, `/content/page/{id}`).\n";
 $mega_prompt .= "   - **Pillar 2: Performance & Core Web Vitals** -> Playbook `agency_performance_audit` (queries `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).\n";
 $mega_prompt .= "   - **Pillar 3: System Health & Database Bloat Hygiene** -> Playbook `database_system_hygiene` (queries `/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).\n";
-$mega_prompt .= "   - **Pillar 4: Orders, Checkout & Gateway Troubleshooting** -> Playbook `order_checkout_troubleshoot` (queries `/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).\n";
+$mega_prompt .= "   - **Pillar 4: Orders, Checkout & Gateway Troubleshooting** -> Playbook `order_checkout_troubleshoot` (queries `/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`).\n";
 $mega_prompt .= "   - **Pillar 5: 360° E-Commerce Sales & Analytics** -> Playbook `ecommerce_bi_analytics` (queries `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).\n";
 $mega_prompt .= "   - **Pillar 6: Shipping Logistics & Flexible Shipping** -> Playbook `shipping_logistics_audit` (queries `/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).\n";
-$mega_prompt .= "   - **Pillar 7: Code Architecture & Integrations Map** -> Playbook `code_theme_integrations` (queries `/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/wpcode/snippets`, `/meta/fields`).\n";
+$mega_prompt .= "   - **Pillar 7: Code Architecture & Integrations Map** -> Playbook `code_theme_integrations` (queries `/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).\n";
 $mega_prompt .= "3. **Plugin Updates & Zero-Prompt-Stagnation**:\n";
 $mega_prompt .= "   The plugin auto-updates via GitHub releases. You do NOT need human prompts to learn new features: periodically re-run `GET {$rest_base_url}/capabilities?format=skill` to discover newly released inspection endpoints and playbooks automatically.\n\n";
 
@@ -52,7 +52,7 @@ $mega_prompt .= "### Phase 2: Systematic \"Live Freshness Check\" Before Modifyi
 $mega_prompt .= "Before designing code, debugging an issue, or refactoring a feature:\n";
 $mega_prompt .= "- **DO NOT rely solely on local files** that might be outdated.\n";
 $mega_prompt .= "- **Always inspect the live site first** using the active endpoints discovered via `/capabilities`:\n";
-$mega_prompt .= "  * Modifying custom logic or hooks? -> Check `/wpcode/snippets?status=active` to inspect live code executing in production.\n";
+$mega_prompt .= "  * Modifying custom logic or hooks? -> Check `/snippets?status=active` (or `/wpcode/snippets?status=active`) to inspect live code executing in production.\n";
 $mega_prompt .= "  * Working on forms or page design? -> Check `/elementor/forms` or `/elementor/item/{id}` (or `/elementor/list?status=publish`).\n";
 $mega_prompt .= "  * Working on automations or webhooks? -> Check `/flowmattic/workflows?status=active` to inspect active workflow steps and triggers.\n";
 $mega_prompt .= "  * Auditing frontend performance, TTFB or native Web Vitals? -> Check `/performance/templates-urls` and `/performance/profile?path=/&include_assets=true&include_queries=true`.\n";
@@ -72,10 +72,12 @@ $mega_prompt .= "  * Investigating recent site crashes or fatal PHP errors? -> C
 $mega_prompt .= "  * Investigating cart/checkout/product bugs? -> Check `/theme/overrides` and latest logs with `/logs/view` or specific logs with `/logs/custom?file=...`.\n";
 $mega_prompt .= "  * Investigating cron, background tasks, or queue backlog? -> Check `/crons` (WP-Cron schedules & overdue status) and `/action-scheduler` (in-progress, failed, complete tasks, retention policy, and error logs).\n\n";
 
-$mega_prompt .= "### Phase 3: WPCode Snippets Direct Admin Links\n";
-$mega_prompt .= "Whenever you analyze, recommend, or modify a WPCode snippet:\n";
+$mega_prompt .= "### Phase 3: Code Snippets & WPCode Direct Admin Links\n";
+$mega_prompt .= "Whenever you analyze, recommend, or modify a snippet:\n";
 $mega_prompt .= "- ALWAYS provide the user with a direct, clickable link to edit the snippet in WordPress Admin:\n";
-$mega_prompt .= "  `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n\n";
+$mega_prompt .= "  * WPCode: `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n";
+$mega_prompt .= "  * Code Snippets: `{$site_url}/wp-admin/admin.php?page=edit-snippet&id=<ID>`\n";
+$mega_prompt .= "- Or simply use the direct `admin_edit_url` property returned in each snippet object by the API.\n\n";
 
 $mega_prompt .= "### Phase 4: Strict Active vs Inactive State Management (Zero False-Positives)\n";
 $mega_prompt .= "- **Live Production Code**: When debugging or analyzing architecture, ALWAYS query active items first (`?status=active` or `?status=publish`). Never assume an inactive snippet or disabled workflow is executing on the live site.\n";

@@ -40,9 +40,9 @@ class Permissions {
                 'endpoints'   => ['/elementor/export-all', '/elementor/list', '/elementor/item/{id}', '/elementor/forms', '/elementor/kit'],
             ],
             'wpcode' => [
-                'label'       => esc_html__('WPCode Snippets', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and inspecting custom PHP, JS, and CSS snippets stored in WPCode plugin.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/wpcode/snippets', '/wpcode/snippet/{id}'],
+                'label'       => esc_html__('Code Snippets (WPCode & Code Snippets Pro)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows listing and inspecting custom PHP, JS, CSS, and HTML snippets stored in WPCode and Code Snippets (Free/Pro) plugins.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/snippets', '/snippets/{id}', '/wpcode/snippets', '/wpcode/snippet/{id}'],
             ],
             'logs' => [
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
@@ -298,20 +298,33 @@ class Permissions {
             ],
             [
                 'id'          => 'wpcode',
-                'label'       => esc_html__('WPCode Snippets', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and inspecting custom PHP, JS, and CSS snippets stored in WPCode plugin.', 'woo-get-data-for-ai'),
+                'label'       => esc_html__('Code Snippets (WPCode & Code Snippets Pro)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows listing and inspecting custom PHP, JS, CSS, and HTML snippets stored in WPCode and Code Snippets (Free/Pro) plugins.', 'woo-get-data-for-ai'),
                 'enabled'     => !empty($permissions['wpcode']),
                 'endpoints'   => [
                     [
+                        'path'        => '/snippets',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (all|active|inactive, default: all)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
+                        'description' => esc_html__('List all snippets across WPCode and Code Snippets with source plugin, execution location, priority, tags, direct admin edit link, and full source code.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/snippets/{id}',
+                        'methods'     => ['GET'],
+                        'params'      => ['source (all|code-snippets|wpcode, default: all)'],
+                        'description' => esc_html__('Full source code, execution location, priority, tags, and direct WordPress Admin edit link for a specific snippet with collision resolution.', 'woo-get-data-for-ai'),
+                    ],
+                    [
                         'path'        => '/wpcode/snippets',
                         'methods'     => ['GET'],
-                        'params'      => ['status (all|active|inactive, default: all, recommended for diagnostics: active)'],
-                        'description' => esc_html__('List all WPCode snippets with full source code, hook targets, type, and execution state.', 'woo-get-data-for-ai'),
+                        'params'      => ['status (all|active|inactive, default: all)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
+                        'description' => esc_html__('Legacy alias: List all snippets across WPCode and Code Snippets.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/wpcode/snippet/{id}',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Full source code, settings, and direct WordPress Admin edit link for a specific snippet.', 'woo-get-data-for-ai'),
+                        'params'      => ['source (all|code-snippets|wpcode, default: all)'],
+                        'description' => esc_html__('Legacy alias: Full source code and settings for a specific snippet.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

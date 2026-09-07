@@ -46,10 +46,10 @@
 
             if (isPassword) {
                 $input.attr('type', 'text');
-                $(this).html('<span class="dashicons dashicons-hidden"></span> Hide');
+                $(this).html('<span class="dashicons dashicons-hidden"></span> ' + (agentBridgeData.hideText || 'Hide'));
             } else {
                 $input.attr('type', 'password');
-                $(this).html('<span class="dashicons dashicons-visibility"></span> Show');
+                $(this).html('<span class="dashicons dashicons-visibility"></span> ' + (agentBridgeData.showText || 'Show'));
             }
         });
 
@@ -75,15 +75,15 @@
                     $btn.prop('disabled', false).removeClass('updating-message');
                     if (response.success && response.data.token) {
                         $('#agent-bridge-token-input').val(response.data.token);
-                        alert(response.data.message || 'Token regenerated successfully.');
+                        alert(response.data.message || agentBridgeData.tokenRegenerated || 'Token regenerated successfully.');
                         location.reload();
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Error regenerating token.');
+                        alert(response.data && response.data.message ? response.data.message : (agentBridgeData.errorRegen || 'Error regenerating token.'));
                     }
                 },
                 error: function() {
                     $btn.prop('disabled', false).removeClass('updating-message');
-                    alert('Network error occurred while communicating with WordPress.');
+                    alert(agentBridgeData.networkError || 'Network error occurred while communicating with WordPress.');
                 }
             });
         });
@@ -112,12 +112,12 @@
                         alert(response.data.message);
                         location.reload();
                     } else {
-                        alert('Error clearing logs.');
+                        alert(agentBridgeData.errorClear || 'Error clearing logs.');
                     }
                 },
                 error: function() {
                     $btn.prop('disabled', false).removeClass('updating-message');
-                    alert('Network error occurred.');
+                    alert(agentBridgeData.networkError || 'Network error occurred.');
                 }
             });
         });
@@ -153,12 +153,12 @@
                         });
                     } else {
                         $btn.prop('disabled', false);
-                        alert(response.data && response.data.message ? response.data.message : 'Error unlocking IP.');
+                        alert(response.data && response.data.message ? response.data.message : (agentBridgeData.errorUnlock || 'Error unlocking IP.'));
                     }
                 },
                 error: function() {
                     $btn.prop('disabled', false);
-                    alert('Network error occurred while unlocking IP.');
+                    alert(agentBridgeData.networkError || 'Network error occurred while unlocking IP.');
                 }
             });
         });
@@ -184,15 +184,15 @@
                 success: function(response) {
                     $btn.prop('disabled', false).removeClass('updating-message');
                     if (response.success) {
-                        alert(response.data.message || 'All lockouts have been cleared.');
+                        alert(response.data.message || agentBridgeData.lockoutsCleared || 'All lockouts have been cleared.');
                         location.reload();
                     } else {
-                        alert(response.data && response.data.message ? response.data.message : 'Error resetting lockouts.');
+                        alert(response.data && response.data.message ? response.data.message : (agentBridgeData.errorReset || 'Error resetting lockouts.'));
                     }
                 },
                 error: function() {
                     $btn.prop('disabled', false).removeClass('updating-message');
-                    alert('Network error occurred while resetting lockouts.');
+                    alert(agentBridgeData.networkError || 'Network error occurred while resetting lockouts.');
                 }
             });
         });

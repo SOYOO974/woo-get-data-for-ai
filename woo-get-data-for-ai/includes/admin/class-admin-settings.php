@@ -144,13 +144,23 @@ class Admin_Settings {
         );
 
         wp_localize_script('agent-bridge-admin-js', 'agentBridgeData', [
-            'ajaxUrl'       => admin_url('admin-ajax.php'),
-            'nonce'         => wp_create_nonce('agent_bridge_admin_nonce'),
-            'confirmRegen'  => esc_html__('Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated.', 'woo-get-data-for-ai'),
-            'confirmClear'  => esc_html__('Are you sure you want to clear all connection logs?', 'woo-get-data-for-ai'),
-            'confirmUnlock' => esc_html__('Are you sure you want to unlock this IP address immediately?', 'woo-get-data-for-ai'),
-            'confirmReset'  => esc_html__('Are you sure you want to reset all lockout counters and unblock all IP addresses?', 'woo-get-data-for-ai'),
-            'copiedText'    => esc_html__('Copied to clipboard!', 'woo-get-data-for-ai'),
+            'ajaxUrl'          => admin_url('admin-ajax.php'),
+            'nonce'            => wp_create_nonce('agent_bridge_admin_nonce'),
+            'confirmRegen'     => esc_html__('Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated.', 'woo-get-data-for-ai'),
+            'confirmClear'     => esc_html__('Are you sure you want to clear all connection logs?', 'woo-get-data-for-ai'),
+            'confirmUnlock'    => esc_html__('Are you sure you want to unlock this IP address immediately?', 'woo-get-data-for-ai'),
+            'confirmReset'     => esc_html__('Are you sure you want to reset all lockout counters and unblock all IP addresses?', 'woo-get-data-for-ai'),
+            'copiedText'       => esc_html__('Copied to clipboard!', 'woo-get-data-for-ai'),
+            'copiedShort'      => esc_html__('Copied!', 'woo-get-data-for-ai'),
+            'showText'         => esc_html__('Show', 'woo-get-data-for-ai'),
+            'hideText'         => esc_html__('Hide', 'woo-get-data-for-ai'),
+            'networkError'     => esc_html__('Network error occurred while communicating with WordPress.', 'woo-get-data-for-ai'),
+            'errorRegen'       => esc_html__('Error regenerating token.', 'woo-get-data-for-ai'),
+            'tokenRegenerated' => esc_html__('Token regenerated successfully.', 'woo-get-data-for-ai'),
+            'errorClear'       => esc_html__('Error clearing logs.', 'woo-get-data-for-ai'),
+            'errorUnlock'      => esc_html__('Error unlocking IP.', 'woo-get-data-for-ai'),
+            'errorReset'       => esc_html__('Error resetting lockouts.', 'woo-get-data-for-ai'),
+            'lockoutsCleared'  => esc_html__('All lockouts have been cleared.', 'woo-get-data-for-ai'),
         ]);
     }
 

@@ -7,7 +7,7 @@
 
 **WP Agent Bridge** is an enterprise-grade, lightweight, and ultra-secure WordPress and WooCommerce inspection plugin. It exposes a protected, read-only REST API (`agent-bridge/v1/`) designed specifically for AI coding assistants (**Antigravity**, **Claude**, **Cursor**, **ChatGPT**) and developer tools.
 
-It allows AI assistants to instantly inspect live site configurations, debug logs, Elementor trees, WPCode snippets, and theme settings (Woodmart, Elessi) safely without requiring full SSH, SFTP, or database access.
+It allows AI assistants to instantly inspect live site configurations, debug logs, Elementor trees, WPCode & Code Snippets, and theme settings (Woodmart, Elessi) safely without requiring full SSH, SFTP, or database access.
 
 ---
 
@@ -19,7 +19,7 @@ It allows AI assistants to instantly inspect live site configurations, debug log
 - **Dynamic AI Discovery & Playbooks (`/capabilities`)**: Self-describing schema and procedural diagnostic Playbooks allowing AI assistants to discover available modules, active permissions, query parameters, and step-by-step audit recipes.
 - **Auto-Updating Skill Generator (`?format=skill`)**: When queried with `?format=skill`, the API dynamically generates a complete, ready-to-save `SKILL.md` markdown file for Antigravity, Cursor, and Claude agents.
 - **2-Click AI Onboarding & Smart First-Time Banners**: Prominent, non-intrusive onboarding banners in WP Admin and inside the plugin settings dashboard. Active until the first successful AI connection is recorded, reassuring users with 100% read-only safety, offering 1-click prompt copying, and suggesting high-value performance audit prompts.
-- **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, WPCode, Logs, FlowMattic, Analytics) via checkboxes in the admin panel.
+- **Granular Permissions Matrix**: Toggle access to specific modules (System, Themes, Code, Elementor, Snippets, Logs, FlowMattic, Analytics) via checkboxes in the admin panel.
 - **Deep WooCommerce Diagnostics**: Audits template overrides in child/parent themes, detects outdated templates, and inspects HPOS (High-Performance Order Storage) status.
 - **Theme Settings Export**: Deep inspection and decoding of **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and child theme `functions.php` / `style.css`.
 - **Sandboxed Code Inspector**: Safely inspects file trees of active plugins and `mu-plugins`, and reads specific PHP/JS/CSS files with strict `realpath` validation.
@@ -120,8 +120,10 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /elementor/item/{id}` | Decoded JSON element tree (`_elementor_data`) and page settings. |
 | `GET /elementor/forms` | Inventory of Elementor forms, fields, and submit actions (webhooks, emails). |
 | `GET /elementor/kit` | Global colors, system fonts, and design tokens from the active Elementor Kit. |
-| `GET /wpcode/snippets?status={active\|inactive\|all}` | Custom PHP, JS, and CSS snippets stored in WPCode with global `active_count` and `inactive_count` (recommended for diagnostics: `active`). |
-| `GET /wpcode/snippet/{id}` | Source code and metadata of a specific snippet. |
+| `GET /snippets?status={active\|inactive\|all}&source={all\|code-snippets\|wpcode}&type={all\|php\|css\|js\|html}` | Custom PHP, JS, CSS, and HTML snippets across WPCode and Code Snippets (Free & Pro) with location, priority, tags, direct admin edit URLs, and global active/inactive counts. |
+| `GET /snippets/{id}?source={all\|code-snippets\|wpcode}` | Source code, execution location, priority, tags, and admin edit URL of a specific snippet with collision resolution. |
+| `GET /wpcode/snippets` | Legacy alias: Listing of all snippets across WPCode and Code Snippets. |
+| `GET /wpcode/snippet/{id}` | Legacy alias: Source code and metadata of a specific snippet. |
 | `GET /logs/sources` | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom `wp-content/` logs) with file sizes and dates. |
 | `GET /logs/view?source={file}&lines=200` | Memory-safe tail extraction of the latest log lines. |
 | `GET /logs/custom?file={filename}&lines=200` | Tail inspection of specific custom logs in `wp-content/` (e.g. `komela-order-status-sync.log`). |
@@ -172,10 +174,10 @@ To eliminate prompt dilution and trigger collisions while guaranteeing exhaustiv
 1. **360° SEO, Content Hierarchy & Visibility Audit** (`seo_content_audit`): Runs `/content/seo-audit`, analyzes `/content/pages`, and inspects `/content/page/{id}` for flagged URLs, Gutenberg block structures, and meta tags.
 2. **Agency Multi-Template Performance & Core Web Vitals Audit** (`agency_performance_audit`): Correlates `/performance/templates-urls`, conducts on-demand profiling with `/performance/profile` across 5 archetypes (attributing SQL duration and memory per plugin with 100% native Core Web Vitals & frontend signals), and analyzes active plugins database footprint with `/performance/plugins-summary`.
 3. **System Health, Database Bloat & Background Hygiene Audit** (`database_system_hygiene`): Correlates `/system`, `/system/database` (table sizes, autoload memory, orphaned options detection), `/woocommerce/summary` (order cancellation ratio & stale unpaid orders > 1y), `/action-scheduler` (queue backlog & retention policy alerts), `/crons` (overdue jobs), and `/logs/errors-summary` (Crash Watch).
-4. **Orders, Payment Gateways & Delivery Troubleshooting** (`order_checkout_troubleshoot`): Investigates order failures with `/woocommerce/orders`, `/woocommerce/order/{id}`, gateway debug logs `/logs/view`, active checkout snippets `/wpcode/snippets`, SMTP delivery diagnostics `/system/mail`, and WooCommerce webhooks `/woocommerce/webhooks`.
+4. **Orders, Payment Gateways & Delivery Troubleshooting** (`order_checkout_troubleshoot`): Investigates order failures with `/woocommerce/orders`, `/woocommerce/order/{id}`, gateway debug logs `/logs/view`, active checkout snippets `/snippets`, SMTP delivery diagnostics `/system/mail`, and WooCommerce webhooks `/woocommerce/webhooks`.
 5. **360° E-Commerce Sales, Traffic & Conversion Analytics** (`ecommerce_bi_analytics`): Deep commercial intelligence combining native WooCommerce sales `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock` alongside traffic acquisition `/analytics/overview`, and marketing campaigns `/analytics/campaigns`.
 6. **Shipping Zones, Methods & Flexible Shipping Rules Audit** (`shipping_logistics_audit`): Comprehensive logistics audit inspecting shipping zones and geo-locations with `/woocommerce/shipping`, general shop options with `/woocommerce/settings`, and deep order shipping line metadata with `/woocommerce/order/{id}`.
-7. **Code Architecture, Theme Settings & Automations Map** (`code_theme_integrations`): Audits WooCommerce template version drift `/theme/overrides`, child theme files `/theme/child`, cryptographic directory checksum fingerprints for local vs remote drift `/code/checksums`, FlowMattic workflows `/flowmattic/workflows`, Elementor forms `/elementor/forms`, WPCode snippets `/wpcode/snippets`, and custom ACF/code meta fields `/meta/fields`.
+7. **Code Architecture, Theme Settings & Automations Map** (`code_theme_integrations`): Audits WooCommerce template version drift `/theme/overrides`, child theme files `/theme/child`, cryptographic directory checksum fingerprints for local vs remote drift `/code/checksums`, FlowMattic workflows `/flowmattic/workflows`, Elementor forms `/elementor/forms`, custom snippets (WPCode & Code Snippets) `/snippets`, and custom ACF/code meta fields `/meta/fields`.
 
 > 💡 **Instant Setup**: Run `curl -s -H 'Authorization: Bearer <TOKEN>' 'https://your-site.com/wp-json/agent-bridge/v1/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md` in your project to immediately equip your AI with all active routes and playbooks!
 

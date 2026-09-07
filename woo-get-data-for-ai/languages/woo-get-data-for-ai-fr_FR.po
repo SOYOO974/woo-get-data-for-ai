@@ -1,11 +1,11 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: WP Agent Bridge (Data for AI) 1.0.0\n"
+"Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-05 16:40:00+00:00\n"
-"PO-Revision-Date: 2026-09-05 16:45:00+00:00\n"
-"Last-Translator: SOYOO\n"
-"Language-Team: Français\n"
+"POT-Creation-Date: 2026-09-07 04:31+00:00\n"
+"PO-Revision-Date: 2026-09-07 04:31+00:00\n"
+"Last-Translator: SOYOO <julien@soyoo.re>\n"
+"Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -13,567 +13,1766 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: woo-get-data-for-ai\n"
 
-#: woo-get-data-for-ai.php:6
-msgid "WP Agent Bridge (Data for AI)"
-msgstr "WP Agent Bridge (Données pour IA)"
+#: includes/admin/class-admin-settings.php:41
+msgid "Settings"
+msgstr "Réglages"
 
-#: woo-get-data-for-ai.php:7
-msgid "Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode snippets, and theme options to AI agents (Antigravity, Claude, Cursor)."
-msgstr "API d'inspection en lecture seule pour WordPress et WooCommerce. Expose de manière sécurisée l'état système, les logs, les arbres Elementor, les snippets WPCode et les réglages de thèmes aux agents IA (Antigravity, Claude, Cursor)."
+#: includes/admin/class-admin-settings.php:50
+msgid "WP Agent Bridge Settings"
+msgstr "Réglages WP Agent Bridge"
 
-#: includes/class-security.php:63
-msgid "Only GET (Read-Only) requests are permitted by WP Agent Bridge."
-msgstr "Seules les requêtes GET (Lecture seule) sont autorisées par WP Agent Bridge."
+#: includes/admin/class-admin-settings.php:51
+msgid "Agent Bridge"
+msgstr "Agent Bridge"
 
-#: includes/class-security.php:73
-msgid "No Agent Bridge token configured on this server."
-msgstr "Aucun token Agent Bridge configuré sur ce serveur."
+#: includes/admin/class-admin-settings.php:149
+msgid "Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated."
+msgstr "Êtes-vous sûr de vouloir régénérer le token ? Les agents IA et scripts CLI perdront immédiatement l'accès jusqu'à leur mise à jour."
 
-#: includes/class-security.php:94
-msgid "Missing or invalid Authorization Bearer header."
-msgstr "En-tête Authorization Bearer manquant ou invalide."
+#: includes/admin/class-admin-settings.php:150
+msgid "Are you sure you want to clear all connection logs?"
+msgstr "Êtes-vous sûr de vouloir effacer tout l'historique des logs de connexion ?"
 
-#: includes/class-security.php:104
-msgid "Invalid authentication token."
-msgstr "Token d'authentification invalide."
+#: includes/admin/class-admin-settings.php:151
+msgid "Are you sure you want to unlock this IP address immediately?"
+msgstr "Êtes-vous sûr de vouloir débloquer cette adresse IP immédiatement ?"
 
-#: includes/class-security.php:118
-msgid "Access denied: Client IP is not in the authorized whitelist."
-msgstr "Accès refusé : L'adresse IP cliente n'est pas dans la liste blanche autorisée."
+#: includes/admin/class-admin-settings.php:152
+msgid "Are you sure you want to reset all lockout counters and unblock all IP addresses?"
+msgstr "Êtes-vous sûr de vouloir réinitialiser tous les compteurs de blocage et débloquer toutes les adresses IP ?"
 
-#: includes/class-security.php:131
-msgid "Too many requests. Please throttle your queries (limit: 120/min)."
-msgstr "Trop de requêtes. Veuillez ralentir vos appels (limite : 120/min)."
+#: includes/admin/class-admin-settings.php:153
+msgid "Copied to clipboard!"
+msgstr "Copié dans le presse-papier !"
 
-#: includes/class-permissions.php:17
+#: includes/admin/class-admin-settings.php:154
+msgid "Copied!"
+msgstr "Copié !"
+
+#: includes/admin/class-admin-settings.php:155
+#: includes/admin/views/tab-general.php:152
+msgid "Show"
+msgstr "Afficher"
+
+#: includes/admin/class-admin-settings.php:156
+msgid "Hide"
+msgstr "Masquer"
+
+#: includes/admin/class-admin-settings.php:157
+msgid "Network error occurred while communicating with WordPress."
+msgstr "Une erreur réseau est survenue lors de la communication avec WordPress."
+
+#: includes/admin/class-admin-settings.php:158
+msgid "Error regenerating token."
+msgstr "Erreur lors de la régénération du token."
+
+#: includes/admin/class-admin-settings.php:159
+msgid "Token regenerated successfully."
+msgstr "Token régénéré avec succès."
+
+#: includes/admin/class-admin-settings.php:160
+msgid "Error clearing logs."
+msgstr "Erreur lors de l'effacement des logs."
+
+#: includes/admin/class-admin-settings.php:161
+msgid "Error unlocking IP."
+msgstr "Erreur lors du déblocage de l'adresse IP."
+
+#: includes/admin/class-admin-settings.php:162
+msgid "Error resetting lockouts."
+msgstr "Erreur lors de la réinitialisation des blocages."
+
+#: includes/admin/class-admin-settings.php:163
+msgid "All lockouts have been cleared."
+msgstr "Tous les blocages d'adresses IP ont été réinitialisés."
+
+#: includes/admin/class-admin-settings.php:183
+#: includes/admin/views/tab-general.php:18
+msgid "Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."
+msgstr "Analyse les performances de mon site, identifie les plugins lents et vérifie l'encombrement de la base de données pour trouver des gains d'optimisation rapides."
+
+#: includes/admin/class-admin-settings.php:196
+msgid "Connect your AI to %s in 2 clicks"
+msgstr "Connectez votre IA à %s en 2 clics"
+
+#: includes/admin/class-admin-settings.php:203
+msgid "100% Read-Only & Safe"
+msgstr "100% Lecture seule & Sécurisé"
+
+#: includes/admin/class-admin-settings.php:207
+msgid "WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders."
+msgstr "WP Agent Bridge est actif et prêt. Connectez votre assistant IA (Antigravity, Claude, Cursor, ChatGPT) en toute sécurité pour inspecter et diagnostiquer votre site, sans aucun risque pour vos données ou vos commandes."
+
+#: includes/admin/class-admin-settings.php:212
+msgid "High-value prompt to try with your AI:"
+msgstr "Exemple de question à forte valeur à poser à votre IA :"
+
+#: includes/admin/class-admin-settings.php:217
+msgid "Copy Prompt"
+msgstr "Copier la question"
+
+#: includes/admin/class-admin-settings.php:223
+msgid "Connect My AI in 2 Clicks"
+msgstr "Connecter mon IA en 2 clics"
+
+#: includes/admin/class-admin-settings.php:226
+msgid "View Documentation"
+msgstr "Consulter la documentation"
+
+#: includes/admin/class-admin-settings.php:242
+msgid "General & Status"
+msgstr "Général & Statut"
+
+#: includes/admin/class-admin-settings.php:243
+msgid "Permissions Matrix"
+msgstr "Matrice de Permissions"
+
+#: includes/admin/class-admin-settings.php:244
+msgid "AI Mega-Prompt & Skill"
+msgstr "Méga-Prompt IA & Skill"
+
+#: includes/admin/class-admin-settings.php:245
+msgid "Connection Logs & Analytics"
+msgstr "Logs de Connexion & Statistiques"
+
+#: includes/admin/class-admin-settings.php:246
+msgid "Documentation & Guide"
+msgstr "Documentation & Guide"
+
+#: includes/admin/class-admin-settings.php:251
+#: includes/admin/class-admin-settings.php:258
+msgid "WP Agent Bridge"
+msgstr "WP Agent Bridge"
+
+#: includes/admin/class-admin-settings.php:263
+msgid "Active & Protected"
+msgstr "Actif & Protégé"
+
+#: includes/admin/class-admin-settings.php:263
+msgid "Token Missing"
+msgstr "Token Manquant"
+
+#: includes/admin/class-admin-settings.php:267
+msgid "Secure, read-only inspection API for WordPress & WooCommerce to connect AI Agents (Antigravity, Claude, Cursor) and developer tools."
+msgstr "API d'inspection sécurisée en lecture seule pour WordPress & WooCommerce afin de connecter les agents IA (Antigravity, Claude, Cursor) et les outils de développement."
+
+#: includes/admin/class-admin-settings.php:310
+#: includes/admin/class-admin-settings.php:335
+#: includes/admin/class-admin-settings.php:349
+#: includes/admin/class-admin-settings.php:363
+#: includes/admin/class-admin-settings.php:386
+msgid "Unauthorized."
+msgstr "Non autorisé."
+
+#: includes/admin/class-admin-settings.php:315
+msgid "Token is set in wp-config.php via WP_AGENT_BRIDGE_TOKEN constant and cannot be regenerated from admin."
+msgstr "Le token est défini de manière sécurisée dans wp-config.php via la constante WP_AGENT_BRIDGE_TOKEN et ne peut pas être régénéré depuis l'administration."
+
+#: includes/admin/class-admin-settings.php:327
+msgid "Access token regenerated successfully."
+msgstr "Token d'accès régénéré avec succès."
+
+#: includes/admin/class-admin-settings.php:341
+msgid "All failed attempts and IP lockouts have been reset successfully."
+msgstr "Toutes les tentatives échouées et les blocages d'adresses IP ont été réinitialisés avec succès."
+
+#: includes/admin/class-admin-settings.php:355
+msgid "All access logs have been cleared."
+msgstr "Tous les journaux d'accès ont été effacés."
+
+#: includes/admin/class-admin-settings.php:368
+msgid "Missing IP parameter."
+msgstr "Paramètre IP manquant."
+
+#: includes/admin/class-admin-settings.php:376
+msgid "IP address %s has been unlocked."
+msgstr "L'adresse IP %s a été débloquée."
+
+#: includes/admin/class-admin-settings.php:392
+msgid "Onboarding notice dismissed."
+msgstr "Notification de bienvenue masquée."
+
+#: includes/admin/views/tab-ai-prompt.php:111
+msgid "AI Onboarding & Skill Mega-Prompt"
+msgstr "Méga-Prompt IA & Skill pour Débuter"
+
+#: includes/admin/views/tab-ai-prompt.php:113
+msgid "Connect any AI assistant (Antigravity, Cursor, Claude, ChatGPT) in 2 clicks. Copy the pre-filled prompt below and paste it directly into your AI chat session. It contains the site URL, your active access key, and all active endpoints."
+msgstr "Connectez n'importe quel assistant IA (Antigravity, Cursor, Claude, ChatGPT) en 2 clics. Copiez le prompt pré-rempli ci-dessous et collez-le directement dans votre session IA. Il contient l'URL du site, votre clé d'accès active et tous les endpoints disponibles."
+
+#: includes/admin/views/tab-ai-prompt.php:118
+msgid "%d Active Modules"
+msgstr "%d modules actifs"
+
+#: includes/admin/views/tab-ai-prompt.php:122
+msgid "%d Procedural Playbooks Active"
+msgstr "%d playbooks procéduraux actifs"
+
+#: includes/admin/views/tab-ai-prompt.php:126
+msgid "100% Read-Only Protected"
+msgstr "100% Lecture seule & Protégé"
+
+#: includes/admin/views/tab-ai-prompt.php:131
+msgid "Copy Mega-Prompt for AI"
+msgstr "Copier le Méga-Prompt pour l'IA"
+
+#: includes/admin/views/tab-ai-prompt.php:142
+msgid "One-Line Terminal Skill Generator (Creates local .agents/skills/wp-agent-bridge/SKILL.md)"
+msgstr "Générateur de Skill Terminal en 1 ligne (Crée le fichier local .agents/skills/wp-agent-bridge/SKILL.md)"
+
+#: includes/admin/views/tab-ai-prompt.php:145
+msgid "Run this directly in your terminal (Antigravity, Cursor, VS Code) to download the live skill with all playbooks in 1 second:"
+msgstr "Exécutez cette commande directement dans votre terminal (Antigravity, Cursor, VS Code) pour télécharger la skill à jour avec tous les playbooks en 1 seconde :"
+
+#: includes/admin/views/tab-ai-prompt.php:153
+msgid "How to use this in 2 clicks:"
+msgstr "Comment l'utiliser en 2 clics :"
+
+#: includes/admin/views/tab-ai-prompt.php:155
+msgid "Click the \"Copy Mega-Prompt for AI\" button above."
+msgstr "Cliquez sur le bouton « Copier le Méga-Prompt pour l'IA » ci-dessus."
+
+#: includes/admin/views/tab-ai-prompt.php:156
+msgid "Paste it into your conversation with Antigravity, Cursor, or Claude Desktop."
+msgstr "Collez-le dans votre conversation avec Antigravity, Cursor ou Claude Desktop."
+
+#: includes/admin/views/tab-ai-prompt.php:157
+msgid "Your AI is instantly aware of your site architecture and can query logs, plugins, Elementor templates, and settings safely!"
+msgstr "Votre IA prend immédiatement connaissance de l'architecture de votre site et peut interroger les logs, extensions, modèles Elementor et réglages en toute sécurité !"
+
+#: includes/admin/views/tab-docs.php:18
+msgid "WP Agent Bridge Documentation & Quick Guide"
+msgstr "Documentation & Guide Rapide WP Agent Bridge"
+
+#: includes/admin/views/tab-docs.php:21
+msgid "WP Agent Bridge is an enterprise-grade, lightweight, and ultra-secure inspection plugin for WordPress & WooCommerce. It exposes a protected, 100% read-only REST API (agent-bridge/v1/) allowing AI coding assistants (Antigravity, Cursor, Claude, ChatGPT) and developer tools to safely audit, diagnose bugs, and inspect live site architecture without requiring risky SSH, SFTP, or database credentials."
+msgstr "WP Agent Bridge est une extension d'inspection sécurisée et légère pour WordPress et WooCommerce. Elle expose une API REST protégée et 100% en lecture seule (agent-bridge/v1/) permettant aux assistants de codage IA (Antigravity, Cursor, Claude, ChatGPT) et aux outils de développement d'auditer, diagnostiquer les bugs et explorer l'architecture du site sans exiger d'accès risqué SSH, SFTP ou base de données."
+
+#: includes/admin/views/tab-docs.php:30
+msgid "Getting Started in 4 Quick Steps"
+msgstr "Premières Étapes en 4 Gestes Simples"
+
+#: includes/admin/views/tab-docs.php:33
+msgid "Follow these simple steps to connect your AI assistant to this WordPress installation in less than two minutes."
+msgstr "Suivez ces étapes simples pour connecter votre assistant IA à cette installation WordPress en moins de deux minutes."
+
+#: includes/admin/views/tab-docs.php:40
+msgid "Verify Permissions & Token"
+msgstr "Vérifier les Permissions & le Jeton"
+
+#: includes/admin/views/tab-docs.php:42
+msgid "Make sure your Bearer token is active in the General tab, and select which data modules your AI is allowed to query in the Permissions Matrix tab."
+msgstr "Assurez-vous que votre jeton Bearer est actif dans l'onglet Général, puis sélectionnez les modules que votre IA est autorisée à interroger dans l'onglet Matrice de Permissions."
+
+#: includes/admin/views/tab-docs.php:45
+msgid "Configure Permissions"
+msgstr "Configurer les Permissions"
+
+#: includes/admin/views/tab-docs.php:53
+msgid "Copy the AI Mega-Prompt"
+msgstr "Copier le Mega-Prompt IA"
+
+#: includes/admin/views/tab-docs.php:55
+msgid "Open the \"AI Mega-Prompt & Skill\" tab and click the copy button. The prompt is automatically pre-filled with your live site URL, active Bearer token, and available endpoints."
+msgstr "Ouvrez l'onglet \"AI Mega-Prompt & Skill\" et cliquez sur le bouton de copie. Le prompt est automatiquement pré-rempli avec l'URL de votre site, votre jeton Bearer actif et les endpoints disponibles."
+
+#: includes/admin/views/tab-docs.php:58
+msgid "Go to AI Mega-Prompt Tab"
+msgstr "Aller à l'onglet Mega-Prompt IA"
+
+#: includes/admin/views/tab-docs.php:66
+msgid "Paste into your AI Assistant"
+msgstr "Coller dans votre Assistant IA"
+
+#: includes/admin/views/tab-docs.php:68
+msgid "Paste the entire copied prompt into your chat session with Antigravity, Cursor, Claude Desktop, or ChatGPT. Your AI will instantly understand how to inspect the site safely."
+msgstr "Collez l'intégralité du prompt copié dans votre conversation avec Antigravity, Cursor, Claude Desktop ou ChatGPT. Votre IA saura immédiatement inspecter le site en toute sécurité."
+
+#: includes/admin/views/tab-docs.php:76
+msgid "Audit, Diagnose & Build"
+msgstr "Auditer, Diagnostiquer & Développer"
+
+#: includes/admin/views/tab-docs.php:78
+msgid "Ask your AI to inspect recent WooCommerce fatal errors, analyze theme overrides, or examine custom WPCode & Code Snippets. The AI queries the endpoints via curl with zero SSH needed."
+msgstr "Demandez à votre IA d'inspecter les erreurs fatales récentes de WooCommerce, d'analyser les surcharges de thèmes ou d'examiner les extraits personnalisés WPCode & Code Snippets. L'IA interroge les endpoints via curl sans aucun accès SSH requis."
+
+#: includes/admin/views/tab-docs.php:89
+msgid "How It Works & Security Architecture"
+msgstr "Fonctionnement & Architecture de Sécurité"
+
+#: includes/admin/views/tab-docs.php:92
+msgid "WP Agent Bridge has been engineered from the ground up for maximum safety on high-traffic production environments."
+msgstr "WP Agent Bridge a été conçu dès l'origine pour une sécurité maximale sur les environnements de production à fort trafic."
+
+#: includes/admin/views/tab-docs.php:99
+msgid "100% Read-Only Guarantee"
+msgstr "Garantie 100% Lecture Seule"
+
+#: includes/admin/views/tab-docs.php:100
+msgid "Every single endpoint strictly enforces HTTP GET (WP_REST_Server::READABLE). There are zero POST, PUT, or DELETE routes. The plugin contains no modification or execution primitives, ensuring your database and site files remain completely untouched."
+msgstr "Chaque endpoint impose strictement la méthode HTTP GET (WP_REST_Server::READABLE). Il n'existe aucune route POST, PUT ou DELETE. L'extension ne contient aucune primitive de modification ou d'exécution, garantissant l'intégrité absolue de votre base de données et de vos fichiers."
+
+#: includes/admin/views/tab-docs.php:107
+msgid "Bearer Token Authentication"
+msgstr "Authentification par Jeton Bearer"
+
+#: includes/admin/views/tab-docs.php:108
+msgid "Requests must supply an Authorization: Bearer header. The 64-character cryptographically secure token can be rotated at any time with 1 click in admin, or permanently hardcoded via WP_AGENT_BRIDGE_TOKEN in wp-config.php."
+msgstr "Les requêtes doivent obligatoirement fournir un en-tête Authorization: Bearer. Le jeton cryptographique de 64 caractères peut être régénéré en 1 clic dans l'administration, ou fixé de façon permanente via la constante WP_AGENT_BRIDGE_TOKEN dans wp-config.php."
+
+#: includes/admin/views/tab-docs.php:115
+msgid "Anti-Brute-Force & IP Lockout"
+msgstr "Protection Anti-Brute-Force & Blocage IP"
+
+#: includes/admin/views/tab-docs.php:116
+msgid "Failed authentication attempts are automatically tracked per client IP. After exceeding the threshold, offending IPs are locked out with HTTP 429 responses. Active lockouts can be monitored and unlocked with 1 click in the admin."
+msgstr "Les tentatives d'authentification infructueuses sont automatiquement comptabilisées par adresse IP. Au-delà du seuil défini, les IP fautives sont bloquées avec une réponse HTTP 429. Les blocages actifs sont visibles et déblocables en 1 clic dans l'administration."
+
+#: includes/admin/views/tab-docs.php:123
+msgid "Real-Time Secret & PII Redaction"
+msgstr "Anonymisation en Temps Réel des Secrets & PII"
+
+#: includes/admin/views/tab-docs.php:124
+msgid "Before returning any JSON response, an integrated redaction engine systematically masks Stripe secret keys (sk_live_*), payment gateway secrets, database passwords, salts, and customer email addresses."
+msgstr "Avant d'envoyer la moindre réponse JSON, un moteur d'anonymisation intégré masque systématiquement les clés secrètes Stripe (sk_live_*), les secrets de passerelles de paiement, mots de passe de base de données, sels et adresses emails des clients."
+
+#: includes/admin/views/tab-docs.php:131
+msgid "Memory-Safe Log Streaming"
+msgstr "Streaming de Logs Économe en Mémoire"
+
+#: includes/admin/views/tab-docs.php:132
+msgid "Large log files (debug.log and WooCommerce logs) are extracted from the bottom up using reverse file pointer (fseek). This guarantees low memory consumption and avoids PHP out-of-memory errors on heavy sites."
+msgstr "Les fichiers de logs volumineux (debug.log et logs WooCommerce) sont extraits par le bas via un pointeur de fichier inversé (fseek). Cela garantit une faible consommation de RAM et prévient tout dépassement de mémoire PHP."
+
+#: includes/admin/views/tab-docs.php:139
+msgid "Audit Trail & GeoIP Analytics"
+msgstr "Piste d'Audit & Statistiques Géographiques"
+
+#: includes/admin/views/tab-docs.php:140
+msgid "All incoming API requests are logged in a lightweight table with timestamps, IP addresses, country flags (via Cloudflare header or cached GeoIP), endpoints, and HTTP response status codes."
+msgstr "Toutes les requêtes API entrantes sont journalisées dans une table légère avec horodatage, adresses IP, drapeaux de pays (via en-tête Cloudflare ou GeoIP en cache), endpoints et codes HTTP retournés."
+
+#: includes/admin/views/tab-docs.php:150
+msgid "Inspectable Technical Data"
+msgstr "Périmètre des Données Inspectables"
+
+#: includes/admin/views/tab-docs.php:153
+msgid "Here is the technical scope exposed by the plugin according to your permissions matrix:"
+msgstr "Voici l'étendue technique exposée par l'extension en fonction de votre matrice de permissions :"
+
+#: includes/admin/views/tab-docs.php:160
+msgid "Domain"
+msgstr "Domaine"
+
+#: includes/admin/views/tab-docs.php:161
+msgid "Available Endpoints"
+msgstr "Endpoints Disponibles"
+
+#: includes/admin/views/tab-docs.php:162
+msgid "Data Returned to AI"
+msgstr "Données Renvoyées à l'IA"
+
+#: includes/admin/views/tab-docs.php:167
+msgid "System & Limits"
+msgstr "Système & Limites"
+
+#: includes/admin/views/tab-docs.php:169
+msgid "Dynamic capabilities discovery catalog, ready-to-use SKILL.md generator (?format=skill), WordPress, PHP, MySQL versions, memory limits, active plugins with update status, database health with autoload footprint analysis, transactional SMTP mail diagnostic, security hardening audit, HPOS state, and Action Scheduler queues."
+msgstr "Catalogue dynamique de découverte des capacités, générateur de SKILL.md prêt à l'emploi (?format=skill), versions WP/PHP/MySQL, limites de mémoire, extensions actives avec statut des mises à jour, santé de la base de données avec analyse de l'autoload, diagnostic SMTP transactionnel, durcissement de sécurité, état HPOS et files Action Scheduler."
+
+#: includes/admin/views/tab-docs.php:172
+msgid "WooCommerce & Themes"
+msgstr "WooCommerce & Thèmes"
+
+#: includes/admin/views/tab-docs.php:174
+msgid "Overridden WooCommerce templates with version check against core, Woodmart & Elessi theme settings, child theme functions.php and style.css."
+msgstr "Templates WooCommerce surchargés avec comparaison de version par rapport au core, réglages des thèmes Woodmart & Elessi, code de functions.php et style.css du thème enfant."
+
+#: includes/admin/views/tab-docs.php:177
+msgid "Code & Plugins"
+msgstr "Code & Extensions"
+
+#: includes/admin/views/tab-docs.php:179
+msgid "File trees of plugins and mu-plugins (supports ?status=active|inactive|all), sandboxed reading of specific PHP, JS, or CSS files with strict path validation."
+msgstr "Arborescences des extensions et mu-plugins (supporte ?status=active|inactive|all), lecture sandboxée des fichiers PHP, JS ou CSS avec validation stricte du chemin."
+
+#: includes/admin/views/tab-docs.php:182
+#: includes/class-permissions.php:38
+#: includes/class-permissions.php:266
+msgid "Elementor Architecture"
+msgstr "Architecture Elementor"
+
+#: includes/admin/views/tab-docs.php:184
+msgid "Bulk export and listing of pages and templates with status filter (?status=publish|draft|private|all or active|inactive), complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens."
+msgstr "Export groupé et liste des pages et modèles avec filtre de statut (?status=publish|draft|private|all ou active|inactive), arbres JSON de widgets décodés, définitions des champs de formulaires et webhooks, tokens du kit graphique global."
+
+#: includes/admin/views/tab-docs.php:187
+#: includes/class-permissions.php:43
+#: includes/class-permissions.php:301
+msgid "Code Snippets (WPCode & Code Snippets Pro)"
+msgstr "Extraits de code (WPCode & Code Snippets Pro)"
+
+#: includes/admin/views/tab-docs.php:189
+msgid "Inventory of all custom PHP/JS/CSS/HTML snippets stored in WPCode and Code Snippets (Free/Pro) with status (?status=active|inactive|all), source (?source=all|code-snippets|wpcode), and type (?type=all|php|css|js|html) filters, execution location, priority, tags, direct admin edit URLs, and full source code."
+msgstr "Inventaire de tous les extraits PHP/JS/CSS/HTML personnalisés stockés dans WPCode et Code Snippets (Free/Pro) avec filtres de statut (?status=active|inactive|all), de source (?source=all|code-snippets|wpcode) et de type (?type=all|php|css|js|html), emplacement d'exécution, priorité, étiquettes, URLs directes d'édition admin et code source complet."
+
+#: includes/admin/views/tab-docs.php:192
+msgid "Logs & Diagnostics"
+msgstr "Journaux & Diagnostics"
+
+#: includes/admin/views/tab-docs.php:194
+msgid "List of available log files (debug.log, uploads/wc-logs/*.log, custom wp-content/ logs), memory-safe tail extraction, and Crash Watch: aggregated recent PHP fatal errors & exceptions."
+msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log, logs personnalisés de wp-content/), extraction mémoire sécurisée des dernières lignes, et Crash Watch : erreurs fatales PHP et exceptions récentes agrégées."
+
+#: includes/admin/views/tab-docs.php:197
+#: includes/class-permissions.php:53
+#: includes/class-permissions.php:364
+msgid "WP-Cron & Action Scheduler"
+msgstr "WP-Cron & Action Scheduler"
+
+#: includes/admin/views/tab-docs.php:199
+msgid "Inspection of registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending actions with error failure logs)."
+msgstr "Inspection des tâches planifiées WP-Cron, intervalles, tâches en retard, et files Action Scheduler (actions en cours, échouées, en attente avec logs d'erreur)."
+
+#: includes/admin/views/tab-docs.php:202
+#: includes/class-permissions.php:58
+#: includes/class-permissions.php:384
+msgid "FlowMattic Workflows"
+msgstr "Workflows FlowMattic"
+
+#: includes/admin/views/tab-docs.php:204
+msgid "Bulk export and inspection of FlowMattic workflows with status filter (?status=active|inactive|all), steps, triggers, action counts, and native importable JSON format."
+msgstr "Export groupé et inspection des workflows FlowMattic avec filtre de statut (?status=active|inactive|all), étapes, déclencheurs, compteurs d'actions et format JSON importable natif."
+
+#: includes/admin/views/tab-docs.php:207
+msgid "Independent Analytics"
+msgstr "Independent Analytics"
+
+#: includes/admin/views/tab-docs.php:209
+msgid "Audience and conversion tracking: visits, views, bounce rate, WooCommerce conversion rate, net sales, top pages, acquisition channels, UTM campaigns, and device breakdowns."
+msgstr "Suivi de l'audience et des conversions : visites, vues, taux de rebond, taux de conversion WooCommerce, ventes nettes, pages populaires, canaux d'acquisition, campagnes UTM et répartition par appareil."
+
+#: includes/admin/views/tab-docs.php:212
+#: includes/class-permissions.php:68
+#: includes/class-permissions.php:466
+msgid "Custom Fields & Meta (ACF & Code)"
+msgstr "Champs Personnalisés & Métadonnées (ACF & Code)"
+
+#: includes/admin/views/tab-docs.php:214
+msgid "Unified catalog of custom fields defined in code (register_post_meta) and ACF (groups, recursive subfields, location rules, options pages). Includes single post/product metadata inspection with resolved values."
+msgstr "Catalogue unifié des champs personnalisés déclarés dans le code (register_post_meta) et ACF (groupes, sous-champs récursifs, règles d'affichage, pages d'options). Inclut l'inspection des métadonnées avec valeurs résolues pour chaque publication/produit."
+
+#: includes/admin/views/tab-docs.php:217
+msgid "WooCommerce Store Data"
+msgstr "Données Boutique WooCommerce"
+
+#: includes/admin/views/tab-docs.php:219
+msgid "Store health summary, paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health."
+msgstr "Résumé de santé de la boutique, catalogue produits paginé avec variations et SEO unifié, commandes récentes avec anonymisation stricte RGPD/PII, rapports de vente natifs (ventes nettes/brutes, panier moyen, % de croissance), top produits et codes promo, valorisation financière des stocks & alertes stocks dormants, et santé de délivrance des webhooks."
+
+#: includes/admin/views/tab-docs.php:222
+#: includes/class-permissions.php:78
+#: includes/class-permissions.php:559
+msgid "Pages, Content & SEO"
+msgstr "Pages, Contenus & SEO"
+
+#: includes/admin/views/tab-docs.php:224
+msgid "WordPress pages and blog posts hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, page templates, and unified SEO audit across pages, posts, WooCommerce products, and categories (Yoast, Rank Math, SEOPress, AIOSEO)."
+msgstr "Hiérarchie des pages et articles WordPress, arbres de blocs Gutenberg bruts et rendus, shortcodes détectés, modèles de page, et audit SEO unifié sur les pages, articles, produits WooCommerce et catégories (Yoast, Rank Math, SEOPress, AIOSEO)."
+
+#: includes/admin/views/tab-docs.php:227
+msgid "Site Performance & Profiling"
+msgstr "Performance & Profilage du Site"
+
+#: includes/admin/views/tab-docs.php:229
+msgid "Auto-discovery of 5 template archetypes (home, shop, category, product, cart), on-demand URL profiler (SQL queries and execution time attributed per plugin, memory, TTFB, duplicate/slow queries), 100% native Core Web Vitals & frontend signals (DOM size & Elementor %, CLS missing image dimensions, legacy formats, Google Fonts swap, WP core bloat scripts, cart fragments), autoload bloat, and plugins database footprint."
+msgstr "Découverte automatique de 5 archétypes de modèles (accueil, boutique, catégorie, produit, panier), profileur d'URL à la demande (requêtes SQL et temps d'exécution attribués par extension, mémoire, TTFB, requêtes lentes/doublons), signaux Core Web Vitals & frontend 100% natifs (taille DOM & % Elementor, dimensions manquantes pour CLS, formats d'image obsolètes, swap Google Fonts, scripts superflus du cœur WP, fragments panier), surcharge autoload, et empreinte BDD des extensions."
+
+#: includes/admin/views/tab-docs.php:240
+msgid "Dynamic Procedural Playbooks & AI Skill Generator"
+msgstr "Playbooks Procéduraux Dynamiques & Générateur de Skill IA"
+
+#: includes/admin/views/tab-docs.php:243
+msgid "WP Agent Bridge is more than raw endpoints: it embeds 7 structured MECE Master Playbooks and dynamically generates ready-to-use AI skills."
+msgstr "WP Agent Bridge est bien plus qu'une liste d'endpoints : il intègre 7 Playbooks maîtres MECE structurés et génère dynamiquement des skills IA prêtes à l'emploi."
+
+#: includes/admin/views/tab-docs.php:250
+msgid "Self-Updating Skill (?format=skill)"
+msgstr "Skill Auto-Actualisable (?format=skill)"
+
+#: includes/admin/views/tab-docs.php:253
+msgid "When an AI agent queries /capabilities?format=skill, the plugin generates an up-to-date SKILL.md file with active routes and playbooks. When you update the plugin, the AI detects new capabilities without re-copying prompts."
+msgstr "Lorsqu'un agent IA interroge /capabilities?format=skill, l'extension génère un fichier SKILL.md à jour avec les routes et playbooks actifs. Dès que vous mettez à jour l'extension, l'IA détecte les nouvelles capacités sans avoir à recopier le prompt."
+
+#: includes/admin/views/tab-docs.php:260
+msgid "7 MECE Master Audit Playbooks"
+msgstr "7 Playbooks d'Audit Maîtres MECE"
+
+#: includes/admin/views/tab-docs.php:263
+msgid "Organized into 7 Strategic MECE Master Pillars: 360° SEO & Content, Agency Performance & Core Web Vitals, System Health & Database Bloat Hygiene, Orders & Checkout Troubleshooting, 360° E-Commerce Sales & Analytics, Shipping Logistics & Flexible Shipping, and Code Architecture & Automations Map."
+msgstr "Organisé en 7 piliers stratégiques MECE : SEO 360° & Contenu, Performance Agence & Core Web Vitals, Santé Système & Hygiène Base de Données, Dépannage Commandes & Paiement, Ventes & Analytics E-Commerce 360°, Logistique Expédition & Flexible Shipping, et Architecture Code & Cartographie Automatisations."
+
+#: includes/admin/views/tab-docs.php:270
+msgid "Permission-Adaptive Workflows"
+msgstr "Workflows Adaptatifs aux Permissions"
+
+#: includes/admin/views/tab-docs.php:273
+msgid "Playbooks dynamically adapt to your site settings. If you disable a module in the Permissions tab, associated playbook steps are automatically pruned so the AI never triggers 403 Forbidden errors."
+msgstr "Les playbooks s'adaptent dynamiquement aux réglages de votre site. Si vous désactivez un module dans l'onglet Permissions, les étapes associées sont automatiquement retirées afin que l'IA ne rencontre aucune erreur 403 Forbidden."
+
+#: includes/admin/views/tab-docs.php:285
+msgid "Open Source & Plugin Evolution (GitHub)"
+msgstr "Open Source & Évolution de l'Extension (GitHub)"
+
+#: includes/admin/views/tab-docs.php:287
+msgid "WP Agent Bridge is actively maintained and open source. If you need new inspection capabilities or wish to contribute improvements, you are warmly invited to participate!"
+msgstr "WP Agent Bridge est activement maintenu et open source. Si vous avez besoin de nouvelles capacités d'inspection ou souhaitez apporter des améliorations, vous êtes chaleureusement invité à participer !"
+
+#: includes/admin/views/tab-docs.php:292
+msgid "View Repository on GitHub"
+msgstr "Voir le Dépôt sur GitHub"
+
+#: includes/admin/views/tab-docs.php:298
+msgid "Suggesting New Endpoints"
+msgstr "Suggérer de Nouveaux Endpoints"
+
+#: includes/admin/views/tab-docs.php:300
+msgid "Need to inspect WooCommerce shipping zones, tax rules, payment gateway settings, or custom database tables? You can open an issue or submit a Pull Request on GitHub."
+msgstr "Besoin d'inspecter les zones d'expédition WooCommerce, les règles de taxes, les réglages de passerelles de paiement ou des tables SQL personnalisées ? Vous pouvez ouvrir une issue ou soumettre une Pull Request sur GitHub."
+
+#: includes/admin/views/tab-docs.php:303
+msgid "The AI Mega-Prompt is also programmed to formulate ready-to-send feature requests and sample PHP controller code whenever your AI assistant identifies missing technical context!"
+msgstr "Le Mega-Prompt IA est également configuré pour formuler des demandes de fonctionnalités prêtes à envoyer avec un exemple de contrôleur PHP dès que votre assistant IA identifie un contexte manquant !"
+
+#: includes/admin/views/tab-docs.php:308
+msgid "Automatic Updates via PUC"
+msgstr "Mises à Jour Automatiques via PUC"
+
+#: includes/admin/views/tab-docs.php:310
+msgid "This plugin embeds the Plugin Update Checker (PUC v5.6). Whenever a new GitHub Release is tagged and published with a higher version number, your WordPress installation will automatically notify you and allow 1-click updates right from your Plugins dashboard."
+msgstr "Cette extension intègre Plugin Update Checker (PUC v5.6). Dès qu'une nouvelle version GitHub Release est publiée avec un numéro supérieur, votre WordPress vous notifiera automatiquement et permettra la mise à jour en 1 clic depuis votre tableau de bord des extensions."
+
+#: includes/admin/views/tab-docs.php:315
+msgid "Contact & Direct Support"
+msgstr "Contact & Support Direct"
+
+#: includes/admin/views/tab-docs.php:317
+msgid "Have questions, ideas, or feedback? You can contact the author directly at:"
+msgstr "Des questions, des idées ou des retours ? Vous pouvez contacter l'auteur directement à :"
+
+#: includes/admin/views/tab-general.php:34
+msgid "Settings saved successfully."
+msgstr "Réglages enregistrés avec succès."
+
+#: includes/admin/views/tab-general.php:49
+msgid "Connect Your AI Assistant in 2 Clicks"
+msgstr "Connectez votre assistant IA en 2 clics"
+
+#: includes/admin/views/tab-general.php:51
+msgid "No AI has connected to this site yet. Follow these 2 simple steps to start exploring your site data with your AI."
+msgstr "Aucune IA ne s'est encore connectée à ce site. Suivez ces 2 étapes simples pour commencer à explorer les données de votre site avec votre IA."
+
+#: includes/admin/views/tab-general.php:57
+msgid "Awaiting First Connection"
+msgstr "En attente de la 1ère connexion"
+
+#: includes/admin/views/tab-general.php:65
+msgid "Get Your AI Connection Prompt"
+msgstr "Récupérez votre prompt de connexion IA"
+
+#: includes/admin/views/tab-general.php:66
+msgid "Navigate to the AI Mega-Prompt tab to copy the self-updating skill or ready-made connection prompt."
+msgstr "Rendez-vous sur l'onglet Mega-Prompt IA pour copier la compétence auto-actualisée ou le prompt de connexion prêt à l'emploi."
+
+#: includes/admin/views/tab-general.php:68
+msgid "Open AI Mega-Prompt Tab"
+msgstr "Ouvrir l'onglet Mega-Prompt IA"
+
+#: includes/admin/views/tab-general.php:76
+msgid "Paste & Ask High-Value Questions"
+msgstr "Collez & Posez des questions à forte valeur"
+
+#: includes/admin/views/tab-general.php:77
+msgid "Paste the prompt into your AI agent (Antigravity, Claude, Cursor, ChatGPT) and try this high-value prompt:"
+msgstr "Collez le prompt dans votre agent IA (Antigravity, Claude, Cursor, ChatGPT) et essayez cette question à forte valeur :"
+
+#: includes/admin/views/tab-general.php:81
+msgid "Copy"
+msgstr "Copier"
+
+#: includes/admin/views/tab-general.php:92
+msgid "100% Read-Only"
+msgstr "100% Lecture seule"
+
+#: includes/admin/views/tab-general.php:92
+msgid "Zero risk: cannot write, modify, or delete any site data."
+msgstr "Zéro risque : aucune écriture, modification ou suppression possible sur votre site."
+
+#: includes/admin/views/tab-general.php:98
+msgid "Auto-Redacted PII"
+msgstr "Données privées masquées"
+
+#: includes/admin/views/tab-general.php:98
+msgid "Customer data, passwords, and secret keys are automatically masked."
+msgstr "Les données clients, mots de passe et clés secrètes sont automatiquement masqués."
+
+#: includes/admin/views/tab-general.php:104
+msgid "Zero Idle Impact"
+msgstr "Zéro impact au repos"
+
+#: includes/admin/views/tab-general.php:104
+msgid "Consumes 0 resources when idle; lightning fast on demands."
+msgstr "Consomme 0 ressource au repos ; ultra-rapide lors des requêtes."
+
+#: includes/admin/views/tab-general.php:117
+msgid "AI Agent Connected & Operational"
+msgstr "Agent IA connecté & opérationnel"
+
+#: includes/admin/views/tab-general.php:120
+msgid "Your site is actively connected with AI agents. You can inspect all authenticated queries, response times, and IP locations anytime in the Connection Logs tab."
+msgstr "Votre site est activement connecté avec des agents IA. Vous pouvez consulter les requêtes authentifiées, temps de réponse et adresses IP à tout moment dans l'onglet Journaux de connexion."
+
+#: includes/admin/views/tab-general.php:124
+msgid "View Connection Logs"
+msgstr "Voir les journaux de connexion"
+
+#: includes/admin/views/tab-general.php:131
+msgid "API Connection & Authentication"
+msgstr "Connexion API & Authentification"
+
+#: includes/admin/views/tab-general.php:133
+msgid "Use these credentials to connect your local development environment or AI assistants to this WordPress installation."
+msgstr "Utilisez ces identifiants pour connecter votre environnement de développement local ou vos assistants IA à cette installation WordPress."
+
+#: includes/admin/views/tab-general.php:137
+msgid "REST API Base URL"
+msgstr "URL de base de l'API REST"
+
+#: includes/admin/views/tab-general.php:141
+msgid "Copy URL"
+msgstr "Copier l'URL"
+
+#: includes/admin/views/tab-general.php:144
+msgid "All inspection endpoints are available under this root URL."
+msgstr "Tous les endpoints d'inspection sont disponibles sous cette URL racine."
+
+#: includes/admin/views/tab-general.php:148
+msgid "Bearer Access Token"
+msgstr "Token d'accès Bearer"
+
+#: includes/admin/views/tab-general.php:155
+msgid "Copy Token"
+msgstr "Copier le token"
+
+#: includes/admin/views/tab-general.php:159
+msgid "Regenerate Token"
+msgstr "Régénérer le token"
+
+#: includes/admin/views/tab-general.php:167
+msgid "Token is defined securely in wp-config.php via WP_AGENT_BRIDGE_TOKEN constant."
+msgstr "Le token est défini de manière sécurisée dans wp-config.php via la constante WP_AGENT_BRIDGE_TOKEN."
+
+#: includes/admin/views/tab-general.php:171
+msgid "Cryptographically secure 64-character hexadecimal token (RFC 6750 compliant, shell-safe). Keep it private. Click Regenerate at any time to invalidate old credentials."
+msgstr "Token hexadécimal sécurisé de 64 caractères (conforme RFC 6750, sans risque shell). Gardez-le privé. Cliquez sur Régénérer à tout moment pour invalider les anciens identifiants."
+
+#: includes/admin/views/tab-general.php:182
+msgid "Anti-Brute-Force Protection & Lockouts"
+msgstr "Protection Anti-Brute-Force & Blocages"
+
+#: includes/admin/views/tab-general.php:185
+msgid "Reset All Failures & Unblock All IPs"
+msgstr "Réinitialiser les échecs et débloquer toutes les IP"
+
+#: includes/admin/views/tab-general.php:189
+msgid "Protects your site against unauthorized automated attempts to guess your Bearer token. Any IP that submits wrong tokens repeatedly is automatically locked out."
+msgstr "Protège votre site contre les tentatives automatisées de deviner votre token Bearer. Toute IP soumettant des clés erronées de manière répétée est automatiquement bloquée."
+
+#: includes/admin/views/tab-general.php:196
+msgid "%d IP address(es) currently locked out."
+msgstr "%d adresse(s) IP actuellement bloquée(s)."
+
+#: includes/admin/views/tab-general.php:201
+msgid "Locked IP"
+msgstr "IP Bloquée"
+
+#: includes/admin/views/tab-general.php:202
+msgid "Locked Since"
+msgstr "Bloquée Depuis"
+
+#: includes/admin/views/tab-general.php:203
+msgid "Remaining Lockout"
+msgstr "Temps Restant"
+
+#: includes/admin/views/tab-general.php:204
+msgid "Action"
+msgstr "Action"
+
+#: includes/admin/views/tab-general.php:214
+msgid "%d minute(s) remaining"
+msgstr "%d minute(s) restante(s)"
+
+#: includes/admin/views/tab-general.php:219
+msgid "Unlock IP"
+msgstr "Débloquer l'IP"
+
+#: includes/admin/views/tab-general.php:229
+msgid "No IP addresses currently locked out. Your inspection API is secure."
+msgstr "Aucune adresse IP bloquée actuellement. Votre API d'inspection est sécurisée."
+
+#: includes/admin/views/tab-general.php:238
+msgid "Security & Restrictions Settings"
+msgstr "Réglages de Sécurité & Restrictions"
+
+#: includes/admin/views/tab-general.php:241
+msgid "Max Failed Attempts Before Lockout"
+msgstr "Tentatives Échouées Max Avant Blocage"
+
+#: includes/admin/views/tab-general.php:244
+msgid "Number of invalid authentication attempts permitted from an IP address before it is temporarily blocked (default: 5 attempts)."
+msgstr "Nombre de tentatives invalides autorisées depuis une adresse IP avant son blocage temporaire (par défaut : 5 tentatives)."
+
+#: includes/admin/views/tab-general.php:249
+msgid "Lockout Duration (Minutes)"
+msgstr "Durée du Blocage (Minutes)"
+
+#: includes/admin/views/tab-general.php:252
+msgid "Duration in minutes for which an offending IP remains completely blocked from querying the API (default: 30 minutes)."
+msgstr "Durée en minutes pendant laquelle une IP fautive reste totalement bloquée (par défaut : 30 minutes)."
+
+#: includes/admin/views/tab-general.php:257
+msgid "IP Whitelist (Optional)"
+msgstr "Liste blanche d'adresses IP (Optionnel)"
+
+#: includes/admin/views/tab-general.php:260
+msgid "Comma or line-separated list of allowed IP addresses. Leave empty to allow any client presenting the valid Bearer token."
+msgstr "Liste d'adresses IP autorisées, séparées par des virgules ou des retours à la ligne. Laissez vide pour autoriser tout client présentant le token Bearer valide."
+
+#: includes/admin/views/tab-general.php:265
+msgid "Connection Log Retention (Max Entries)"
+msgstr "Rétention des logs de connexion (Entrées max)"
+
+#: includes/admin/views/tab-general.php:268
+msgid "Maximum number of recent connection logs kept in the database. Older entries are automatically summarized into cumulative statistics to save database storage."
+msgstr "Nombre maximum de logs de connexion récents conservés en base de données. Les entrées plus anciennes sont automatiquement résumées dans des statistiques cumulatives pour économiser l'espace disque."
+
+#: includes/admin/views/tab-general.php:273
+msgid "Save Security Settings"
+msgstr "Enregistrer les Réglages de Sécurité"
+
+#: includes/admin/views/tab-logs.php:17
+msgid "Total API Requests (All-Time)"
+msgstr "Total des requêtes API (Depuis l'origine)"
+
+#: includes/admin/views/tab-logs.php:24
+msgid "Requests in Last 24 Hours"
+msgstr "Requêtes au cours des 24 dernières heures"
+
+#: includes/admin/views/tab-logs.php:31
+msgid "Requests in Last 7 Days"
+msgstr "Requêtes au cours des 7 derniers jours"
+
+#: includes/admin/views/tab-logs.php:39
+msgid "Requests by Country"
+msgstr "Requêtes par pays"
+
+#: includes/admin/views/tab-logs.php:46
+#: includes/admin/views/tab-logs.php:117
+#: includes/class-access-logger.php:38
+msgid "Unknown"
+msgstr "Inconnu"
+
+#: includes/admin/views/tab-logs.php:48
+#: includes/admin/views/tab-logs.php:65
+msgid "reqs"
+msgstr "req."
+
+#: includes/admin/views/tab-logs.php:53
+msgid "No country connection data recorded yet."
+msgstr "Aucune donnée de connexion par pays enregistrée pour le moment."
+
+#: includes/admin/views/tab-logs.php:59
+msgid "Top Client IPs"
+msgstr "Top des adresses IP clientes"
+
+#: includes/admin/views/tab-logs.php:70
+msgid "No client IP connection data recorded yet."
+msgstr "Aucune donnée de connexion IP enregistrée pour le moment."
+
+#: includes/admin/views/tab-logs.php:78
+msgid "Recent API Connection Logs"
+msgstr "Logs récents des connexions API"
+
+#: includes/admin/views/tab-logs.php:80
+msgid "Detailed audit trail of the latest 100 API queries received."
+msgstr "Journal d'audit détaillé des 100 dernières requêtes API reçues."
+
+#: includes/admin/views/tab-logs.php:84
+msgid "Clear Log History"
+msgstr "Effacer l'historique des logs"
+
+#: includes/admin/views/tab-logs.php:92
+msgid "Date & Time"
+msgstr "Date & Heure"
+
+#: includes/admin/views/tab-logs.php:93
+msgid "Client IP"
+msgstr "IP Cliente"
+
+#: includes/admin/views/tab-logs.php:94
+msgid "Country"
+msgstr "Pays"
+
+#: includes/admin/views/tab-logs.php:95
+msgid "Endpoint"
+msgstr "Endpoint"
+
+#: includes/admin/views/tab-logs.php:96
+msgid "Status"
+msgstr "Statut"
+
+#: includes/admin/views/tab-logs.php:97
+msgid "User-Agent"
+msgstr "User-Agent"
+
+#: includes/admin/views/tab-logs.php:132
+msgid "No connection logs recorded yet. Once your AI agent connects, entries will show up here in real time."
+msgstr "Aucun log de connexion enregistré pour le moment. Dès que votre agent IA se connectera, les entrées apparaîtront ici en temps réel."
+
+#: includes/admin/views/tab-permissions.php:22
+msgid "Permissions updated successfully."
+msgstr "Permissions mises à jour avec succès."
+
+#: includes/admin/views/tab-permissions.php:29
+msgid "Granular Permissions Matrix"
+msgstr "Matrice de permissions granulaires"
+
+#: includes/admin/views/tab-permissions.php:31
+msgid "Control exactly which system modules and resources your AI assistants or external tools are permitted to inspect. When a module is unchecked, the API will block requests with a 403 Forbidden response."
+msgstr "Contrôlez précisément quels modules et ressources système vos assistants IA ou outils externes sont autorisés à inspecter. Lorsqu'un module est décoché, l'API bloquera les requêtes avec une réponse 403 Forbidden."
+
+#: includes/admin/views/tab-permissions.php:38
+msgid "Allow"
+msgstr "Autoriser"
+
+#: includes/admin/views/tab-permissions.php:39
+msgid "Module"
+msgstr "Module"
+
+#: includes/admin/views/tab-permissions.php:40
+msgid "Description & Scope"
+msgstr "Description & Portée"
+
+#: includes/admin/views/tab-permissions.php:41
+msgid "Associated Endpoints"
+msgstr "Endpoints associés"
+
+#: includes/admin/views/tab-permissions.php:73
+msgid "Save Permissions Matrix"
+msgstr "Enregistrer la matrice de permissions"
+
+#: includes/api/class-analytics-controller.php:162
+msgid "Independent Analytics is not installed or its database tables were not found on this site."
+msgstr "Independent Analytics n'est pas installé ou ses tables de base de données sont introuvables sur ce site."
+
+#: includes/api/class-analytics-controller.php:163
+msgid "Install and activate Independent Analytics or Independent Analytics Pro to enable audience and conversion tracking."
+msgstr "Installez et activez Independent Analytics ou Independent Analytics Pro pour activer le suivi de l'audience et des conversions."
+
+#: includes/api/class-analytics-controller.php:1105
+msgid "No ecommerce orders table active in Independent Analytics."
+msgstr "Aucune table de commandes e-commerce active dans Independent Analytics."
+
+#: includes/api/class-code-controller.php:206
+msgid "Access denied: File extension not permitted."
+msgstr "Accès refusé : Extension de fichier non autorisée."
+
+#: includes/api/class-code-controller.php:212
+msgid "Access denied: Protected file."
+msgstr "Accès refusé : Fichier protégé."
+
+#: includes/api/class-code-controller.php:218
+msgid "File exceeds maximum readable size of 2MB."
+msgstr "Le fichier dépasse la taille maximale lisible de 2 Mo."
+
+#: includes/api/class-code-controller.php:248
+msgid "Unsupported hashing algorithm. Choose \"md5\" or \"sha256\"."
+msgstr "Algorithme de hachage non supporté. Choisissez « md5 » ou « sha256 »."
+
+#: includes/api/class-code-controller.php:285
+msgid "PHP ZipArchive extension is not available on this server."
+msgstr "L'extension PHP ZipArchive n'est pas disponible sur ce serveur."
+
+#: includes/api/class-code-controller.php:296
+msgid "Parameter \"format\" must be \"stream\" or \"base64\"."
+msgstr "Le paramètre « format » doit être « stream » ou « base64 »."
+
+#: includes/api/class-code-controller.php:305
+msgid "Target directory has no eligible files to compress."
+msgstr "Le répertoire cible ne contient aucun fichier éligible à la compression."
+
+#: includes/api/class-code-controller.php:324
+msgid "Failed to initialize ZIP archive on server."
+msgstr "Échec de l'initialisation de l'archive ZIP sur le serveur."
+
+#: includes/api/class-code-controller.php:344
+msgid "Failed to read generated ZIP archive."
+msgstr "Échec de la lecture de l'archive ZIP générée."
+
+#: includes/api/class-code-controller.php:359
+msgid "Headers already sent, cannot stream binary ZIP."
+msgstr "En-têtes déjà envoyés, impossible de diffuser le ZIP binaire."
+
+#: includes/api/class-code-controller.php:396
+msgid "Parameter \"path\" is required."
+msgstr "Le paramètre « path » est obligatoire."
+
+#: includes/api/class-code-controller.php:401
+msgid "Access denied: Directory traversal detected."
+msgstr "Accès refusé : Traversée de répertoire détectée."
+
+#: includes/api/class-code-controller.php:417
+msgid "Requested path not found on server."
+msgstr "Chemin demandé introuvable sur le serveur."
+
+#: includes/api/class-code-controller.php:421
+msgid "Requested path must be a directory."
+msgstr "Le chemin demandé doit être un dossier."
+
+#: includes/api/class-code-controller.php:443
+msgid "Access denied: Requested path is outside authorized directories (plugins, mu-plugins, themes)."
+msgstr "Accès refusé : Le chemin demandé se trouve en dehors des répertoires autorisés (plugins, mu-plugins, themes)."
+
+#: includes/api/class-code-controller.php:449
+msgid "Access denied: Cannot target the root plugins or themes directory."
+msgstr "Accès refusé : Impossible de cibler directement la racine du répertoire plugins ou themes."
+
+#: includes/api/class-code-controller.php:459
+msgid "Access denied: Sensitive or upload directory."
+msgstr "Accès refusé : Répertoire sensible ou dossier d'uploads."
+
+#: includes/api/class-code-controller.php:538
+msgid "Directory contains more than %d files. Safety limit exceeded."
+msgstr "Le répertoire contient plus de %d fichiers. Limite de sécurité dépassée."
+
+#: includes/api/class-code-controller.php:548
+msgid "Directory total size exceeds %d MB. Safety limit exceeded."
+msgstr "La taille totale du répertoire dépasse %d Mo. Limite de sécurité dépassée."
+
+#: includes/api/class-elementor-controller.php:213
+msgid "Post or template not found."
+msgstr "Publication ou modèle introuvable."
+
+#: includes/api/class-elementor-controller.php:409
+msgid "No active Elementor Kit found."
+msgstr "Aucun Kit Elementor actif trouvé."
+
+#: includes/api/class-flowmattic-controller.php:282
+msgid "FlowMattic is not active or workflows database table was not found."
+msgstr "FlowMattic n'est pas actif ou la table de base de données des workflows est introuvable."
+
+#: includes/api/class-flowmattic-controller.php:370
+#: includes/api/class-flowmattic-controller.php:439
+msgid "FlowMattic is not active or workflows table was not found."
+msgstr "FlowMattic n'est pas actif ou la table des workflows est introuvable."
+
+#: includes/api/class-flowmattic-controller.php:382
+msgid "Workflow '%s' was not found."
+msgstr "Le workflow '%s' est introuvable."
+
+#: includes/api/class-logs-controller.php:155
+msgid "Parameter \"source\" is required."
+msgstr "Le paramètre « source » est obligatoire."
+
+#: includes/api/class-logs-controller.php:161
+msgid "Log file not found or unreadable."
+msgstr "Fichier de log introuvable ou illisible."
+
+#: includes/api/class-logs-controller.php:205
+msgid "Parameter \"file\" is required."
+msgstr "Le paramètre « file » est obligatoire."
+
+#: includes/api/class-logs-controller.php:214
+msgid "Log file not found, unreadable, or outside allowed directories."
+msgstr "Fichier de log introuvable, illisible ou situé en dehors des répertoires autorisés."
+
+#: includes/api/class-meta-controller.php:219
+msgid "Post with ID %d does not exist."
+msgstr "La publication avec l'identifiant %d n'existe pas."
+
+#: includes/api/class-scheduler-controller.php:138
+msgid "in %s"
+msgstr "dans %s"
+
+#: includes/api/class-scheduler-controller.php:139
+msgid "%s ago (OVERDUE)"
+msgstr "il y a %s (EN RETARD)"
+
+#: includes/api/class-scheduler-controller.php:210
+msgid "Action Scheduler tables not found in database."
+msgstr "Tables Action Scheduler introuvables dans la base de données."
+
+#: includes/api/class-theme-controller.php:81
+#: includes/api/class-woocommerce-controller.php:307
+#: includes/api/class-woocommerce-controller.php:501
+#: includes/api/class-woocommerce-controller.php:648
+#: includes/api/class-woocommerce-controller.php:802
+#: includes/api/class-woocommerce-controller.php:906
+#: includes/api/class-woocommerce-controller.php:1065
+#: includes/api/class-woocommerce-controller.php:1155
+msgid "WooCommerce is not active on this site."
+msgstr "WooCommerce n'est pas actif sur ce site."
+
+#: includes/api/class-woocommerce-controller.php:655
+msgid "Product not found."
+msgstr "Produit introuvable."
+
+#: includes/api/class-woocommerce-controller.php:913
+msgid "Order not found."
+msgstr "Commande introuvable."
+
+#: includes/api/class-wpcode-controller.php:233
+msgid "Snippet not found."
+msgstr "Extrait de code introuvable."
+
+#: includes/class-access-logger.php:26
+msgid "Local Network"
+msgstr "Réseau Local"
+
+#: includes/class-permissions.php:18
+#: includes/class-permissions.php:164
 msgid "System & Environment"
 msgstr "Système & Environnement"
 
-#: includes/class-permissions.php:18
-msgid "Allows inspection of WP, PHP, MySQL versions, active plugins list, server limits, and Action Scheduler crons."
-msgstr "Permet l'inspection des versions WP, PHP, MySQL, des extensions actives, des limites serveur et de l'Action Scheduler."
+#: includes/class-permissions.php:19
+msgid "Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, and security hardening."
+msgstr "Permet d'inspecter les versions WP, PHP, MySQL, les extensions actives, les limites serveur, les crons Action Scheduler, l'empreinte autoload de la BDD, le diagnostic SMTP et la sécurité."
 
 #: includes/class-permissions.php:23
+#: includes/class-permissions.php:202
 msgid "WooCommerce Diagnostic & Overrides"
 msgstr "Diagnostic WooCommerce & Surcharges"
 
 #: includes/class-permissions.php:24
+#: includes/class-permissions.php:203
 msgid "Allows auditing template overrides in active themes, detecting outdated WooCommerce templates, and HPOS status."
 msgstr "Permet d'auditer les templates WooCommerce surchargés dans le thème actif, de détecter les versions obsolètes et le statut HPOS."
 
-#: includes/class-permissions.php:29
+#: includes/class-permissions.php:28
+#: includes/class-permissions.php:215
 msgid "Theme Settings & Child Theme"
 msgstr "Réglages Thème & Thème Enfant"
 
-#: includes/class-permissions.php:30
+#: includes/class-permissions.php:29
+#: includes/class-permissions.php:216
 msgid "Allows exporting Woodmart (xts-woodmart-options), Elessi (elessi_options) settings, and child theme functions.php/style.css."
 msgstr "Permet d'exporter les options Woodmart (xts-woodmart-options), Elessi (elessi_options) et le code du thème enfant."
 
-#: includes/class-permissions.php:35
+#: includes/class-permissions.php:33
+#: includes/class-permissions.php:234
 msgid "Code & Plugin File Inspector"
 msgstr "Inspecteur de Code & Extensions"
 
-#: includes/class-permissions.php:36
-msgid "Allows browsing active plugins and mu-plugins file structures and reading specific PHP/JS/CSS files in sandbox."
-msgstr "Permet de parcourir les fichiers des extensions actives/mu-plugins et de lire des fichiers PHP/JS/CSS sous sandbox."
+#: includes/class-permissions.php:34
+msgid "Allows browsing active plugins/mu-plugins structures, reading sandboxed source code, generating directory checksums, and exporting plugin/theme ZIP archives."
+msgstr "Permet de parcourir les extensions/mu-plugins actives, de lire le code source sandboxé, de générer des sommes de contrôle et d'exporter des archives ZIP d'extensions/thèmes."
 
-#: includes/class-permissions.php:41
-msgid "Elementor Architecture"
-msgstr "Architecture Elementor"
-
-#: includes/class-permissions.php:42
+#: includes/class-permissions.php:39
+#: includes/class-permissions.php:267
 msgid "Allows reading Elementor page trees, global kit styles, and mapping form widgets with webhooks."
 msgstr "Permet de lire les arbres JSON Elementor, les styles globaux du kit et de cartographier les formulaires et webhooks."
 
-#: includes/class-permissions.php:47
-msgid "WPCode Snippets"
-msgstr "Extraits de Code WPCode"
+#: includes/class-permissions.php:44
+#: includes/class-permissions.php:302
+msgid "Allows listing and inspecting custom PHP, JS, CSS, and HTML snippets stored in WPCode and Code Snippets (Free/Pro) plugins."
+msgstr "Permet de lister et d'inspecter les extraits de code PHP, JS, CSS et HTML personnalisés stockés dans les extensions WPCode et Code Snippets (Free/Pro)."
 
 #: includes/class-permissions.php:48
-msgid "Allows listing and inspecting custom PHP, JS, and CSS snippets stored in WPCode plugin."
-msgstr "Permet de lister et d'inspecter les extraits de code personnalisés PHP, JS et CSS stockés dans WPCode."
-
-#: includes/class-permissions.php:53
+#: includes/class-permissions.php:333
 msgid "Error & WooCommerce Logs"
 msgstr "Journaux d'Erreurs & Logs WooCommerce"
 
+#: includes/class-permissions.php:49
+#: includes/class-permissions.php:334
+msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection."
+msgstr "Permet de lister et lire en streaming mémoire sécurisé debug.log, uploads/wc-logs/*.log et les logs wp-content/ personnalisés."
+
 #: includes/class-permissions.php:54
-msgid "Allows listing and tail-reading debug.log and uploads/wc-logs/*.log with memory protection."
-msgstr "Permet de lister et d'extraire les dernières lignes de debug.log et wc-logs avec protection mémoire."
+#: includes/class-permissions.php:365
+msgid "Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks)."
+msgstr "Permet d'inspecter les tâches planifiées WP-Cron, intervalles, tâches en retard et les files d'attente d'Action Scheduler (tâches en cours, échouées, en attente)."
 
-#: includes/admin/class-admin-settings.php:23
-msgid "WP Agent Bridge Settings"
-msgstr "Réglages WP Agent Bridge"
+#: includes/class-permissions.php:59
+#: includes/class-permissions.php:385
+msgid "Allows listing and exporting FlowMattic workflows, steps, triggers, and configurations in native JSON format."
+msgstr "Permet de lister et d'exporter les workflows FlowMattic, étapes, déclencheurs et réglages au format JSON natif."
 
-#: includes/admin/class-admin-settings.php:24
-msgid "Agent Bridge"
-msgstr "Agent Bridge"
+#: includes/class-permissions.php:63
+#: includes/class-permissions.php:410
+msgid "Independent Analytics (Visits & Conversion Rates)"
+msgstr "Independent Analytics (Visites & Taux de Conversion)"
 
-#: includes/admin/class-admin-settings.php:79
-msgid "Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated."
-msgstr "Êtes-vous sûr de vouloir régénérer le token ? Les agents IA et scripts CLI perdront immédiatement l'accès jusqu'à leur mise à jour."
+#: includes/class-permissions.php:64
+#: includes/class-permissions.php:411
+msgid "Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics."
+msgstr "Permet d'inspecter les statistiques de visites, canaux de trafic, campagnes UTM, répartition par appareil et taux de conversion WooCommerce suivis par Independent Analytics."
 
-#: includes/admin/class-admin-settings.php:80
-msgid "Are you sure you want to clear all connection logs?"
-msgstr "Êtes-vous sûr de vouloir effacer tout l'historique des logs de connexion ?"
+#: includes/class-permissions.php:69
+#: includes/class-permissions.php:467
+msgid "Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta."
+msgstr "Permet d'inspecter les champs personnalisés déclarés dans le code (register_post_meta), les groupes de champs ACF et leurs champs, ainsi que la table postmeta."
 
-#: includes/admin/class-admin-settings.php:81
-msgid "Copied to clipboard!"
-msgstr "Copié dans le presse-papier !"
+#: includes/class-permissions.php:73
+msgid "WooCommerce Store Data (Products, Orders, Settings, Shipping)"
+msgstr "Données Boutique WooCommerce (Produits, Commandes, Réglages, Expédition)"
 
-#: includes/admin/class-admin-settings.php:93
-msgid "General & Status"
-msgstr "Général & Statut"
+#: includes/class-permissions.php:74
+msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings."
+msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/sans PII), résumé de la boutique, analytics de ventes, top produits, valorisation des stocks, webhooks, zones et méthodes d'expédition avec règles matricielles, et réglages e-commerce."
 
-#: includes/admin/class-admin-settings.php:94
-msgid "Permissions Matrix"
-msgstr "Matrice de Permissions"
+#: includes/class-permissions.php:79
+#: includes/class-permissions.php:560
+msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO)."
+msgstr "Permet d'inspecter la hiérarchie des pages et articles WordPress, le contenu des blocs Gutenberg bruts et rendus, les modèles et les métadonnées SEO unifiées (Yoast, Rank Math, SEOPress, AIOSEO)."
 
-#: includes/admin/class-admin-settings.php:95
-msgid "AI Mega-Prompt & Skill"
-msgstr "Méga-Prompt IA & Skill"
+#: includes/class-permissions.php:83
+#: includes/class-permissions.php:595
+msgid "Site Performance & Plugin Profiler"
+msgstr "Performance du Site & Profileur d'Extensions"
 
-#: includes/admin/class-admin-settings.php:96
-msgid "Connection Logs & Analytics"
-msgstr "Logs de Connexion & Statistiques"
+#: includes/class-permissions.php:84
+msgid "Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, and auditing autoloaded options bloat."
+msgstr "Permet de profiler le temps de réponse des URLs, d'attribuer les requêtes SQL et leur durée par extension, de détecter les requêtes lentes/doublons, de mesurer le poids des assets JS/CSS par extension, d'analyser 5 URLs modèles clés, d'effectuer des vérifications Core Web Vitals 100% natives côté serveur et d'auditer la surcharge des options autoload."
 
-#: includes/admin/class-admin-settings.php:111
-msgid "Active & Protected"
-msgstr "Actif & Protégé"
+#: includes/class-permissions.php:143
+msgid "The '%s' module is disabled by the site administrator."
+msgstr "Le module '%s' est désactivé par l'administrateur du site."
 
-#: includes/admin/class-admin-settings.php:111
-msgid "Token Missing"
-msgstr "Token Manquant"
+#: includes/class-permissions.php:165
+msgid "Allows inspection of WP, PHP, MySQL versions, active plugins list, server limits, and Action Scheduler crons."
+msgstr "Permet l'inspection des versions WP, PHP, MySQL, des extensions actives, des limites serveur et de l'Action Scheduler."
 
-#: includes/class-security.php:186
+#: includes/class-permissions.php:171
+msgid "Quick connectivity, server timestamp, and plugin version check."
+msgstr "Test rapide de connectivité, horodatage serveur et vérification de version de l'extension."
+
+#: includes/class-permissions.php:176
+msgid "Self-describing API catalog, active modules, and dynamic discovery of inspectable data types."
+msgstr "Catalogue d'API auto-descriptif, modules actifs et découverte dynamique des données inspectables."
+
+#: includes/class-permissions.php:181
+msgid "Comprehensive server, WordPress, theme, active plugins & updates, WooCommerce environment, and Action Scheduler status."
+msgstr "État complet du serveur, de WordPress, du thème, des extensions actives & mises à jour, environnement WooCommerce et Action Scheduler."
+
+#: includes/class-permissions.php:186
+msgid "Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint with 800KB threshold, orphaned options analysis from inactive plugins, transient counts, and object cache status."
+msgstr "Diagnostic approfondi de la base de données : taille des tables, top 15 des tables les plus volumineuses, empreinte autoload avec seuil de 800 Ko, options orphelines d'extensions inactives, compteurs de transients et statut du cache objet."
+
+#: includes/class-permissions.php:191
+msgid "SMTP & transactional email diagnostic: active mail plugin (FluentSMTP, WP Mail SMTP, Post SMTP), provider, sanitization of secrets, and recent delivery failures."
+msgstr "Diagnostic SMTP & emails transactionnels : extension mail active (FluentSMTP, WP Mail SMTP, Post SMTP), prestataire, masquage des identifiants et échecs récents de livraison."
+
+#: includes/class-permissions.php:196
+msgid "Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins."
+msgstr "Audit de sécurité et durcissement : DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, exposition XML-RPC, SSL forcé, préfixe de base de données, extensions de sécurité et de cache détectées."
+
+#: includes/class-permissions.php:209
+msgid "Audits WooCommerce template overrides in active theme with version comparison to core WC."
+msgstr "Audite les templates WooCommerce surchargés dans le thème actif avec comparaison de version par rapport au cœur WooCommerce."
+
+#: includes/class-permissions.php:223
+msgid "Decoded theme settings and Customizer theme mods with sensitive keys redacted."
+msgstr "Réglages de thèmes décodés et options du Customizer avec clés sensibles masquées."
+
+#: includes/class-permissions.php:228
+msgid "Full source code and header info of the active child theme functions.php and style.css."
+msgstr "Code source complet et informations d'en-tête de functions.php et style.css du thème enfant actif."
+
+#: includes/class-permissions.php:235
+msgid "Allows browsing active plugins and mu-plugins file structures, reading specific files in sandbox, computing directory checksums, and exporting clean ZIP archives."
+msgstr "Permet de parcourir les arborescences des extensions et mu-plugins, de lire des fichiers sous sandbox, de calculer des checksums et d'exporter des archives ZIP."
+
+#: includes/class-permissions.php:242
+msgid "Hierarchical directory and file trees of plugins and wp-content/mu-plugins/."
+msgstr "Arborescence hiérarchique des dossiers et fichiers d'extensions et wp-content/mu-plugins/."
+
+#: includes/class-permissions.php:248
+msgid "Sandboxed source code reader for PHP, JS, and CSS files."
+msgstr "Lecteur de code source sandboxé pour fichiers PHP, JS et CSS."
+
+#: includes/class-permissions.php:254
+msgid "Directory checksum fingerprint map of all code files with modified timestamps and byte sizes for instant local vs prod drift detection."
+msgstr "Cartographie des empreintes checksum de tous les fichiers de code avec dates de modification et tailles en octets pour une détection immédiate des écarts entre local et production."
+
+#: includes/class-permissions.php:260
+msgid "Generates and streams a clean on-the-fly ZIP archive of a target plugin or child theme directory (excluding .git, logs, and sensitive files)."
+msgstr "Génère et diffuse à la volée une archive ZIP propre d'une extension ou d'un thème enfant cible (en excluant .git, les logs et les fichiers sensibles)."
+
+#: includes/class-permissions.php:274
+msgid "Bulk export of all Elementor pages, templates, kit & forms in 1 optimized HTTP request."
+msgstr "Export groupé de toutes les pages Elementor, modèles, kit et formulaires en 1 seule requête HTTP optimisée."
+
+#: includes/class-permissions.php:280
+msgid "List all Elementor pages, posts, and saved library templates."
+msgstr "Liste de toutes les pages Elementor, articles et modèles enregistrés dans la bibliothèque."
+
+#: includes/class-permissions.php:285
+msgid "Full decoded _elementor_data JSON tree and page settings for a specific post/template."
+msgstr "Arbre JSON _elementor_data complet décodé et réglages de page pour une publication ou un modèle spécifique."
+
+#: includes/class-permissions.php:290
+msgid "Inventory of all Elementor Pro form widgets, field configurations, webhooks, and recipient emails."
+msgstr "Inventaire de tous les widgets de formulaire Elementor Pro, configurations de champs, webhooks et adresses emails de réception."
+
+#: includes/class-permissions.php:295
+msgid "Global design system: colors, system fonts, and design tokens from active Elementor Kit."
+msgstr "Design system global : couleurs, polices système et jetons de design du Kit Elementor actif."
+
+#: includes/class-permissions.php:309
+msgid "List all snippets across WPCode and Code Snippets with source plugin, execution location, priority, tags, direct admin edit link, and full source code."
+msgstr "Liste tous les extraits de code dans WPCode et Code Snippets avec l'extension source, l'emplacement d'exécution, la priorité, les étiquettes, le lien direct d'édition dans l'admin et le code source complet."
+
+#: includes/class-permissions.php:315
+msgid "Full source code, execution location, priority, tags, and direct WordPress Admin edit link for a specific snippet with collision resolution."
+msgstr "Code source complet, emplacement d'exécution, priorité, étiquettes et lien direct d'édition dans l'administration WordPress pour un extrait spécifique avec résolution de collisions."
+
+#: includes/class-permissions.php:321
+msgid "Legacy alias: List all snippets across WPCode and Code Snippets."
+msgstr "Alias historique : Liste tous les extraits de code dans WPCode et Code Snippets."
+
+#: includes/class-permissions.php:327
+msgid "Legacy alias: Full source code and settings for a specific snippet."
+msgstr "Alias historique : Code source complet et réglages pour un extrait spécifique."
+
+#: includes/class-permissions.php:340
+msgid "List available log files (debug.log, uploads/wc-logs/*.log, custom logs) with sizes and timestamps."
+msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log, logs personnalisés) avec tailles et horodatages."
+
+#: includes/class-permissions.php:346
+msgid "Memory-safe reverse tail extraction of last N lines with optional error filtering."
+msgstr "Extraction mémoire sécurisée des N dernières lignes en ordre inverse avec filtrage d'erreurs optionnel."
+
+#: includes/class-permissions.php:352
+msgid "Memory-safe reverse tail extraction of specific log files in wp-content/ with path sandboxing."
+msgstr "Extraction mémoire sécurisée des dernières lignes d'un fichier log spécifique dans wp-content/ avec sandbox de chemin."
+
+#: includes/class-permissions.php:358
+msgid "Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from debug.log and wc-logs."
+msgstr "Crash Watch : erreurs fatales PHP et exceptions récentes agrégées et dédupliquées depuis debug.log et wc-logs."
+
+#: includes/class-permissions.php:372
+msgid "List registered WP-Cron jobs, execution timestamps, overdue detection, recurrence intervals, and hook arguments."
+msgstr "Liste des tâches WP-Cron enregistrées, horodatages d'exécution, détection des retards, intervalles et arguments de hooks."
+
+#: includes/class-permissions.php:378
+msgid "Inspect Action Scheduler queue with status summary, retention policy in days, scheduled dates, attempts, arguments, and failure log messages."
+msgstr "Inspection de la file Action Scheduler avec résumé des statuts, politique de rétention en jours, dates planifiées, tentatives, arguments et messages d'erreur."
+
+#: includes/class-permissions.php:392
+msgid "Bulk export of all FlowMattic workflows in native importable JSON format in 1 request."
+msgstr "Export groupé de tous les workflows FlowMattic au format JSON importable natif en 1 seule requête."
+
+#: includes/class-permissions.php:398
+msgid "List all FlowMattic workflows (ID, name, status, trigger, actions, tasks count)."
+msgstr "Liste de tous les workflows FlowMattic (ID, nom, statut, déclencheur, actions, nombre de tâches)."
+
+#: includes/class-permissions.php:404
+msgid "Single FlowMattic workflow detail or native importable JSON backup."
+msgstr "Détail d'un workflow FlowMattic spécifique ou sauvegarde JSON importable native."
+
+#: includes/class-permissions.php:418
+msgid "Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices)."
+msgstr "Audit consolidé de trafic et conversion 360° en 1 seul appel (synthèse, top pages, référents, campagnes, appareils)."
+
+#: includes/class-permissions.php:424
+msgid "Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth."
+msgstr "KPIs de trafic (visiteurs, vues, taux de rebond, durée) et taux de conversion WooCommerce, ventes nettes, panier moyen, % de croissance."
+
+#: includes/class-permissions.php:430
+msgid "Performance & conversion rate per page / WooCommerce product."
+msgstr "Performance et taux de conversion par page / produit WooCommerce."
+
+#: includes/class-permissions.php:436
+msgid "Traffic acquisition sources & referring domains with associated orders, sales, and conversion rates."
+msgstr "Sources d'acquisition de trafic et domaines référents avec commandes, chiffre d'affaires et taux de conversion associés."
+
+#: includes/class-permissions.php:442
+msgid "Marketing UTM campaigns ROI tracking (utm_source, utm_medium, utm_campaign, orders, net_sales)."
+msgstr "Suivi du ROI des campagnes marketing UTM (utm_source, utm_medium, utm_campaign, commandes, ventes nettes)."
+
+#: includes/class-permissions.php:448
+msgid "Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS."
+msgstr "Répartition et comparaison des conversions par type d'appareil (ordinateur, mobile, tablette), navigateurs et systèmes d'exploitation."
+
+#: includes/class-permissions.php:454
+msgid "Geographic distribution of visitors and orders by country and city."
+msgstr "Répartition géographique des visiteurs et des commandes par pays et ville."
+
+#: includes/class-permissions.php:460
+msgid "Recent order and conversion stream with attribution (landing page, country, device, browser, amount)."
+msgstr "Flux des commandes récentes et conversions avec attribution (page d'atterrissage, pays, appareil, navigateur, montant)."
+
+#: includes/class-permissions.php:474
+msgid "Unified catalog of all declared custom meta fields (WordPress code register_post_meta and ACF plugin field groups/fields)."
+msgstr "Catalogue unifié de tous les champs personnalisés déclarés (code WordPress register_post_meta et groupes/champs ACF)."
+
+#: includes/class-permissions.php:480
+msgid "Deep ACF inspection: field groups, hierarchy, recursive subfields, location rules, and registered options pages."
+msgstr "Inspection approfondie ACF : groupes de champs, hiérarchie, sous-champs récursifs, règles d'emplacement et pages d'options."
+
+#: includes/class-permissions.php:485
+msgid "Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta)."
+msgstr "Inspection des métadonnées d'une publication, d'un produit ou d'une commande (champs ACF résolus, meta du code et postmeta brutes catégorisées)."
+
+#: includes/class-permissions.php:491
+msgid "WooCommerce Store Data (Products, Orders, Settings)"
+msgstr "Données Boutique WooCommerce (Produits, Commandes, Réglages)"
+
+#: includes/class-permissions.php:492
+msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings."
+msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/sans PII), résumé de la boutique et réglages e-commerce."
+
+#: includes/class-permissions.php:498
+msgid "High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones."
+msgstr "Santé globale de la boutique, compteurs de produits par statut/stock/type, volume de commandes et analyse d'hygiène (taux d'annulation, commandes impayées > 1 an), état HPOS, passerelles de paiement actives et zones de livraison."
+
+#: includes/class-permissions.php:504
+msgid "Paginated WooCommerce products catalog with SKU, prices, stock, categories, tags, and attributes."
+msgstr "Catalogue paginé des produits WooCommerce avec référence SKU, prix, stock, catégories, étiquettes et attributs."
+
+#: includes/class-permissions.php:509
+msgid "Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields."
+msgstr "Fiche produit détaillée comprenant la décomposition des déclinaisons, dimensions, visuels et champs personnalisés postmeta assainis."
+
+#: includes/class-permissions.php:515
+msgid "Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, totals, and gateways."
+msgstr "Commandes récentes avec anonymisation stricte RGPD/PII (noms masqués, emails/téléphones/adresses caviardés), lignes d'articles, totaux et passerelles."
+
+#: includes/class-permissions.php:520
+msgid "Deep order diagnostics: item line metadata, shipping lines with decoded metadata (e.g. Flexible Shipping fs_costs base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata."
+msgstr "Diagnostic approfondi de commande : métadonnées des articles, lignes de livraison avec métadonnées décodées (ex. Flexible Shipping fs_costs coût de base & coûts additionnels), frais, codes promo, remboursements, notes de commande et métadonnées assainies."
+
+#: includes/class-permissions.php:525
+msgid "Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules."
+msgstr "Configuration de la boutique : devise, taxes, gestion des stocks, passerelles de paiement actives (clés secrètes masquées) et zones/méthodes d'expédition avec règles matricielles Flexible Shipping."
+
+#: includes/class-permissions.php:530
+msgid "Dedicated shipping & logistics inspection: zones, geographic locations (postcodes, regions, countries), native method parameters, flat_rate table rate rules, Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and sanitized raw instance settings."
+msgstr "Inspection dédiée expédition & logistique : zones, localisations géographiques (codes postaux, régions, pays), paramètres des méthodes natives, règles forfait table rate, règles matricielles Flexible Shipping & Flexible Shipping PRO (paliers poids/prix, classes de livraison) et réglages bruts assainis."
+
+#: includes/class-permissions.php:536
+msgid "100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period."
+msgstr "Rapport de ventes 100% natif WooCommerce : ventes nettes, ventes brutes, nombre de commandes, panier moyen, remboursements, tendance journalière et pourcentage de croissance par rapport à la période précédente."
+
+#: includes/class-permissions.php:542
+msgid "Top selling products by net revenue and units sold, and top discount coupons with usage counts."
+msgstr "Meilleures ventes de produits par chiffre d'affaires net et unités vendues, et top des codes promo avec compteurs d'utilisation."
+
+#: includes/class-permissions.php:548
+msgid "Stock health and financial valuation: total managed units, total retail valuation, low stock alerts, and dormant stock (0 sales in last 90 days)."
+msgstr "Santé et valorisation financière du stock : total des unités gérées, valeur marchande totale, alertes stock faible et stocks dormants (0 vente sur les 90 derniers jours)."
+
+#: includes/class-permissions.php:553
+msgid "WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures."
+msgstr "Inventaire des webhooks WooCommerce : URL de livraison, sujet, statut (actif/suspendu/désactivé), compteurs d'échecs et alertes en cas de pannes répétées."
+
+#: includes/class-permissions.php:567
+msgid "Lists WordPress pages with hierarchy (parent/child), slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview."
+msgstr "Liste des pages WordPress avec hiérarchie (parent/enfant), identifiant, statut, modèle PHP, type d'éditeur (Gutenberg/Classique/Elementor), marqueurs de pages spéciales et aperçu SEO rapide."
+
+#: includes/class-permissions.php:572
+msgid "Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified SEO metadata."
+msgstr "Inspection approfondie d'une page : contenu brut/rendu, résumé des blocs Gutenberg, shortcodes détectés, nombre de mots, hiérarchie parent/enfant et métadonnées SEO unifiées."
+
+#: includes/class-permissions.php:578
+msgid "Lists WordPress blog posts with categories, tags, author, editor type, and quick SEO preview."
+msgstr "Liste des articles de blog WordPress avec catégories, étiquettes, auteur, type d'éditeur et aperçu SEO rapide."
+
+#: includes/class-permissions.php:583
+msgid "Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object."
+msgstr "Inspection approfondie d'un article ou type de publication sur mesure : contenu brut/rendu, blocs, taxonomies, postmeta assainies et objet SEO unifié complet."
+
+#: includes/class-permissions.php:589
+msgid "Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions."
+msgstr "Rapport d'audit SEO à l'échelle du site sur les pages, articles, produits WooCommerce et catégories : méta-descriptions manquantes, problèmes de titres, alertes noindex sur produits publiés/panier, contenu faible et descriptions de catégories."
+
+#: includes/class-permissions.php:596
+msgid "Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, 100% native server-side Core Web Vitals checks (DOM size, CLS image dimensions, legacy image formats, render-blocking resources, Google Fonts, WP core bloat scripts, cart fragments), autoload bloat audit, and plugin resource footprint."
+msgstr "Permet le benchmark d'URLs à la demande (TTFB, mémoire, requêtes SQL par extension, requêtes lentes/doublons, assets JS/CSS par extension), découverte des archétypes de templates, signaux Core Web Vitals 100% natifs côté serveur (taille DOM, dimensions images pour CLS, formats d'images obsolètes, ressources bloquantes, Google Fonts, scripts superflus du cœur WP, fragments panier), audit autoload et empreinte des extensions."
+
+#: includes/class-permissions.php:602
+msgid "Automatic discovery and resolution of 5 key representative template URLs: Homepage, Shop / Catalog, Product Category, Single Product, and Cart / Checkout."
+msgstr "Découverte et résolution automatiques des 5 URLs modèles représentatives clés : Accueil, Boutique / Catalogue, Catégorie Produit, Fiche Produit et Panier / Commande."
+
+#: includes/class-permissions.php:608
+msgid "Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native Web Vitals checks (DOM size, CLS image dimensions, legacy format PNG/JPEG, render-blocking in <head>, external Google Fonts, core bloat scripts, and WooCommerce cart-fragments detection)."
+msgstr "Profileur ciblé d'URL : mesure le TTFB, le pic mémoire, attribue les requêtes SQL et leur durée à des extensions spécifiques via backtrace, signale les requêtes lentes et doublons, mesure les assets JS/CSS par extension et exécute les vérifications natives Web Vitals (taille DOM, dimensions images CLS, formats obsolètes PNG/JPEG, ressources bloquantes dans <head>, Google Fonts externes, scripts superflus du cœur et détection cart-fragments de WooCommerce)."
+
+#: includes/class-permissions.php:614
+msgid "Audits wp_options autoload bloat: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix."
+msgstr "Audite la surcharge de wp_options en autoload : taille totale par rapport au seuil de 800 Ko, top des options les plus lourdes et répartition du volume groupée par préfixe d'extension."
+
+#: includes/class-permissions.php:620
+msgid "Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts."
+msgstr "Empreinte consolidée des ressources par extension : statut d'activation, nombre de tables de base de données associées, taille disque et nombre de lignes des tables."
+
+#: includes/class-playbooks.php:29
+msgid "360° SEO, Content Hierarchy & Visibility Audit"
+msgstr "Audit 360° SEO, Hiérarchie des Contenus & Visibilité"
+
+#: includes/class-playbooks.php:30
+msgid "Comprehensive audit protocol to identify indexation blockers, critical noindex on products/pages, missing meta descriptions, title anomalies, and Gutenberg content structure."
+msgstr "Protocole d'audit complet pour identifier les blocages d'indexation, les balises noindex critiques sur produits/pages, les méta-descriptions manquantes, les anomalies de titres et la structure Gutenberg."
+
+#: includes/class-playbooks.php:47
+msgid "Site-wide SEO Audit Report"
+msgstr "Rapport d'audit SEO du site entier"
+
+#: includes/class-playbooks.php:50
+msgid "Detects active SEO plugin (Yoast, Rank Math, SEOPress, AIOSEO), global visibility flag, critical noindex warnings, and pages with missing SEO titles or meta descriptions."
+msgstr "Détecte l'extension SEO active (Yoast, Rank Math, SEOPress, AIOSEO), le réglage global de visibilité, les alertes noindex critiques et les pages sans titre ou sans méta-description."
+
+#: includes/class-playbooks.php:55
+msgid "Strategic Pages Structure & Hierarchy"
+msgstr "Structure & Hiérarchie des Pages Stratégiques"
+
+#: includes/class-playbooks.php:58
+msgid "Inspects page hierarchy (parent/child relationships), templates (PHP template files), and editor type (Gutenberg, Classic, Elementor)."
+msgstr "Inspecte la hiérarchie des pages (relations parent/enfant), les modèles PHP et le type d'éditeur (Gutenberg, Classique, Elementor)."
+
+#: includes/class-playbooks.php:63
+msgid "Deep Inspection of Flagged Pages"
+msgstr "Inspection Approfondie des Pages Signalées"
+
+#: includes/class-playbooks.php:66
+msgid "Examines raw vs rendered content, Gutenberg block list, shortcodes, and unified normalized SEO metadata for flagged pages."
+msgstr "Examine le contenu brut vs rendu, la liste des blocs Gutenberg, les shortcodes et les métadonnées SEO normalisées unifiées pour les pages signalées."
+
+#: includes/class-playbooks.php:77
+msgid "Agency Multi-Template Performance & Core Web Vitals Audit"
+msgstr "Audit de Performance Multi-Modèles & Core Web Vitals"
+
+#: includes/class-playbooks.php:78
+msgid "Front-facing page speed diagnostic benchmarking 5 key e-commerce page archetypes, measuring TTFB, memory peak, SQL queries attributed per plugin, and 100% native Core Web Vitals signals (DOM size, Elementor footprint %, CLS image dimensions, legacy formats, render-blocking scripts)."
+msgstr "Diagnostic de vitesse comparant 5 archétypes de pages e-commerce clés, mesurant le TTFB, le pic mémoire, les requêtes SQL attribuées par extension et les signaux Core Web Vitals 100% natifs (taille DOM, empreinte Elementor %, dimensions d'images CLS, formats obsolètes, scripts bloquants)."
+
+#: includes/class-playbooks.php:100
+msgid "Strategic Multi-Template URLs Discovery"
+msgstr "Découverte Stratégique des URLs Multi-Modèles"
+
+#: includes/class-playbooks.php:103
+msgid "Discovers and resolves representative URLs for 5 key e-commerce page archetypes: Homepage (/), Shop (/shop/), Product Category, Single Product, and Cart/Checkout."
+msgstr "Découvre et résout les URLs représentatives pour 5 archétypes de pages e-commerce : Accueil (/), Boutique (/boutique/), Catégorie Produit, Fiche Produit et Panier/Commande."
+
+#: includes/class-playbooks.php:108
+msgid "Multi-Template Benchmarking & Plugin SQL Attribution"
+msgstr "Benchmark Multi-Modèles & Attribution SQL par Extension"
+
+#: includes/class-playbooks.php:111
+msgid "Profiles each key template archetype: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), and measures TTFB and peak memory."
+msgstr "Profile chaque archétype de modèle clé : attribue les requêtes SQL et leur durée par extension via backtrace d'appels, détecte les requêtes lentes/doublons (>50ms) et mesure le TTFB et la mémoire pic."
+
+#: includes/class-playbooks.php:116
+msgid "Native Web Vitals & Frontend Performance Signals Audit"
+msgstr "Audit des Signaux Natifs Web Vitals & Performance Frontend"
+
+#: includes/class-playbooks.php:119
+msgid "Performs 100% native server-side Core Web Vitals & frontend diagnostics on the rendered HTML: DOM size & Elementor bloat, images missing dimensions (CLS), legacy PNG/JPEG images (WebP/AVIF recommendation), render-blocking resources, Google Fonts swap status, core script bloat (emojis, embeds, migrate, dashicons), and WooCommerce cart fragments."
+msgstr "Exécute un diagnostic 100% natif Core Web Vitals & frontend côté serveur sur le HTML rendu : taille du DOM & surcharge Elementor, images sans dimensions (CLS), images au format ancien PNG/JPEG (recommandation WebP/AVIF), ressources bloquantes, statut du swap Google Fonts, scripts superflus du cœur (emojis, embeds, migrate, dashicons) et fragments panier WooCommerce."
+
+#: includes/class-playbooks.php:124
+msgid "Active Plugins Database & Disk Footprint"
+msgstr "Empreinte Disque & Base de Données des Extensions Actives"
+
+#: includes/class-playbooks.php:127
+msgid "Inventories database tables, disk storage size (data + index in KB), and row counts per active plugin to isolate bloated extensions."
+msgstr "Inventorie les tables de la base de données, l'espace disque occupé (données + index en Ko) et le nombre de lignes par extension active pour isoler les extensions volumineuses."
+
+#: includes/class-playbooks.php:138
+msgid "System Health, Database Bloat & Background Hygiene Audit"
+msgstr "Audit Santé Système, Nettoyage BDD & Hygiène d'Arrière-Plan"
+
+#: includes/class-playbooks.php:139
+msgid "In-depth technical health and database hygiene check-up: PHP/MySQL limits, security constants, total database size, autoload memory bloat with orphaned options detection from inactive plugins, Action Scheduler queue & retention policy, stale abandoned orders older than 1 year, overdue WP-Cron jobs, and Crash Watch PHP fatal errors."
+msgstr "Bilan de santé technique et d'hygiène de base de données approfondi : limites PHP/MySQL, constantes de sécurité, taille totale de la base, surcharge autoload avec détection des options orphelines d'extensions inactives, file Action Scheduler & rétention, commandes abandonnées de plus d'un an, crons en retard et erreurs fatales PHP Crash Watch."
+
+#: includes/class-playbooks.php:163
+msgid "Server Limits & Environment Diagnostic"
+msgstr "Diagnostic des Limites Serveur & Environnement"
+
+#: includes/class-playbooks.php:166
+msgid "Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security)."
+msgstr "Vérifie la version de PHP, memory_limit (minimum 256M conseillé pour Woo), max_execution_time, version MySQL, OPcache, extensions actives avec statut des mises à jour et constantes de sécurité (DISALLOW_FILE_EDIT, exposition XML-RPC, WP_DEBUG_DISPLAY via /system/security)."
+
+#: includes/class-playbooks.php:171
+msgid "Database Size & Autoload Orphaned Options"
+msgstr "Taille de la Base & Options Autoload Orphelines"
+
+#: includes/class-playbooks.php:174
+msgid "Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options left behind by inactive plugins."
+msgstr "Inspecte la taille de la BDD, le top 15 des tables les plus volumineuses, l'autoload par rapport au seuil de 800 Ko et les options orphelines laissées par d'anciennes extensions."
+
+#: includes/class-playbooks.php:179
+msgid "WooCommerce Order Volume & Stale Orders Ratio"
+msgstr "Volume de Commandes WooCommerce & Ratio de Commandes Obsolètes"
+
+#: includes/class-playbooks.php:182
+msgid "Audits total orders, cancellation ratio, and estimates stale unpaid abandoned orders older than 1 year cluttering HPOS tables."
+msgstr "Audite le total des commandes, le taux d'annulation et estime le volume de commandes impayées abandonnées de plus d'un an encombrant les tables HPOS."
+
+#: includes/class-playbooks.php:187
+msgid "Action Scheduler Queue & Retention Policy"
+msgstr "File Action Scheduler & Politique de Rétention"
+
+#: includes/class-playbooks.php:190
+msgid "Evaluates completed actions accumulation, active retention period in days, cleanup batch size, and bloat alert."
+msgstr "Évalue l'accumulation d'actions terminées, la durée de rétention en jours, la taille des lots de nettoyage et les alertes d'engorgement."
+
+#: includes/class-playbooks.php:195
+msgid "Overdue Crons & Ghost Hooks"
+msgstr "Crons en Retard & Hooks Fantômes"
+
+#: includes/class-playbooks.php:198
+msgid "Detects overdue WP-Cron jobs and orphan background hooks that may fail repeatedly or delay maintenance cleanup."
+msgstr "Détecte les tâches WP-Cron en retard et les hooks orphelins en arrière-plan susceptibles d'échouer en boucle ou de ralentir le site."
+
+#: includes/class-playbooks.php:203
+msgid "Crash Watch Fatal Errors Scan"
+msgstr "Analyse des Erreurs Fatales Crash Watch"
+
+#: includes/class-playbooks.php:206
+msgid "Verifies whether recurrent PHP fatal errors, memory exhaustions, or exceptions are flooding debug.log and choking disk I/O."
+msgstr "Vérifie si des erreurs fatales PHP récurrentes, des dépassements de mémoire ou des exceptions saturent debug.log et le disque serveur."
+
+#: includes/class-playbooks.php:217
+msgid "Orders, Payment Gateways & Delivery Troubleshooting"
+msgstr "Dépannage Commandes, Passerelles de Paiement & Livraison"
+
+#: includes/class-playbooks.php:218
+msgid "Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks."
+msgstr "Diagnostic d'urgence de commande en cas d'échec de paiement ou de réclamation client : inspecte les commandes échouées, les notes de passerelle, les logs de paiement, les snippets de validation, la délivrabilité SMTP et les webhooks en erreur."
+
+#: includes/class-playbooks.php:237
+msgid "Recent Failed Orders Inspection"
+msgstr "Inspection des Commandes Échouées Récentes"
+
+#: includes/class-playbooks.php:240
+msgid "Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, and order totals."
+msgstr "Extrait les commandes récentes échouées, annulées ou en attente avec anonymisation RGPD pour identifier les récurrences, moyens de paiement et montants."
+
+#: includes/class-playbooks.php:245
+msgid "Deep Order & Gateway Diagnosis"
+msgstr "Diagnostic Approfondi Commande & Passerelle"
+
+#: includes/class-playbooks.php:248
+msgid "Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and coupon lines."
+msgstr "Inspecte les notes de commande pour trouver les motifs de refus bancaire, l'historique de remboursement, les métadonnées de lignes, l'expédition avec fs_costs et les codes promo."
+
+#: includes/class-playbooks.php:253
+msgid "Gateway Error Logs Inspection"
+msgstr "Inspection des Logs d'Erreurs de Passerelles"
+
+#: includes/class-playbooks.php:256
+msgid "Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion."
+msgstr "Inspecte les logs récents de passerelles WooCommerce (Stripe, Alma, PayPal) et les crashs PHP récents sans risque de saturation mémoire."
+
+#: includes/class-playbooks.php:261
+msgid "Active Custom Checkout Hooks"
+msgstr "Hooks Personnalisés Actifs sur la Commande"
+
+#: includes/class-playbooks.php:264
+msgid "Inventories active custom PHP snippets running on the site (WPCode & Code Snippets) to spot buggy hooks attached to woocommerce_checkout_* or order status transitions."
+msgstr "Inventorie les extraits PHP personnalisés actifs s'exécutant sur le site (WPCode & Code Snippets) pour repérer d'éventuels hooks défectueux attachés à woocommerce_checkout_* ou aux transitions de statut de commande."
+
+#: includes/class-playbooks.php:269
+msgid "SMTP & Email Deliverability Check"
+msgstr "Vérification Délivrabilité SMTP & Emails"
+
+#: includes/class-playbooks.php:272
+msgid "Detects active SMTP provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials status, recent delivery failures, and PHP mail unauthenticated spam risk alert."
+msgstr "Détecte le prestataire SMTP actif (FluentSMTP, WP Mail SMTP, Post SMTP), l'état des identifiants, les échecs récents d'envoi et les alertes spam liées à mail() PHP."
+
+#: includes/class-playbooks.php:277
+msgid "WooCommerce Webhooks Delivery Health"
+msgstr "Santé de Délivrance des Webhooks WooCommerce"
+
+#: includes/class-playbooks.php:280
+msgid "Inventories WooCommerce webhooks, topics (e.g. order.created), delivery URLs, and alerts on failure counters (failure_count >= 5)."
+msgstr "Inventorie les webhooks WooCommerce, les sujets (ex. order.created), les URLs cibles et alerte sur les compteurs d'échecs (failure_count >= 5)."
+
+#: includes/class-playbooks.php:291
+msgid "360° E-Commerce Sales, Traffic & Conversion Analytics"
+msgstr "Analytics Ventes, Trafic & Conversion E-Commerce 360°"
+
+#: includes/class-playbooks.php:292
+msgid "Executive commercial report combining native WooCommerce sales KPIs, paid orders, net sales growth %, average order value (AOV), traffic audience, page conversion rates, marketing UTM campaign ROI, top products, top coupons, and inventory valuation with dormant stock alerts."
+msgstr "Rapport commercial combinant les KPIs de ventes WooCommerce natifs, commandes payées, % de croissance des ventes nettes, panier moyen (AOV), audience, taux de conversion des pages, ROI des campagnes marketing UTM, top produits, top codes promo et valorisation des stocks avec alertes stocks dormants."
+
+#: includes/class-playbooks.php:315
+msgid "Native WooCommerce Sales KPIs & Growth"
+msgstr "KPIs de Ventes Natifs WooCommerce & Croissance"
+
+#: includes/class-playbooks.php:318
+msgid "Extracts net sales, gross sales, paid orders count, AOV, refunds, daily trend, and % growth comparison against prior period."
+msgstr "Extrait les ventes nettes, ventes brutes, nombre de commandes payées, panier moyen, remboursements, tendance journalière et comparaison de croissance en % par rapport à la période précédente."
+
+#: includes/class-playbooks.php:323
+msgid "Top Performing Products & Coupons"
+msgstr "Top Produits les Plus Performants & Codes Promo"
+
+#: includes/class-playbooks.php:326
+msgid "Identifies best-selling products by net revenue and units sold, plus top discount coupons used with totals."
+msgstr "Identifie les meilleures ventes de produits par chiffre d'affaires net et quantités vendues, ainsi que les codes de réduction les plus utilisés."
+
+#: includes/class-playbooks.php:331
+msgid "Inventory Valuation & Dormant Stock Alerts"
+msgstr "Valorisation des Stocks & Alertes Stocks Dormants"
+
+#: includes/class-playbooks.php:334
+msgid "Calculates stock financial valuation (cost vs retail value), low stock alerts, and dormant stock (products with 0 sales in last 90 days)."
+msgstr "Calcule la valorisation financière des stocks (prix d'achat vs prix de vente), les alertes stock faible et les stocks dormants (produits sans vente depuis 90 jours)."
+
+#: includes/class-playbooks.php:339
+msgid "Traffic KPIs & Overall Conversion Rate"
+msgstr "KPIs de Trafic & Taux de Conversion Global"
+
+#: includes/class-playbooks.php:342
+msgid "Consolidates visitors, sessions, pageviews, bounce rate, device breakdown, and store conversion rate in 1 request."
+msgstr "Consolide les visiteurs, sessions, pages vues, taux de rebond, répartition par appareil et taux de conversion de la boutique en 1 seule requête."
+
+#: includes/class-playbooks.php:347
+msgid "Marketing Campaigns (UTM) ROI Attribution"
+msgstr "Attribution & ROI des Campagnes Marketing (UTM)"
+
+#: includes/class-playbooks.php:350
+msgid "Tracks marketing campaigns by source and medium (Google Ads, Meta, Newsletters) with direct order and net sales attribution."
+msgstr "Suit les campagnes marketing par source et support (Google Ads, Meta, Newsletters) avec attribution directe des commandes et des ventes nettes."
+
+#: includes/class-playbooks.php:361
+msgid "Shipping Zones, Methods & Flexible Shipping Rules Audit"
+msgstr "Audit Zones, Méthodes & Règles de Calcul Flexible Shipping"
+
+#: includes/class-playbooks.php:362
+msgid "Logistics and shipping calculation audit: verifies shipping zones, geographic locations (postcodes, regions, countries), native method configurations (flat rate, free shipping threshold), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (including Table Rate on flat rate), and order shipping metadata."
+msgstr "Audit logistique et calcul des frais de port : vérifie les zones d'expédition, les zones géographiques (codes postaux, régions, pays), les méthodes natives (forfait, seuil de gratuité), les règles de calcul matricielles Flexible Shipping & Flexible Shipping PRO (dont Table Rate) et les métadonnées de commande."
+
+#: includes/class-playbooks.php:378
+msgid "Shipping Zones & Matrix Calculation Rules"
+msgstr "Zones d'Expédition & Règles Matricielles de Calcul"
+
+#: includes/class-playbooks.php:381
+msgid "Extracts configured shipping zones, geographic locations (postcodes, regions, countries), native method parameters, and decoded Flexible Shipping matrix calculation rules (including flat_rate table rate)."
+msgstr "Extrait les zones d'expédition configurées, les zones géographiques (codes postaux, régions, pays), les paramètres des méthodes natives et les règles de calcul matricielles Flexible Shipping décodées."
+
+#: includes/class-playbooks.php:386
+msgid "General Store Shipping Settings"
+msgstr "Réglages Généraux d'Expédition de la Boutique"
+
+#: includes/class-playbooks.php:389
+msgid "Cross-references shipping methods against general store configuration, tax settings, and shipping calculation options."
+msgstr "Croise les méthodes de livraison avec la configuration générale de la boutique, les options de taxes et les calculs d'expédition."
+
+#: includes/class-playbooks.php:394
+msgid "Recent Orders Shipping Line Metadata"
+msgstr "Métadonnées de Livraison des Commandes Récentes"
+
+#: includes/class-playbooks.php:397
+msgid "Inspects shipping_lines[].meta_data on live orders, including decoded fs_costs (base + additional costs) to verify calculation accuracy."
+msgstr "Inspecte les métadonnées shipping_lines[].meta_data sur les commandes réelles, y compris les coûts fs_costs décodés pour vérifier la justesse du calcul."
+
+#: includes/class-playbooks.php:408
+msgid "Code Architecture, Theme Settings & Automations Map"
+msgstr "Architecture Code, Réglages Thème & Cartographie Automatisations"
+
+#: includes/class-playbooks.php:409
+msgid "Technical customization inventory: WooCommerce template overrides drift, child theme functions.php/style.css, Woodmart/Elessi theme options, FlowMattic automation workflows, Elementor forms & webhooks, active WPCode snippets, custom ACF/code meta fields, and local vs production file checksums drift."
+msgstr "Inventaire des personnalisations techniques : surcharges de templates WooCommerce, thème enfant functions.php/style.css, options de thème Woodmart/Elessi, workflows FlowMattic, formulaires et webhooks Elementor, snippets WPCode actifs, métadonnées ACF et écarts de checksums entre local et production."
+
+#: includes/class-playbooks.php:434
+msgid "WooCommerce Template Overrides Drift"
+msgstr "Écart des Surcharges de Templates WooCommerce"
+
+#: includes/class-playbooks.php:437
+msgid "Identifies overridden WooCommerce PHP templates in active theme and checks for outdated templates requiring updates."
+msgstr "Identifie les templates PHP WooCommerce surchargés dans le thème actif et signale les templates obsolètes nécessitant une mise à jour."
+
+#: includes/class-playbooks.php:442
+msgid "Child Theme Code & Theme Options"
+msgstr "Code du Thème Enfant & Options de Thème"
+
+#: includes/class-playbooks.php:445
+msgid "Inspects active child theme functions.php and style.css, and decodes Woodmart / Elessi theme options via /theme/options."
+msgstr "Inspecte functions.php et style.css du thème enfant actif et décode les réglages de thèmes Woodmart / Elessi via /theme/options."
+
+#: includes/class-playbooks.php:450
+msgid "Code Drift Verification via Checksums"
+msgstr "Vérification des Écarts de Code via Checksums"
+
+#: includes/class-playbooks.php:453
+msgid "Computes cryptographic file hashes (MD5 / SHA256) of local vs production files to detect drift or unversioned hotfixes."
+msgstr "Calcule les empreintes cryptographiques (MD5 / SHA256) des fichiers locaux vs production pour détecter tout correctif non versionné."
+
+#: includes/class-playbooks.php:458
+msgid "FlowMattic Automation Workflows Map"
+msgstr "Cartographie des Workflows d'Automatisation FlowMattic"
+
+#: includes/class-playbooks.php:461
+msgid "Lists active FlowMattic automation recipes, triggers (e.g. order placed), action steps, and task execution counts."
+msgstr "Liste les recettes d'automatisation FlowMattic actives, déclencheurs (ex. commande passée), étapes d'action et compteurs d'exécution."
+
+#: includes/class-playbooks.php:466
+msgid "Elementor Forms & Webhook Endpoints"
+msgstr "Formulaires Elementor & Endpoints Webhooks"
+
+#: includes/class-playbooks.php:469
+msgid "Maps all Elementor forms across the site, their submit actions, and connected webhook integration URLs."
+msgstr "Cartographie tous les formulaires Elementor du site, leurs actions après soumission et les URLs de webhooks connectées."
+
+#: includes/class-playbooks.php:474
+msgid "Active Custom Snippets (WPCode & Code Snippets)"
+msgstr "Extraits de Code Personnalisés Actifs (WPCode & Code Snippets)"
+
+#: includes/class-playbooks.php:477
+msgid "Inventories active custom PHP/JS/CSS/HTML snippets running in production (WPCode and Code Snippets) with direct admin edit URLs."
+msgstr "Inventorie les extraits personnalisés PHP/JS/CSS/HTML exécutés en production (WPCode et Code Snippets) avec URLs directes d'édition dans l'admin."
+
+#: includes/class-playbooks.php:482
+msgid "Custom Fields & ACF Meta Schema"
+msgstr "Champs Personnalisés & Schéma de Métadonnées ACF"
+
+#: includes/class-playbooks.php:485
+msgid "Discovers custom meta fields registered in code (register_post_meta) and ACF field groups with recursive subfield hierarchies."
+msgstr "Découvre les champs personnalisés déclarés dans le code (register_post_meta) et les groupes de champs ACF avec hiérarchies récursives de sous-champs."
+
+#: includes/class-security.php:290
+msgid "Only GET (Read-Only) requests are permitted by WP Agent Bridge."
+msgstr "Seules les requêtes GET (Lecture seule) sont autorisées par WP Agent Bridge."
+
+#: includes/class-security.php:302
 msgid "Too many failed authentication attempts. Your IP has been temporarily locked out for %d more minute(s)."
 msgstr "Trop de tentatives d'authentification échouées. Votre adresse IP a été temporairement bloquée pour encore %d minute(s)."
 
-#: includes/class-security.php:236
+#: includes/class-security.php:316
+msgid "Access denied: Client IP is not in the authorized whitelist."
+msgstr "Accès refusé : L'adresse IP cliente n'est pas dans la liste blanche autorisée."
+
+#: includes/class-security.php:326
+msgid "No Agent Bridge token configured on this server."
+msgstr "Aucun token Agent Bridge configuré sur ce serveur."
+
+#: includes/class-security.php:386
+msgid "Missing or invalid Authorization Bearer header."
+msgstr "En-tête Authorization Bearer manquant ou invalide."
+
+#: includes/class-security.php:400
 msgid "Too many failed authentication attempts. Your IP has been locked out for %d minutes."
 msgstr "Trop de tentatives d'authentification échouées. Votre adresse IP a été bloquée pendant %d minutes."
 
-#: includes/class-security.php:248
+#: includes/class-security.php:412
 msgid "Invalid authentication token. %d attempt(s) remaining before temporary lockout."
 msgstr "Token d'authentification invalide. Encore %d tentative(s) restante(s) avant blocage temporaire."
 
-#: includes/admin/class-admin-settings.php:94
-msgid "Are you sure you want to unlock this IP address immediately?"
-msgstr "Êtes-vous sûr de vouloir débloquer cette adresse IP immédiatement ?"
+#: includes/class-security.php:429
+msgid "Too many requests. Please throttle your queries (limit: 300/min)."
+msgstr "Trop de requêtes. Veuillez ralentir vos appels (limite : 300/min)."
 
-#: includes/admin/class-admin-settings.php:218
-msgid "IP address %s has been unlocked."
-msgstr "L'adresse IP %s a été débloquée."
-
-#: includes/admin/views/tab-general.php:97
-msgid "Anti-Brute-Force Protection & Lockouts"
-msgstr "Protection Anti-Brute-Force & Blocages"
-
-#: includes/admin/views/tab-general.php:100
-msgid "Protects your site against unauthorized automated attempts to guess your Bearer token. Any IP that submits wrong tokens repeatedly is automatically locked out."
-msgstr "Protège votre site contre les tentatives automatisées de deviner votre token Bearer. Toute IP soumettant des clés erronées de manière répétée est automatiquement bloquée."
-
-#: includes/admin/views/tab-general.php:106
-msgid "%d IP address(es) currently locked out."
-msgstr "%d adresse(s) IP actuellement bloquée(s)."
-
-#: includes/admin/views/tab-general.php:111
-msgid "Locked IP"
-msgstr "IP Bloquée"
-
-#: includes/admin/views/tab-general.php:112
-msgid "Locked Since"
-msgstr "Bloquée Depuis"
-
-#: includes/admin/views/tab-general.php:113
-msgid "Remaining Lockout"
-msgstr "Temps Restant"
-
-#: includes/admin/views/tab-general.php:114
-msgid "Action"
-msgstr "Action"
-
-#: includes/admin/views/tab-general.php:123
-msgid "%d minute(s) remaining"
-msgstr "%d minute(s) restante(s)"
-
-#: includes/admin/views/tab-general.php:128
-msgid "Unlock IP"
-msgstr "Débloquer l'IP"
-
-#: includes/admin/views/tab-general.php:137
-msgid "No IP addresses currently locked out. Your inspection API is secure."
-msgstr "Aucune adresse IP bloquée actuellement. Votre API d'inspection est sécurisée."
-
-#: includes/admin/views/tab-general.php:146
-msgid "Security & Restrictions Settings"
-msgstr "Réglages de Sécurité & Restrictions"
-
-#: includes/admin/views/tab-general.php:149
-msgid "Max Failed Attempts Before Lockout"
-msgstr "Tentatives Échouées Max Avant Blocage"
-
-#: includes/admin/views/tab-general.php:152
-msgid "Number of invalid authentication attempts permitted from an IP address before it is temporarily blocked (default: 5 attempts)."
-msgstr "Nombre de tentatives invalides autorisées depuis une adresse IP avant son blocage temporaire (par défaut : 5 tentatives)."
-
-#: includes/admin/views/tab-general.php:157
-msgid "Lockout Duration (Minutes)"
-msgstr "Durée du Blocage (Minutes)"
-
-#: includes/admin/views/tab-general.php:160
-msgid "Duration in minutes for which an offending IP remains completely blocked from querying the API (default: 30 minutes)."
-msgstr "Durée en minutes pendant laquelle une IP fautive reste totalement bloquée (par défaut : 30 minutes)."
-
-#: includes/admin/views/tab-general.php:181
-msgid "Save Security Settings"
-msgstr "Enregistrer les Réglages de Sécurité"
-
-#: includes/admin/class-admin-settings.php:36
-msgid "Settings"
-msgstr "Réglages"
-
-#: includes/admin/class-admin-settings.php:143
-msgid "Documentation & Guide"
-msgstr "Documentation & Guide"
-
-#: includes/admin/views/tab-docs.php:17
-msgid "WP Agent Bridge Documentation & Quick Guide"
-msgstr "Documentation & Guide Rapide WP Agent Bridge"
-
-#: includes/admin/views/tab-docs.php:20
-msgid "WP Agent Bridge is an enterprise-grade, lightweight, and ultra-secure inspection plugin for WordPress & WooCommerce. It exposes a protected, 100% read-only REST API (agent-bridge/v1/) allowing AI coding assistants (Antigravity, Cursor, Claude, ChatGPT) and developer tools to safely audit, diagnose bugs, and inspect live site architecture without requiring risky SSH, SFTP, or database credentials."
-msgstr "WP Agent Bridge est une extension d'inspection sécurisée et légère pour WordPress et WooCommerce. Elle expose une API REST protégée et 100% en lecture seule (agent-bridge/v1/) permettant aux assistants de codage IA (Antigravity, Cursor, Claude, ChatGPT) et aux outils de développement d'auditer, diagnostiquer les bugs et explorer l'architecture du site sans exiger d'accès risqué SSH, SFTP ou base de données."
-
-#: includes/admin/views/tab-docs.php:29
-msgid "Getting Started in 4 Quick Steps"
-msgstr "Premières Étapes en 4 Gestes Simples"
-
-#: includes/admin/views/tab-docs.php:32
-msgid "Follow these simple steps to connect your AI assistant to this WordPress installation in less than two minutes."
-msgstr "Suivez ces étapes simples pour connecter votre assistant IA à cette installation WordPress en moins de deux minutes."
-
-#: includes/admin/views/tab-docs.php:38
-msgid "Verify Permissions & Token"
-msgstr "Vérifier les Permissions & le Jeton"
-
-#: includes/admin/views/tab-docs.php:40
-msgid "Make sure your Bearer token is active in the General tab, and select which data modules your AI is allowed to query in the Permissions Matrix tab."
-msgstr "Assurez-vous que votre jeton Bearer est actif dans l'onglet Général, puis sélectionnez les modules que votre IA est autorisée à interroger dans l'onglet Matrice de Permissions."
-
-#: includes/admin/views/tab-docs.php:43
-msgid "Configure Permissions"
-msgstr "Configurer les Permissions"
-
-#: includes/admin/views/tab-docs.php:50
-msgid "Copy the AI Mega-Prompt"
-msgstr "Copier le Mega-Prompt IA"
-
-#: includes/admin/views/tab-docs.php:52
-msgid "Open the \"AI Mega-Prompt & Skill\" tab and click the copy button. The prompt is automatically pre-filled with your live site URL, active Bearer token, and available endpoints."
-msgstr "Ouvrez l'onglet \"AI Mega-Prompt & Skill\" et cliquez sur le bouton de copie. Le prompt est automatiquement pré-rempli avec l'URL de votre site, votre jeton Bearer actif et les endpoints disponibles."
-
-#: includes/admin/views/tab-docs.php:55
-msgid "Go to AI Mega-Prompt Tab"
-msgstr "Aller à l'onglet Mega-Prompt IA"
-
-#: includes/admin/views/tab-docs.php:62
-msgid "Paste into your AI Assistant"
-msgstr "Coller dans votre Assistant IA"
-
-#: includes/admin/views/tab-docs.php:64
-msgid "Paste the entire copied prompt into your chat session with Antigravity, Cursor, Claude Desktop, or ChatGPT. Your AI will instantly understand how to inspect the site safely."
-msgstr "Collez l'intégralité du prompt copié dans votre conversation avec Antigravity, Cursor, Claude Desktop ou ChatGPT. Votre IA saura immédiatement inspecter le site en toute sécurité."
-
-#: includes/admin/views/tab-docs.php:72
-msgid "Audit, Diagnose & Build"
-msgstr "Auditer, Diagnostiquer & Développer"
-
-#: includes/admin/views/tab-docs.php:74
-msgid "Ask your AI to inspect recent WooCommerce fatal errors, analyze theme overrides, or examine custom WPCode snippets. The AI queries the endpoints via curl with zero SSH needed."
-msgstr "Demandez à votre IA d'inspecter les erreurs fatales WooCommerce récentes, d'analyser les surcharges de thèmes ou d'examiner vos snippets WPCode. L'IA interroge les endpoints via curl sans aucun accès SSH requis."
-
-#: includes/admin/views/tab-docs.php:85
-msgid "How It Works & Security Architecture"
-msgstr "Fonctionnement & Architecture de Sécurité"
-
-#: includes/admin/views/tab-docs.php:88
-msgid "WP Agent Bridge has been engineered from the ground up for maximum safety on high-traffic production environments."
-msgstr "WP Agent Bridge a été conçu dès l'origine pour une sécurité maximale sur les environnements de production à fort trafic."
-
-#: includes/admin/views/tab-docs.php:95
-msgid "100% Read-Only Guarantee"
-msgstr "Garantie 100% Lecture Seule"
-
-#: includes/admin/views/tab-docs.php:96
-msgid "Every single endpoint strictly enforces HTTP GET (WP_REST_Server::READABLE). There are zero POST, PUT, or DELETE routes. The plugin contains no modification or execution primitives, ensuring your database and site files remain completely untouched."
-msgstr "Chaque endpoint impose strictement la méthode HTTP GET (WP_REST_Server::READABLE). Il n'existe aucune route POST, PUT ou DELETE. L'extension ne contient aucune primitive de modification ou d'exécution, garantissant l'intégrité absolue de votre base de données et de vos fichiers."
-
-#: includes/admin/views/tab-docs.php:103
-msgid "Bearer Token Authentication"
-msgstr "Authentification par Jeton Bearer"
-
-#: includes/admin/views/tab-docs.php:104
-msgid "Requests must supply an Authorization: Bearer header. The 64-character cryptographically secure token can be rotated at any time with 1 click in admin, or permanently hardcoded via WP_AGENT_BRIDGE_TOKEN in wp-config.php."
-msgstr "Les requêtes doivent obligatoirement fournir un en-tête Authorization: Bearer. Le jeton cryptographique de 64 caractères peut être régénéré en 1 clic dans l'administration, ou fixé de façon permanente via la constante WP_AGENT_BRIDGE_TOKEN dans wp-config.php."
-
-#: includes/admin/views/tab-docs.php:111
-msgid "Anti-Brute-Force & IP Lockout"
-msgstr "Protection Anti-Brute-Force & Blocage IP"
-
-#: includes/admin/views/tab-docs.php:112
-msgid "Failed authentication attempts are automatically tracked per client IP. After exceeding the threshold, offending IPs are locked out with HTTP 429 responses. Active lockouts can be monitored and unlocked with 1 click in the admin."
-msgstr "Les tentatives d'authentification infructueuses sont automatiquement comptabilisées par adresse IP. Au-delà du seuil défini, les IP fautives sont bloquées avec une réponse HTTP 429. Les blocages actifs sont visibles et déblocables en 1 clic dans l'administration."
-
-#: includes/admin/views/tab-docs.php:119
-msgid "Real-Time Secret & PII Redaction"
-msgstr "Anonymisation en Temps Réel des Secrets & PII"
-
-#: includes/admin/views/tab-docs.php:120
-msgid "Before returning any JSON response, an integrated redaction engine systematically masks Stripe secret keys (sk_live_*), payment gateway secrets, database passwords, salts, and customer email addresses."
-msgstr "Avant d'envoyer la moindre réponse JSON, un moteur d'anonymisation intégré masque systématiquement les clés secrètes Stripe (sk_live_*), les secrets de passerelles de paiement, mots de passe de base de données, sels et adresses emails des clients."
-
-#: includes/admin/views/tab-docs.php:127
-msgid "Memory-Safe Log Streaming"
-msgstr "Streaming de Logs Économe en Mémoire"
-
-#: includes/admin/views/tab-docs.php:128
-msgid "Large log files (debug.log and WooCommerce logs) are extracted from the bottom up using reverse file pointer (fseek). This guarantees low memory consumption and avoids PHP out-of-memory errors on heavy sites."
-msgstr "Les fichiers de logs volumineux (debug.log et logs WooCommerce) sont extraits par le bas via un pointeur de fichier inversé (fseek). Cela garantit une faible consommation de RAM et prévient tout dépassement de mémoire PHP."
-
-#: includes/admin/views/tab-docs.php:135
-msgid "Audit Trail & GeoIP Analytics"
-msgstr "Piste d'Audit & Statistiques Géographiques"
-
-#: includes/admin/views/tab-docs.php:136
-msgid "All incoming API requests are logged in a lightweight table with timestamps, IP addresses, country flags (via Cloudflare header or cached GeoIP), endpoints, and HTTP response status codes."
-msgstr "Toutes les requêtes API entrantes sont journalisées dans une table légère avec horodatage, adresses IP, drapeaux de pays (via en-tête Cloudflare ou GeoIP en cache), endpoints et codes HTTP retournés."
-
-#: includes/admin/views/tab-docs.php:146
-msgid "Inspectable Technical Data"
-msgstr "Périmètre des Données Inspectables"
-
-#: includes/admin/views/tab-docs.php:149
-msgid "Here is the technical scope exposed by the plugin according to your permissions matrix:"
-msgstr "Voici l'étendue technique exposée par l'extension en fonction de votre matrice de permissions :"
-
-#: includes/admin/views/tab-docs.php:156
-msgid "Domain"
-msgstr "Domaine"
-
-#: includes/admin/views/tab-docs.php:157
-msgid "Available Endpoints"
-msgstr "Endpoints Disponibles"
-
-#: includes/admin/views/tab-docs.php:158
-msgid "Data Returned to AI"
-msgstr "Données Renvoyées à l'IA"
-
-#: includes/admin/views/tab-docs.php:163
-msgid "System & Limits"
-msgstr "Système & Limites"
-
-#: includes/admin/views/tab-docs.php:165
-msgid "WordPress, PHP, MySQL versions, memory limits, active plugins with update status, HPOS state, Action Scheduler queues."
-msgstr "Versions WordPress, PHP, MySQL, limites mémoire, extensions actives avec statut des mises à jour, état HPOS, files Action Scheduler."
-
-#: includes/admin/views/tab-docs.php:168
-msgid "WooCommerce & Themes"
-msgstr "WooCommerce & Thèmes"
-
-#: includes/admin/views/tab-docs.php:170
-msgid "Overridden WooCommerce templates with version check against core, Woodmart & Elessi theme settings, child theme functions.php and style.css."
-msgstr "Templates WooCommerce surchargés avec comparaison de version par rapport au core, réglages des thèmes Woodmart & Elessi, code de functions.php et style.css du thème enfant."
-
-#: includes/admin/views/tab-docs.php:173
-msgid "Code & Plugins"
-msgstr "Code & Extensions"
-
-#: includes/admin/views/tab-docs.php:175
-msgid "File trees of active plugins and mu-plugins, sandboxed reading of specific PHP, JS, or CSS files with strict path validation."
-msgstr "Arborescences des extensions actives et mu-plugins, lecture sécurisée sous sandbox de fichiers PHP, JS ou CSS avec validation stricte des chemins."
-
-#: includes/admin/views/tab-docs.php:178
-msgid "Elementor Architecture"
-msgstr "Architecture Elementor"
-
-#: includes/admin/views/tab-docs.php:180
-msgid "Elementor page/template listings, complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens."
-msgstr "Liste des pages/modèles Elementor, arbres JSON complets des widgets décodés, définitions des champs de formulaires et webhooks, jetons globaux du kit de design."
-
-#: includes/admin/views/tab-docs.php:183
-msgid "WPCode Snippets"
-msgstr "Extraits de Code WPCode"
-
-#: includes/admin/views/tab-docs.php:185
-msgid "Inventory of all custom PHP/JS/CSS snippets stored in WPCode, execution location, active state, and full source code."
-msgstr "Inventaire de tous les snippets personnalisés PHP/JS/CSS enregistrés dans WPCode, emplacement d'exécution, état d'activation et code source complet."
-
-#: includes/admin/views/tab-docs.php:188
-msgid "Logs & Diagnostics"
-msgstr "Journaux & Diagnostics"
-
-#: includes/admin/views/tab-docs.php:190
-msgid "List of available log files (debug.log, uploads/wc-logs/*.log), tail extraction up to 1000 lines, error and fatal filtering."
-msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log), extraction de fin de fichier jusqu'à 1000 lignes, filtrage des erreurs et fatales."
-
-#: includes/admin/views/tab-docs.php:203
-msgid "Open Source & Plugin Evolution (GitHub)"
-msgstr "Open Source & Évolution de l'Extension (GitHub)"
-
-#: includes/admin/views/tab-docs.php:205
-msgid "WP Agent Bridge is actively maintained and open source. If you need new inspection capabilities or wish to contribute improvements, you are warmly invited to participate!"
-msgstr "WP Agent Bridge est activement maintenu et open source. Si vous avez besoin de nouvelles capacités d'inspection ou souhaitez apporter des améliorations, vous êtes chaleureusement invité à participer !"
-
-#: includes/admin/views/tab-docs.php:210
-msgid "View Repository on GitHub"
-msgstr "Voir le Dépôt sur GitHub"
-
-#: includes/admin/views/tab-docs.php:216
-msgid "Suggesting New Endpoints"
-msgstr "Suggérer de Nouveaux Endpoints"
-
-#: includes/admin/views/tab-docs.php:218
-msgid "Need to inspect WooCommerce shipping zones, tax rules, payment gateway settings, or custom database tables? You can open an issue or submit a Pull Request on GitHub."
-msgstr "Besoin d'inspecter les zones d'expédition WooCommerce, les règles de taxes, les réglages de passerelles de paiement ou des tables SQL personnalisées ? Vous pouvez ouvrir une issue ou soumettre une Pull Request sur GitHub."
-
-#: includes/admin/views/tab-docs.php:221
-msgid "The AI Mega-Prompt is also programmed to formulate ready-to-send feature requests and sample PHP controller code whenever your AI assistant identifies missing technical context!"
-msgstr "Le Mega-Prompt IA est également configuré pour formuler des demandes de fonctionnalités prêtes à envoyer avec un exemple de contrôleur PHP dès que votre assistant IA identifie un contexte manquant !"
-
-#: includes/admin/views/tab-docs.php:226
-msgid "Automatic Updates via PUC"
-msgstr "Mises à Jour Automatiques via PUC"
-
-#: includes/admin/views/tab-docs.php:228
-msgid "This plugin embeds the Plugin Update Checker (PUC v5.6). Whenever a new GitHub Release is tagged and published with a higher version number, your WordPress installation will automatically notify you and allow 1-click updates right from your Plugins dashboard."
-msgstr "Cette extension intègre Plugin Update Checker (PUC v5.6). Dès qu'une nouvelle version GitHub Release est publiée avec un numéro supérieur, votre WordPress vous notifiera automatiquement et permettra la mise à jour en 1 clic depuis votre tableau de bord des extensions."
-
-#: includes/admin/views/tab-docs.php:233
-msgid "Contact & Direct Support"
-msgstr "Contact & Support Direct"
-
-#: includes/admin/views/tab-docs.php:235
-msgid "Have questions, ideas, or feedback? You can contact the author directly at:"
-msgstr "Des questions, des idées ou des retours ? Vous pouvez contacter l'auteur directement à :"
-
-#: includes/admin/views/tab-general.php:81
-msgid "Cryptographically secure 64-character hexadecimal token (RFC 6750 compliant, shell-safe). Keep it private. Click Regenerate at any time to invalidate old credentials."
-msgstr "Token hexadécimal sécurisé de 64 caractères (conforme RFC 6750, sans risque shell). Gardez-le privé. Cliquez sur Régénérer à tout moment pour invalider les anciens identifiants."
-
-#: includes/admin/views/tab-general.php:94
-msgid "Reset All Failures & Unblock All IPs"
-msgstr "Réinitialiser tous les échecs & Débloquer toutes les IPs"
-
-#: includes/admin/class-admin-settings.php:129
-msgid "Are you sure you want to reset all lockout counters and unblock all IP addresses?"
-msgstr "Êtes-vous sûr de vouloir réinitialiser tous les compteurs de blocage et débloquer toutes les adresses IP ?"
-
-#: includes/admin/class-admin-settings.php:234
-msgid "All failed attempts and IP lockouts have been reset successfully."
-msgstr "Toutes les tentatives échouées et blocages IP ont été réinitialisés avec succès."
-
-
-#: includes/admin/class-admin-settings.php
-msgid "Connect your AI to %s in 2 clicks"
-msgstr "Connectez votre IA à %s en 2 clics"
-
-#: includes/admin/class-admin-settings.php
-msgid "100% Read-Only & Safe"
-msgstr "100% Lecture seule & Sécurisé"
-
-#: includes/admin/class-admin-settings.php
-msgid "WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders."
-msgstr "WP Agent Bridge est actif et prêt. Connectez votre assistant IA (Antigravity, Claude, Cursor, ChatGPT) en toute sécurité pour inspecter et diagnostiquer votre site, sans aucun risque pour vos données ou vos commandes."
-
-#: includes/admin/class-admin-settings.php
-msgid "High-value prompt to try with your AI:"
-msgstr "Exemple de question à forte valeur à poser à votre IA :"
-
-#: includes/admin/class-admin-settings.php
-msgid "Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."
-msgstr "Analyse les performances de mon site, identifie les plugins lents et vérifie l'encombrement de la base de données pour trouver des gains d'optimisation rapides."
-
-#: includes/admin/class-admin-settings.php
-msgid "Copy Prompt"
-msgstr "Copier la question"
-
-#: includes/admin/class-admin-settings.php
-msgid "Connect My AI in 2 Clicks"
-msgstr "Connecter mon IA en 2 clics"
-
-#: includes/admin/class-admin-settings.php
-msgid "Onboarding notice dismissed."
-msgstr "Notification de bienvenue masquée."
-
-#: includes/admin/views/tab-general.php
-msgid "Connect Your AI Assistant in 2 Clicks"
-msgstr "Connectez votre assistant IA en 2 clics"
-
-#: includes/admin/views/tab-general.php
-msgid "No AI has connected to this site yet. Follow these 2 simple steps to start exploring your site data with your AI."
-msgstr "Aucune IA ne s'est encore connectée à ce site. Suivez ces 2 étapes simples pour commencer à explorer les données de votre site avec votre IA."
-
-#: includes/admin/views/tab-general.php
-msgid "Awaiting First Connection"
-msgstr "En attente de la 1ère connexion"
-
-#: includes/admin/views/tab-general.php
-msgid "Get Your AI Connection Prompt"
-msgstr "Récupérez votre prompt de connexion IA"
-
-#: includes/admin/views/tab-general.php
-msgid "Navigate to the AI Mega-Prompt tab to copy the self-updating skill or ready-made connection prompt."
-msgstr "Rendez-vous sur l'onglet Mega-Prompt IA pour copier la compétence auto-actualisée ou le prompt de connexion prêt à l'emploi."
-
-#: includes/admin/views/tab-general.php
-msgid "Open AI Mega-Prompt Tab"
-msgstr "Ouvrir l'onglet Mega-Prompt IA"
-
-#: includes/admin/views/tab-general.php
-msgid "Paste & Ask High-Value Questions"
-msgstr "Collez & Posez des questions à forte valeur"
-
-#: includes/admin/views/tab-general.php
-msgid "Paste the prompt into your AI agent (Antigravity, Claude, Cursor, ChatGPT) and try this high-value prompt:"
-msgstr "Collez le prompt dans votre agent IA (Antigravity, Claude, Cursor, ChatGPT) et essayez cette question à forte valeur :"
-
-#: includes/admin/views/tab-general.php
-msgid "Copy"
-msgstr "Copier"
-
-#: includes/admin/views/tab-general.php
-msgid "100% Read-Only"
-msgstr "100% Lecture seule"
-
-#: includes/admin/views/tab-general.php
-msgid "Zero risk: cannot write, modify, or delete any site data."
-msgstr "Zéro risque : aucune écriture, modification ou suppression possible sur votre site."
-
-#: includes/admin/views/tab-general.php
-msgid "Auto-Redacted PII"
-msgstr "Données privées masquées"
-
-#: includes/admin/views/tab-general.php
-msgid "Customer data, passwords, and secret keys are automatically masked."
-msgstr "Les données clients, mots de passe et clés secrètes sont automatiquement masqués."
-
-#: includes/admin/views/tab-general.php
-msgid "Zero Idle Impact"
-msgstr "Zéro impact au repos"
-
-#: includes/admin/views/tab-general.php
-msgid "Consumes 0 resources when idle; lightning fast on demands."
-msgstr "Consomme 0 ressource au repos ; ultra-rapide lors des requêtes."
-
-#: includes/admin/views/tab-general.php
-msgid "AI Agent Connected & Operational"
-msgstr "Agent IA connecté & opérationnel"
-
-#: includes/admin/views/tab-general.php
-msgid "Your site is actively connected with AI agents. You can inspect all authenticated queries, response times, and IP locations anytime in the Connection Logs tab."
-msgstr "Votre site est activement connecté avec des agents IA. Vous pouvez consulter les requêtes authentifiées, temps de réponse et adresses IP à tout moment dans l'onglet Journaux de connexion."
-
-#: includes/admin/views/tab-general.php
-msgid "View Connection Logs"
-msgstr "Voir les journaux de connexion"

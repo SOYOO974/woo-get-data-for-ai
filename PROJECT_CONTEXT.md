@@ -186,7 +186,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`)
 - `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`, `/code/checksums`, `/code/zip`)
 - `[x] Elementor Architecture` (`/elementor/list`, `/elementor/forms`, `/elementor/kit`)
-- `[x] WPCode Snippets` (`/wpcode/snippets`)
+- `[x] Code Snippets (WPCode & Code Snippets Pro)` (`/snippets`, `/wpcode/snippets`)
 - `[x] Error & WooCommerce Logs` (`/logs/sources`, `/logs/view`)
 - `[x] FlowMattic Workflows` (`/flowmattic/export-all`, `/flowmattic/workflows`, `/flowmattic/workflow/{id}`)
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
@@ -255,8 +255,10 @@ Enables/disables modules on a per-site basis:
 | `GET /elementor/item/{id}` | GET | Full decoded `_elementor_data` JSON tree and page settings |
 | `GET /elementor/forms` | GET | Inventory of all Elementor forms (field definitions, actions, webhook URLs) |
 | `GET /elementor/kit` | GET | Global colors, system fonts, and design tokens from the active Elementor Kit |
-| `GET /wpcode/snippets` | GET | Listing of all WPCode snippets (`?status=all|active|inactive`, default: `all`, recommended: `active`) with global `active_count` and `inactive_count` |
-| `GET /wpcode/snippet/{id}` | GET | Full source code and configuration of a targeted snippet |
+| `GET /snippets` | GET | Unified listing of all custom snippets across WPCode and Code Snippets (`?status=all\|active\|inactive`, `?source=all\|code-snippets\|wpcode`, `?type=all\|php\|css\|js\|html`) with global `active_count` and `inactive_count` |
+| `GET /snippets/{id}` | GET | Full source code, execution location, priority, tags, and direct WordPress Admin edit link with collision resolution (`?source=all\|code-snippets\|wpcode`) |
+| `GET /wpcode/snippets` | GET | Legacy alias: Listing of all snippets across WPCode and Code Snippets (`?status`, `?source`, `?type`) |
+| `GET /wpcode/snippet/{id}` | GET | Legacy alias: Full source code and configuration of a targeted snippet (`?source`) |
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
 | `GET /logs/custom` | GET | Memory-safe tail inspection of specific log files in `wp-content/` with strict path sandboxing (`?file=nom-du-log`) |
@@ -310,10 +312,10 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   1. `seo_content_audit` (360° SEO, Content Hierarchy & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
-  4. `order_checkout_troubleshoot` (Orders, Payment Gateways & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), and WooCommerce webhook delivery status (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/wpcode/snippets`, `/system/mail`, `/woocommerce/webhooks`).
+  4. `order_checkout_troubleshoot` (Orders, Payment Gateways & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), and WooCommerce webhook delivery status (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic & Conversion Analytics): Complete commercial & CRO intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, alongside traffic channels, UTM marketing campaigns, and device breakdowns (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).
   6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
-  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom WPCode snippets, and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/wpcode/snippets`, `/meta/fields`).
+  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).
 
 ---
 
@@ -368,6 +370,28 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.19.0 (2026-09-07)
+- **Support Complet et Unifié Code Snippets & WPCode (`Wpcode_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Routes Unifiées & Rétrocompatibilité** :
+    - Nouvelles routes unifiées `GET /snippets` et `GET /snippets/{id}` avec conservation des routes existantes `GET /wpcode/snippets` et `GET /wpcode/snippet/{id}`.
+    - Nouveaux paramètres de filtrage : `?source=all|code-snippets|wpcode` et `?type=all|php|css|js|html` aux côtés de `?status=all|active|inactive`.
+  - **Extraction Fidèle et Détection Dynamique Code Snippets (`{$wpdb->prefix}snippets`)** :
+    - Déduction dynamique du type de code (`code_type`) depuis `scope` : `-css` -> `css`, `-js` -> `js`, `content` -> `html`, sinon `php`.
+    - Traduction lisible de `location` depuis `scope` : `global` -> `run-everywhere`, `admin` -> `admin-only`, `front-end` -> `front-end-only`, `single-use` -> `single-use`, ou conservation de la valeur brute (`site-head-js`, `site-css`, etc.).
+    - Extraction réelle de la colonne `priority`, du champ `description`, et normalisation des `tags` (tableau nettoyé depuis tableau sérialisé, JSON ou chaîne séparée par des virgules).
+    - Génération systématique du lien direct d'édition admin : `admin_url('admin.php?page=edit-snippet&id=' . $id)`.
+  - **Extraction Enrichie WPCode (`wpcode` CPT)** :
+    - Extraction de `description` (`_wpcode_snippet_description`), normalisation des tags (`wpcode_tags` / `wpcode_tag`), et génération du lien d'édition admin : `admin_url('admin.php?page=wpcode-snippet-manager&snippet_id=' . $id)`.
+  - **Schéma JSON Uniforme & Résolution des Collisions** :
+    - Schéma cohérent et complet partagé entre les collections et les détails unitaires : `source_plugin`, `id`, `title`, `status`, `is_active`, `code_type`, `location`, `priority`, `description`, `tags`, `admin_edit_url`, `modified_at`, `code`.
+    - Résolution des collisions d'ID dans `get_snippet_by_id` avec paramètre optionnel `?source=wpcode|code-snippets` (recherche en cascade WPCode puis Code Snippets par défaut).
+  - **Permissions, Playbooks & Mega-Prompt** :
+    - Renommage du module en `Code Snippets (WPCode & Code Snippets Pro)`.
+    - Mise à jour du Playbook 4 (Étape 4) et du Playbook 7 (Étape 6 : « Active Custom Snippets (WPCode & Code Snippets) ») pointant sur `/snippets`.
+    - Mise à jour de la Directive #3 dans `generate_skill_markdown()` et le Mega-Prompt pour les liens d'édition admin WPCode et Code Snippets.
+  - **Client CLI (`cli/sync.js`)** :
+    - Prise en charge de l'extension `.html` pour le type `html`, interrogation transparente de `/snippets` avec fallback `/wpcode/snippets`, et enrichissement de l'en-tête de fichier (`Type`, `Location`, `Priority`, `Description`, `Tags`, `Admin URL`).
 
 ### v1.18.0 (2026-09-07)
 - **Bannières d'Onboarding Premier Utilisateur & Connexion IA en 2 Clics (`Access_Logger`, `Admin_Settings`, `tab-general.php`)** :

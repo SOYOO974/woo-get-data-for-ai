@@ -43,7 +43,7 @@ $recent_logs = Access_Logger::get_recent_logs(100);
                     <li>
                         <span class="country-pill">
                             <span class="country-code"><?php echo esc_html($c['country_code'] ?: 'XX'); ?></span>
-                            <strong><?php echo esc_html($c['country_name'] ?: 'Unknown'); ?></strong>
+                            <strong><?php echo esc_html($c['country_name'] ?: esc_html__('Unknown', 'woo-get-data-for-ai')); ?></strong>
                         </span>
                         <span class="badge-count"><?php echo number_format_i18n($c['cnt']); ?> <?php esc_html_e('reqs', 'woo-get-data-for-ai'); ?></span>
                     </li>
@@ -114,7 +114,7 @@ $recent_logs = Access_Logger::get_recent_logs(100);
                             <td>
                                 <span class="country-pill-sm">
                                     <span class="country-code"><?php echo esc_html($log['country_code'] ?: 'XX'); ?></span>
-                                    <?php echo esc_html($log['country_name'] ?: 'Unknown'); ?>
+                                    <?php echo esc_html($log['country_name'] ?: esc_html__('Unknown', 'woo-get-data-for-ai')); ?>
                                 </span>
                             </td>
                             <td><code><?php echo esc_html($log['endpoint']); ?></code></td>

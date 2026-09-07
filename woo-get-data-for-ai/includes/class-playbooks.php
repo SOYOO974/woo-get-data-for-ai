@@ -259,10 +259,10 @@ class Playbooks {
                     [
                         'step'        => 4,
                         'action'      => esc_html__('Active Custom Checkout Hooks', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/wpcode/snippets',
+                        'endpoint'    => '/snippets',
                         'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Inventories active custom PHP snippets running on the site to spot buggy hooks attached to woocommerce_checkout_* or order status transitions.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['snippets[].title', 'snippets[].code', 'snippets[].location'],
+                        'description' => esc_html__('Inventories active custom PHP snippets running on the site (WPCode & Code Snippets) to spot buggy hooks attached to woocommerce_checkout_* or order status transitions.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['snippets[].title', 'snippets[].code', 'snippets[].location', 'snippets[].admin_edit_url'],
                     ],
                     [
                         'step'        => 5,
@@ -471,10 +471,10 @@ class Playbooks {
                     ],
                     [
                         'step'        => 6,
-                        'action'      => esc_html__('Active Custom WPCode Snippets', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/wpcode/snippets',
+                        'action'      => esc_html__('Active Custom Snippets (WPCode & Code Snippets)', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/snippets',
                         'params'      => ['status' => 'active'],
-                        'description' => esc_html__('Inventories active custom PHP/JS/CSS snippets running in production with direct admin edit URLs.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Inventories active custom PHP/JS/CSS/HTML snippets running in production (WPCode and Code Snippets) with direct admin edit URLs.', 'woo-get-data-for-ai'),
                         'key_signals' => ['snippets[].title', 'snippets[].code_type', 'snippets[].location', 'snippets[].admin_edit_url'],
                     ],
                     [
@@ -541,7 +541,7 @@ class Playbooks {
         if (strpos($endpoint, '/theme') === 0) return 'theme';
         if (strpos($endpoint, '/code') === 0) return 'code';
         if (strpos($endpoint, '/elementor') === 0) return 'elementor';
-        if (strpos($endpoint, '/wpcode') === 0) return 'wpcode';
+        if (strpos($endpoint, '/snippets') === 0 || strpos($endpoint, '/wpcode') === 0) return 'wpcode';
         if (strpos($endpoint, '/logs') === 0) return 'logs';
         if (strpos($endpoint, '/crons') === 0 || strpos($endpoint, '/action-scheduler') === 0) return 'scheduler';
         if (strpos($endpoint, '/flowmattic') === 0) return 'flowmattic';
@@ -589,9 +589,11 @@ class Playbooks {
         $md .= "2. **ACTIVE VS INACTIVE CODE INTEGRITY**:\n";
         $md .= "   - When diagnosing issues, ALWAYS query live active elements first (`?status=active` or `?status=publish`).\n";
         $md .= "   - Never mistake inactive snippets or drafts for live production code.\n";
-        $md .= "3. **WPCODE DIRECT ADMIN LINKS RULE**:\n";
-        $md .= "   - Whenever you recommend or analyze a WPCode snippet, ALWAYS provide the user with the direct WordPress Admin edit link:\n";
-        $md .= "     `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n";
+        $md .= "3. **CODE SNIPPETS & WPCODE DIRECT ADMIN LINKS RULE**:\n";
+        $md .= "   - Whenever you recommend or analyze a custom snippet, ALWAYS provide the user with the direct WordPress Admin edit link:\n";
+        $md .= "     - WPCode: `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n";
+        $md .= "     - Code Snippets: `{$site_url}/wp-admin/admin.php?page=edit-snippet&id=<ID>`\n";
+        $md .= "   - Alternatively, use the direct `admin_edit_url` property returned in each snippet object by the API.\n";
         $md .= "4. **DYNAMIC FRESHNESS & REFRESH PROTOCOL**:\n";
         $md .= "   - Re-query `GET {$rest_base}/capabilities?format=skill` regularly to detect new inspection capabilities after plugin updates.\n\n";
 
@@ -666,7 +668,7 @@ class Playbooks {
         $md .= "# Pillar 7: Code Architecture, Themes & Automations\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/overrides'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/flowmattic/workflows?status=active'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/wpcode/snippets?status=active'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/snippets?status=active'\n";
         $md .= "```\n";
 
         return $md;

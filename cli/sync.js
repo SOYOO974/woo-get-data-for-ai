@@ -392,12 +392,17 @@ async function pullSnippets() {
     console.log('⏳ Pulling WPCode & Code Snippets...');
     try {
         const query = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
-        const data = await makeRequest(`/wpcode/snippets${query}`);
+        let data;
+        try {
+            data = await makeRequest(`/snippets${query}`);
+        } catch (e) {
+            data = await makeRequest(`/wpcode/snippets${query}`);
+        }
         let activeSaved = 0;
         let inactiveSaved = 0;
 
         (data.snippets || []).forEach(snip => {
-            const ext = snip.code_type === 'javascript' || snip.code_type === 'js' ? 'js' : (snip.code_type === 'css' ? 'css' : 'php');
+            const ext = (snip.code_type === 'javascript' || snip.code_type === 'js') ? 'js' : (snip.code_type === 'css' ? 'css' : (snip.code_type === 'html' ? 'html' : 'php'));
             const cleanTitle = (snip.title || 'snippet').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
             const filename = `${snip.id}-${cleanTitle}.${ext}`;
             const isAct = (snip.is_active || snip.status === 'active');
@@ -409,7 +414,8 @@ async function pullSnippets() {
                 inactiveSaved++;
             }
 
-            let header = `/**\n * Snippet: ${snip.title}\n * Source: ${snip.source_plugin}\n * Status: ${snip.status}\n * Location: ${snip.location}\n * Priority: ${snip.priority}\n * Modified: ${snip.modified_at}\n */\n\n`;
+            const tagsStr = Array.isArray(snip.tags) && snip.tags.length > 0 ? snip.tags.join(', ') : 'none';
+            let header = `/**\n * Snippet: ${snip.title}\n * Source: ${snip.source_plugin}\n * Status: ${snip.status}\n * Type: ${snip.code_type}\n * Location: ${snip.location}\n * Priority: ${snip.priority}\n * Description: ${snip.description || 'none'}\n * Tags: ${tagsStr}\n * Admin URL: ${snip.admin_edit_url || 'n/a'}\n * Modified: ${snip.modified_at}\n */\n\n`;
             writeText(path.join(outputDir, `snippets/${subfolder}/${filename}`), header + (snip.code || ''));
         });
         console.log(`✅ Saved ${activeSaved} active snippets to ./snippets/active/ and ${inactiveSaved} inactive snippets to ./snippets/inactive/ (Total: ${data.total || (activeSaved + inactiveSaved)})`);

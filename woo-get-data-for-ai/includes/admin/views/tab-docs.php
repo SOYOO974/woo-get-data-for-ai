@@ -75,7 +75,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
             <div class="step-body">
                 <h4><?php esc_html_e('Audit, Diagnose & Build', 'woo-get-data-for-ai'); ?></h4>
                 <p>
-                    <?php esc_html_e('Ask your AI to inspect recent WooCommerce fatal errors, analyze theme overrides, or examine custom WPCode snippets. The AI queries the endpoints via curl with zero SSH needed.', 'woo-get-data-for-ai'); ?>
+                    <?php esc_html_e('Ask your AI to inspect recent WooCommerce fatal errors, analyze theme overrides, or examine custom WPCode & Code Snippets. The AI queries the endpoints via curl with zero SSH needed.', 'woo-get-data-for-ai'); ?>
                 </p>
             </div>
         </div>
@@ -184,9 +184,9 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><?php esc_html_e('Bulk export and listing of pages and templates with status filter (?status=publish|draft|private|all or active|inactive), complete decoded JSON widget trees, form field definitions and webhook URLs, global design kit tokens.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
-                    <td><strong><?php esc_html_e('WPCode Snippets', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/wpcode/snippets</code>, <code>/wpcode/snippet/{id}</code></td>
-                    <td><?php esc_html_e('Inventory of all custom PHP/JS/CSS snippets stored in WPCode with status filter (?status=active|inactive|all), execution location, active state, and full source code.', 'woo-get-data-for-ai'); ?></td>
+                    <td><strong><?php esc_html_e('Code Snippets (WPCode & Code Snippets Pro)', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/snippets</code>, <code>/snippets/{id}</code>, <code>/wpcode/snippets</code>, <code>/wpcode/snippet/{id}</code></td>
+                    <td><?php esc_html_e('Inventory of all custom PHP/JS/CSS/HTML snippets stored in WPCode and Code Snippets (Free/Pro) with status (?status=active|inactive|all), source (?source=all|code-snippets|wpcode), and type (?type=all|php|css|js|html) filters, execution location, priority, tags, direct admin edit URLs, and full source code.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Logs & Diagnostics', 'woo-get-data-for-ai'); ?></strong></td>
