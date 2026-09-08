@@ -230,6 +230,10 @@ class Playbooks {
                     'problème smtp',
                     'webhooks qui échouent',
                     'order troubleshoot',
+                    'problème code promo',
+                    'code promo bloqué',
+                    'coupon non valide',
+                    'coupon troubleshoot',
                 ],
                 'workflow'        => [
                     [
@@ -237,16 +241,16 @@ class Playbooks {
                         'action'      => esc_html__('Recent Failed Orders Inspection', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/orders',
                         'params'      => ['status' => 'failed,cancelled', 'per_page' => 10],
-                        'description' => esc_html__('Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, and order totals.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders[].status', 'orders[].payment_method', 'orders[].total', 'orders[].date_created'],
+                        'description' => esc_html__('Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, applied coupons, and order totals. Supports direct filtering by coupon code (?coupon=...).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['orders[].status', 'orders[].payment_method', 'orders[].total', 'orders[].coupon_codes', 'orders[].date_created'],
                     ],
                     [
                         'step'        => 2,
                         'action'      => esc_html__('Deep Order & Gateway Diagnosis', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/order/{id}',
                         'params'      => ['id' => '<failing_order_id>'],
-                        'description' => esc_html__('Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and coupon lines.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['order_notes[].content', 'order_notes[].customer_note', 'shipping_lines[].meta_data.fs_costs', 'payment_method_title'],
+                        'description' => esc_html__('Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and applied coupon lines. For coupon-specific checkout stalls, inspect /woocommerce/coupon/{id} to verify validity, remaining usage quotas, and active held checkout sessions.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['order_notes[].content', 'order_notes[].customer_note', 'shipping_lines[].meta_data.fs_costs', 'coupon_lines[].code', 'payment_method_title'],
                     ],
                     [
                         'step'        => 3,
@@ -602,7 +606,12 @@ class Playbooks {
         $md .= "     - **HPOS Data Caching (`hpos_data_caching.enabled`)**: Recommend enabling if `object_cache_present` (Redis/Memcached) is detected to eliminate redundant order SQL queries.\n";
         $md .= "     - **Deferred Transactional Emails (`deferred_transactional_emails.enabled`)**: If false and checkout is slow, advise adding `add_filter('woocommerce_defer_transactional_emails', '__return_true');` via WPCode to offload SMTP sending to Action Scheduler and make checkout confirmation instant.\n";
         $md .= "     - **Checkout Rate Limiting (`checkout_rate_limiting.enabled`)**: Must be enabled in production (*WooCommerce > Settings > Advanced > Features*) to prevent card testing bot attacks.\n";
-        $md .= "     - **HPOS Full-Text Search (`hpos_full_text_search.enabled`)**: If store has > 5,000 orders and admin order search is sluggish, recommend testing full-text search indexes with experimental notice.\n\n";
+        $md .= "     - **HPOS Full-Text Search (`hpos_full_text_search.enabled`)**: If store has > 5,000 orders and admin order search is sluggish, recommend testing full-text search indexes with experimental notice.\n";
+        $md .= "6. **WOOCOMMERCE COUPONS & PROMOTIONAL DIAGNOSTICS**:\n";
+        $md .= "   - When troubleshooting checkout issues, discount anomalies, or customer complaints about coupons:\n";
+        $md .= "     - Use `GET /woocommerce/coupons` to list active/expired/exhausted coupons with usage counts, limits, and held counts.\n";
+        $md .= "     - Use `GET /woocommerce/coupon/{id}` (by numeric ID or code slug) to check real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and recent associated orders.\n";
+        $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n\n";
 
         $md .= "---\n\n";
 

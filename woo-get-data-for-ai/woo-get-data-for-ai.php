@@ -3,7 +3,7 @@
  * Plugin Name:       WP Agent Bridge (Data for AI)
  * Plugin URI:        https://github.com/SOYOO974/woo-get-data-for-ai
  * Description:       Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode & Code Snippets, and theme options to AI agents (Antigravity, Claude, Cursor).
- * Version:           1.20.0
+ * Version:           1.21.0
  * Author:            SOYOO
  * Author URI:        https://github.com/SOYOO974
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define Plugin Constants
-define('WOO_GET_DATA_AI_VERSION', '1.20.0');
+define('WOO_GET_DATA_AI_VERSION', '1.21.0');
 
 define('WOO_GET_DATA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));

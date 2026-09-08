@@ -836,6 +836,16 @@ async function pullWooCommerce() {
         const orders = await makeRequest('/woocommerce/orders?per_page=20');
         writeJson(path.join(wcDir, 'orders.json'), orders);
 
+        // 4b. Pull Promotional Coupons
+        console.log('   🎟️  Fetching Promotional Coupons...');
+        let couponsData = null;
+        try {
+            couponsData = await makeRequest('/woocommerce/coupons?per_page=50');
+            writeJson(path.join(wcDir, 'coupons.json'), couponsData);
+        } catch (coupErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/coupons:', coupErr.message);
+        }
+
         // 5. Pull Sales Analytics
         console.log('   📈 Fetching WooCommerce Native Sales Analytics...');
         let salesData = null;

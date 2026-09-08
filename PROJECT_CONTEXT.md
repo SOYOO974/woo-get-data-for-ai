@@ -288,7 +288,9 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones |
 | `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
-| `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?per_page=10`) |
+| `GET /woocommerce/coupons` | GET | List and filter promotional discount coupons with status (`active`, `expired`, `exhausted`, `all`), discount types, usage counts, limits, held counts, and PII-masked email restrictions (`?status=`, `?type=`, `?search=`, `?email=`, `?per_page=20`, `?page=1`, `?orderby=date\|code\|usage_count\|modified`, `?order=DESC\|ASC`) |
+| `GET /woocommerce/coupon/{id}` | GET | Deep inspection of a single coupon by numeric ID or code slug: discount rules, real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and last 10 associated orders |
+| `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, coupon lines, applied coupon codes, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?coupon=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping lines with decoded metadata (`shipping_lines[].meta_data` including Flexible Shipping `fs_costs` base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
 | `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with geo-locations, flat_rate table rate rules, and Flexible Shipping matrix rules |
 | `GET /woocommerce/shipping` | GET | Dedicated logistics & shipping inspection: zones, geographic locations (postcodes, states, countries), native method parameters, flat_rate table rate rules (`flexible_shipping_table_rate`), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (tiers, classes, conditions), and sanitized `raw_instance_settings` |
@@ -376,6 +378,22 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.21.0 (2026-09-08)
+- **Module Codes Promos (Coupons) & Amélioration de l'Inspection des Commandes (`Woocommerce_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Nouveaux Endpoints REST d'Inspection des Codes Promos** :
+    - `GET /woocommerce/coupons` : Découverte et filtrage des codes promos de la boutique avec compteurs de résumé global (`total_coupons`, `active_coupons`, `expired_coupons`, `exhausted_coupons`), filtrage par statut (`active`, `expired`, `exhausted`, `all`), type de remise (`fixed_cart`, `percent`, `fixed_product`, `all`), recherche textuelle (code ou description), restrictions e-mail, pagination et tris (`date`, `code`, `usage_count`, `modified`). Masquage RGPD strict des adresses e-mails restreintes (`w***e@domain.com`).
+    - `GET /woocommerce/coupon/{id}` : Inspection approfondie unitaire d'un code promo par ID numérique ou par slug/code textuel. Retourne l'ensemble des attributs du coupon (`WC_Coupon`), un diagnostic en temps réel de disponibilité (`is_valid_now`, `usage_left`), les sessions de checkout en cours de retenue (`held_sessions` via `_coupon_held_keys` et commandes en attente avec ID, date, statut et total), et les 10 dernières commandes associées ayant appliqué ce code (`associated_orders` avec statut, date, total, devise et client anonymisé RGPD).
+  - **Amélioration de l'Inspection des Commandes (`GET /woocommerce/orders`)** :
+    - **Injection des Codes Promos dans les Commandes** : Chaque objet commande expose désormais `coupon_lines` (détail des remises et taxes de remise par coupon) et `coupon_codes` (tableau des codes appliqués).
+    - **Filtrage Direct par Code Promo (`?coupon=<code>`)** : Permet de requêter directement `GET /woocommerce/orders?coupon=sophie_5eur_2` pour retrouver instantanément toutes les commandes (en cours, payées ou en attente) rattachées à ce code.
+    - **Recherche Améliorée par E-mail et Nom Client en Environnement HPOS & CPT** : Résolution fiable et indexée de la recherche `$query_args['s']` sur les tables personnalisées de commandes HPOS (`wp_wc_orders` et `wp_wc_order_addresses`) et fallback CPT pour rechercher par e-mail, nom de client, numéro de transaction ou ID de commande sans altération.
+  - **Permissions, Capabilities & Playbooks** :
+    - Enregistrement des nouvelles routes dans `get_module_definitions()` et `get_capabilities_catalog()`.
+    - Enrichissement des Piliers 4 (`order_checkout_troubleshoot`) et 5 (`ecommerce_bi_analytics`) avec déclencheurs et directives de diagnostic coupons (`_coupon_held_keys`, quota restant).
+  - **Client CLI Local (`cli/sync.js`)** :
+    - `pullWooCommerce()` télécharge automatiquement `/woocommerce/coupons` dans `./synced-site-data/woocommerce/coupons.json`.
+  - **Internationalisation & Loco Translate** : 442 chaînes uniques, couverture française maintenue à 100% dans `languages/`.
 
 ### v1.20.0 (2026-09-07)
 - **Audit des Options de Performance & Checkout WooCommerce (`Woocommerce_Controller`, `System_Controller`, `Playbooks`)** :

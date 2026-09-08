@@ -66,7 +66,7 @@ $mega_prompt .= "  * Inspecting custom fields, product specs, or ACF data? -> Ch
 $mega_prompt .= "  * Inspecting WordPress pages, hierarchy, or Gutenberg content? -> Check `/content/pages?status=publish` or `/content/page/{id}`.\n";
 $mega_prompt .= "  * Auditing SEO (meta tags, noindex, OpenGraph across Yoast/RankMath/SEOPress)? -> Check `/content/seo-audit` or `/content/page/{id}`.\n";
 $mega_prompt .= "  * Investigating WooCommerce products, stock, or variations? -> Check `/woocommerce/products?status=publish` or `/woocommerce/product/{id}`.\n";
-$mega_prompt .= "  * Investigating orders, payment errors, cancellation ratios, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` or `/woocommerce/order/{id}` (includes payment gateway error logs in order notes, customer PII strictly anonymized) and `/woocommerce/summary`.\n";
+$mega_prompt .= "  * Investigating orders, payment errors, coupons, cancellation ratios, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` (supports `?coupon=<code>`), `/woocommerce/order/{id}`, `/woocommerce/coupons` or `/woocommerce/coupon/{id}` (real-time availability, held sessions, associated orders) and `/woocommerce/summary`.\n";
 $mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings`.\n";
 $mega_prompt .= "  * Investigating recent site crashes or fatal PHP errors? -> Check `/logs/errors-summary` (Crash Watch).\n";
 $mega_prompt .= "  * Investigating cart/checkout/product bugs? -> Check `/theme/overrides` and latest logs with `/logs/view` or specific logs with `/logs/custom?file=...`.\n";

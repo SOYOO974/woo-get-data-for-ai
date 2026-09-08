@@ -86,6 +86,64 @@ class Woocommerce_Controller extends Rest_Controller {
             ],
         ]);
 
+        // GET /woocommerce/coupons (List and filter WooCommerce promotional discount coupons)
+        register_rest_route(self::NAMESPACE, '/woocommerce/coupons', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_coupons'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'status'   => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'type'     => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'search'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'email'    => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'per_page' => [
+                    'default'           => 20,
+                    'sanitize_callback' => 'absint',
+                ],
+                'page'     => [
+                    'default'           => 1,
+                    'sanitize_callback' => 'absint',
+                ],
+                'orderby'  => [
+                    'default'           => 'date',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'order'    => [
+                    'default'           => 'DESC',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
+        // GET /woocommerce/coupon/{id} (Deep inspection of single coupon by numeric ID or code slug)
+        register_rest_route(self::NAMESPACE, '/woocommerce/coupon/(?P<id>[a-zA-Z0-9_\-]+)', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_coupon'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
         // GET /woocommerce/orders (Recent orders with strict PII anonymization)
         register_rest_route(self::NAMESPACE, '/woocommerce/orders', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -105,6 +163,10 @@ class Woocommerce_Controller extends Rest_Controller {
                 'customer_id' => [
                     'default'           => 0,
                     'sanitize_callback' => 'absint',
+                ],
+                'coupon'      => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
                 ],
                 'per_page'    => [
                     'default'           => 10,
@@ -264,6 +326,34 @@ class Woocommerce_Controller extends Rest_Controller {
             return $trimmed . '***';
         }
         return mb_substr($trimmed, 0, 1) . '***';
+    }
+
+    /**
+     * Anonymize customer emails for GDPR/PII protection (e.g. "sophie@aol.com" -> "s***e@aol.com").
+     *
+     * @param string $email
+     * @return string
+     */
+    protected static function mask_email($email) {
+        if (empty($email) || !is_string($email)) {
+            return '';
+        }
+        $email = trim($email);
+        $parts = explode('@', $email, 2);
+        if (count($parts) !== 2) {
+            return '***';
+        }
+        $name   = $parts[0];
+        $domain = $parts[1];
+        $len    = mb_strlen($name);
+        if ($len <= 1) {
+            $masked_name = $name . '***';
+        } elseif ($len === 2) {
+            $masked_name = mb_substr($name, 0, 1) . '***';
+        } else {
+            $masked_name = mb_substr($name, 0, 1) . '***' . mb_substr($name, -1);
+        }
+        return $masked_name . '@' . $domain;
     }
 
     /**
@@ -923,6 +1013,438 @@ class Woocommerce_Controller extends Rest_Controller {
     }
 
     /**
+     * GET /woocommerce/coupons
+     *
+     * List and filter WooCommerce promotional discount coupons.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function get_coupons(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', esc_html__('WooCommerce is not active on this site.', 'woo-get-data-for-ai'), 400);
+        }
+
+        global $wpdb;
+
+        $status_filter = sanitize_text_field($request->get_param('status') ?: 'all');
+        $type_filter   = sanitize_text_field($request->get_param('type') ?: 'all');
+        $search        = sanitize_text_field($request->get_param('search') ?: '');
+        $email_filter  = sanitize_text_field($request->get_param('email') ?: '');
+        $per_page      = min(100, max(1, (int) ($request->get_param('per_page') ?: 20)));
+        $page          = max(1, (int) ($request->get_param('page') ?: 1));
+        $orderby       = sanitize_text_field($request->get_param('orderby') ?: 'date');
+        $order         = strtoupper(sanitize_text_field($request->get_param('order') ?: 'DESC'));
+        if (!in_array($order, ['ASC', 'DESC'], true)) {
+            $order = 'DESC';
+        }
+
+        // 1. Calculate store-wide summary (total, active, expired, exhausted)
+        $summary_rows = $wpdb->get_results("
+            SELECT p.ID,
+                   MAX(CASE WHEN pm.meta_key = 'date_expires' THEN pm.meta_value END) as date_expires,
+                   MAX(CASE WHEN pm.meta_key = 'usage_count' THEN pm.meta_value END) as usage_count,
+                   MAX(CASE WHEN pm.meta_key = 'usage_limit' THEN pm.meta_value END) as usage_limit
+            FROM {$wpdb->posts} p
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key IN ('date_expires', 'usage_count', 'usage_limit')
+            WHERE p.post_type = 'shop_coupon' AND p.post_status = 'publish'
+            GROUP BY p.ID
+        ", ARRAY_A);
+
+        $total_coupons     = count($summary_rows);
+        $active_coupons    = 0;
+        $expired_coupons   = 0;
+        $exhausted_coupons = 0;
+        $now               = time();
+
+        foreach ($summary_rows as $s_row) {
+            $exp = $s_row['date_expires'];
+            $is_exp = false;
+            if (!empty($exp)) {
+                $ts = is_numeric($exp) ? (int) $exp : strtotime($exp);
+                if ($ts && $ts < $now) {
+                    $is_exp = true;
+                }
+            }
+            $u_count = (int) ($s_row['usage_count'] ?? 0);
+            $u_limit = (int) ($s_row['usage_limit'] ?? 0);
+            $is_exh  = ($u_limit > 0 && $u_count >= $u_limit);
+
+            if ($is_exp) {
+                $expired_coupons++;
+            } elseif ($is_exh) {
+                $exhausted_coupons++;
+            } else {
+                $active_coupons++;
+            }
+        }
+
+        // 2. Query matching coupons based on filters
+        $where = ["p.post_type = 'shop_coupon'", "p.post_status = 'publish'"];
+        $joins = [];
+
+        if ($type_filter !== 'all') {
+            $joins['type'] = "INNER JOIN {$wpdb->postmeta} pm_type ON p.ID = pm_type.post_id AND pm_type.meta_key = 'discount_type'";
+            $where[]       = $wpdb->prepare("pm_type.meta_value = %s", $type_filter);
+        }
+
+        if (!empty($search)) {
+            $search_like = '%' . $wpdb->esc_like($search) . '%';
+            $where[]     = $wpdb->prepare("(p.post_title LIKE %s OR p.post_excerpt LIKE %s)", $search_like, $search_like);
+        }
+
+        if (!empty($email_filter)) {
+            $email_like     = '%' . $wpdb->esc_like($email_filter) . '%';
+            $joins['email'] = "INNER JOIN {$wpdb->postmeta} pm_email ON p.ID = pm_email.post_id AND pm_email.meta_key = 'customer_email'";
+            $where[]        = $wpdb->prepare("pm_email.meta_value LIKE %s", $email_like);
+        }
+
+        // Additional joins for ordering and status filtering
+        $joins['exp']   = "LEFT JOIN {$wpdb->postmeta} pm_exp ON p.ID = pm_exp.post_id AND pm_exp.meta_key = 'date_expires'";
+        $joins['count'] = "LEFT JOIN {$wpdb->postmeta} pm_cnt ON p.ID = pm_cnt.post_id AND pm_cnt.meta_key = 'usage_count'";
+        $joins['limit'] = "LEFT JOIN {$wpdb->postmeta} pm_lmt ON p.ID = pm_lmt.post_id AND pm_lmt.meta_key = 'usage_limit'";
+
+        $order_clause = "ORDER BY p.post_date {$order}";
+        if ($orderby === 'code') {
+            $order_clause = "ORDER BY p.post_title {$order}";
+        } elseif ($orderby === 'usage_count') {
+            $order_clause = "ORDER BY CAST(COALESCE(pm_cnt.meta_value, 0) AS UNSIGNED) {$order}";
+        } elseif ($orderby === 'modified') {
+            $order_clause = "ORDER BY p.post_modified {$order}";
+        }
+
+        $join_sql  = implode(' ', $joins);
+        $where_sql = implode(' AND ', $where);
+
+        $query = "
+            SELECT p.ID, p.post_title,
+                   pm_exp.meta_value as date_expires,
+                   pm_cnt.meta_value as usage_count,
+                   pm_lmt.meta_value as usage_limit
+            FROM {$wpdb->posts} p
+            {$join_sql}
+            WHERE {$where_sql}
+            GROUP BY p.ID
+            {$order_clause}
+        ";
+
+        $candidate_coupons = $wpdb->get_results($query, ARRAY_A);
+
+        // Filter by status if requested
+        $matched_coupons = [];
+        foreach ($candidate_coupons as $row) {
+            $exp = $row['date_expires'];
+            $is_exp = false;
+            if (!empty($exp)) {
+                $ts = is_numeric($exp) ? (int) $exp : strtotime($exp);
+                if ($ts && $ts < $now) {
+                    $is_exp = true;
+                }
+            }
+            $u_count = (int) ($row['usage_count'] ?? 0);
+            $u_limit = (int) ($row['usage_limit'] ?? 0);
+            $is_exh  = ($u_limit > 0 && $u_count >= $u_limit);
+
+            $coupon_status = 'active';
+            if ($is_exp) {
+                $coupon_status = 'expired';
+            } elseif ($is_exh) {
+                $coupon_status = 'exhausted';
+            }
+
+            if ($status_filter === 'active' && $coupon_status !== 'active') {
+                continue;
+            }
+            if ($status_filter === 'expired' && $coupon_status !== 'expired') {
+                continue;
+            }
+            if ($status_filter === 'exhausted' && $coupon_status !== 'exhausted') {
+                continue;
+            }
+
+            $row['computed_status'] = $coupon_status;
+            $row['is_expired']      = $is_exp;
+            $row['is_exhausted']    = $is_exh;
+            $matched_coupons[]      = $row;
+        }
+
+        $total         = count($matched_coupons);
+        $max_num_pages = (int) ceil($total / $per_page);
+        $offset        = ($page - 1) * $per_page;
+        $page_rows     = array_slice($matched_coupons, $offset, $per_page);
+
+        // Hydrate WC_Coupon objects for current page
+        $coupons = [];
+        foreach ($page_rows as $p_row) {
+            $cid    = (int) $p_row['ID'];
+            $coupon = new \WC_Coupon($cid);
+            if (!$coupon || !$coupon->get_id()) {
+                continue;
+            }
+
+            $data_store = $coupon->get_data_store();
+            $held_count = is_callable([$data_store, 'get_tentative_usage_count'])
+                ? (int) $data_store->get_tentative_usage_count($cid)
+                : 0;
+
+            // Extract non-internal sanitized metadata
+            $custom_meta = [];
+            foreach ($coupon->get_meta_data() as $meta_obj) {
+                $m_data = $meta_obj->get_data();
+                $m_key  = $m_data['key'] ?? '';
+                $m_val  = $m_data['value'] ?? '';
+                if (in_array($m_key, ['_edit_lock', '_edit_last'], true)) {
+                    continue;
+                }
+                $custom_meta[$m_key] = Redaction::redact_data($m_val);
+            }
+
+            $email_restrictions = (array) $coupon->get_email_restrictions();
+            $masked_emails      = array_values(array_filter(array_map([self::class, 'mask_email'], $email_restrictions)));
+
+            $coupons[] = [
+                'id'                   => $coupon->get_id(),
+                'code'                 => $coupon->get_code(),
+                'discount_type'        => $coupon->get_discount_type(),
+                'amount'               => number_format((float) $coupon->get_amount(), 2, '.', ''),
+                'status'               => $p_row['computed_status'],
+                'date_created'         => $coupon->get_date_created() ? $coupon->get_date_created()->date('Y-m-d H:i:s') : null,
+                'date_expires'         => $coupon->get_date_expires() ? $coupon->get_date_expires()->date('Y-m-d H:i:s') : null,
+                'is_expired'           => $p_row['is_expired'],
+                'usage_count'          => (int) $coupon->get_usage_count(),
+                'usage_limit'          => (int) $coupon->get_usage_limit(),
+                'usage_limit_per_user' => (int) $coupon->get_usage_limit_per_user(),
+                'is_exhausted'         => $p_row['is_exhausted'],
+                'individual_use'       => (bool) $coupon->get_individual_use(),
+                'free_shipping'        => (bool) $coupon->get_free_shipping(),
+                'email_restrictions'   => $masked_emails,
+                'minimum_amount'       => number_format((float) $coupon->get_minimum_amount(), 2, '.', ''),
+                'maximum_amount'       => number_format((float) $coupon->get_maximum_amount(), 2, '.', ''),
+                'held_count'           => $held_count,
+                'has_active_hold'      => ($held_count > 0),
+                'meta_data'            => $custom_meta,
+            ];
+        }
+
+        return $this->response([
+            'total'         => $total,
+            'max_num_pages' => $max_num_pages,
+            'page'          => $page,
+            'per_page'      => $per_page,
+            'summary'       => [
+                'total_coupons'     => $total_coupons,
+                'active_coupons'    => $active_coupons,
+                'expired_coupons'   => $expired_coupons,
+                'exhausted_coupons' => $exhausted_coupons,
+            ],
+            'coupons'       => $coupons,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/coupon/{id}
+     *
+     * Deep inspection of a single coupon by numeric ID or code slug.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function get_coupon(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', esc_html__('WooCommerce is not active on this site.', 'woo-get-data-for-ai'), 400);
+        }
+
+        global $wpdb;
+
+        $id_param = sanitize_text_field($request->get_param('id'));
+        $coupon   = null;
+
+        if (is_numeric($id_param)) {
+            $coupon = new \WC_Coupon((int) $id_param);
+        }
+        if (!$coupon || !$coupon->get_id()) {
+            $coupon = new \WC_Coupon($id_param);
+        }
+        if (!$coupon || !$coupon->get_id()) {
+            return $this->error('coupon_not_found', esc_html__('Coupon not found.', 'woo-get-data-for-ai'), 404);
+        }
+
+        $now              = time();
+        $date_expires_obj = $coupon->get_date_expires();
+        $is_expired       = $date_expires_obj ? ($date_expires_obj->getTimestamp() < $now) : false;
+
+        $usage_limit  = (int) $coupon->get_usage_limit();
+        $usage_count  = (int) $coupon->get_usage_count();
+        $is_exhausted = ($usage_limit > 0 && $usage_count >= $usage_limit);
+
+        $status = 'active';
+        if ($is_expired) {
+            $status = 'expired';
+        } elseif ($is_exhausted) {
+            $status = 'exhausted';
+        }
+
+        // Held sessions check (_coupon_held_keys)
+        $data_store      = $coupon->get_data_store();
+        $tentative_count = is_callable([$data_store, 'get_tentative_usage_count'])
+            ? (int) $data_store->get_tentative_usage_count($coupon->get_id())
+            : 0;
+
+        $hpos_enabled = class_exists('\Automattic\WooCommerce\Utilities\OrderUtil')
+            && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+
+        $held_orders_map = [];
+
+        // 1. Search _coupon_held_keys in HPOS order meta or postmeta
+        if ($hpos_enabled) {
+            $held_meta_rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT order_id, meta_value FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key = '_coupon_held_keys' AND meta_value LIKE %s",
+                '%' . $wpdb->esc_like((string) $coupon->get_id()) . '%'
+            ), ARRAY_A);
+        } else {
+            $held_meta_rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT post_id AS order_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_coupon_held_keys' AND meta_value LIKE %s",
+                '%' . $wpdb->esc_like((string) $coupon->get_id()) . '%'
+            ), ARRAY_A);
+        }
+
+        foreach ((array) $held_meta_rows as $hm_row) {
+            $order_id = (int) $hm_row['order_id'];
+            $data     = maybe_unserialize($hm_row['meta_value']);
+            if (is_array($data) && (isset($data[$coupon->get_id()]) || in_array($coupon->get_id(), $data, false))) {
+                $held_orders_map[$order_id] = true;
+            }
+        }
+
+        // 2. Also check pending/on-hold orders in woocommerce_order_items for this coupon code
+        $coupon_code_lower = strtolower($coupon->get_code());
+        $pending_order_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT oi.order_id 
+             FROM {$wpdb->prefix}woocommerce_order_items oi
+             WHERE oi.order_item_type = 'coupon' AND LOWER(oi.order_item_name) = %s",
+            $coupon_code_lower
+        ));
+
+        foreach ((array) $pending_order_ids as $p_oid) {
+            $held_orders_map[(int) $p_oid] = true;
+        }
+
+        $held_sessions = [];
+        foreach (array_keys($held_orders_map) as $h_oid) {
+            $h_order = wc_get_order($h_oid);
+            if ($h_order && in_array($h_order->get_status(), ['pending', 'on-hold', 'checkout-draft'], true)) {
+                $held_sessions[] = [
+                    'order_id'     => $h_order->get_id(),
+                    'order_number' => $h_order->get_order_number(),
+                    'status'       => $h_order->get_status(),
+                    'date_created' => $h_order->get_date_created() ? $h_order->get_date_created()->date('Y-m-d H:i:s') : null,
+                    'total'        => $h_order->get_total(),
+                ];
+            }
+        }
+
+        $held_count      = max($tentative_count, count($held_sessions));
+        $has_active_hold = ($held_count > 0 || !empty($held_sessions));
+
+        // Real-time availability
+        $is_valid_now = (!$is_expired && !$is_exhausted && ($usage_limit === 0 || ($usage_count + $held_count) < $usage_limit));
+        $usage_left   = ($usage_limit > 0) ? max(0, $usage_limit - $usage_count - $held_count) : null;
+
+        // Associated orders (last 10 orders having applied this code)
+        $associated_order_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT oi.order_id 
+             FROM {$wpdb->prefix}woocommerce_order_items oi
+             WHERE oi.order_item_type = 'coupon' AND LOWER(oi.order_item_name) = %s
+             ORDER BY oi.order_id DESC
+             LIMIT 10",
+            $coupon_code_lower
+        ));
+
+        if (empty($associated_order_ids) && $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wc_order_coupon_lookup'") === "{$wpdb->prefix}wc_order_coupon_lookup") {
+            $associated_order_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT order_id 
+                 FROM {$wpdb->prefix}wc_order_coupon_lookup 
+                 WHERE coupon_id = %d
+                 ORDER BY order_id DESC
+                 LIMIT 10",
+                $coupon->get_id()
+            ));
+        }
+
+        $associated_orders = [];
+        foreach ((array) $associated_order_ids as $ao_id) {
+            $ao_order = wc_get_order($ao_id);
+            if ($ao_order) {
+                $associated_orders[] = [
+                    'order_id'     => $ao_order->get_id(),
+                    'order_number' => $ao_order->get_order_number(),
+                    'status'       => $ao_order->get_status(),
+                    'date_created' => $ao_order->get_date_created() ? $ao_order->get_date_created()->date('Y-m-d H:i:s') : null,
+                    'total'        => $ao_order->get_total(),
+                    'currency'     => $ao_order->get_currency(),
+                    'customer'     => [
+                        'name'  => trim(self::mask_name($ao_order->get_billing_first_name()) . ' ' . self::mask_name($ao_order->get_billing_last_name())),
+                        'email' => self::mask_email($ao_order->get_billing_email()),
+                    ],
+                ];
+            }
+        }
+
+        // Custom metadata
+        $custom_meta = [];
+        foreach ($coupon->get_meta_data() as $meta_obj) {
+            $m_data = $meta_obj->get_data();
+            $m_key  = $m_data['key'] ?? '';
+            $m_val  = $m_data['value'] ?? '';
+            if (in_array($m_key, ['_edit_lock', '_edit_last'], true)) {
+                continue;
+            }
+            $custom_meta[$m_key] = Redaction::redact_data($m_val);
+        }
+
+        $email_restrictions = (array) $coupon->get_email_restrictions();
+        $masked_emails      = array_values(array_filter(array_map([self::class, 'mask_email'], $email_restrictions)));
+
+        return $this->response([
+            'id'                          => $coupon->get_id(),
+            'code'                        => $coupon->get_code(),
+            'description'                 => $coupon->get_description(),
+            'discount_type'               => $coupon->get_discount_type(),
+            'amount'                      => number_format((float) $coupon->get_amount(), 2, '.', ''),
+            'status'                      => $status,
+            'date_created'                => $coupon->get_date_created() ? $coupon->get_date_created()->date('Y-m-d H:i:s') : null,
+            'date_modified'               => $coupon->get_date_modified() ? $coupon->get_date_modified()->date('Y-m-d H:i:s') : null,
+            'date_expires'                => $coupon->get_date_expires() ? $coupon->get_date_expires()->date('Y-m-d H:i:s') : null,
+            'is_expired'                  => $is_expired,
+            'usage_count'                 => $usage_count,
+            'usage_limit'                 => $usage_limit,
+            'usage_limit_per_user'        => (int) $coupon->get_usage_limit_per_user(),
+            'is_exhausted'                => $is_exhausted,
+            'individual_use'              => (bool) $coupon->get_individual_use(),
+            'free_shipping'               => (bool) $coupon->get_free_shipping(),
+            'product_ids'                 => array_map('intval', (array) $coupon->get_product_ids()),
+            'excluded_product_ids'        => array_map('intval', (array) $coupon->get_excluded_product_ids()),
+            'product_categories'          => array_map('intval', (array) $coupon->get_product_categories()),
+            'excluded_product_categories' => array_map('intval', (array) $coupon->get_excluded_product_categories()),
+            'exclude_sale_items'          => (bool) $coupon->get_exclude_sale_items(),
+            'minimum_amount'              => number_format((float) $coupon->get_minimum_amount(), 2, '.', ''),
+            'maximum_amount'              => number_format((float) $coupon->get_maximum_amount(), 2, '.', ''),
+            'email_restrictions'          => $masked_emails,
+            'held_count'                  => $held_count,
+            'has_active_hold'             => $has_active_hold,
+            'meta_data'                   => $custom_meta,
+            'diagnostics'                 => [
+                'is_valid_now'      => $is_valid_now,
+                'usage_left'        => $usage_left,
+                'held_count'        => $held_count,
+                'has_active_hold'   => $has_active_hold,
+                'held_sessions'     => $held_sessions,
+                'associated_orders' => $associated_orders,
+            ],
+        ]);
+    }
+
+    /**
      * GET /woocommerce/orders
      *
      * @param \WP_REST_Request $request
@@ -933,9 +1455,12 @@ class Woocommerce_Controller extends Rest_Controller {
             return $this->error('woocommerce_not_active', esc_html__('WooCommerce is not active on this site.', 'woo-get-data-for-ai'), 400);
         }
 
+        global $wpdb;
+
         $status_filter = sanitize_text_field($request->get_param('status') ?: 'all');
         $search        = sanitize_text_field($request->get_param('search') ?: '');
         $customer_id   = (int) $request->get_param('customer_id');
+        $coupon_filter = sanitize_text_field($request->get_param('coupon') ?: '');
         $per_page      = min(50, max(1, (int) ($request->get_param('per_page') ?: 10)));
         $page          = max(1, (int) ($request->get_param('page') ?: 1));
         $orderby       = sanitize_text_field($request->get_param('orderby') ?: 'date');
@@ -958,8 +1483,71 @@ class Woocommerce_Controller extends Rest_Controller {
             $query_args['customer_id'] = $customer_id;
         }
 
+        $hpos_enabled = class_exists('\Automattic\WooCommerce\Utilities\OrderUtil')
+            && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+
+        // 1. Coupon filtering across order items
+        $coupon_order_ids = null;
+        if (!empty($coupon_filter)) {
+            $coupon_slug      = wc_format_coupon_code($coupon_filter);
+            $c_ids            = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT order_id 
+                 FROM {$wpdb->prefix}woocommerce_order_items 
+                 WHERE order_item_type = 'coupon' AND LOWER(order_item_name) = %s",
+                strtolower($coupon_slug)
+            ));
+            $coupon_order_ids = array_map('intval', (array) $c_ids);
+        }
+
+        // 2. Enhanced search across email, name, transaction ID, and order ID for HPOS & CPT
+        $search_order_ids = null;
         if (!empty($search)) {
-            $query_args['s'] = $search;
+            $search_like = '%' . $wpdb->esc_like($search) . '%';
+            if ($hpos_enabled) {
+                $s_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT DISTINCT o.id 
+                     FROM {$wpdb->prefix}wc_orders o
+                     LEFT JOIN {$wpdb->prefix}wc_order_addresses a ON o.id = a.order_id
+                     WHERE o.billing_email LIKE %s
+                        OR a.email LIKE %s
+                        OR a.first_name LIKE %s
+                        OR a.last_name LIKE %s
+                        OR CONCAT(a.first_name, ' ', a.last_name) LIKE %s
+                        OR o.transaction_id LIKE %s
+                        OR o.id = %s",
+                    $search_like,
+                    $search_like,
+                    $search_like,
+                    $search_like,
+                    $search_like,
+                    $search_like,
+                    $search
+                ));
+            } else {
+                $s_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT DISTINCT post_id 
+                     FROM {$wpdb->postmeta} 
+                     WHERE meta_key IN ('_billing_email', '_billing_first_name', '_billing_last_name', '_shipping_first_name', '_shipping_last_name', '_transaction_id')
+                       AND meta_value LIKE %s
+                     UNION
+                     SELECT ID FROM {$wpdb->posts}
+                     WHERE post_type = 'shop_order' AND (post_title LIKE %s OR ID = %s)",
+                    $search_like,
+                    $search_like,
+                    $search
+                ));
+            }
+            $search_order_ids = array_map('intval', (array) $s_ids);
+        }
+
+        // Combine include constraints
+        if ($coupon_order_ids !== null && $search_order_ids !== null) {
+            $intersected = array_values(array_intersect($coupon_order_ids, $search_order_ids));
+            $query_args['include'] = !empty($intersected) ? $intersected : [0];
+        } elseif ($coupon_order_ids !== null) {
+            $query_args['include'] = !empty($coupon_order_ids) ? $coupon_order_ids : [0];
+        } elseif ($search_order_ids !== null) {
+            $query_args['include'] = !empty($search_order_ids) ? $search_order_ids : [0];
         }
 
         $results = wc_get_orders($query_args);
@@ -988,6 +1576,16 @@ class Woocommerce_Controller extends Rest_Controller {
                     ];
                 }
 
+                // Coupon lines and coupon codes
+                $coupon_lines = array_map(function ($coupon_item) {
+                    /** @var \WC_Order_Item_Coupon $coupon_item */
+                    return [
+                        'code'         => $coupon_item->get_code(),
+                        'discount'     => $coupon_item->get_discount(),
+                        'discount_tax' => $coupon_item->get_discount_tax(),
+                    ];
+                }, $order_obj->get_items('coupon'));
+
                 $orders[] = [
                     'id'                   => $order_obj->get_id(),
                     'order_number'         => $order_obj->get_order_number(),
@@ -1001,6 +1599,8 @@ class Woocommerce_Controller extends Rest_Controller {
                     'total_tax'            => $order_obj->get_total_tax(),
                     'shipping_total'       => $order_obj->get_shipping_total(),
                     'discount_total'       => $order_obj->get_discount_total(),
+                    'coupon_lines'         => $coupon_lines,
+                    'coupon_codes'         => $order_obj->get_coupon_codes(),
                     'payment_method'       => $order_obj->get_payment_method(),
                     'payment_method_title' => $order_obj->get_payment_method_title(),
                     'transaction_id'       => $order_obj->get_transaction_id(),
@@ -1020,6 +1620,7 @@ class Woocommerce_Controller extends Rest_Controller {
                 'status'      => $status_filter,
                 'search'      => $search,
                 'customer_id' => $customer_id,
+                'coupon'      => $coupon_filter,
             ],
             'count'       => count($orders),
             'orders'      => $orders,

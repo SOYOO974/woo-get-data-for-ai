@@ -72,7 +72,7 @@ class Permissions {
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
@@ -509,10 +509,22 @@ class Permissions {
                         'description' => esc_html__('Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields.', 'woo-get-data-for-ai'),
                     ],
                     [
+                        'path'        => '/woocommerce/coupons',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (active|expired|exhausted|all, default: all)', 'type (fixed_cart|percent|fixed_product|all, default: all)', 'search', 'email', 'per_page (default: 20, max: 100)', 'page', 'orderby (date|code|usage_count|modified, default: date)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('List and filter WooCommerce promotional coupons with status, expiration, usage counts, limits, held count, and PII-masked email restrictions.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/coupon/{id}',
+                        'methods'     => ['GET'],
+                        'params'      => ['id (numeric ID or coupon code slug, required)'],
+                        'description' => esc_html__('Deep inspection of a single coupon: discount rules, real-time availability (is_valid_now, usage_left), active held checkout sessions (_coupon_held_keys), and last 10 associated orders.', 'woo-get-data-for-ai'),
+                    ],
+                    [
                         'path'        => '/woocommerce/orders',
                         'methods'     => ['GET'],
-                        'params'      => ['status (processing|completed|failed|all, default: all)', 'search', 'customer_id', 'per_page (default: 10, max: 50)', 'page', 'orderby (default: date)', 'order (DESC|ASC)'],
-                        'description' => esc_html__('Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, totals, and gateways.', 'woo-get-data-for-ai'),
+                        'params'      => ['status (processing|completed|failed|all, default: all)', 'search (customer email, name, transaction ID, or order ID)', 'customer_id', 'coupon', 'per_page (default: 10, max: 50)', 'page', 'orderby (default: date)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, coupon lines and applied coupon codes, totals, and gateways.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/order/{id}',

@@ -215,7 +215,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WooCommerce Store Data', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code>, <code>/woocommerce/analytics/sales</code>, <code>/woocommerce/analytics/top-performers</code>, <code>/woocommerce/analytics/stock</code>, <code>/woocommerce/webhooks</code></td>
+                    <td><code>/woocommerce/summary</code>, <code>/woocommerce/products</code>, <code>/woocommerce/product/{id}</code>, <code>/woocommerce/coupons</code>, <code>/woocommerce/coupon/{id}</code>, <code>/woocommerce/orders</code>, <code>/woocommerce/order/{id}</code>, <code>/woocommerce/settings</code>, <code>/woocommerce/shipping</code>, <code>/woocommerce/analytics/sales</code>, <code>/woocommerce/analytics/top-performers</code>, <code>/woocommerce/analytics/stock</code>, <code>/woocommerce/webhooks</code></td>
                     <td><?php esc_html_e('Store health summary, paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
