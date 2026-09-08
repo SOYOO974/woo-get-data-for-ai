@@ -245,7 +245,7 @@ Enables/disables modules on a per-site basis:
 | :--- | :--- | :--- |
 | `GET /ping` | GET | Connectivity check, server timestamp, site name |
 | `GET /capabilities` | GET | Dynamic schema, active permissions, procedural diagnostic Playbooks, and ready-to-use Agent SKILL.md generator (`?format=skill\|markdown`) |
-| `GET /system` | GET | WP/WC/PHP/MySQL versions, active plugins & updates, HPOS status, Action Scheduler queue & retention policy |
+| `GET /system` | GET | Server, WP/WC/PHP/MySQL versions, active plugins list & summary counts (`?plugins=active\|inactive\|all`, default: `active`), HPOS status, Action Scheduler queue & retention policy |
 | `GET /system/database` | GET | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold and orphaned options from inactive plugins, transient counts, and object cache status |
 | `GET /system/mail` | GET | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures |
 | `GET /system/security` | GET | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins |
@@ -261,9 +261,9 @@ Enables/disables modules on a per-site basis:
 | `GET /elementor/item/{id}` | GET | Full decoded `_elementor_data` JSON tree and page settings |
 | `GET /elementor/forms` | GET | Inventory of all Elementor forms (field definitions, actions, webhook URLs) |
 | `GET /elementor/kit` | GET | Global colors, system fonts, and design tokens from the active Elementor Kit |
-| `GET /snippets` | GET | Unified listing of all custom snippets across WPCode and Code Snippets (`?status=all\|active\|inactive`, `?source=all\|code-snippets\|wpcode`, `?type=all\|php\|css\|js\|html`) with global `active_count` and `inactive_count` |
+| `GET /snippets` | GET | Unified listing of custom snippets across WPCode and Code Snippets (`?status=active\|inactive\|all`, default: `active`, `?source=all\|code-snippets\|wpcode`, `?type=all\|php\|css\|js\|html`) with global `active_count` and `inactive_count` |
 | `GET /snippets/{id}` | GET | Full source code, execution location, priority, tags, and direct WordPress Admin edit link with collision resolution (`?source=all\|code-snippets\|wpcode`) |
-| `GET /wpcode/snippets` | GET | Legacy alias: Listing of all snippets across WPCode and Code Snippets (`?status`, `?source`, `?type`) |
+| `GET /wpcode/snippets` | GET | Legacy alias: Listing of custom snippets across WPCode and Code Snippets (`?status=active\|inactive\|all`, default: `active`, `?source`, `?type`) |
 | `GET /wpcode/snippet/{id}` | GET | Legacy alias: Full source code and configuration of a targeted snippet (`?source`) |
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
@@ -378,6 +378,24 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.22.0 (2026-09-08)
+- **Harmonisation des Statuts Actifs/Inactifs & Optimisation Drastique des Tokens (`System_Controller`, `Wpcode_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Endpoint `GET /system` Révolutionné** :
+    - Élimination définitive des biais cognitifs et faux positifs d'agents IA (ex: outils de débug inactifs pris pour des processus actifs dégradant le TTFB).
+    - Filtrage par défaut sur les extensions actives (`?plugins=active` par défaut).
+    - Nouveaux paramètres explicites : `?plugins=all` (toutes les extensions installées avec booléen `is_active`) et `?plugins=inactive` (extensions dormantes).
+    - `plugins_count` reflète désormais fidèlement le nombre de plugins retournés dans le tableau (par défaut, uniquement les extensions actives).
+    - Ajout du bloc racine `plugins_summary` avec compteurs exhaustifs : `total_installed`, `active_count`, `inactive_count`, et `must_use_count`.
+  - **Endpoints `GET /snippets` & `GET /wpcode/snippets` Inversés par Défaut** :
+    - Comportement par défaut réaligné sur `status=active` : ne retourne que les extraits réellement actifs et exécutés en production.
+    - Économie massive de tokens (ex: évite d'ingérer 178 extraits inactifs/brouillons sur un total de 275 sur Conforama.re) et suppression des hallucinations d'IA sur du code mort.
+    - Paramètres explicites préservés : `?status=all` pour auditer l'historique complet et `?status=inactive` pour inspecter les extraits dormants.
+  - **Générateur de Compétences `SKILL.md` & Playbooks** :
+    - Renforcement de la directive contractuelle n°2 (*ACTIVE VS INACTIVE CODE & PLUGIN INTEGRITY*) alertant formellement les agents sur les valeurs par défaut actives de `/system`, `/code/plugins` et `/snippets`.
+  - **Synchronisation CLI & i18n** :
+    - Prise en charge de `plugins_summary` dans `cli/sync.js` (`system-report.md`) et forçage de `?status=all` lors des sauvegardes complètes CLI.
+    - Synchronisation i18n 100% avec mise à jour de `woo-get-data-for-ai.pot`, `woo-get-data-for-ai-fr_FR.po`, et recompilation binaire de `woo-get-data-for-ai-fr_FR.mo`.
 
 ### v1.21.1 (2026-09-08)
 - **Correctif Critique sur l'Inspection des Commandes (`Woocommerce_Controller`)** :

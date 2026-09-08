@@ -23,7 +23,7 @@ class Wpcode_Controller extends Rest_Controller {
                 },
                 'args'                => [
                     'status' => [
-                        'default'           => 'all',
+                        'default'           => 'active',
                         'sanitize_callback' => 'sanitize_text_field',
                     ],
                     'source' => [
@@ -68,13 +68,13 @@ class Wpcode_Controller extends Rest_Controller {
      * @return \WP_REST_Response
      */
     public function get_snippets(\WP_REST_Request $request) {
-        $raw_status = strtolower(trim((string) ($request->get_param('status') ?: 'all')));
-        if (in_array($raw_status, ['active', 'publish', 'enabled', '1'], true)) {
-            $status_filter = 'active';
+        $raw_status = strtolower(trim((string) ($request->get_param('status') ?: 'active')));
+        if (in_array($raw_status, ['all', '*'], true)) {
+            $status_filter = 'all';
         } elseif (in_array($raw_status, ['inactive', 'draft', 'disabled', '0'], true)) {
             $status_filter = 'inactive';
         } else {
-            $status_filter = 'all';
+            $status_filter = 'active';
         }
 
         $raw_source = strtolower(trim((string) ($request->get_param('source') ?: 'all')));

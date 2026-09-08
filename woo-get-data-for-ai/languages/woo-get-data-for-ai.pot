@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-08 05:26+00:00\n"
+"POT-Creation-Date: 2026-09-08 06:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -398,7 +398,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:182
 #: includes/class-permissions.php:38
-#: includes/class-permissions.php:266
+#: includes/class-permissions.php:267
 msgid "Elementor Architecture"
 msgstr ""
 
@@ -408,7 +408,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:187
 #: includes/class-permissions.php:43
-#: includes/class-permissions.php:301
+#: includes/class-permissions.php:302
 msgid "Code Snippets (WPCode & Code Snippets Pro)"
 msgstr ""
 
@@ -426,7 +426,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:197
 #: includes/class-permissions.php:53
-#: includes/class-permissions.php:364
+#: includes/class-permissions.php:365
 msgid "WP-Cron & Action Scheduler"
 msgstr ""
 
@@ -436,7 +436,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:202
 #: includes/class-permissions.php:58
-#: includes/class-permissions.php:384
+#: includes/class-permissions.php:385
 msgid "FlowMattic Workflows"
 msgstr ""
 
@@ -454,7 +454,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:212
 #: includes/class-permissions.php:68
-#: includes/class-permissions.php:466
+#: includes/class-permissions.php:467
 msgid "Custom Fields & Meta (ACF & Code)"
 msgstr ""
 
@@ -472,7 +472,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:222
 #: includes/class-permissions.php:78
-#: includes/class-permissions.php:571
+#: includes/class-permissions.php:572
 msgid "Pages, Content & SEO"
 msgstr ""
 
@@ -1095,27 +1095,27 @@ msgid "Allows inspecting WordPress, PHP, MySQL versions, active plugins list, se
 msgstr ""
 
 #: includes/class-permissions.php:23
-#: includes/class-permissions.php:202
+#: includes/class-permissions.php:203
 msgid "WooCommerce Diagnostic & Overrides"
 msgstr ""
 
 #: includes/class-permissions.php:24
-#: includes/class-permissions.php:203
+#: includes/class-permissions.php:204
 msgid "Allows auditing template overrides in active themes, detecting outdated WooCommerce templates, and HPOS status."
 msgstr ""
 
 #: includes/class-permissions.php:28
-#: includes/class-permissions.php:215
+#: includes/class-permissions.php:216
 msgid "Theme Settings & Child Theme"
 msgstr ""
 
 #: includes/class-permissions.php:29
-#: includes/class-permissions.php:216
+#: includes/class-permissions.php:217
 msgid "Allows exporting Woodmart (xts-woodmart-options), Elessi (elessi_options) settings, and child theme functions.php/style.css."
 msgstr ""
 
 #: includes/class-permissions.php:33
-#: includes/class-permissions.php:234
+#: includes/class-permissions.php:235
 msgid "Code & Plugin File Inspector"
 msgstr ""
 
@@ -1124,47 +1124,47 @@ msgid "Allows browsing active plugins/mu-plugins structures, reading sandboxed s
 msgstr ""
 
 #: includes/class-permissions.php:39
-#: includes/class-permissions.php:267
+#: includes/class-permissions.php:268
 msgid "Allows reading Elementor page trees, global kit styles, and mapping form widgets with webhooks."
 msgstr ""
 
 #: includes/class-permissions.php:44
-#: includes/class-permissions.php:302
+#: includes/class-permissions.php:303
 msgid "Allows listing and inspecting custom PHP, JS, CSS, and HTML snippets stored in WPCode and Code Snippets (Free/Pro) plugins."
 msgstr ""
 
 #: includes/class-permissions.php:48
-#: includes/class-permissions.php:333
+#: includes/class-permissions.php:334
 msgid "Error & WooCommerce Logs"
 msgstr ""
 
 #: includes/class-permissions.php:49
-#: includes/class-permissions.php:334
+#: includes/class-permissions.php:335
 msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection."
 msgstr ""
 
 #: includes/class-permissions.php:54
-#: includes/class-permissions.php:365
+#: includes/class-permissions.php:366
 msgid "Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks)."
 msgstr ""
 
 #: includes/class-permissions.php:59
-#: includes/class-permissions.php:385
+#: includes/class-permissions.php:386
 msgid "Allows listing and exporting FlowMattic workflows, steps, triggers, and configurations in native JSON format."
 msgstr ""
 
 #: includes/class-permissions.php:63
-#: includes/class-permissions.php:410
+#: includes/class-permissions.php:411
 msgid "Independent Analytics (Visits & Conversion Rates)"
 msgstr ""
 
 #: includes/class-permissions.php:64
-#: includes/class-permissions.php:411
+#: includes/class-permissions.php:412
 msgid "Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics."
 msgstr ""
 
 #: includes/class-permissions.php:69
-#: includes/class-permissions.php:467
+#: includes/class-permissions.php:468
 msgid "Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta."
 msgstr ""
 
@@ -1177,12 +1177,12 @@ msgid "Allows inspecting WooCommerce products, variations, recent orders (anonym
 msgstr ""
 
 #: includes/class-permissions.php:79
-#: includes/class-permissions.php:572
+#: includes/class-permissions.php:573
 msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO)."
 msgstr ""
 
 #: includes/class-permissions.php:83
-#: includes/class-permissions.php:607
+#: includes/class-permissions.php:608
 msgid "Site Performance & Plugin Profiler"
 msgstr ""
 
@@ -1206,267 +1206,267 @@ msgstr ""
 msgid "Self-describing API catalog, active modules, and dynamic discovery of inspectable data types."
 msgstr ""
 
-#: includes/class-permissions.php:181
-msgid "Comprehensive server, WordPress, theme, active plugins & updates, WooCommerce environment, and Action Scheduler status."
+#: includes/class-permissions.php:182
+msgid "Comprehensive server, WordPress, theme, active plugins list & summary counts (or all installed plugins via ?plugins=all), WooCommerce environment, and Action Scheduler status."
 msgstr ""
 
-#: includes/class-permissions.php:186
+#: includes/class-permissions.php:187
 msgid "Deep database diagnostic: table sizes, top 15 largest tables, autoload footprint with 800KB threshold, orphaned options analysis from inactive plugins, transient counts, and object cache status."
 msgstr ""
 
-#: includes/class-permissions.php:191
+#: includes/class-permissions.php:192
 msgid "SMTP & transactional email diagnostic: active mail plugin (FluentSMTP, WP Mail SMTP, Post SMTP), provider, sanitization of secrets, and recent delivery failures."
 msgstr ""
 
-#: includes/class-permissions.php:196
+#: includes/class-permissions.php:197
 msgid "Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins."
 msgstr ""
 
-#: includes/class-permissions.php:209
+#: includes/class-permissions.php:210
 msgid "Audits WooCommerce template overrides in active theme with version comparison to core WC."
 msgstr ""
 
-#: includes/class-permissions.php:223
+#: includes/class-permissions.php:224
 msgid "Decoded theme settings and Customizer theme mods with sensitive keys redacted."
 msgstr ""
 
-#: includes/class-permissions.php:228
+#: includes/class-permissions.php:229
 msgid "Full source code and header info of the active child theme functions.php and style.css."
 msgstr ""
 
-#: includes/class-permissions.php:235
+#: includes/class-permissions.php:236
 msgid "Allows browsing active plugins and mu-plugins file structures, reading specific files in sandbox, computing directory checksums, and exporting clean ZIP archives."
 msgstr ""
 
-#: includes/class-permissions.php:242
+#: includes/class-permissions.php:243
 msgid "Hierarchical directory and file trees of plugins and wp-content/mu-plugins/."
 msgstr ""
 
-#: includes/class-permissions.php:248
+#: includes/class-permissions.php:249
 msgid "Sandboxed source code reader for PHP, JS, and CSS files."
 msgstr ""
 
-#: includes/class-permissions.php:254
+#: includes/class-permissions.php:255
 msgid "Directory checksum fingerprint map of all code files with modified timestamps and byte sizes for instant local vs prod drift detection."
 msgstr ""
 
-#: includes/class-permissions.php:260
+#: includes/class-permissions.php:261
 msgid "Generates and streams a clean on-the-fly ZIP archive of a target plugin or child theme directory (excluding .git, logs, and sensitive files)."
 msgstr ""
 
-#: includes/class-permissions.php:274
+#: includes/class-permissions.php:275
 msgid "Bulk export of all Elementor pages, templates, kit & forms in 1 optimized HTTP request."
 msgstr ""
 
-#: includes/class-permissions.php:280
+#: includes/class-permissions.php:281
 msgid "List all Elementor pages, posts, and saved library templates."
 msgstr ""
 
-#: includes/class-permissions.php:285
+#: includes/class-permissions.php:286
 msgid "Full decoded _elementor_data JSON tree and page settings for a specific post/template."
 msgstr ""
 
-#: includes/class-permissions.php:290
+#: includes/class-permissions.php:291
 msgid "Inventory of all Elementor Pro form widgets, field configurations, webhooks, and recipient emails."
 msgstr ""
 
-#: includes/class-permissions.php:295
+#: includes/class-permissions.php:296
 msgid "Global design system: colors, system fonts, and design tokens from active Elementor Kit."
 msgstr ""
 
-#: includes/class-permissions.php:309
-msgid "List all snippets across WPCode and Code Snippets with source plugin, execution location, priority, tags, direct admin edit link, and full source code."
+#: includes/class-permissions.php:310
+msgid "List active snippets by default across WPCode and Code Snippets (use ?status=all for full history or ?status=inactive for dormant snippets) with source plugin, execution location, priority, tags, direct admin edit link, and full source code."
 msgstr ""
 
-#: includes/class-permissions.php:315
+#: includes/class-permissions.php:316
 msgid "Full source code, execution location, priority, tags, and direct WordPress Admin edit link for a specific snippet with collision resolution."
 msgstr ""
 
-#: includes/class-permissions.php:321
-msgid "Legacy alias: List all snippets across WPCode and Code Snippets."
+#: includes/class-permissions.php:322
+msgid "Legacy alias: List active snippets by default across WPCode and Code Snippets (?status=all for all)."
 msgstr ""
 
-#: includes/class-permissions.php:327
+#: includes/class-permissions.php:328
 msgid "Legacy alias: Full source code and settings for a specific snippet."
 msgstr ""
 
-#: includes/class-permissions.php:340
+#: includes/class-permissions.php:341
 msgid "List available log files (debug.log, uploads/wc-logs/*.log, custom logs) with sizes and timestamps."
 msgstr ""
 
-#: includes/class-permissions.php:346
+#: includes/class-permissions.php:347
 msgid "Memory-safe reverse tail extraction of last N lines with optional error filtering."
 msgstr ""
 
-#: includes/class-permissions.php:352
+#: includes/class-permissions.php:353
 msgid "Memory-safe reverse tail extraction of specific log files in wp-content/ with path sandboxing."
 msgstr ""
 
-#: includes/class-permissions.php:358
+#: includes/class-permissions.php:359
 msgid "Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from debug.log and wc-logs."
 msgstr ""
 
-#: includes/class-permissions.php:372
+#: includes/class-permissions.php:373
 msgid "List registered WP-Cron jobs, execution timestamps, overdue detection, recurrence intervals, and hook arguments."
 msgstr ""
 
-#: includes/class-permissions.php:378
+#: includes/class-permissions.php:379
 msgid "Inspect Action Scheduler queue with status summary, retention policy in days, scheduled dates, attempts, arguments, and failure log messages."
 msgstr ""
 
-#: includes/class-permissions.php:392
+#: includes/class-permissions.php:393
 msgid "Bulk export of all FlowMattic workflows in native importable JSON format in 1 request."
 msgstr ""
 
-#: includes/class-permissions.php:398
+#: includes/class-permissions.php:399
 msgid "List all FlowMattic workflows (ID, name, status, trigger, actions, tasks count)."
 msgstr ""
 
-#: includes/class-permissions.php:404
+#: includes/class-permissions.php:405
 msgid "Single FlowMattic workflow detail or native importable JSON backup."
 msgstr ""
 
-#: includes/class-permissions.php:418
+#: includes/class-permissions.php:419
 msgid "Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices)."
 msgstr ""
 
-#: includes/class-permissions.php:424
+#: includes/class-permissions.php:425
 msgid "Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth."
 msgstr ""
 
-#: includes/class-permissions.php:430
+#: includes/class-permissions.php:431
 msgid "Performance & conversion rate per page / WooCommerce product."
 msgstr ""
 
-#: includes/class-permissions.php:436
+#: includes/class-permissions.php:437
 msgid "Traffic acquisition sources & referring domains with associated orders, sales, and conversion rates."
 msgstr ""
 
-#: includes/class-permissions.php:442
+#: includes/class-permissions.php:443
 msgid "Marketing UTM campaigns ROI tracking (utm_source, utm_medium, utm_campaign, orders, net_sales)."
 msgstr ""
 
-#: includes/class-permissions.php:448
+#: includes/class-permissions.php:449
 msgid "Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS."
 msgstr ""
 
-#: includes/class-permissions.php:454
+#: includes/class-permissions.php:455
 msgid "Geographic distribution of visitors and orders by country and city."
 msgstr ""
 
-#: includes/class-permissions.php:460
+#: includes/class-permissions.php:461
 msgid "Recent order and conversion stream with attribution (landing page, country, device, browser, amount)."
 msgstr ""
 
-#: includes/class-permissions.php:474
+#: includes/class-permissions.php:475
 msgid "Unified catalog of all declared custom meta fields (WordPress code register_post_meta and ACF plugin field groups/fields)."
 msgstr ""
 
-#: includes/class-permissions.php:480
+#: includes/class-permissions.php:481
 msgid "Deep ACF inspection: field groups, hierarchy, recursive subfields, location rules, and registered options pages."
 msgstr ""
 
-#: includes/class-permissions.php:485
+#: includes/class-permissions.php:486
 msgid "Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta)."
 msgstr ""
 
-#: includes/class-permissions.php:491
+#: includes/class-permissions.php:492
 msgid "WooCommerce Store Data (Products, Orders, Settings)"
 msgstr ""
 
-#: includes/class-permissions.php:492
+#: includes/class-permissions.php:493
 msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings."
 msgstr ""
 
-#: includes/class-permissions.php:498
+#: includes/class-permissions.php:499
 msgid "High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones."
 msgstr ""
 
-#: includes/class-permissions.php:504
+#: includes/class-permissions.php:505
 msgid "Paginated WooCommerce products catalog with SKU, prices, stock, categories, tags, and attributes."
 msgstr ""
 
-#: includes/class-permissions.php:509
+#: includes/class-permissions.php:510
 msgid "Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields."
 msgstr ""
 
-#: includes/class-permissions.php:515
+#: includes/class-permissions.php:516
 msgid "List and filter WooCommerce promotional coupons with status, expiration, usage counts, limits, held count, and PII-masked email restrictions."
 msgstr ""
 
-#: includes/class-permissions.php:521
+#: includes/class-permissions.php:522
 msgid "Deep inspection of a single coupon: discount rules, real-time availability (is_valid_now, usage_left), active held checkout sessions (_coupon_held_keys), and last 10 associated orders."
 msgstr ""
 
-#: includes/class-permissions.php:527
+#: includes/class-permissions.php:528
 msgid "Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, coupon lines and applied coupon codes, totals, and gateways."
 msgstr ""
 
-#: includes/class-permissions.php:532
+#: includes/class-permissions.php:533
 msgid "Deep order diagnostics: item line metadata, shipping lines with decoded metadata (e.g. Flexible Shipping fs_costs base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata."
 msgstr ""
 
-#: includes/class-permissions.php:537
+#: includes/class-permissions.php:538
 msgid "Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules."
 msgstr ""
 
-#: includes/class-permissions.php:542
+#: includes/class-permissions.php:543
 msgid "Dedicated shipping & logistics inspection: zones, geographic locations (postcodes, regions, countries), native method parameters, flat_rate table rate rules, Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and sanitized raw instance settings."
 msgstr ""
 
-#: includes/class-permissions.php:548
+#: includes/class-permissions.php:549
 msgid "100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period."
 msgstr ""
 
-#: includes/class-permissions.php:554
+#: includes/class-permissions.php:555
 msgid "Top selling products by net revenue and units sold, and top discount coupons with usage counts."
 msgstr ""
 
-#: includes/class-permissions.php:560
+#: includes/class-permissions.php:561
 msgid "Stock health and financial valuation: total managed units, total retail valuation, low stock alerts, and dormant stock (0 sales in last 90 days)."
 msgstr ""
 
-#: includes/class-permissions.php:565
+#: includes/class-permissions.php:566
 msgid "WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures."
 msgstr ""
 
-#: includes/class-permissions.php:579
+#: includes/class-permissions.php:580
 msgid "Lists WordPress pages with hierarchy (parent/child), slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview."
 msgstr ""
 
-#: includes/class-permissions.php:584
+#: includes/class-permissions.php:585
 msgid "Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified SEO metadata."
 msgstr ""
 
-#: includes/class-permissions.php:590
+#: includes/class-permissions.php:591
 msgid "Lists WordPress blog posts with categories, tags, author, editor type, and quick SEO preview."
 msgstr ""
 
-#: includes/class-permissions.php:595
+#: includes/class-permissions.php:596
 msgid "Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object."
 msgstr ""
 
-#: includes/class-permissions.php:601
+#: includes/class-permissions.php:602
 msgid "Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions."
 msgstr ""
 
-#: includes/class-permissions.php:608
+#: includes/class-permissions.php:609
 msgid "Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, 100% native server-side Core Web Vitals checks (DOM size, CLS image dimensions, legacy image formats, render-blocking resources, Google Fonts, WP core bloat scripts, cart fragments), autoload bloat audit, and plugin resource footprint."
 msgstr ""
 
-#: includes/class-permissions.php:614
+#: includes/class-permissions.php:615
 msgid "Automatic discovery and resolution of 5 key representative template URLs: Homepage, Shop / Catalog, Product Category, Single Product, and Cart / Checkout."
 msgstr ""
 
-#: includes/class-permissions.php:620
+#: includes/class-permissions.php:621
 msgid "Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native Web Vitals checks (DOM size, CLS image dimensions, legacy format PNG/JPEG, render-blocking in <head>, external Google Fonts, core bloat scripts, and WooCommerce cart-fragments detection)."
 msgstr ""
 
-#: includes/class-permissions.php:626
+#: includes/class-permissions.php:627
 msgid "Audits wp_options autoload bloat: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix."
 msgstr ""
 
-#: includes/class-permissions.php:632
+#: includes/class-permissions.php:633
 msgid "Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts."
 msgstr ""
 

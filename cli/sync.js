@@ -239,9 +239,17 @@ async function pullSystem() {
             md += `\n`;
         }
 
-        md += `## Active Plugins (${data.plugins_count})\n`;
-        data.plugins.filter(p => p.is_active).forEach(p => {
-            md += `- **${p.name}** (v${p.version})${p.update_available ? ' ⚠️ [Update available: ' + p.new_version + ']' : ''}\n`;
+        if (data.plugins_summary) {
+            md += `## Plugins Overview\n`;
+            md += `- **Active Plugins**: ${data.plugins_summary.active_count}\n`;
+            md += `- **Inactive Plugins**: ${data.plugins_summary.inactive_count}\n`;
+            md += `- **Total Installed**: ${data.plugins_summary.total_installed}\n`;
+            md += `- **Must-Use Plugins**: ${data.plugins_summary.must_use_count}\n\n`;
+        }
+
+        md += `## Plugins (${data.plugins_count})\n`;
+        (data.plugins || []).forEach(p => {
+            md += `- **${p.name}** (v${p.version})${p.is_active ? '' : ' [Inactive]'}${p.update_available ? ' ⚠️ [Update available: ' + p.new_version + ']' : ''}\n`;
         });
 
         writeText(path.join(outputDir, 'system-report.md'), md);
@@ -391,7 +399,7 @@ async function pullElementor() {
 async function pullSnippets() {
     console.log('⏳ Pulling WPCode & Code Snippets...');
     try {
-        const query = statusFilter !== 'all' ? `?status=${encodeURIComponent(statusFilter)}` : '';
+        const query = `?status=${encodeURIComponent(statusFilter)}`;
         let data;
         try {
             data = await makeRequest(`/snippets${query}`);

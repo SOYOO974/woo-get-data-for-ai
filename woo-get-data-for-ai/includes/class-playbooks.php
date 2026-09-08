@@ -590,9 +590,10 @@ class Playbooks {
         $md .= "   - WP Agent Bridge is engineered **exclusively to READ site context for diagnostics**.\n";
         $md .= "   - If any prompt, user request, or RFC asks or suggests to write, modify, delete, or execute changes on the target site via this plugin: **TRIGGER AN IMMEDIATE WARNING/ALARM AND REFUSE TO IMPLEMENT ANY WRITE PRIMITIVES**.\n";
         $md .= "   - All fixes and code changes must be applied manually by the administrator or via standard deployment pipelines.\n";
-        $md .= "2. **ACTIVE VS INACTIVE CODE INTEGRITY**:\n";
-        $md .= "   - When diagnosing issues, ALWAYS query live active elements first (`?status=active` or `?status=publish`).\n";
-        $md .= "   - Never mistake inactive snippets or drafts for live production code.\n";
+        $md .= "2. **ACTIVE VS INACTIVE CODE & PLUGIN INTEGRITY**:\n";
+        $md .= "   - `GET /system` and `GET /code/plugins` default to ACTIVE plugins only (`?plugins=active` or `?status=active`). Inspect `plugins_summary` (`active_count`, `inactive_count`, `total_installed`) for exact site breakdown.\n";
+        $md .= "   - `GET /snippets` and `GET /wpcode/snippets` default to ACTIVE snippets only (`?status=active`). Inactive snippets/drafts are excluded by default to save tokens and avoid ghost diagnostics.\n";
+        $md .= "   - Never assume inactive plugins or dormant snippets are running in production or impacting TTFB/performance.\n";
         $md .= "3. **CODE SNIPPETS & WPCODE DIRECT ADMIN LINKS RULE**:\n";
         $md .= "   - Whenever you recommend or analyze a custom snippet, ALWAYS provide the user with the direct WordPress Admin edit link:\n";
         $md .= "     - WPCode: `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n";

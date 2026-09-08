@@ -104,7 +104,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | :--- | :--- |
 | `GET /ping` | Health check, server time, site name, and plugin version. |
 | `GET /capabilities?format={json\|skill\|markdown}` | Dynamic discovery catalog: active modules, endpoints, procedural Playbooks, and ready-to-use Agent `SKILL.md` generator. |
-| `GET /system` | Server limits (PHP, RAM, execution time), WP core info, active plugins with update status, HPOS state, Action Scheduler queue, and retention policy. |
+| `GET /system?plugins={active\|inactive\|all}` | Server limits (PHP, RAM, execution time), WP core info, active plugins list & summary breakdown (total, active, inactive, mu-plugins; default: `active`), HPOS state, Action Scheduler queue, and retention policy. |
 | `GET /system/database` | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold, orphaned options analysis from inactive plugins, transient counts, and object cache status. |
 | `GET /system/mail` | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures. |
 | `GET /system/security` | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins. |
@@ -120,9 +120,9 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /elementor/item/{id}` | Decoded JSON element tree (`_elementor_data`) and page settings. |
 | `GET /elementor/forms` | Inventory of Elementor forms, fields, and submit actions (webhooks, emails). |
 | `GET /elementor/kit` | Global colors, system fonts, and design tokens from the active Elementor Kit. |
-| `GET /snippets?status={active\|inactive\|all}&source={all\|code-snippets\|wpcode}&type={all\|php\|css\|js\|html}` | Custom PHP, JS, CSS, and HTML snippets across WPCode and Code Snippets (Free & Pro) with location, priority, tags, direct admin edit URLs, and global active/inactive counts. |
+| `GET /snippets?status={active\|inactive\|all}&source={all\|code-snippets\|wpcode}&type={all\|php\|css\|js\|html}` | Custom PHP, JS, CSS, and HTML snippets across WPCode and Code Snippets (Free & Pro) with location, priority, tags, direct admin edit URLs, and global active/inactive counts (default: `active`). |
 | `GET /snippets/{id}?source={all\|code-snippets\|wpcode}` | Source code, execution location, priority, tags, and admin edit URL of a specific snippet with collision resolution. |
-| `GET /wpcode/snippets` | Legacy alias: Listing of all snippets across WPCode and Code Snippets. |
+| `GET /wpcode/snippets` | Legacy alias: Listing of custom snippets across WPCode and Code Snippets (default: `active`). |
 | `GET /wpcode/snippet/{id}` | Legacy alias: Source code and metadata of a specific snippet. |
 | `GET /logs/sources` | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom `wp-content/` logs) with file sizes and dates. |
 | `GET /logs/view?source={file}&lines=200` | Memory-safe tail extraction of the latest log lines. |

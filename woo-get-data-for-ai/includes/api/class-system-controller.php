@@ -45,6 +45,12 @@ class System_Controller extends Rest_Controller {
             'permission_callback' => function ($request) {
                 return $this->check_access($request, 'system');
             },
+            'args'                => [
+                'plugins' => [
+                    'default'           => 'active',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
         ]);
 
         // GET /system/database (Database health, table sizes, autoload analysis, transients)
@@ -181,6 +187,16 @@ class System_Controller extends Rest_Controller {
             'parent_theme'  => is_child_theme() && $theme->parent() ? $theme->parent()->get('Name') : null,
         ];
 
+        // Plugins filter: 'active' (default), 'inactive', 'all'
+        $raw_plugins_filter = strtolower(trim((string) ($request->get_param('plugins') ?: $request->get_param('status') ?: 'active')));
+        if (in_array($raw_plugins_filter, ['all', '*'], true)) {
+            $plugins_filter = 'all';
+        } elseif (in_array($raw_plugins_filter, ['inactive', 'disabled', '0'], true)) {
+            $plugins_filter = 'inactive';
+        } else {
+            $plugins_filter = 'active';
+        }
+
         // Plugins info (Active & Updates)
         if (!function_exists('get_plugins')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -190,9 +206,28 @@ class System_Controller extends Rest_Controller {
         $active_plugins_option = (array) get_option('active_plugins', []);
         $update_plugins = get_site_transient('update_plugins');
 
+        $active_count = 0;
+        $inactive_count = 0;
+        foreach ($all_plugins as $plugin_file => $plugin_data) {
+            $is_active = in_array($plugin_file, $active_plugins_option, true) || (function_exists('is_plugin_active_for_network') && is_plugin_active_for_network($plugin_file));
+            if ($is_active) {
+                $active_count++;
+            } else {
+                $inactive_count++;
+            }
+        }
+
         $plugins_list = [];
         foreach ($all_plugins as $plugin_file => $plugin_data) {
-            $is_active = in_array($plugin_file, $active_plugins_option, true);
+            $is_active = in_array($plugin_file, $active_plugins_option, true) || (function_exists('is_plugin_active_for_network') && is_plugin_active_for_network($plugin_file));
+
+            if ($plugins_filter === 'active' && !$is_active) {
+                continue;
+            }
+            if ($plugins_filter === 'inactive' && $is_active) {
+                continue;
+            }
+
             $has_update = isset($update_plugins->response[$plugin_file]);
 
             $plugins_list[] = [
@@ -315,6 +350,12 @@ class System_Controller extends Rest_Controller {
             'system'           => $server_info,
             'wordpress'        => $wp_info,
             'theme'            => $theme_info,
+            'plugins_summary'  => [
+                'total_installed' => count($all_plugins),
+                'active_count'    => $active_count,
+                'inactive_count'  => $inactive_count,
+                'must_use_count'  => count($mu_list),
+            ],
             'plugins_count'    => count($plugins_list),
             'plugins'          => $plugins_list,
             'mu_plugins'       => $mu_list,

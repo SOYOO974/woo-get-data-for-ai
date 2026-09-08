@@ -178,7 +178,8 @@ class Permissions {
                     [
                         'path'        => '/system',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Comprehensive server, WordPress, theme, active plugins & updates, WooCommerce environment, and Action Scheduler status.', 'woo-get-data-for-ai'),
+                        'params'      => ['plugins (active|inactive|all, default: active)'],
+                        'description' => esc_html__('Comprehensive server, WordPress, theme, active plugins list & summary counts (or all installed plugins via ?plugins=all), WooCommerce environment, and Action Scheduler status.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/database',
@@ -305,8 +306,8 @@ class Permissions {
                     [
                         'path'        => '/snippets',
                         'methods'     => ['GET'],
-                        'params'      => ['status (all|active|inactive, default: all)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
-                        'description' => esc_html__('List all snippets across WPCode and Code Snippets with source plugin, execution location, priority, tags, direct admin edit link, and full source code.', 'woo-get-data-for-ai'),
+                        'params'      => ['status (active|inactive|all, default: active)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
+                        'description' => esc_html__('List active snippets by default across WPCode and Code Snippets (use ?status=all for full history or ?status=inactive for dormant snippets) with source plugin, execution location, priority, tags, direct admin edit link, and full source code.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/snippets/{id}',
@@ -317,8 +318,8 @@ class Permissions {
                     [
                         'path'        => '/wpcode/snippets',
                         'methods'     => ['GET'],
-                        'params'      => ['status (all|active|inactive, default: all)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
-                        'description' => esc_html__('Legacy alias: List all snippets across WPCode and Code Snippets.', 'woo-get-data-for-ai'),
+                        'params'      => ['status (active|inactive|all, default: active)', 'source (all|code-snippets|wpcode, default: all)', 'type (all|php|css|js|html, default: all)'],
+                        'description' => esc_html__('Legacy alias: List active snippets by default across WPCode and Code Snippets (?status=all for all).', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/wpcode/snippet/{id}',
