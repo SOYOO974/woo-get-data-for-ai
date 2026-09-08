@@ -16,8 +16,8 @@ class Permissions {
         return [
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, and security hardening.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security'],
+                'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, security hardening, and caching configuration.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security', '/system/caching'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -81,8 +81,8 @@ class Permissions {
             ],
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, and auditing autoloaded options bloat.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary'],
+                'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, auditing autoloaded options bloat, and inspecting caching & WP Rocket settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary', '/performance/caching'],
             ],
         ];
     }
@@ -195,6 +195,11 @@ class Permissions {
                         'path'        => '/system/security',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/caching',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -631,6 +636,11 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['status (active|all, default: active)'],
                         'description' => esc_html__('Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/performance/caching',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

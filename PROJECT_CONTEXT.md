@@ -307,6 +307,8 @@ Enables/disables modules on a per-site basis:
 | `GET /performance/profile` | GET | Targeted on-demand URL profiler: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), measures TTFB, memory, enqueued JS/CSS assets, and 100% native Core Web Vitals signals (DOM size/depth, Elementor nodes %, CLS images missing dimensions, legacy PNG/JPEG images, external Google Fonts display=swap check, WP core bloat scripts, wc-cart-fragments, server compression) (`?path=/`, `?include_assets=true`, `?include_queries=true`, `?slow_query_threshold_ms=50`) |
 | `GET /performance/autoload` | GET | Deep `wp_options` autoload bloat analysis: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix (`?limit=25`) |
 | `GET /performance/plugins-summary` | GET | Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts (`?status=active\|all`) |
+| `GET /performance/caching` | GET | Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in (`advanced-cache.php`), and in-depth WP Rocket settings (RUCSS vs CPCSS mode, CSS safelist, Delay JS exclusions & safe mode, lazyload, mobile caching) with strict security redaction |
+| `GET /system/caching` | GET | Alias to `/performance/caching`: Universal caching & optimization diagnostic accessible via either `system` or `performance` module permissions |
 
 ---
 
@@ -318,7 +320,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - **Built-in Procedural Playbooks (7 MECE Strategic Master Pillars)**:
   To eliminate LLM attention dilution and trigger collisions while providing comprehensive agency-grade diagnostics, the playbooks are strictly organized into 7 MECE (Mutually Exclusive, Collectively Exhaustive) master pillars:
   1. `seo_content_audit` (360° SEO, Content Hierarchy & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
-  2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
+  2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
   4. `order_checkout_troubleshoot` (Orders, Payment Gateways & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), and WooCommerce webhook delivery status (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic & Conversion Analytics): Complete commercial & CRO intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, alongside traffic channels, UTM marketing campaigns, and device breakdowns (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).
@@ -378,6 +380,30 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.23.0 (2026-09-08)
+- **Module d'Inspection Universelle du Cache & Réglages WP Rocket (`Performance_Controller`, `Permissions`, `Playbooks`, `Redaction`, `sync.js`)** :
+  - **Nouvelle Route Universelle d'Audit du Cache (`GET /performance/caching` et alias `GET /system/caching`)** :
+    - Permet aux agents IA et développeurs d'inspecter instantanément l'architecture de cache et d'optimisation d'un site WordPress/WooCommerce sans accès serveur.
+    - Accessible de manière transparente si le module `performance` OU le module `system` est actif (`check_caching_access()`).
+  - **Diagnostic Cache Objet & Cache de Page** :
+    - Détection de l'Object Cache externe (`wp_using_ext_object_cache()`), du drop-in `wp-content/object-cache.php`, et recommandations d'optimisation (Redis/Memcached).
+    - Détection du drop-in de cache de page `wp-content/advanced-cache.php`, de la constante `WP_CACHE`, et identification du moteur actif (WP Rocket, LiteSpeed Cache, W3 Total Cache, WP Super Cache, FlyingPress, Redis Object Cache, etc.).
+  - **Inspection Approfondie & Sécurisée de WP Rocket** :
+    - Détection défensive via `get_rocket_option()` et `get_option('wp_rocket_settings')`.
+    - **Cache Mobile** : Activation du cache mobile et fichiers de cache séparés pour smartphones (`cache_mobile`, `do_caching_mobile_files`).
+    - **Optimisation CSS** : Résolution du mode de distribution CSS (`remove_unused_css` [RUCSS], `async_css` [CPCSS / critique], ou `disabled`), extraction nettoyée de la safelist (`remove_unused_css_safelist` sous forme de liste propre de sélecteurs), et détection de CSS critique de secours (`critical_css_fallback_present`).
+    - **Optimisation JavaScript** : Minification (`minify_js`), report (`defer_all_js`), exécution différée (`delay_js`), exclusions textuelles nettoyées (`delay_js_exclusions`), et mode sans échec (`delay_js_execution_safe_mode`).
+    - **Optimisation Médias** : Lazyload des images (`lazyload`), des iframes/vidéos (`lazyload_iframes`), des images d'arrière-plan CSS (`lazyload_css_bg_img`), et ajout automatique des dimensions d'images manquantes (`image_dimensions`).
+  - **Directive de Sécurité Absolue & Caviardage (Zéro Fuite)** :
+    - Élimination garantie de toute exposition des clés de licence ou secrets : extraction sélective stricte des seules métriques de performance, sans jamais sérialiser l'option brute.
+    - Ajout des fragments `consumer_key` et `consumer_email` dans `Redaction::$sensitive_key_fragments` pour une protection en profondeur globale.
+  - **Intégration Pilier 2 MECE (`agency_performance_audit`) & SKILL.md** :
+    - Intégration de `/performance/caching` comme Étape 1 du playbook d'audit de performance multi-templates afin d'auditer l'infrastructure de mise en cache avant de profiler les URLs.
+    - Mise à jour de `Playbooks::generate_skill_markdown()`, de la documentation et génération du `SKILL.md` actualisé.
+  - **Intégration CLI `cli/sync.js` & i18n** :
+    - Prise en charge dans `pullPerformance()` (`./synced-site-data/performance/caching.json` et rapport Markdown enrichi).
+    - Synchronisation i18n 100% avec mise à jour du dictionnaire `cli/translations-fr.php`, du template `.pot`, du fichier `.po` et compilation du binaire `.mo`.
 
 ### v1.22.0 (2026-09-08)
 - **Harmonisation des Statuts Actifs/Inactifs & Optimisation Drastique des Tokens (`System_Controller`, `Wpcode_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :

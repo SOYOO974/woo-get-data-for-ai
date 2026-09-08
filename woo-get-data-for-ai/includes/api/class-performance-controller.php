@@ -95,6 +95,23 @@ class Performance_Controller extends Rest_Controller {
             },
         ]);
 
+        // GET /performance/caching (Universal caching & optimization diagnostic: Object Cache, Page Cache & WP Rocket)
+        register_rest_route(self::NAMESPACE, '/performance/caching', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_caching_status'],
+            'permission_callback' => function ($request) {
+                return $this->check_caching_access($request);
+            },
+        ]);
+
+        // GET /system/caching (Alias to /performance/caching for system diagnostic continuity)
+        register_rest_route(self::NAMESPACE, '/system/caching', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_caching_status'],
+            'permission_callback' => function ($request) {
+                return $this->check_caching_access($request);
+            },
+        ]);
     }
 
     /**
@@ -1058,4 +1075,307 @@ class Performance_Controller extends Rest_Controller {
             'templates'          => $templates,
         ]);
     }
+
+    /**
+     * Check access for caching endpoints, allowing access if either 'performance' or 'system' module is enabled.
+     *
+     * @param \WP_REST_Request $request
+     * @return true|\WP_Error
+     */
+    public function check_caching_access(\WP_REST_Request $request) {
+        $endpoint = $request->get_route();
+
+        // 1. Verify Security (Bearer token, method, rate limit, IP)
+        $security_check = \WPAgentBridge\Security::verify_request($request);
+        if (is_wp_error($security_check)) {
+            $status = $security_check->get_error_data()['status'] ?? 401;
+            \WPAgentBridge\Access_Logger::log_request($endpoint, $status);
+            return $security_check;
+        }
+
+        // 2. Allow if either 'performance' or 'system' module is enabled
+        $perf_enabled   = \WPAgentBridge\Permissions::is_module_enabled('performance');
+        $system_enabled = \WPAgentBridge\Permissions::is_module_enabled('system');
+
+        if (!$perf_enabled && !$system_enabled) {
+            \WPAgentBridge\Access_Logger::log_request($endpoint, 403);
+            return new \WP_Error(
+                'agent_bridge_module_disabled',
+                esc_html__("Both 'performance' and 'system' modules are disabled by the site administrator.", 'woo-get-data-for-ai'),
+                ['status' => 403]
+            );
+        }
+
+        \WPAgentBridge\Access_Logger::log_request($endpoint, 200);
+        return true;
+    }
+
+    /**
+     * GET /performance/caching & GET /system/caching
+     * Universal caching and optimization diagnostic.
+     * Inspects Object Cache (Redis/Memcached), Page Cache drop-ins, and WP Rocket configuration.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_caching_status(\WP_REST_Request $request) {
+        // 1. Object Cache inspection
+        $ext_object_cache = function_exists('wp_using_ext_object_cache') ? (bool) wp_using_ext_object_cache() : false;
+        $object_dropin_exists = file_exists(WP_CONTENT_DIR . '/object-cache.php');
+
+        $object_recommendation = $ext_object_cache
+            ? esc_html__('External object cache is active.', 'woo-get-data-for-ai')
+            : ($object_dropin_exists
+                ? esc_html__('object-cache.php drop-in is present but external object cache is inactive or misconfigured.', 'woo-get-data-for-ai')
+                : esc_html__('Redis drop-in missing', 'woo-get-data-for-ai'));
+
+        // 2. Page Cache inspection
+        $advanced_cache_dropin = file_exists(WP_CONTENT_DIR . '/advanced-cache.php');
+        $wp_cache_constant     = defined('WP_CACHE') && (bool) WP_CACHE;
+
+        // Detect active caching plugins/engines
+        $detected_plugins = [];
+        $active_engine    = 'None';
+
+        if (defined('WP_ROCKET_VERSION') || class_exists('WP_Rocket\Plugin') || function_exists('get_rocket_option')) {
+            $detected_plugins[] = [
+                'name'    => 'WP Rocket',
+                'version' => defined('WP_ROCKET_VERSION') ? WP_ROCKET_VERSION : null,
+            ];
+            $active_engine = 'WP Rocket';
+        }
+
+        if (defined('LSCWP_V') || class_exists('LiteSpeed\Core')) {
+            $detected_plugins[] = [
+                'name'    => 'LiteSpeed Cache',
+                'version' => defined('LSCWP_V') ? LSCWP_V : null,
+            ];
+            if ($active_engine === 'None') {
+                $active_engine = 'LiteSpeed Cache';
+            }
+        }
+
+        if (defined('W3TC')) {
+            $detected_plugins[] = [
+                'name'    => 'W3 Total Cache',
+                'version' => defined('W3TC_VERSION') ? W3TC_VERSION : null,
+            ];
+            if ($active_engine === 'None') {
+                $active_engine = 'W3 Total Cache';
+            }
+        }
+
+        if (defined('ADVANCEDCACHEPROBLEM') || function_exists('wp_cache_init')) {
+            $detected_plugins[] = [
+                'name'    => 'WP Super Cache',
+                'version' => null,
+            ];
+            if ($active_engine === 'None') {
+                $active_engine = 'WP Super Cache';
+            }
+        }
+
+        if (defined('FLYING_PRESS_VERSION')) {
+            $detected_plugins[] = [
+                'name'    => 'FlyingPress',
+                'version' => FLYING_PRESS_VERSION,
+            ];
+            if ($active_engine === 'None') {
+                $active_engine = 'FlyingPress';
+            }
+        }
+
+        if (class_exists('RedisObjectCache') || defined('WP_REDIS_VERSION')) {
+            $detected_plugins[] = [
+                'name'    => 'Redis Object Cache',
+                'version' => defined('WP_REDIS_VERSION') ? WP_REDIS_VERSION : null,
+            ];
+        }
+
+        if (defined('AUTOPTIMIZE_PLUGIN_VERSION')) {
+            $detected_plugins[] = [
+                'name'    => 'Autoptimize',
+                'version' => AUTOPTIMIZE_PLUGIN_VERSION,
+            ];
+        }
+
+        if (defined('PERFMATTERS_VERSION')) {
+            $detected_plugins[] = [
+                'name'    => 'Perfmatters',
+                'version' => PERFMATTERS_VERSION,
+            ];
+        }
+
+        // 3. WP Rocket in-depth inspection
+        $is_rocket_active = defined('WP_ROCKET_VERSION')
+            || class_exists('WP_Rocket\Plugin')
+            || function_exists('get_rocket_option')
+            || (function_exists('is_plugin_active') && is_plugin_active('wp-rocket/wp-rocket.php'))
+            || in_array('wp-rocket/wp-rocket.php', (array) get_option('active_plugins', []));
+
+        $wp_rocket_data = [
+            'is_active' => (bool) $is_rocket_active,
+        ];
+
+        if ($is_rocket_active) {
+            $rocket_version = defined('WP_ROCKET_VERSION') ? WP_ROCKET_VERSION : null;
+            if (!$rocket_version && file_exists(WP_PLUGIN_DIR . '/wp-rocket/wp-rocket.php') && function_exists('get_file_data')) {
+                $p_data = get_file_data(WP_PLUGIN_DIR . '/wp-rocket/wp-rocket.php', ['Version' => 'Version']);
+                $rocket_version = $p_data['Version'] ?? null;
+            }
+            $wp_rocket_data['version'] = $rocket_version;
+
+            // Load options defensively
+            $raw_settings = get_option('wp_rocket_settings', []);
+            if (!is_array($raw_settings)) {
+                $raw_settings = [];
+            }
+
+            $get_opt = function ($key, $default = 0) use ($raw_settings) {
+                if (function_exists('get_rocket_option')) {
+                    return get_rocket_option($key, $default);
+                }
+                return isset($raw_settings[$key]) ? $raw_settings[$key] : $default;
+            };
+
+            // Mobile Cache
+            $wp_rocket_data['mobile_cache'] = [
+                'enabled'        => (bool) $get_opt('cache_mobile', 0),
+                'separate_files' => (bool) $get_opt('do_caching_mobile_files', 0),
+            ];
+
+            // CSS Optimization
+            $rucss_active = (bool) $get_opt('remove_unused_css', 0);
+            $async_active = (bool) $get_opt('async_css', 0);
+            if ($rucss_active) {
+                $css_mode = 'remove_unused_css';
+            } elseif ($async_active) {
+                $css_mode = 'async_css';
+            } else {
+                $css_mode = 'disabled';
+            }
+
+            // CSS Safelist
+            $safelist_raw = $get_opt('remove_unused_css_safelist', []);
+            $safelist = [];
+            if (is_array($safelist_raw)) {
+                foreach ($safelist_raw as $item) {
+                    $item = is_string($item) ? trim($item) : '';
+                    if ($item !== '') {
+                        $safelist[] = $item;
+                    }
+                }
+            } elseif (is_string($safelist_raw) && trim($safelist_raw) !== '') {
+                $lines = preg_split('/\r\n|\r|\n/', $safelist_raw);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if ($line !== '') {
+                        $safelist[] = $line;
+                    }
+                }
+            }
+
+            // Fallback Critical CSS Check
+            $critical_raw = $get_opt('critical_css', '');
+            $has_critical_str = is_string($critical_raw) && trim($critical_raw) !== '';
+            $has_critical_file = defined('WP_ROCKET_CRITICAL_CSS_PATH') && is_dir(WP_ROCKET_CRITICAL_CSS_PATH) && (
+                file_exists(WP_ROCKET_CRITICAL_CSS_PATH . 'fallback.css') ||
+                (function_exists('get_current_blog_id') && file_exists(WP_ROCKET_CRITICAL_CSS_PATH . get_current_blog_id() . '/fallback.css'))
+            );
+            $critical_css_fallback_present = $has_critical_str || $has_critical_file;
+
+            $wp_rocket_data['css'] = [
+                'minify'                        => (bool) $get_opt('minify_css', 0),
+                'mode'                          => $css_mode,
+                'safelist'                      => array_values(array_unique($safelist)),
+                'critical_css_fallback_present' => (bool) $critical_css_fallback_present,
+            ];
+
+            // JavaScript Optimization
+            $delay_raw = $get_opt('delay_js_exclusions', []);
+            $delay_exclusions = [];
+            if (is_array($delay_raw)) {
+                foreach ($delay_raw as $item) {
+                    $item = is_string($item) ? trim($item) : '';
+                    if ($item !== '') {
+                        $delay_exclusions[] = $item;
+                    }
+                }
+            } elseif (is_string($delay_raw) && trim($delay_raw) !== '') {
+                $lines = preg_split('/\r\n|\r|\n/', $delay_raw);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if ($line !== '') {
+                        $delay_exclusions[] = $line;
+                    }
+                }
+            }
+
+            $wp_rocket_data['javascript'] = [
+                'minify'                       => (bool) $get_opt('minify_js', 0),
+                'defer'                        => (bool) $get_opt('defer_all_js', 0),
+                'delay_js'                     => (bool) $get_opt('delay_js', 0),
+                'delay_js_exclusions'          => array_values(array_unique($delay_exclusions)),
+                'delay_js_execution_safe_mode' => (bool) $get_opt('delay_js_execution_safe_mode', 0),
+            ];
+
+            // Media Optimization
+            $wp_rocket_data['media'] = [
+                'lazyload_images'  => (bool) $get_opt('lazyload', 0),
+                'lazyload_iframes' => (bool) $get_opt('lazyload_iframes', 0),
+                'lazyload_css_bg'  => (bool) $get_opt('lazyload_css_bg_img', 0),
+                'image_dimensions' => (bool) $get_opt('image_dimensions', 0),
+            ];
+        }
+
+        // Actionable performance & caching recommendations
+        $recommendations = [];
+        if (!$ext_object_cache) {
+            $recommendations[] = [
+                'type'     => 'object_cache',
+                'severity' => 'medium',
+                'message'  => esc_html__('External object cache (Redis or Memcached) is not active. Enabling an external object cache significantly reduces database query load on high-traffic WooCommerce sites.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if (!$advanced_cache_dropin) {
+            $recommendations[] = [
+                'type'     => 'page_cache',
+                'severity' => 'high',
+                'message'  => esc_html__('advanced-cache.php drop-in is missing from wp-content/. Full-page caching may not be operational, resulting in higher TTFB.', 'woo-get-data-for-ai'),
+            ];
+        }
+        if ($is_rocket_active) {
+            if (empty($wp_rocket_data['javascript']['delay_js'])) {
+                $recommendations[] = [
+                    'type'     => 'delay_js',
+                    'severity' => 'low',
+                    'message'  => esc_html__('WP Rocket Delay JavaScript execution is disabled. Enabling Delay JS is one of the most impactful optimizations for Total Blocking Time (TBT) and Mobile Core Web Vitals.', 'woo-get-data-for-ai'),
+                ];
+            }
+            if ($wp_rocket_data['css']['mode'] === 'disabled') {
+                $recommendations[] = [
+                    'type'     => 'css_delivery',
+                    'severity' => 'medium',
+                    'message'  => esc_html__('WP Rocket CSS delivery optimization is disabled. Enabling Remove Unused CSS (RUCSS) will eliminate render-blocking stylesheets and reduce page payload.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
+
+        return $this->response([
+            'object_cache' => [
+                'enabled'        => $ext_object_cache,
+                'dropin_exists'  => (bool) $object_dropin_exists,
+                'recommendation' => $object_recommendation,
+            ],
+            'page_cache' => [
+                'advanced_cache_dropin' => (bool) $advanced_cache_dropin,
+                'wp_cache_constant'     => (bool) $wp_cache_constant,
+                'active_engine'         => $active_engine,
+            ],
+            'wp_rocket'                => $wp_rocket_data,
+            'detected_caching_plugins' => $detected_plugins,
+            'recommendations'          => $recommendations,
+        ]);
+    }
 }
+

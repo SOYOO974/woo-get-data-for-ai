@@ -1341,13 +1341,15 @@ async function pullPerformance() {
         const perfDir = path.join(outputDir, 'performance');
         ensureDir(perfDir);
 
-        const [templatesUrls, homeProfile, autoload, pluginsSummary] = await Promise.all([
+        const [caching, templatesUrls, homeProfile, autoload, pluginsSummary] = await Promise.all([
+            makeRequest('/performance/caching').catch(e => ({ error: e.message })),
             makeRequest('/performance/templates-urls').catch(e => ({ error: e.message })),
             makeRequest('/performance/profile?path=/&include_assets=true&include_queries=true').catch(e => ({ error: e.message })),
             makeRequest('/performance/autoload?limit=50').catch(e => ({ error: e.message })),
             makeRequest('/performance/plugins-summary?status=active').catch(e => ({ error: e.message }))
         ]);
 
+        writeJson(path.join(perfDir, 'caching.json'), caching);
         writeJson(path.join(perfDir, 'templates-urls.json'), templatesUrls);
         writeJson(path.join(perfDir, 'profile-home.json'), homeProfile);
         writeJson(path.join(perfDir, 'autoload.json'), autoload);
@@ -1355,8 +1357,24 @@ async function pullPerformance() {
 
         let md = `# ⚡ Site Performance & Plugin Footprint Report\n\n`;
 
+        if (!caching.error) {
+            md += `## 1. Caching & Optimization Infrastructure\n\n`;
+            md += `- **Object Cache**: ${caching.object_cache && caching.object_cache.enabled ? '🟢 Active' : '🔴 Inactive'} (${caching.object_cache && caching.object_cache.recommendation ? caching.object_cache.recommendation : ''})\n`;
+            md += `- **Page Cache Drop-in**: ${caching.page_cache && caching.page_cache.advanced_cache_dropin ? '🟢 advanced-cache.php present' : '🔴 Missing'}\n`;
+            md += `- **Active Caching Engine**: **${caching.page_cache ? caching.page_cache.active_engine : 'Unknown'}**\n`;
+            if (caching.wp_rocket && caching.wp_rocket.is_active) {
+                const rk = caching.wp_rocket;
+                md += `\n### WP Rocket Configuration (v${rk.version || 'unknown'})\n\n`;
+                md += `- **Mobile Cache**: ${rk.mobile_cache && rk.mobile_cache.enabled ? 'Enabled' : 'Disabled'} (Separate files: ${rk.mobile_cache && rk.mobile_cache.separate_files ? 'Yes' : 'No'})\n`;
+                md += `- **CSS Optimization**: Mode = **${rk.css ? rk.css.mode : 'unknown'}**, Minify = ${rk.css && rk.css.minify ? 'Yes' : 'No'}, Safelist = ${rk.css && rk.css.safelist ? rk.css.safelist.length : 0} rules\n`;
+                md += `- **JavaScript Optimization**: Delay JS = **${rk.javascript && rk.javascript.delay_js ? 'Enabled' : 'Disabled'}**, Defer = ${rk.javascript && rk.javascript.defer ? 'Yes' : 'No'}, Minify = ${rk.javascript && rk.javascript.minify ? 'Yes' : 'No'}, Exclusions = ${rk.javascript && rk.javascript.delay_js_exclusions ? rk.javascript.delay_js_exclusions.length : 0} rules\n`;
+                md += `- **Media Optimization**: Lazyload Images = ${rk.media && rk.media.lazyload_images ? 'Yes' : 'No'}, Iframes = ${rk.media && rk.media.lazyload_iframes ? 'Yes' : 'No'}, CSS BG = ${rk.media && rk.media.lazyload_css_bg ? 'Yes' : 'No'}, Image Dimensions = ${rk.media && rk.media.image_dimensions ? 'Yes' : 'No'}\n`;
+            }
+            md += `\n`;
+        }
+
         if (!templatesUrls.error && templatesUrls.templates) {
-            md += `## 1. Strategic E-Commerce Archetype URLs\n\n`;
+            md += `## 2. Strategic E-Commerce Archetype URLs\n\n`;
             md += `| Archetype | Resolved URL | Context |\n|---|---|---|\n`;
             Object.entries(templatesUrls.templates).forEach(([key, item]) => {
                 md += `| **${item.label || key}** | [${item.url}](${item.url}) | ${item.type || key} |\n`;
@@ -1366,7 +1384,7 @@ async function pullPerformance() {
 
         if (!homeProfile.error && homeProfile.profile) {
             const p = homeProfile.profile;
-            md += `## 2. Homepage Synthetic Benchmark & Server Metrics\n\n`;
+            md += `## 3. Homepage Synthetic Benchmark & Server Metrics\n\n`;
             md += `- **TTFB**: **${p.ttfb_ms} ms**\n`;
             md += `- **Peak Memory**: **${p.memory_peak_mb} MB**\n`;
             md += `- **Total SQL Queries**: **${p.sql ? p.sql.total_queries : '-'}**\n`;
@@ -1390,16 +1408,17 @@ async function pullPerformance() {
                 if (psa.google_fonts && psa.google_fonts.detected) {
                     md += `- **Google Fonts**: ${psa.google_fonts.missing_swap ? '⚠️ **display=swap missing** (risk of FOIT/blank text on mobile)' : '✅ Loaded with display=swap'}\n`;
                 }
-                if (psa.core_bloat && psa.core_bloat.detected_scripts && psa.core_bloat.detected_scripts.length > 0) {
-                    md += `- **WordPress Core Frontend Bloat**: ⚠️ **${psa.core_bloat.detected_scripts.join(', ')}** loaded (can be dequeued via WPCode)\n`;
+                if (psa.render_blocking_in_head) {
+                    const rbCount = psa.render_blocking_in_head.render_blocking_count || 0;
+                    md += `- **Render-blocking Scripts in <head>**: ${rbCount > 0 ? `⚠️ **${rbCount} render-blocking script(s)**` : '✅ Zero render-blocking scripts in head'}\n`;
                 }
-                const blockingCount = psa.render_blocking_in_head ? psa.render_blocking_in_head.total_blocking : (psa.render_blocking_count || 0);
-                md += `- **Render-Blocking Head Resources**: **${blockingCount}**\n`;
-                const cartFragActive = psa.woocommerce_cart_fragments ? psa.woocommerce_cart_fragments.is_active : psa.wc_cart_fragments_active;
-                md += `- **WooCommerce Cart Fragments**: ${cartFragActive ? '⚠️ **ACTIVE** (triggers uncacheable POST admin-ajax.php on page load)' : '✅ Not detected'}\n`;
-                const isCompressed = psa.compression ? psa.compression.is_enabled : psa.compression_enabled;
-                const compType = psa.compression ? psa.compression.encoding : psa.compression_type;
-                md += `- **Server Compression**: ${isCompressed ? `✅ **Active** (${compType})` : '⚠️ Not detected'}\n\n`;
+                if (psa.core_bloat) {
+                    const bloatCount = psa.core_bloat.detected_bloat_count || 0;
+                    md += `- **WordPress Core Bloat Scripts**: ${bloatCount > 0 ? `⚠️ **${bloatCount} core script(s)** (${(psa.core_bloat.detected_handles || []).join(', ')})` : '✅ Core bloat cleaned up'}\n`;
+                }
+                if (psa.woocommerce_cart_fragments && psa.woocommerce_cart_fragments.active) {
+                    md += `- **WooCommerce Cart Fragments**: ⚠️ **wc-cart-fragments AJAX polling active** (slows non-cart pages)\n`;
+                }
             }
 
             if (p.sql && p.sql.by_component && Object.keys(p.sql.by_component).length > 0) {
@@ -1414,7 +1433,7 @@ async function pullPerformance() {
 
         if (!autoload.error) {
             const statusIcon = autoload.status === 'good' ? '🟢' : (autoload.status === 'warning' ? '🟡' : '🔴');
-            md += `## 3. wp_options Autoload Footprint\n\n`;
+            md += `## 4. wp_options Autoload Footprint\n\n`;
             md += `- **Health Status**: ${statusIcon} **${(autoload.status || 'unknown').toUpperCase()}**\n`;
             md += `- **Total Autoloaded Options**: ${autoload.total_options}\n`;
             md += `- **Total Autoload Size**: **${autoload.total_size_kb} KB** (Recommended limit: < ${autoload.recommended_max_kb} KB)\n`;
@@ -1442,7 +1461,7 @@ async function pullPerformance() {
         }
 
         if (!pluginsSummary.error && Array.isArray(pluginsSummary.plugins)) {
-            md += `## 4. Active Plugins Database Footprint\n\n`;
+            md += `## 5. Active Plugins Database Footprint\n\n`;
             md += `| Plugin | Slug | Version | DB Tables | DB Size (KB) | DB Rows |\n|---|---|---|---|---|---|\n`;
             pluginsSummary.plugins.forEach(p => {
                 md += `| **${p.name}** | \`${p.slug}\` | v${p.version} | ${p.tables_count} | ${p.db_size_kb} KB | ${p.db_rows.toLocaleString()} |\n`;

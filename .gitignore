@@ -5,6 +5,8 @@ node_modules/
 
 # Local Synced Data & CLI Exports
 synced-site-data/
+SKILL.md
+.agents/
 *.log
 npm-debug.log*
 yarn-debug.log*

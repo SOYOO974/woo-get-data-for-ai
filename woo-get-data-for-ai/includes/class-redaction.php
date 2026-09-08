@@ -45,6 +45,8 @@ class Redaction {
         'auth_token',
         'jwt',
         'consumer_secret',
+        'consumer_key',
+        'consumer_email',
         'webhook_secret',
         'license_key',
         'smtp_pass',

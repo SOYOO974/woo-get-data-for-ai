@@ -75,7 +75,7 @@ class Playbooks {
             [
                 'id'              => 'agency_performance_audit',
                 'title'           => esc_html__('Agency Multi-Template Performance & Core Web Vitals Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Front-facing page speed diagnostic benchmarking 5 key e-commerce page archetypes, measuring TTFB, memory peak, SQL queries attributed per plugin, and 100% native Core Web Vitals signals (DOM size, Elementor footprint %, CLS image dimensions, legacy formats, render-blocking scripts).', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Front-facing page speed diagnostic benchmarking 5 key e-commerce page archetypes, measuring TTFB, memory peak, SQL queries attributed per plugin, 100% native Core Web Vitals signals (DOM size, Elementor footprint %, CLS image dimensions, legacy formats, render-blocking scripts), and caching infrastructure (Object Cache, Page Cache, WP Rocket RUCSS vs CPCSS, Delay JS, safelist).', 'woo-get-data-for-ai'),
                 'required_modules'=> ['performance'],
                 'optional_modules'=> ['system'],
                 'intent_triggers' => [
@@ -93,10 +93,24 @@ class Playbooks {
                     'core web vitals',
                     'pagespeed',
                     'quick wins performance',
+                    'audit cache',
+                    'wp rocket',
+                    'reglages cache',
+                    'delay js',
+                    'rucss',
+                    'cache configuration',
                 ],
                 'workflow'        => [
                     [
                         'step'        => 1,
+                        'action'      => esc_html__('Caching Infrastructure & WP Rocket Settings Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/caching',
+                        'params'      => [],
+                        'description' => esc_html__('Inspects external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), and in-depth WP Rocket configuration (CSS mode RUCSS vs CPCSS, safelist, Delay JS exclusions and safe mode, lazyload, mobile caching).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['object_cache.enabled', 'page_cache.advanced_cache_dropin', 'wp_rocket.is_active', 'wp_rocket.css.mode', 'wp_rocket.javascript.delay_js', 'wp_rocket.javascript.delay_js_exclusions'],
+                    ],
+                    [
+                        'step'        => 2,
                         'action'      => esc_html__('Strategic Multi-Template URLs Discovery', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/templates-urls',
                         'params'      => [],
@@ -104,7 +118,7 @@ class Playbooks {
                         'key_signals' => ['templates.home.url', 'templates.shop.url', 'templates.category.url', 'templates.product.url', 'templates.cart.url'],
                     ],
                     [
-                        'step'        => 2,
+                        'step'        => 3,
                         'action'      => esc_html__('Multi-Template Benchmarking & Plugin SQL Attribution', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/profile',
                         'params'      => ['path' => '<template_url>', 'include_assets' => true, 'include_queries' => true, 'slow_query_threshold_ms' => 50],
@@ -112,7 +126,7 @@ class Playbooks {
                         'key_signals' => ['profile.ttfb_ms', 'profile.memory_peak_mb', 'profile.sql.total_queries', 'profile.sql.by_component', 'profile.sql.duplicate_queries', 'profile.sql.slow_queries'],
                     ],
                     [
-                        'step'        => 3,
+                        'step'        => 4,
                         'action'      => esc_html__('Native Web Vitals & Frontend Performance Signals Audit', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/profile',
                         'params'      => ['path' => '<template_url>', 'include_assets' => true, 'include_queries' => false],
@@ -120,7 +134,7 @@ class Playbooks {
                         'key_signals' => ['pagespeed_audits.dom_health', 'pagespeed_audits.cls_image_dimensions', 'pagespeed_audits.image_formats', 'pagespeed_audits.render_blocking_in_head', 'pagespeed_audits.google_fonts', 'pagespeed_audits.core_bloat', 'pagespeed_audits.woocommerce_cart_fragments'],
                     ],
                     [
-                        'step'        => 4,
+                        'step'        => 5,
                         'action'      => esc_html__('Active Plugins Database & Disk Footprint', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/plugins-summary',
                         'params'      => ['status' => 'active'],
@@ -612,7 +626,15 @@ class Playbooks {
         $md .= "   - When troubleshooting checkout issues, discount anomalies, or customer complaints about coupons:\n";
         $md .= "     - Use `GET /woocommerce/coupons` to list active/expired/exhausted coupons with usage counts, limits, and held counts.\n";
         $md .= "     - Use `GET /woocommerce/coupon/{id}` (by numeric ID or code slug) to check real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and recent associated orders.\n";
-        $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n\n";
+        $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n";
+        $md .= "7. **UNIVERSAL CACHING & OPTIMIZATION AUDIT (WP ROCKET / OBJECT CACHE)**:\n";
+        $md .= "   - Run `GET /performance/caching` (or alias `GET /system/caching`) to inspect caching infrastructure:\n";
+        $md .= "     - **External Object Cache (`object_cache.enabled`)**: Must be active on high-traffic WooCommerce stores to relieve database pressure.\n";
+        $md .= "     - **Page Cache (`page_cache.advanced_cache_dropin`)**: Verifies `advanced-cache.php` drop-in and active caching engine.\n";
+        $md .= "     - **WP Rocket Deep Inspection (`wp_rocket.is_active`)**:\n";
+        $md .= "       - `css.mode`: Inspect active CSS delivery optimization (`remove_unused_css`, `async_css`, or `disabled`) and `safelist` patterns.\n";
+        $md .= "       - `javascript.delay_js`: Inspect Delay JS execution state, safe mode, and `delay_js_exclusions`.\n";
+        $md .= "       - `media`: Verify lazyload on images, iframes, CSS background images, and automatic image dimensions injection.\n\n";
 
         $md .= "---\n\n";
 
@@ -668,6 +690,7 @@ class Playbooks {
         $md .= "# Pillar 1: SEO, Content & Visibility\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n\n";
         $md .= "# Pillar 2: Frontend Performance & Core Web Vitals\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/caching'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n\n";
         $md .= "# Pillar 3: System Health, Database Bloat & Background Hygiene\n";
