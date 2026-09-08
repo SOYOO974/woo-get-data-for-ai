@@ -1332,10 +1332,11 @@ class Woocommerce_Controller extends Rest_Controller {
         $held_sessions = [];
         foreach (array_keys($held_orders_map) as $h_oid) {
             $h_order = wc_get_order($h_oid);
-            if ($h_order && in_array($h_order->get_status(), ['pending', 'on-hold', 'checkout-draft'], true)) {
+            if ($h_order && !($h_order instanceof \WC_Order_Refund) && in_array($h_order->get_status(), ['pending', 'on-hold', 'checkout-draft'], true)) {
+                $h_order_number = method_exists($h_order, 'get_order_number') ? $h_order->get_order_number() : (string) $h_order->get_id();
                 $held_sessions[] = [
                     'order_id'     => $h_order->get_id(),
-                    'order_number' => $h_order->get_order_number(),
+                    'order_number' => $h_order_number,
                     'status'       => $h_order->get_status(),
                     'date_created' => $h_order->get_date_created() ? $h_order->get_date_created()->date('Y-m-d H:i:s') : null,
                     'total'        => $h_order->get_total(),
@@ -1374,10 +1375,11 @@ class Woocommerce_Controller extends Rest_Controller {
         $associated_orders = [];
         foreach ((array) $associated_order_ids as $ao_id) {
             $ao_order = wc_get_order($ao_id);
-            if ($ao_order) {
+            if ($ao_order && !($ao_order instanceof \WC_Order_Refund)) {
+                $ao_order_number = method_exists($ao_order, 'get_order_number') ? $ao_order->get_order_number() : (string) $ao_order->get_id();
                 $associated_orders[] = [
                     'order_id'     => $ao_order->get_id(),
-                    'order_number' => $ao_order->get_order_number(),
+                    'order_number' => $ao_order_number,
                     'status'       => $ao_order->get_status(),
                     'date_created' => $ao_order->get_date_created() ? $ao_order->get_date_created()->date('Y-m-d H:i:s') : null,
                     'total'        => $ao_order->get_total(),
@@ -1470,6 +1472,7 @@ class Woocommerce_Controller extends Rest_Controller {
             'paginate' => true,
             'limit'    => $per_page,
             'page'     => $page,
+            'type'     => 'shop_order',
             'orderby'  => $orderby,
             'order'    => in_array($order, ['ASC', 'DESC'], true) ? $order : 'DESC',
         ];
@@ -1561,6 +1564,13 @@ class Woocommerce_Controller extends Rest_Controller {
             $max_num_pages = (int) $results->max_num_pages;
 
             foreach ($results->orders as $order_obj) {
+                // Ignore any object that is not a real order (e.g. OrderRefund)
+                if (!($order_obj instanceof \WC_Order) || ($order_obj instanceof \WC_Order_Refund)) {
+                    continue;
+                }
+
+                $order_number = method_exists($order_obj, 'get_order_number') ? $order_obj->get_order_number() : (string) $order_obj->get_id();
+
                 /** @var \WC_Order $order_obj */
                 $items = [];
                 foreach ($order_obj->get_items() as $item_id => $item) {
@@ -1588,7 +1598,7 @@ class Woocommerce_Controller extends Rest_Controller {
 
                 $orders[] = [
                     'id'                   => $order_obj->get_id(),
-                    'order_number'         => $order_obj->get_order_number(),
+                    'order_number'         => $order_number,
                     'status'               => $order_obj->get_status(),
                     'date_created'         => $order_obj->get_date_created() ? $order_obj->get_date_created()->date('Y-m-d H:i:s') : null,
                     'date_modified'        => $order_obj->get_date_modified() ? $order_obj->get_date_modified()->date('Y-m-d H:i:s') : null,
@@ -1600,7 +1610,7 @@ class Woocommerce_Controller extends Rest_Controller {
                     'shipping_total'       => $order_obj->get_shipping_total(),
                     'discount_total'       => $order_obj->get_discount_total(),
                     'coupon_lines'         => $coupon_lines,
-                    'coupon_codes'         => $order_obj->get_coupon_codes(),
+                    'coupon_codes'         => method_exists($order_obj, 'get_coupon_codes') ? $order_obj->get_coupon_codes() : [],
                     'payment_method'       => $order_obj->get_payment_method(),
                     'payment_method_title' => $order_obj->get_payment_method_title(),
                     'transaction_id'       => $order_obj->get_transaction_id(),
@@ -1641,7 +1651,7 @@ class Woocommerce_Controller extends Rest_Controller {
         $id = (int) $request->get_param('id');
         $order = wc_get_order($id);
 
-        if (!$order) {
+        if (!$order || ($order instanceof \WC_Order_Refund)) {
             return $this->error('order_not_found', esc_html__('Order not found.', 'woo-get-data-for-ai'), 404);
         }
 
@@ -1758,7 +1768,7 @@ class Woocommerce_Controller extends Rest_Controller {
 
         return $this->response([
             'id'                   => $order->get_id(),
-            'order_number'         => $order->get_order_number(),
+            'order_number'         => method_exists($order, 'get_order_number') ? $order->get_order_number() : (string) $order->get_id(),
             'status'               => $order->get_status(),
             'date_created'         => $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i:s') : null,
             'date_modified'        => $order->get_date_modified() ? $order->get_date_modified()->date('Y-m-d H:i:s') : null,

@@ -379,6 +379,15 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.21.1 (2026-09-08)
+- **Correctif Critique sur l'Inspection des Commandes (`Woocommerce_Controller`)** :
+  - **Correction Fatal Error `OrderRefund::get_order_number()`** : Forçage explicite du paramètre `'type' => 'shop_order'` dans `$query_args` pour `wc_get_orders()` dans `GET /woocommerce/orders`, excluant nativement les objets de remboursement (`shop_order_refund`).
+  - **Sécurisation Défensive Multi-Couches** :
+    - Filtrage strict dans la boucle `foreach ($results->orders as $order_obj)` avec `!($order_obj instanceof \WC_Order) || ($order_obj instanceof \WC_Order_Refund)`.
+    - Sécurisation de l'appel `$order_obj->get_order_number()` via `method_exists()` avec fallback sur l'ID de commande.
+    - Sécurisation de `$order_obj->get_coupon_codes()` via `method_exists()`.
+    - Sécurisation symétrique dans `GET /woocommerce/order/{id}`, ainsi que dans les sessions en retenue (`held_sessions`) et commandes associées (`associated_orders`) de `GET /woocommerce/coupon/{id}`.
+
 ### v1.21.0 (2026-09-08)
 - **Module Codes Promos (Coupons) & Amélioration de l'Inspection des Commandes (`Woocommerce_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
   - **Nouveaux Endpoints REST d'Inspection des Codes Promos** :
