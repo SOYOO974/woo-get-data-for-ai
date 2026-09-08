@@ -80,6 +80,8 @@ class Plugin {
             Api\Woocommerce_Controller::class,
             Api\Content_Controller::class,
             Api\Performance_Controller::class,
+            Api\Pmpro_Controller::class,
+            Api\Masterstudy_Controller::class,
         ];
 
         foreach ($controller_classes as $class) {

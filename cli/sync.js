@@ -51,7 +51,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:logs');
     process.exit(1);
 }
 
@@ -1476,6 +1476,71 @@ async function pullPerformance() {
     }
 }
 
+async function pullPmpro() {
+    console.log('⏳ Pulling Paid Memberships Pro (PMPro)...');
+    try {
+        const pmproDir = path.join(outputDir, 'pmpro');
+        ensureDir(pmproDir);
+
+        const levels = await makeRequest('/pmpro/levels');
+        writeJson(path.join(pmproDir, 'levels.json'), levels);
+
+        if (levels && levels.levels && Array.isArray(levels.levels)) {
+            console.log(`  ✓ Successfully fetched ${levels.levels.length} PMPro levels.`);
+            let lmd = `# Paid Memberships Pro — Levels Overview\n\n`;
+            lmd += `**Total Levels**: ${levels.total_levels || levels.levels.length}\n`;
+            lmd += `**Active Subscriptions**: ${levels.total_active_memberships || 0}\n\n`;
+            lmd += `| ID | Name | Duration | Price / Billing | Active Members | Anomalies |\n`;
+            lmd += `|---|---|---|---|---|---|\n`;
+            levels.levels.forEach(l => {
+                const anomalyBadge = l.duration_anomaly ? '⚠️ ' + l.duration_anomaly_description : '🟢 OK';
+                lmd += `| \`${l.id}\` | **${l.name}** | ${l.duration_text || '-'} | ${l.billing_type || '-'} | ${l.active_members_count || 0} | ${anomalyBadge} |\n`;
+            });
+            writeText(path.join(pmproDir, 'levels.md'), lmd);
+        }
+
+        try {
+            const members = await makeRequest('/pmpro/members?status=active&per_page=50');
+            writeJson(path.join(pmproDir, 'members_active.json'), members);
+            console.log(`  ✓ Successfully fetched active PMPro members.`);
+        } catch (mErr) {
+            console.warn('  ⚠️ Could not fetch /pmpro/members:', mErr.message);
+        }
+
+        console.log('✅ PMPro data saved to ./pmpro/ (levels.json, levels.md, members_active.json)');
+    } catch (err) {
+        console.warn('  ⚠️ Paid Memberships Pro skipped or not active:', err.message);
+    }
+}
+
+async function pullMasterstudy() {
+    console.log('⏳ Pulling MasterStudy LMS...');
+    try {
+        const msDir = path.join(outputDir, 'masterstudy');
+        ensureDir(msDir);
+
+        const courses = await makeRequest('/masterstudy/courses?per_page=50');
+        writeJson(path.join(msDir, 'courses.json'), courses);
+
+        if (courses && courses.courses && Array.isArray(courses.courses)) {
+            console.log(`  ✓ Successfully fetched ${courses.courses.length} MasterStudy LMS courses.`);
+            let cmd = `# MasterStudy LMS — Courses Overview\n\n`;
+            cmd += `**Total Courses**: ${courses.pagination ? courses.pagination.total : courses.courses.length}\n\n`;
+            cmd += `| ID | Course Title | Pricing Mode | Price | Product ID | Enrolled Students | Lessons | Membership Access |\n`;
+            cmd += `|---|---|---|---|---|---|---|---|\n`;
+            courses.courses.forEach(c => {
+                const levelsStr = (c.membership_levels_allowed || []).map(l => l.name).join(', ') || (c.not_membership ? '⛔ No Membership' : 'Any');
+                cmd += `| \`${c.id}\` | **${c.title}** | \`${c.pricing_mode}\` | ${c.price} | ${c.stm_lms_product_id || '-'} | ${c.total_students || 0} | ${c.lessons_count || 0} | ${levelsStr} |\n`;
+            });
+            writeText(path.join(msDir, 'courses.md'), cmd);
+        }
+
+        console.log('✅ MasterStudy LMS data saved to ./masterstudy/ (courses.json, courses.md)');
+    } catch (err) {
+        console.warn('  ⚠️ MasterStudy LMS skipped or not active:', err.message);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -1532,6 +1597,13 @@ async function run() {
         case 'pull:perf':
             await pullPerformance();
             break;
+        case 'pull:pmpro':
+            await pullPmpro();
+            break;
+        case 'pull:masterstudy':
+        case 'pull:lms':
+            await pullMasterstudy();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -1551,6 +1623,8 @@ async function run() {
             await pullWooCommerce();
             await pullContent();
             await pullPerformance();
+            await pullPmpro();
+            await pullMasterstudy();
             await pullLogs();
             break;
     }

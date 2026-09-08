@@ -231,7 +231,7 @@ class Playbooks {
                 'title'           => esc_html__('Orders, Payment Gateways & Delivery Troubleshooting', 'woo-get-data-for-ai'),
                 'description'     => esc_html__('Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['woocommerce'],
-                'optional_modules'=> ['logs', 'wpcode', 'system'],
+                'optional_modules'=> ['logs', 'wpcode', 'system', 'pmpro', 'masterstudy'],
                 'intent_triggers' => [
                     'commande échouée',
                     'problème commande',
@@ -248,6 +248,13 @@ class Playbooks {
                     'code promo bloqué',
                     'coupon non valide',
                     'coupon troubleshoot',
+                    'accès cours expiré',
+                    'expiration prématurée',
+                    'problème adhésion',
+                    'adhésion expirée',
+                    'pmpro troubleshoot',
+                    'masterstudy accès',
+                    'cours bloqué',
                 ],
                 'workflow'        => [
                     [
@@ -297,6 +304,22 @@ class Playbooks {
                         'params'      => [],
                         'description' => esc_html__('Inventories WooCommerce webhooks, topics (e.g. order.created), delivery URLs, and alerts on failure counters (failure_count >= 5).', 'woo-get-data-for-ai'),
                         'key_signals' => ['summary.total', 'summary.health', 'webhooks[].failure_count', 'summary.alert'],
+                    ],
+                    [
+                        'step'        => 7,
+                        'action'      => esc_html__('Paid Memberships Pro Member & Level Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/pmpro/member/{user_id}',
+                        'params'      => ['user_id' => '<member_user_id>'],
+                        'description' => esc_html__('Examines user membership history timeline, active level vs past expiration dates, recurring cycle rules, and associated PMPro order payment statuses to diagnose membership loss.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['diagnostics.has_active_membership', 'diagnostics.access_state', 'diagnostics.anomalies', 'active_memberships[].is_expired', 'active_memberships[].days_left'],
+                    ],
+                    [
+                        'step'        => 8,
+                        'action'      => esc_html__('MasterStudy LMS User Course Enrollment & Expiration Diagnostic', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/masterstudy/user/{user_id}/courses',
+                        'params'      => ['user_id' => '<member_user_id>'],
+                        'description' => esc_html__('Examines course enrollments, course duration limits, linked PMPro subscription ID integrity, and identifies root causes for premature course access expirations or pointer desync.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['diagnostics.anomalies', 'courses[].access_diagnosis.has_access', 'courses[].access_diagnosis.is_expired', 'courses[].access_diagnosis.pointer_mismatch', 'courses[].access_diagnosis.expiration_reasons'],
                     ],
                 ],
             ],
@@ -566,6 +589,8 @@ class Playbooks {
         if (strpos($endpoint, '/analytics') === 0) return 'analytics';
         if (strpos($endpoint, '/meta') === 0) return 'meta';
         if (strpos($endpoint, '/performance') === 0) return 'performance';
+        if (strpos($endpoint, '/pmpro') === 0) return 'pmpro';
+        if (strpos($endpoint, '/masterstudy') === 0) return 'masterstudy';
 
         return null;
     }
@@ -634,7 +659,13 @@ class Playbooks {
         $md .= "     - **WP Rocket Deep Inspection (`wp_rocket.is_active`)**:\n";
         $md .= "       - `css.mode`: Inspect active CSS delivery optimization (`remove_unused_css`, `async_css`, or `disabled`) and `safelist` patterns.\n";
         $md .= "       - `javascript.delay_js`: Inspect Delay JS execution state, safe mode, and `delay_js_exclusions`.\n";
-        $md .= "       - `media`: Verify lazyload on images, iframes, CSS background images, and automatic image dimensions injection.\n\n";
+        $md .= "       - `media`: Verify lazyload on images, iframes, CSS background images, and automatic image dimensions injection.\n";
+        $md .= "8. **PAID MEMBERSHIPS PRO & MASTERSTUDY LMS ACCESS AUDITS**:\n";
+        $md .= "   - When customers or students report premature expiration of course access (e.g. on MasterStudy + PMPro setups):\n";
+        $md .= "     - Use `GET /pmpro/levels` to verify membership level duration rules (flagging duration anomalies like 11 months vs 12 months).\n";
+        $md .= "     - Use `GET /pmpro/member/{user_id}` to inspect the user's membership timeline, active status, enddate, and order transactions.\n";
+        $md .= "     - Use `GET /masterstudy/courses` to inspect course durations, pricing mode, and PMPro levels allowed.\n";
+        $md .= "     - Use `GET /masterstudy/user/{user_id}/courses` to inspect course enrollments, course expiration rules, linked `subscription_id`, and detect pointer mismatches (e.g. `subscription_id` points to a changed/cancelled row while the user has another active membership).\n\n";
 
         $md .= "---\n\n";
 
@@ -697,8 +728,12 @@ class Playbooks {
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/database'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/summary'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=complete,failed,in-progress&per_page=15'\n\n";
-        $md .= "# Pillar 4: Orders, Checkout & Gateway Troubleshooting\n";
+        $md .= "# Pillar 4: Orders, Checkout, PMPro & LMS Access Troubleshooting\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed,cancelled&per_page=10'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/pmpro/levels'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/pmpro/member/<user_id>'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/masterstudy/courses'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/masterstudy/user/<user_id>/courses'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/mail'\n\n";
         $md .= "# Pillar 5: 360° E-Commerce Sales & Analytics\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/sales?range=last_30_days'\n";

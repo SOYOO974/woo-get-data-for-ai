@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-07  
+> **Last Updated**: 2026-09-08  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -200,6 +200,8 @@ Enables/disables modules on a per-site basis:
 - `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
 - `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
 - `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`)
+- `[x] Paid Memberships Pro (PMPro)` (`/pmpro/levels`, `/pmpro/members`, `/pmpro/member/{user_id}`)
+- `[x] MasterStudy LMS` (`/masterstudy/courses`, `/masterstudy/user/{user_id}/courses`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -309,6 +311,11 @@ Enables/disables modules on a per-site basis:
 | `GET /performance/plugins-summary` | GET | Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts (`?status=active\|all`) |
 | `GET /performance/caching` | GET | Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in (`advanced-cache.php`), and in-depth WP Rocket settings (RUCSS vs CPCSS mode, CSS safelist, Delay JS exclusions & safe mode, lazyload, mobile caching) with strict security redaction |
 | `GET /system/caching` | GET | Alias to `/performance/caching`: Universal caching & optimization diagnostic accessible via either `system` or `performance` module permissions |
+| `GET /pmpro/levels` | GET | Paid Memberships Pro levels list with duration configuration (`expiration_number`, `expiration_period`, `cycle_number`, `cycle_period`), pricing, active member counts, and duration anomaly detection (e.g. 11 months vs 12 months) |
+| `GET /pmpro/members` | GET | Paginated membership records from `wp_pmpro_memberships_users` with startdate, enddate, status, masked PII, and computed expiration indicators (`is_expired`, `days_left`) |
+| `GET /pmpro/member/{user_id}` | GET | Deep member diagnostic: active level, membership history timeline, associated PMPro orders (redacted transaction IDs and notes), and access anomaly flags |
+| `GET /masterstudy/courses` | GET | MasterStudy LMS courses list with pricing configuration, linked WooCommerce product ID (`stm_lms_product_id`), course duration/expiration rules, total students, lessons count, and allowed PMPro membership levels |
+| `GET /masterstudy/user/{user_id}/courses` | GET | Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription ID integrity, and root cause diagnosis for premature access expirations or pointer desync |
 
 ---
 
@@ -322,7 +329,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   1. `seo_content_audit` (360° SEO, Content Hierarchy & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
-  4. `order_checkout_troubleshoot` (Orders, Payment Gateways & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), and WooCommerce webhook delivery status (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`).
+  4. `order_checkout_troubleshoot` (Orders, Payment Gateways, PMPro & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), WooCommerce webhook delivery status, Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic & Conversion Analytics): Complete commercial & CRO intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, alongside traffic channels, UTM marketing campaigns, and device breakdowns (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).
   6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
   7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).
@@ -380,6 +387,29 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.24.0 (2026-09-08)
+- **Nouveaux Modules d'Inspection "Paid Memberships Pro" (PMPro) & "MasterStudy LMS" (`Pmpro_Controller`, `Masterstudy_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Diagnostic Complet Paid Memberships Pro (`/pmpro/*`)** :
+    - `GET /pmpro/levels` : Liste tous les niveaux d'adhésion PMPro avec configuration des durées (`expiration_number`, `expiration_period`, `cycle_number`, `cycle_period`), tarifs, nombre de membres actifs, et **détection automatique d'anomalies de durée** (ex: détection d'un niveau annuel configuré par erreur sur 11 mois au lieu de 12 mois).
+    - `GET /pmpro/members` : Liste paginée des adhésions depuis `wp_pmpro_memberships_users` avec dates de début/fin, statuts (`active`, `expired`, `cancelled`, `changed`), indicateurs d'expiration calculés (`is_expired`, `days_left`) et anonymisation PII stricte (emails, identifiants, noms caviardés).
+    - `GET /pmpro/member/{user_id}` : Audit approfondi d'un utilisateur combinant son niveau actif, l'historique chronologique de ses adhésions, les commandes PMPro associées (`wp_pmpro_membership_orders` avec tokens et notes caviardés) et détection des anomalies de statut (ex: statut `active` en BDD alors que la date `enddate` est expirée).
+  - **Diagnostic Complet MasterStudy LMS (`/masterstudy/*`)** :
+    - `GET /masterstudy/courses` : Inventaire des cours MasterStudy LMS (`stm-courses`) avec mode de tarification (`pricing_mode`), prix, ID produit WooCommerce lié (`stm_lms_product_id`), flag `not_membership`, règles de durée/expiration (`expiration_course`, `end_time`), total d'étudiants inscrits, nombre de leçons, et niveaux d'adhésion PMPro autorisés (résolus depuis `wp_pmpro_memberships_pages`).
+    - `GET /masterstudy/user/{user_id}/courses` : Audit complet des inscriptions d'un utilisateur dans `wp_stm_lms_user_courses` (progression, leçons, dates de début/fin, `subscription_id`), recoupement avec la table `wp_pmpro_memberships_users`, et **diagnostic de cause racine des expirations prématurées** :
+      - Expiration par dépassement de la durée propre du cours (`expiration_course` + `end_time`).
+      - Expiration par date de fin d'adhésion PMPro dépassée (`enddate < now`).
+      - Détection de désynchronisation de pointeur d'abonnement : alerte si `subscription_id` pointe sur une ancienne ligne PMPro changée/annulée alors que l'utilisateur dispose d'un autre abonnement actif en cours.
+  - **Sécurité, Résilience & Confidentialité RGPD** :
+    - 100% Lecture seule (`GET` uniquement). Zéro primitive d'écriture.
+    - Anonymisation PII complète des données personnelles utilisateurs (`m***e@example.com`, `M***e R***l`).
+    - Tolérance aux pannes : vérification défensive systématique de l'existence des tables (`SHOW TABLES LIKE ...`) et des classes LMS avant exécution pour un impact nul sur les sites sans PMPro ou MasterStudy.
+  - **Intégration Pilier 4 MECE (`order_checkout_troubleshoot`) & AI Skill Generator** :
+    - Intégration des endpoints PMPro et MasterStudy LMS comme Étape 7 et Étape 8 du playbook Pilier 4 pour dépanner les accès bloqués et expirations sans prolifération de micro-playbooks.
+    - Ajout de la Directive contractuelle n°8 dans le générateur de compétences `generate_skill_markdown()`.
+  - **Client CLI Local (`cli/sync.js`) & i18n 100%** :
+    - Nouvelles commandes CLI `pull:pmpro` et `pull:masterstudy` (également exécutées dans `pull:all`).
+    - Synchronisation i18n avec régénération du template `woo-get-data-for-ai.pot`, mise à jour du dictionnaire `cli/translations-fr.php`, et compilation native de `woo-get-data-for-ai-fr_FR.mo` (100% de couverture française, 488 chaînes).
 
 ### v1.23.0 (2026-09-08)
 - **Module d'Inspection Universelle du Cache & Réglages WP Rocket (`Performance_Controller`, `Permissions`, `Playbooks`, `Redaction`, `sync.js`)** :

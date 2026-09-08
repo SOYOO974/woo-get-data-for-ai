@@ -84,6 +84,16 @@ class Permissions {
                 'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, auditing autoloaded options bloat, and inspecting caching & WP Rocket settings.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary', '/performance/caching'],
             ],
+            'pmpro' => [
+                'label'       => esc_html__('Paid Memberships Pro (PMPro)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting Paid Memberships Pro levels, durations, recurring billing cycles, user membership records, status timeline, and associated PMPro orders.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/pmpro/levels', '/pmpro/members', '/pmpro/member/{user_id}'],
+            ],
+            'masterstudy' => [
+                'label'       => esc_html__('MasterStudy LMS', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course durations, user course enrollments, and PMPro subscription link synchronization.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/masterstudy/courses', '/masterstudy/user/{user_id}/courses'],
+            ],
         ];
     }
 
@@ -108,6 +118,8 @@ class Permissions {
             'woocommerce'  => 1,
             'content'      => 1,
             'performance'  => 1,
+            'pmpro'        => 1,
+            'masterstudy'  => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
@@ -641,6 +653,49 @@ class Permissions {
                         'path'        => '/performance/caching',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'pmpro',
+                'label'       => esc_html__('Paid Memberships Pro (PMPro)', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting Paid Memberships Pro levels, durations, recurring billing cycles, user membership records, status timeline, and associated PMPro orders.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['pmpro']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/pmpro/levels',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Lists all PMPro membership levels with duration rules (expiration_number/period, cycle_number/period), pricing, and active member counts with duration anomaly detection.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/pmpro/members',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (active|all, default: active)', 'level_id', 'search', 'user_id', 'per_page (default: 20, max: 100)', 'page'],
+                        'description' => esc_html__('Lists membership records from pmpro_memberships_users with startdate, enddate, status, masked PII, and computed expiration indicators.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/pmpro/member/{user_id}',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Deep member diagnostic: active level, membership history timeline, associated PMPro orders, and access anomaly flags (e.g. active status with past expiration date).', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'masterstudy',
+                'label'       => esc_html__('MasterStudy LMS', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course durations, user course enrollments, and PMPro subscription link synchronization.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['masterstudy']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/masterstudy/courses',
+                        'methods'     => ['GET'],
+                        'params'      => ['search', 'status (publish|draft|all, default: publish)', 'per_page (default: 20, max: 100)', 'page'],
+                        'description' => esc_html__('Lists MasterStudy LMS courses with pricing configuration, linked WooCommerce product ID, course duration/expiration rules, total students, lessons count, and allowed PMPro membership levels.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/masterstudy/user/{user_id}/courses',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription record, and root cause diagnosis for premature access expirations or pointer desync.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
