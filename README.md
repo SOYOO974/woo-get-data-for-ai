@@ -172,6 +172,8 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /performance/plugins-summary` | Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts (`?status=active\|all`). |
 | `GET /performance/caching` | Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in (`advanced-cache.php`), and in-depth WP Rocket settings (RUCSS vs CPCSS mode, CSS safelist, Delay JS exclusions & safe mode, lazyload, mobile caching) with strict security redaction. |
 | `GET /system/caching` | Alias to `/performance/caching`: Universal caching & optimization diagnostic accessible via either `system` or `performance` module permissions. |
+| `POST /performance/cache/purge?scope={all\|cdn\|page\|object}` | Multi-layer defensive cache purge: Rocket.net Edge CDN (Cloudflare Enterprise), WP Rocket (domain, minify, busting, RUCSS), Object Cache Pro / Redis, LiteSpeed, and Autoptimize (default: `all`). |
+| `POST /system/cache/purge?scope={all\|cdn\|page\|object}` | Continuity alias to `/performance/cache/purge`: Multi-layer defensive cache purge. |
 | `GET /pmpro/levels` | Paid Memberships Pro levels list with duration rules (`expiration_number`, `expiration_period`, `cycle_number`, `cycle_period`), pricing, active member counts, and duration anomaly detection. |
 | `GET /pmpro/members?status={active\|all}` | Paginated membership records from `wp_pmpro_memberships_users` with startdate, enddate, status, masked PII, and computed expiration indicators (`is_expired`, `days_left`). |
 | `GET /pmpro/member/{user_id}` | Deep member diagnostic: active level, membership history timeline, associated PMPro orders (redacted transaction IDs and notes), and access anomaly flags. |
@@ -231,13 +233,14 @@ node sync.js pull:performance  # Dumps multi-template URLs, homepage profile wit
 node sync.js pull:pmpro        # Dumps Paid Memberships Pro levels, duration rules, and active members to ./pmpro/
 node sync.js pull:masterstudy  # Dumps MasterStudy LMS courses, pricing, and duration rules to ./masterstudy/
 node sync.js pull:logs         # Downloads tail of debug.log, wc-logs, and custom logs
+node sync.js purge:cache       # Purges all cache layers (Edge CDN, Page Cache, Object Cache; supports --scope=all|cdn|page|object)
 ```
 
 ---
 
 ## 🔒 Security & Privacy
 
-- **Read-Only**: No endpoints allow `POST`, `PUT`, `DELETE`, or `PATCH`.
+- **Read-Only by Design**: All inspection endpoints strictly enforce `GET`. The only authorized operational `POST` endpoint is `/cache/purge`, which is strictly non-destructive (cannot modify database content or files) and exclusively invalidates volatile caches. No `PUT`, `DELETE`, or `PATCH` routes exist.
 - **Anti-Brute-Force & IP Lockout**: Automatically tracks failed authentication attempts. After 5 failed attempts (configurable), offending IPs are blocked for 30 minutes (configurable), returning HTTP 429. Includes 1-click unlock from admin.
 - **Secret Redaction**: Recursively scrubs Stripe keys (`sk_live_...`), passwords, salts, and webhook secrets before sending any JSON payload.
 - **PII Scrubbing**: Replaces client email addresses in logs with masked identifiers (`[REDACTED_EMAIL@...]`).

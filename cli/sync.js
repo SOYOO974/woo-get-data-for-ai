@@ -51,29 +51,38 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:logs');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:logs, purge:cache');
     process.exit(1);
 }
 
 // Base REST API URL
 const apiBase = `${siteUrl}/wp-json/agent-bridge/v1`;
 
-function makeRequest(endpoint) {
+function makeRequest(endpoint, method = 'GET', data = null) {
     return new Promise((resolve, reject) => {
         const fullUrl = `${apiBase}${endpoint}`;
         const urlObj = new URL(fullUrl);
         const client = urlObj.protocol === 'https:' ? https : http;
 
+        const payload = data ? JSON.stringify(data) : null;
+
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'User-Agent': 'WP-Agent-Bridge-CLI/1.0',
+            'Accept': 'application/json'
+        };
+
+        if (payload) {
+            headers['Content-Type'] = 'application/json';
+            headers['Content-Length'] = Buffer.byteLength(payload);
+        }
+
         const options = {
             hostname: urlObj.hostname,
             port: urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
             path: urlObj.pathname + urlObj.search,
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'User-Agent': 'WP-Agent-Bridge-CLI/1.0',
-                'Accept': 'application/json'
-            }
+            method: method,
+            headers: headers
         };
 
         const req = client.request(options, (res) => {
@@ -93,6 +102,9 @@ function makeRequest(endpoint) {
         });
 
         req.on('error', reject);
+        if (payload) {
+            req.write(payload);
+        }
         req.end();
     });
 }
@@ -1610,6 +1622,20 @@ async function pullMasterstudy() {
     }
 }
 
+// Purge Cache Layers
+async function purgeCache() {
+    const scope = getArg('scope', 'CACHE_SCOPE', 'all');
+    console.log(`🧹 Purging multi-layer cache (scope: ${scope})...`);
+    try {
+        const res = await makeRequest('/performance/cache/purge', 'POST', { scope });
+        console.log('✅ Cache purge response:');
+        console.log(JSON.stringify(res, null, 2));
+    } catch (err) {
+        console.error('❌ Cache purge failed:', err.message);
+        process.exit(1);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -1618,6 +1644,10 @@ async function run() {
     ensureDir(outputDir);
 
     switch (command) {
+        case 'purge:cache':
+        case 'cache:purge':
+            await purgeCache();
+            break;
         case 'pull:capabilities':
             await pullCapabilities();
             break;

@@ -6,7 +6,7 @@
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
 > **Commercial & LTD Roadmap**: [ROADMAP.md](ROADMAP.md) (Stratégie Agences & Lancement Black Friday)  
 > **Updates**: Integrated `plugin-update-checker` (PUC v5.6) configured for GitHub branch `main` and release assets.  
-> **Security Mandate**: 100% Read-Only (`GET` requests only). Zero hardcoded secrets, tokens, or credentials.  
+> **Security Mandate**: Read-Only inspection by default. Non-destructive operational cache invalidation endpoint (`POST /performance/cache/purge`). Zero database mutations or remote code execution. Zero hardcoded secrets, tokens, or credentials.  
 > **PUBLIC REPOSITORY PRIVACY WARNING**: This file is tracked in a public GitHub repository so the developer can access it across workstations. **It must NEVER contain sensitive, private, or confidential information** (no client domains, real store URLs, live API tokens, passwords, database dumps, or customer PII).
 
 ---
@@ -60,14 +60,14 @@ For the strategic and technical product roadmap targeting web agencies and the B
 - Text Domain: `woo-get-data-for-ai`
 - Domain Path: `/languages`
 - Translation-ready for **Loco Translate** and standard WordPress polyglot tools.
-- **100% French Translation Coverage**: Ships with complete master template (`languages/woo-get-data-for-ai.pot`), French PO translation (`languages/woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`languages/woo-get-data-for-ai-fr_FR.mo`) covering 439+ UI, playbook, and API strings.
+- **100% French Translation Coverage**: Ships with complete master template (`languages/woo-get-data-for-ai.pot`), French PO translation (`languages/woo-get-data-for-ai-fr_FR.po`), and binary compiled MO file (`languages/woo-get-data-for-ai-fr_FR.mo`) covering 581+ UI, playbook, and API strings.
 - **Automated CLI Sync Tool**: `php cli/sync-i18n.php` (or `npm run i18n` in `cli/`) scans all tokens across the plugin, regenerates `.pot`, merges French translations from `cli/translations-fr.php`, and compiles the `.mo` file natively without external binary dependencies. Mandatory before every release.
 - **Zero Raw Strings Mandate**: All PHP strings are wrapped in gettext (`esc_html__()`, `esc_html_e()`, etc.) and JS strings are localized via `wp_localize_script()` in `Admin_Settings::enqueue_assets()`.
 
-### C. Strict Read-Only Enforcement & Mandatory Write Alarm (CRITICAL FOR AI AGENTS & DEVELOPERS)
-- **100% of endpoints are `GET` only (`WP_REST_Server::READABLE`).**
-- No `POST`, `PUT`, `DELETE`, or `PATCH` routes.
-- The plugin contains zero execution, modification, or write primitives.
+### C. Strict Read-Only Enforcement & Controlled Action Endpoints
+- **100% of diagnostic endpoints are strictly `GET` only (`WP_REST_Server::READABLE`).**
+- **Zero Database Write/Mutation Primitives**: The plugin never creates, modifies, or deletes posts, terms, options, user accounts, orders, or files.
+- **Controlled Operational Action Endpoint (`POST /performance/cache/purge`)**: The only authorized `POST` endpoint is `/performance/cache/purge` (and alias `/system/cache/purge`), which exclusively flushes volatile caches (Cloudflare Enterprise CDN, WP Rocket, Object Cache Pro / Redis, LiteSpeed, Autoptimize). It cannot alter database content or persistent files.
 - All database queries are strictly `SELECT` with sanitized inputs.
 
 > [!CAUTION]
@@ -387,11 +387,34 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.16.0: `pull:woocommerce` enriches `summary.md` with order volume hygiene analysis (cancellation ratio & stale abandoned orders > 1y); `pull:scheduler` enriches `action-scheduler-summary.md` with active retention policy and bloat alerts.
 - Optimized for v1.25.0: `pull:content` dumps URL redirections (`redirections.json`), 404 hit logs (`404-logs.json`), and generates an executive report (`redirections.md`) with top 404 hits.
 - Optimized for v1.26.0: `pull:content` dumps global SEO plugin settings & optimization health audit (`seo-settings.json`) and enriches `seo-audit.md` with settings health score and actionable recommendations.
+- Optimized for v1.27.0: `purge:cache` triggers on-demand multi-layer cache purging (`POST /performance/cache/purge`) with `--scope=all|cdn|page|object`.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.27.0 (2026-09-09)
+- **Endpoint REST Sécurisé de Vidage de Cache Multi-Niveaux (`Performance_Controller`, `Security`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Nouveaux Endpoints d'Action Contrôlée `POST /performance/cache/purge` & Alias `POST /system/cache/purge`** :
+    - Endpoint opérationnel sécurisé déclenchable par les agents IA, les scripts CLI et les pipelines CI/CD (GitHub Actions) après déploiement de thème ou de snippets.
+    - Paramètre `scope` (`all`, `cdn`, `page`, `object` ; défaut : `all`).
+    - Exécution défensive ultra-légère multi-couches :
+      - *Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)* : Invalidation globale via `purge_cache()` (mu-plugin officiel Rocket.net).
+      - *Couche 2 : WP Rocket* : Purge du cache domaine (`rocket_clean_domain()`), minification (`rocket_clean_minify()`), busting (`rocket_clean_busting()`) et CSS utilisé RUCSS (`rocket_rucss_clear_used_css`).
+      - *Couche 3 : Object Cache Pro / Redis / Memcached* : Invalidation du cache objet persistant via `wp_cache_flush()` avec détection de `wp_using_ext_object_cache()` et `\RedisCachePro\Plugin`.
+      - *Couche 4 : Nettoyeurs complémentaires défensifs* : LiteSpeed Cache (`litespeed_purge_all`), Autoptimize (`autoptimizeCache::clearall()`), WP Super Cache (`wp_cache_clear_cache()`), W3 Total Cache (`w3tc_flush_all()`).
+  - **Contrat de Sécurité & Architecture Read-Only** :
+    - Maintien du statut 100% lecture seule sur tous les endpoints de diagnostic.
+    - Autorisation sélective du verbe `POST` dans `Security::verify_request()` exclusivement pour `/cache/purge`.
+    - Aucune écriture ni mutation de données en base de données ou de fichiers : invalidation exclusive de caches temporaires volatils.
+  - **Pilier 2 des Playbooks MECE & Skill IA** :
+    - Intégration de l'Étape 6 dans `agency_performance_audit` pour l'invalidation ciblée après diagnostics ou modifications.
+    - Nouveaux déclencheurs d'intention : `vider le cache`, `purger cache`, `clear cache`, `purge rocket net`, `purge wp rocket`, `purge object cache`, `flush cache`.
+    - Support dynamique du verbe HTTP dans `generate_skill_markdown()` et exemple cURL prêt à l'emploi.
+  - **Client CLI Local (`cli/sync.js`) & i18n 100%** :
+    - Commande `node sync.js purge:cache --scope=all` ajoutée.
+    - 581 chaînes traduites à 100% en français avec `.pot`, `.po` et binaire `.mo` synchronisés.
 
 ### v1.26.0 (2026-09-09)
 - **Audit d'Optimisation des Réglages des Plugins SEO & Bonnes Pratiques (`Content_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :

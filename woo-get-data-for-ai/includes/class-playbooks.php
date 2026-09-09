@@ -119,6 +119,16 @@ class Playbooks {
                     'delay js',
                     'rucss',
                     'cache configuration',
+                    'vider le cache',
+                    'purger cache',
+                    'purger le cache',
+                    'clear cache',
+                    'purge cache',
+                    'purge rocket net',
+                    'purge wp rocket',
+                    'purge object cache',
+                    'flush cache',
+                    'invalider cache',
                 ],
                 'workflow'        => [
                     [
@@ -160,6 +170,14 @@ class Playbooks {
                         'params'      => ['status' => 'active'],
                         'description' => esc_html__('Inventories database tables, disk storage size (data + index in KB), and row counts per active plugin to isolate bloated extensions.', 'woo-get-data-for-ai'),
                         'key_signals' => ['plugins[].name', 'plugins[].tables_count', 'plugins[].db_size_kb', 'plugins[].db_rows'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Multi-Layer Cache Invalidation & Purge', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/performance/cache/purge',
+                        'params'      => ['scope' => 'all'],
+                        'description' => esc_html__('Safely and selectively invalidates edge CDN (Rocket.net Cloudflare Enterprise), page cache & RUCSS (WP Rocket, LiteSpeed, Autoptimize), and persistent object cache (Object Cache Pro / Redis) across the stack.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['scope', 'cleared.rocket_net_cdn.status', 'cleared.wp_rocket.status', 'cleared.object_cache.status'],
                     ],
                 ],
             ],
@@ -725,7 +743,8 @@ class Playbooks {
 
             foreach ($module['endpoints'] as $ep) {
                 $params_note = !empty($ep['params']) ? ' (Params: `' . implode('`, `', $ep['params']) . '`)' : '';
-                $md .= "- `GET {$rest_base}" . $ep['path'] . "`" . $params_note . ": " . esc_html($ep['description']) . "\n";
+                $method_str  = !empty($ep['methods']) ? implode('/', $ep['methods']) : 'GET';
+                $md .= "- `{$method_str} {$rest_base}" . $ep['path'] . "`" . $params_note . ": " . esc_html($ep['description']) . "\n";
             }
             $md .= "\n";
         }
@@ -743,7 +762,9 @@ class Playbooks {
         $md .= "# Pillar 2: Frontend Performance & Core Web Vitals\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/caching'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
+        $md .= "# Purge all cache layers (Edge CDN, Page Cache, Object Cache)\n";
+        $md .= "curl -s -X POST -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/cache/purge'\n\n";
         $md .= "# Pillar 3: System Health, Database Bloat & Background Hygiene\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/database'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/summary'\n";

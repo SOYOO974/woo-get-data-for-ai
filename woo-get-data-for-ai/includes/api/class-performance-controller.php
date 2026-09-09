@@ -112,6 +112,42 @@ class Performance_Controller extends Rest_Controller {
                 return $this->check_caching_access($request);
             },
         ]);
+
+        // POST /performance/cache/purge (Multi-layer defensive cache purge: Rocket.net CDN, WP Rocket, Object Cache Pro / Redis)
+        register_rest_route(self::NAMESPACE, '/performance/cache/purge', [
+            'methods'             => \WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'purge_caches'],
+            'permission_callback' => function ($request) {
+                return $this->check_caching_access($request);
+            },
+            'args'                => [
+                'scope' => [
+                    'type'              => 'string',
+                    'default'           => 'all',
+                    'enum'              => ['all', 'cdn', 'page', 'object'],
+                    'sanitize_callback' => 'sanitize_key',
+                    'description'       => 'Cache layer scope to invalidate (all, cdn, page, object).',
+                ],
+            ],
+        ]);
+
+        // POST /system/cache/purge (Alias to /performance/cache/purge for system continuity)
+        register_rest_route(self::NAMESPACE, '/system/cache/purge', [
+            'methods'             => \WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'purge_caches'],
+            'permission_callback' => function ($request) {
+                return $this->check_caching_access($request);
+            },
+            'args'                => [
+                'scope' => [
+                    'type'              => 'string',
+                    'default'           => 'all',
+                    'enum'              => ['all', 'cdn', 'page', 'object'],
+                    'sanitize_callback' => 'sanitize_key',
+                    'description'       => 'Cache layer scope to invalidate (all, cdn, page, object).',
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -1382,6 +1418,109 @@ class Performance_Controller extends Rest_Controller {
             'detected_caching_plugins' => $detected_plugins,
             'recommendations'          => $recommendations,
         ]);
+    }
+
+    /**
+     * POST /performance/cache/purge & POST /system/cache/purge
+     * Multi-layer defensive cache purge: Rocket.net Edge CDN, WP Rocket (domain, minify, busting, RUCSS), Object Cache Pro / Redis, LiteSpeed, Autoptimize, WP Super Cache, W3 Total Cache.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function purge_caches(\WP_REST_Request $request) {
+        $scope = (string) $request->get_param('scope');
+        if (empty($scope) || !in_array($scope, ['all', 'cdn', 'page', 'object'], true)) {
+            $scope = 'all';
+        }
+
+        $status = [];
+
+        // Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)
+        if ('all' === $scope || 'cdn' === $scope) {
+            if (function_exists('purge_cache')) {
+                purge_cache();
+                $status['rocket_net_cdn'] = [
+                    'status' => 'cleared',
+                    'engine' => 'Rocket.net Cloudflare Enterprise CDN',
+                ];
+            } else {
+                $status['rocket_net_cdn'] = [
+                    'status' => 'not_detected',
+                ];
+            }
+        }
+
+        // Couche 2 : WP Rocket (Page Cache, Minification & RUCSS)
+        if ('all' === $scope || 'page' === $scope) {
+            if (function_exists('rocket_clean_domain')) {
+                rocket_clean_domain();
+                if (function_exists('rocket_clean_minify')) {
+                    rocket_clean_minify();
+                }
+                if (function_exists('rocket_clean_busting')) {
+                    rocket_clean_busting();
+                }
+                // Purge Used CSS if RUCSS is active
+                do_action('rocket_rucss_clear_used_css');
+
+                $status['wp_rocket'] = [
+                    'status'  => 'cleared',
+                    'version' => defined('WP_ROCKET_VERSION') ? WP_ROCKET_VERSION : null,
+                ];
+            } else {
+                $status['wp_rocket'] = [
+                    'status' => 'not_detected',
+                ];
+            }
+
+            // Couche 4 : Nettoyeurs complémentaires de page cache défensifs (si présents)
+            if (defined('LSCWP_V')) {
+                do_action('litespeed_purge_all');
+                $status['litespeed'] = ['status' => 'cleared'];
+            }
+
+            if (class_exists('autoptimizeCache') && method_exists('autoptimizeCache', 'clearall')) {
+                \autoptimizeCache::clearall();
+                $status['autoptimize'] = ['status' => 'cleared'];
+            }
+
+            if (function_exists('wp_cache_clear_cache')) {
+                wp_cache_clear_cache();
+                $status['wp_super_cache'] = ['status' => 'cleared'];
+            }
+
+            if (function_exists('w3tc_flush_all')) {
+                w3tc_flush_all();
+                $status['w3_total_cache'] = ['status' => 'cleared'];
+            }
+        }
+
+        // Couche 3 : Object Cache Pro / Redis / Memcached
+        if ('all' === $scope || 'object' === $scope) {
+            $has_ext_cache = function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache();
+            $is_ocp        = class_exists('\RedisCachePro\Plugin') || defined('OBJECT_CACHE_PRO_VERSION');
+
+            if ($has_ext_cache || $is_ocp) {
+                wp_cache_flush();
+                $engine_name = $is_ocp ? 'Object Cache Pro (Redis)' : 'WordPress External Object Cache';
+                $status['object_cache'] = [
+                    'status' => 'cleared',
+                    'engine' => $engine_name,
+                ];
+            } else {
+                $status['object_cache'] = [
+                    'status' => 'not_detected',
+                ];
+            }
+        }
+
+        return $this->response([
+            'success'   => true,
+            'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+            'scope'     => $scope,
+            'cleared'   => $status,
+            'message'   => esc_html__('Cache layers purged successfully according to requested scope.', 'woo-get-data-for-ai'),
+        ], 200);
     }
 }
 

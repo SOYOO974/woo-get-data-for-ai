@@ -17,7 +17,7 @@ class Permissions {
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, security hardening, and caching configuration.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security', '/system/caching'],
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security', '/system/caching', '/system/cache/purge'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -82,7 +82,7 @@ class Permissions {
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows profiling URL response times, attributing SQL queries and duration per plugin, detecting duplicate/slow queries, measuring frontend assets (JS/CSS) footprint per plugin, discovering 5 key template URLs, 100% native server-side Core Web Vitals checks, auditing autoloaded options bloat, and inspecting caching & WP Rocket settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary', '/performance/caching'],
+                'endpoints'   => ['/performance/templates-urls', '/performance/profile', '/performance/autoload', '/performance/plugins-summary', '/performance/caching', '/performance/cache/purge'],
             ],
             'pmpro' => [
                 'label'       => esc_html__('Paid Memberships Pro (PMPro)', 'woo-get-data-for-ai'),
@@ -212,6 +212,12 @@ class Permissions {
                         'path'        => '/system/caching',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/cache/purge',
+                        'methods'     => ['POST'],
+                        'params'      => ['scope (all|cdn|page|object, default: all)'],
+                        'description' => esc_html__('Alias for /performance/cache/purge: Multi-layer cache invalidation supporting Rocket.net CDN, WP Rocket, Object Cache Pro / Redis, LiteSpeed, and Autoptimize.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -670,6 +676,12 @@ class Permissions {
                         'path'        => '/performance/caching',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/performance/cache/purge',
+                        'methods'     => ['POST'],
+                        'params'      => ['scope (all|cdn|page|object, default: all)'],
+                        'description' => esc_html__('Multi-layer cache invalidation supporting Rocket.net CDN (Cloudflare Enterprise Edge), WP Rocket (domain, minify, busting, RUCSS), Object Cache Pro / Redis, LiteSpeed, and Autoptimize.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

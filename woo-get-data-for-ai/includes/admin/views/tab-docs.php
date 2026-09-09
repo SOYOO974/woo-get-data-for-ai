@@ -165,7 +165,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
             <tbody>
                 <tr>
                     <td><strong><?php esc_html_e('System & Limits', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/ping</code>, <code>/capabilities</code> (<code>?format=skill</code>), <code>/system</code>, <code>/system/database</code>, <code>/system/mail</code>, <code>/system/security</code></td>
+                    <td><code>/ping</code>, <code>/capabilities</code> (<code>?format=skill</code>), <code>/system</code>, <code>/system/database</code>, <code>/system/mail</code>, <code>/system/security</code>, <code>/system/caching</code>, <code>/system/cache/purge</code></td>
                     <td><?php esc_html_e('Dynamic capabilities discovery catalog, ready-to-use SKILL.md generator (?format=skill), WordPress, PHP, MySQL versions, memory limits, active plugins with update status, database health with autoload footprint analysis, transactional SMTP mail diagnostic, security hardening audit, HPOS state, and Action Scheduler queues.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
@@ -225,7 +225,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Site Performance & Profiling', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/performance/templates-urls</code>, <code>/performance/profile</code>, <code>/performance/autoload</code>, <code>/performance/plugins-summary</code></td>
+                    <td><code>/performance/templates-urls</code>, <code>/performance/profile</code>, <code>/performance/autoload</code>, <code>/performance/plugins-summary</code>, <code>/performance/caching</code>, <code>/performance/cache/purge</code></td>
                     <td><?php esc_html_e('Auto-discovery of 5 template archetypes (home, shop, category, product, cart), on-demand URL profiler (SQL queries and execution time attributed per plugin, memory, TTFB, duplicate/slow queries), 100% native Core Web Vitals & frontend signals (DOM size & Elementor %, CLS missing image dimensions, legacy formats, Google Fonts swap, WP core bloat scripts, cart fragments), autoload bloat, and plugins database footprint.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
             </tbody>

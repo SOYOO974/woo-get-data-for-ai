@@ -283,8 +283,12 @@ class Security {
     public static function verify_request(\WP_REST_Request $request) {
         $client_ip = self::get_client_ip();
 
-        // 1. Enforce 100% Read-Only: Only GET allowed
-        if ($request->get_method() !== 'GET') {
+        // 1. Enforce Read-Only architecture with exception for authorized action endpoints (e.g. cache purge)
+        $method = $request->get_method();
+        $route  = (string) $request->get_route();
+        $is_allowed_action = ('POST' === $method && strpos($route, '/cache/purge') !== false);
+
+        if ($method !== 'GET' && !$is_allowed_action) {
             return new \WP_Error(
                 'rest_forbidden_method',
                 esc_html__('Only GET (Read-Only) requests are permitted by WP Agent Bridge.', 'woo-get-data-for-ai'),
