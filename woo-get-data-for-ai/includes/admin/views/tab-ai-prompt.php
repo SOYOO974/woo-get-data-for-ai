@@ -38,7 +38,7 @@ $mega_prompt .= "   `curl -s -H 'Authorization: Bearer {$active_token}' '{$rest_
 $mega_prompt .= "   (If using Cursor or Claude Desktop, you can query `GET {$rest_base_url}/capabilities` to receive the JSON catalog of active modules and playbooks).\n";
 $mega_prompt .= "2. **Follow the 7 Strategic MECE Master Playbooks for Audits**:\n";
 $mega_prompt .= "   The live `/capabilities` feed organizes all diagnostics into 7 battle-tested MECE master pillars:\n";
-$mega_prompt .= "   - **Pillar 1: SEO, Content & Visibility** -> Playbook `seo_content_audit` (queries `/content/seo-audit`, `/content/pages`, `/content/page/{id}`).\n";
+$mega_prompt .= "   - **Pillar 1: SEO, Content, Redirections & Visibility** -> Playbook `seo_content_audit` (queries `/content/seo-audit`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).\n";
 $mega_prompt .= "   - **Pillar 2: Performance & Core Web Vitals** -> Playbook `agency_performance_audit` (queries `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).\n";
 $mega_prompt .= "   - **Pillar 3: System Health & Database Bloat Hygiene** -> Playbook `database_system_hygiene` (queries `/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).\n";
 $mega_prompt .= "   - **Pillar 4: Orders, Checkout & Gateway Troubleshooting** -> Playbook `order_checkout_troubleshoot` (queries `/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`).\n";
@@ -47,7 +47,6 @@ $mega_prompt .= "   - **Pillar 6: Shipping Logistics & Flexible Shipping** -> Pl
 $mega_prompt .= "   - **Pillar 7: Code Architecture & Integrations Map** -> Playbook `code_theme_integrations` (queries `/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).\n";
 $mega_prompt .= "3. **Plugin Updates & Zero-Prompt-Stagnation**:\n";
 $mega_prompt .= "   The plugin auto-updates via GitHub releases. You do NOT need human prompts to learn new features: periodically re-run `GET {$rest_base_url}/capabilities?format=skill` to discover newly released inspection endpoints and playbooks automatically.\n\n";
-
 $mega_prompt .= "### Phase 2: Systematic \"Live Freshness Check\" Before Modifying Code\n";
 $mega_prompt .= "Before designing code, debugging an issue, or refactoring a feature:\n";
 $mega_prompt .= "- **DO NOT rely solely on local files** that might be outdated.\n";
@@ -64,7 +63,7 @@ $mega_prompt .= "  * Auditing transactional email deliverability or SMTP provide
 $mega_prompt .= "  * Analyzing visits, marketing ROI, or conversion rates? -> Check `/analytics/overview` or `/analytics/campaigns`.\n";
 $mega_prompt .= "  * Inspecting custom fields, product specs, or ACF data? -> Check `/meta/fields?post_type=product` (or `/meta/acf` for full field groups and rules, or `/meta/post/{id}` for values on a specific post).\n";
 $mega_prompt .= "  * Inspecting WordPress pages, hierarchy, or Gutenberg content? -> Check `/content/pages?status=publish` or `/content/page/{id}`.\n";
-$mega_prompt .= "  * Auditing SEO (meta tags, noindex, OpenGraph across Yoast/RankMath/SEOPress)? -> Check `/content/seo-audit` or `/content/page/{id}`.\n";
+$mega_prompt .= "  * Auditing SEO (Rank Math, Yoast, The SEO Framework, SEOPress), redirect rules, or 404 logs? -> Check `/content/seo-audit`, `/content/redirections`, or `/content/redirections/404`.\n";
 $mega_prompt .= "  * Investigating WooCommerce products, stock, or variations? -> Check `/woocommerce/products?status=publish` or `/woocommerce/product/{id}`.\n";
 $mega_prompt .= "  * Investigating orders, payment errors, coupons, cancellation ratios, or checkout hooks? -> Check `/woocommerce/orders?status=failed,processing` (supports `?coupon=<code>`), `/woocommerce/order/{id}`, `/woocommerce/coupons` or `/woocommerce/coupon/{id}` (real-time availability, held sessions, associated orders) and `/woocommerce/summary`.\n";
 $mega_prompt .= "  * Auditing store configuration, tax rules, or payment gateways? -> Check `/woocommerce/settings`.\n";

@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-08  
+> **Last Updated**: 2026-09-09  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -198,7 +198,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
 - `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
-- `[x] Pages, Content & SEO` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`)
+- `[x] Pages, Content, SEO & Redirections` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`, `/content/redirections`, `/content/redirections/404`)
 - `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`)
 - `[x] Paid Memberships Pro (PMPro)` (`/pmpro/levels`, `/pmpro/members`, `/pmpro/member/{user_id}`)
 - `[x] MasterStudy LMS` (`/masterstudy/courses`, `/masterstudy/user/{user_id}/courses`)
@@ -304,7 +304,9 @@ Enables/disables modules on a per-site basis:
 | `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
 | `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
 | `GET /content/post/{id}` | GET | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object |
-| `GET /content/seo-audit` | GET | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`, `?limit=100`, `?limit_products=50`) |
+| `GET /content/seo-audit` | GET | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, category descriptions, and redirection status summary (Rank Math, Yoast SEO, The SEO Framework, SEOPress, AIOSEO) (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`, `?limit=100`, `?limit_products=50`) |
+| `GET /content/redirections` | GET | List and filter configured URL redirection rules (301/302/307/410) across supported plugins (Redirection by John Godley, Rank Math Redirections, 301 Redirects): source URL, target URL, status code, hit count, last access date, regex flag, and provider details (`?provider=`, `?status_code=`, `?search=`, `?per_page=50`, `?page=1`) |
+| `GET /content/redirections/404` | GET | Inspect recent 404 error logs recorded by Redirection plugin: requested URL, hit count, last detected timestamp, referrer, and GDPR/PII-masked IP (`?per_page=50`, `?page=1`, `?search=`) |
 | `GET /performance/templates-urls` | GET | Auto-discovers and resolves representative URLs for 5 key e-commerce page archetypes: Homepage (`/`), Shop (`/shop/`), Product Category, Single Product, and Cart/Checkout |
 | `GET /performance/profile` | GET | Targeted on-demand URL profiler: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), measures TTFB, memory, enqueued JS/CSS assets, and 100% native Core Web Vitals signals (DOM size/depth, Elementor nodes %, CLS images missing dimensions, legacy PNG/JPEG images, external Google Fonts display=swap check, WP core bloat scripts, wc-cart-fragments, server compression) (`?path=/`, `?include_assets=true`, `?include_queries=true`, `?slow_query_threshold_ms=50`) |
 | `GET /performance/autoload` | GET | Deep `wp_options` autoload bloat analysis: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix (`?limit=25`) |
@@ -326,7 +328,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
 - **Built-in Procedural Playbooks (7 MECE Strategic Master Pillars)**:
   To eliminate LLM attention dilution and trigger collisions while providing comprehensive agency-grade diagnostics, the playbooks are strictly organized into 7 MECE (Mutually Exclusive, Collectively Exhaustive) master pillars:
-  1. `seo_content_audit` (360° SEO, Content Hierarchy & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, and Gutenberg content hierarchy (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`).
+  1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, and 301/302/410 URL redirection rules / 404 error logs monitoring (`/content/seo-audit`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
   4. `order_checkout_troubleshoot` (Orders, Payment Gateways, PMPro & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), WooCommerce webhook delivery status, Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
@@ -382,13 +384,29 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.14.0: `pull:woocommerce` extracts Table Rate rules on flat_rate and order shipping lines meta_data.
 - Optimized for v1.15.0: `pull:performance` dumps multi-template URLs (`templates-urls.json`), homepage profile with 100% native Web Vitals (`profile-home.json`), autoload bloat (`autoload.json`), and active plugins DB footprint (`plugins-summary.json`) into `./synced-site-data/performance/` with zero external API dependencies.
 - Optimized for v1.16.0: `pull:woocommerce` enriches `summary.md` with order volume hygiene analysis (cancellation ratio & stale abandoned orders > 1y); `pull:scheduler` enriches `action-scheduler-summary.md` with active retention policy and bloat alerts.
+- Optimized for v1.25.0: `pull:content` dumps URL redirections (`redirections.json`), 404 hit logs (`404-logs.json`), and generates an executive report (`redirections.md`) with top 404 hits.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
 
-### v1.24.0 (2026-09-08)
+### v1.25.0 (2026-09-09)
+- **Moteur SEO Unifié Multi-Plugins (Rank Math, Yoast SEO, The SEO Framework) & Inspection Complète des Redirections (`Content_Controller`, `Rest_Controller`, `Performance_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
+  - **Support SEO Unifié Approfondi** :
+    - **Rank Math SEO (Gratuit & Pro)** : Détection proactive, lecture des métadonnées `rank_math_*` (title, description, canonical, robots noindex/nofollow/advanced, focus keyword, OpenGraph/Twitter cards, redirection, score SEO).
+    - **Yoast SEO (Gratuit & Premium)** : Détection native (`WPSEO_VERSION`, `WPSEO_PREMIUM_FILE`, WooCommerce SEO `WPSEO_WOO_VERSION`), lecture des métadonnées `_yoast_wpseo_*` (title, metadesc, canonical, meta-robots-noindex/nofollow/adv, opengraph/twitter, primary category, focus keyword, scores SEO/readability).
+    - **The SEO Framework (TSF / Autodescription)** : Détection native (`THE_SEO_FRAMEWORK_VERSION`), lecture des métadonnées postmeta `_genesis_title`, `_genesis_description`, `_genesis_canonical_uri`, `_genesis_noindex`, `_genesis_nofollow`, `_genesis_noarchive`, `_open_graph_title`, `_open_graph_description`, `_social_image_url`, `_twitter_title`, `_twitter_description`, `_tsf_twitter_card_type`, `redirect`, et term meta `autodescription-term-settings`.
+    - **Résolution des Modèles Dynamiques** : Support bidirectionnel des balises de template de Yoast (`%%title%%`, `%%sitename%%`, `%%sep%%`, etc.) et de Rank Math (`%title%`, `%sitename%`, `%sep%`, etc.).
+  - **Nouveaux Endpoints d'Inspection des Redirections & Logs 404** :
+    - `GET /content/redirections` : Liste, filtre (`status_code`, `search`, `provider`) et pagine les règles de redirection configurées (301, 302, 307, 410) à travers **Redirection** (John Godley, table `wp_redirection_items`), **Rank Math Redirections** (table `wp_rank_math_redirections`), et **301 Redirects** (option `eps_redirects`).
+    - `GET /content/redirections/404` : Inspection des logs d'erreurs 404 récents enregistrés par l'extension Redirection (table `wp_redirection_404`) avec comptage des hits par URL, référent et **anonymisation stricte RGPD/PII de l'IP cliente**.
+  - **Intégration Pilier 1 MECE (`seo_content_audit`) & Matrice de Permissions** :
+    - Mise à jour du module `'content'` (rebaptisé *Pages, Contenus, SEO & Redirections*).
+    - Enrichissement du playbook Pilier 1 avec déclencheurs d'intention (migrations SEO, dépannage 404, audit de redirections), signaux d'indexation préventifs et Étape 4 dédiée aux redirections.
+  - **Intégration Client CLI (`cli/sync.js`) & i18n 100%** :
+    - Commande `pull:content` enrichie avec téléchargement automatique de `redirections.json`, `404-logs.json` et génération du rapport `redirections.md`.
+    - Synchronisation i18n avec 100% de couverture française (497/497 chaînes traduites).
 - **Nouveaux Modules d'Inspection "Paid Memberships Pro" (PMPro) & "MasterStudy LMS" (`Pmpro_Controller`, `Masterstudy_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :
   - **Diagnostic Complet Paid Memberships Pro (`/pmpro/*`)** :
     - `GET /pmpro/levels` : Liste tous les niveaux d'adhésion PMPro avec configuration des durées (`expiration_number`, `expiration_period`, `cycle_number`, `cycle_period`), tarifs, nombre de membres actifs, et **détection automatique d'anomalies de durée** (ex: détection d'un niveau annuel configuré par erreur sur 11 mois au lieu de 12 mois).

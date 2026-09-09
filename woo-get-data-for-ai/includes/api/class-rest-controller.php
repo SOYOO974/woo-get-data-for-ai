@@ -117,8 +117,11 @@ abstract class Rest_Controller {
         'cookie_notice_'  => ['slug' => 'cookie-notice', 'name' => 'Cookie Notice'],
         'polylang_'       => ['slug' => 'polylang', 'name' => 'Polylang'],
         'icl_'            => ['slug' => 'sitepress-multilingual-cms', 'name' => 'WPML'],
-        'acf_'            => ['slug' => 'advanced-custom-fields', 'name' => 'ACF'],
-        'fs_'             => ['slug' => 'flexible-shipping', 'name' => 'Flexible Shipping'],
+        'acf_'             => ['slug' => 'advanced-custom-fields', 'name' => 'ACF'],
+        'fs_'              => ['slug' => 'flexible-shipping', 'name' => 'Flexible Shipping'],
+        'autodescription_' => ['slug' => 'autodescription', 'name' => 'The SEO Framework'],
+        'autodescription-' => ['slug' => 'autodescription', 'name' => 'The SEO Framework'],
+        'redirection_'     => ['slug' => 'redirection', 'name' => 'Redirection'],
     ];
 
     /**

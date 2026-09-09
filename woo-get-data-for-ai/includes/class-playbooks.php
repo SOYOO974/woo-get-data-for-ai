@@ -27,7 +27,7 @@ class Playbooks {
             [
                 'id'              => 'seo_content_audit',
                 'title'           => esc_html__('360° SEO, Content Hierarchy & Visibility Audit', 'woo-get-data-for-ai'),
-                'description'     => esc_html__('Comprehensive audit protocol to identify indexation blockers, critical noindex on products/pages, missing meta descriptions, title anomalies, and Gutenberg content structure.', 'woo-get-data-for-ai'),
+                'description'     => esc_html__('Comprehensive audit protocol to identify indexation blockers, critical noindex on products/pages, missing meta descriptions, title anomalies, Gutenberg content structure, and 301 URL redirections / 404 monitoring.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['content'],
                 'optional_modules'=> ['system'],
                 'intent_triggers' => [
@@ -40,6 +40,12 @@ class Playbooks {
                     'audit contenu',
                     'noindex check',
                     'seo ranking',
+                    'migrer seo',
+                    'migration seo',
+                    'exporter redirections',
+                    'migration yoast rankmath',
+                    'audit 301',
+                    'erreurs 404 seo',
                 ],
                 'workflow'        => [
                     [
@@ -47,8 +53,8 @@ class Playbooks {
                         'action'      => esc_html__('Site-wide SEO Audit Report', 'woo-get-data-for-ai'),
                         'endpoint'    => '/content/seo-audit',
                         'params'      => ['limit' => 100, 'include_posts' => 'false'],
-                        'description' => esc_html__('Detects active SEO plugin (Yoast, Rank Math, SEOPress, AIOSEO), global visibility flag, critical noindex warnings, and pages with missing SEO titles or meta descriptions.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['critical_warnings', 'missing_descriptions', 'title_length_issues', 'og_image_coverage'],
+                        'description' => esc_html__('Detects active SEO provider (Rank Math, Yoast SEO, The SEO Framework, SEOPress, AIOSEO), sitemap status & canonical URL, global post-type noindex defaults, critical indexation blockers, and content audit.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['critical_warnings', 'post_types_defaults', 'sitemap', 'missing_descriptions', 'title_length_issues', 'og_image_coverage'],
                     ],
                     [
                         'step'        => 2,
@@ -64,7 +70,15 @@ class Playbooks {
                         'endpoint'    => '/content/page/{id}',
                         'params'      => ['id' => '<flagged_page_id>'],
                         'description' => esc_html__('Examines raw vs rendered content, Gutenberg block list, shortcodes, and unified normalized SEO metadata for flagged pages.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['content.blocks_count', 'content.shortcodes', 'seo.meta_title', 'seo.meta_description', 'seo.is_noindex'],
+                        'key_signals' => ['content.blocks_count', 'content.shortcodes', 'seo.title', 'seo.description', 'seo.robots.noindex', 'seo.scores.seo_score'],
+                    ],
+                    [
+                        'step'        => 4,
+                        'action'      => esc_html__('301 URL Redirections & 404 Diagnostics', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/content/redirections',
+                        'params'      => ['per_page' => 50, 'status' => 'all'],
+                        'description' => esc_html__('Inspects configured 301/302/307/410 redirects across Redirection plugin, Rank Math, or 301 Redirects, monitors hit counts, and prepares migration exports.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['provider', 'total_redirects', 'redirects[].source_url', 'redirects[].target_url', 'redirects[].status_code', 'redirects[].hits'],
                     ],
                 ],
             ],

@@ -730,6 +730,12 @@ class Performance_Controller extends Rest_Controller {
         if (strpos($option_name, 'flw_') === 0) {
             return 'flowmattic';
         }
+        if (strpos($option_name, 'autodescription') === 0) {
+            return 'the-seo-framework';
+        }
+        if (strpos($option_name, 'redirection') === 0) {
+            return 'redirection';
+        }
 
         // Fallback: extract prefix before first underscore
         $parts = explode('_', $option_name);

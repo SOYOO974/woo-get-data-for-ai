@@ -75,9 +75,9 @@ class Permissions {
                 'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
             ],
             'content' => [
-                'label'       => esc_html__('Pages, Content & SEO', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO).', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit'],
+                'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, unified SEO metadata (Rank Math, Yoast, The SEO Framework), and URL redirections with 404 monitoring logs.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit', '/content/redirections', '/content/redirections/404'],
             ],
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),

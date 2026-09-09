@@ -157,6 +157,62 @@ class Content_Controller extends Rest_Controller {
                 ],
             ],
         ]);
+
+        // GET /content/redirections (List URL redirects from Redirection plugin, Rank Math, or 301 Redirects)
+        register_rest_route(self::NAMESPACE, '/content/redirections', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_redirections'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'content');
+            },
+            'args'                => [
+                'status'   => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_key',
+                ],
+                'search'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'code'     => [
+                    'default'           => null,
+                    'sanitize_callback' => function ($param) {
+                        return null !== $param && '' !== $param ? absint($param) : null;
+                    },
+                ],
+                'group'    => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'per_page' => [
+                    'default'           => 50,
+                    'sanitize_callback' => 'absint',
+                ],
+                'page'     => [
+                    'default'           => 1,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
+        ]);
+
+        // GET /content/redirections/404 (Recent 404 monitoring logs from Redirection plugin)
+        register_rest_route(self::NAMESPACE, '/content/redirections/404', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_404_logs'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'content');
+            },
+            'args'                => [
+                'limit'  => [
+                    'default'           => 50,
+                    'sanitize_callback' => 'absint',
+                ],
+                'search' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -629,7 +685,7 @@ class Content_Controller extends Rest_Controller {
                     $term_url   = !is_wp_error($term_link) ? $term_link : '';
                     $item_count = (int) $term->count;
 
-                    // Inspect term meta for noindex
+                    // Inspect term meta for noindex across SEO providers
                     $term_noindex = false;
                     if ($seo_plugin['provider'] === 'rank_math') {
                         $robots = get_term_meta($term->term_id, 'rank_math_robots', true);
@@ -638,6 +694,15 @@ class Content_Controller extends Rest_Controller {
                         $wpseo_meta = get_option('wpseo_taxonomy_meta');
                         if (isset($wpseo_meta[$term->taxonomy][$term->term_id]['wpseo_noindex'])) {
                             $term_noindex = ($wpseo_meta[$term->taxonomy][$term->term_id]['wpseo_noindex'] === 'noindex');
+                        }
+                        if (!$term_noindex) {
+                            $term_meta_noindex = get_term_meta($term->term_id, 'wpseo_noindex', true);
+                            $term_noindex = ($term_meta_noindex === 'noindex');
+                        }
+                    } elseif ($seo_plugin['provider'] === 'the_seo_framework') {
+                        $tsf_term = get_term_meta($term->term_id, 'autodescription-term-settings', true);
+                        if (is_array($tsf_term) && !empty($tsf_term['noindex'])) {
+                            $term_noindex = true;
                         }
                     }
 
@@ -679,13 +744,39 @@ class Content_Controller extends Rest_Controller {
         $desc_coverage = $total_audited > 0 ? round((($total_audited - count($missing_meta_desc)) / $total_audited) * 100, 1) : 100;
         $og_coverage   = $total_audited > 0 ? round((($total_audited - count($missing_og_images)) / $total_audited) * 100, 1) : 100;
 
+        // Post types global defaults & critical alert
+        $page_noindex_default    = $this->is_post_type_globally_noindexed('page', $seo_plugin['provider']);
+        $post_noindex_default    = $this->is_post_type_globally_noindexed('post', $seo_plugin['provider']);
+        $product_noindex_default = class_exists('WooCommerce') ? $this->is_post_type_globally_noindexed('product', $seo_plugin['provider']) : false;
+
+        $visibility_alerts = [];
+        if (!$is_public) {
+            $visibility_alerts[] = esc_html__('WARNING: The entire site has search engine visibility disabled (discourage search engines from indexing this site is checked)!', 'woo-get-data-for-ai');
+        }
+        if ($product_noindex_default) {
+            $visibility_alerts[] = esc_html__('CRITICAL ALERT: All WooCommerce products are set to noindex by default in global SEO settings!', 'woo-get-data-for-ai');
+        }
+        if ($page_noindex_default) {
+            $visibility_alerts[] = esc_html__('WARNING: All WordPress pages are set to noindex by default in global SEO settings!', 'woo-get-data-for-ai');
+        }
+
+        // Redirections summary
+        $redirections_summary = $this->get_redirections_summary();
+
         return $this->response([
             'generated_at'            => current_time('mysql'),
             'seo_provider'            => $seo_plugin,
             'site_visibility'         => [
-                'is_public'       => $is_public,
-                'blog_public_raw' => (int) get_option('blog_public'),
-                'alert'           => !$is_public ? 'WARNING: The entire site has search engine visibility disabled (discourage search engines from indexing this site is checked)!' : null,
+                'is_public'             => $is_public,
+                'blog_public_raw'       => (int) get_option('blog_public'),
+                'alerts'                => $visibility_alerts,
+                'alert'                 => !empty($visibility_alerts) ? implode(' | ', $visibility_alerts) : null,
+                'sitemap'               => $this->detect_sitemap_info($seo_plugin),
+                'post_types_defaults'   => [
+                    'page'    => ['noindex' => $page_noindex_default],
+                    'post'    => ['noindex' => $post_noindex_default],
+                    'product' => ['noindex' => class_exists('WooCommerce') ? $product_noindex_default : null],
+                ],
             ],
             'summary'                 => [
                 'total_audited'               => $total_audited,
@@ -696,6 +787,7 @@ class Content_Controller extends Rest_Controller {
                 'weak_titles_count'           => count($weak_or_missing_titles),
                 'noindex_count'               => count($noindex_items),
                 'thin_content_count'          => count($thin_content_items),
+                'redirections_count'          => isset($redirections_summary['total_redirects']) ? $redirections_summary['total_redirects'] : 0,
             ],
             'issues'                  => [
                 'noindex_pages'          => $noindex_items,
@@ -705,6 +797,7 @@ class Content_Controller extends Rest_Controller {
                 'thin_content'           => $thin_content_items,
             ],
             'categories_audit'        => $categories_audit,
+            'redirections'            => $redirections_summary,
         ]);
     }
 
@@ -733,12 +826,17 @@ class Content_Controller extends Rest_Controller {
     /**
      * Detects the active SEO plugin on the WordPress installation.
      */
+    /**
+     * Detects the active SEO plugin on the WordPress installation.
+     */
     public function detect_seo_plugin() {
         if (defined('WPSEO_VERSION') || class_exists('WPSEO_Options')) {
             return [
-                'provider' => 'yoast',
-                'label'    => 'Yoast SEO',
-                'version'  => defined('WPSEO_VERSION') ? WPSEO_VERSION : null,
+                'provider'           => 'yoast',
+                'label'              => 'Yoast SEO',
+                'version'            => defined('WPSEO_VERSION') ? WPSEO_VERSION : null,
+                'is_premium'         => defined('WPSEO_PREMIUM_VERSION') || class_exists('WPSEO_Premium'),
+                'is_woocommerce_seo' => defined('WPSEO_WOO_VERSION'),
             ];
         }
 
@@ -747,6 +845,25 @@ class Content_Controller extends Rest_Controller {
                 'provider' => 'rank_math',
                 'label'    => 'Rank Math SEO',
                 'version'  => defined('RANK_MATH_VERSION') ? RANK_MATH_VERSION : null,
+                'is_pro'   => defined('RANK_MATH_PRO_VERSION'),
+            ];
+        }
+
+        if (defined('THE_SEO_FRAMEWORK_VERSION') || defined('AUTODESCRIPTION_VERSION') || function_exists('the_seo_framework') || class_exists('The_SEO_Framework\Load')) {
+            $tsf_version = null;
+            if (defined('THE_SEO_FRAMEWORK_VERSION')) {
+                $tsf_version = THE_SEO_FRAMEWORK_VERSION;
+            } elseif (defined('AUTODESCRIPTION_VERSION')) {
+                $tsf_version = AUTODESCRIPTION_VERSION;
+            } elseif (function_exists('the_seo_framework') && method_exists(the_seo_framework(), 'get_version')) {
+                $tsf_version = the_seo_framework()->get_version();
+            }
+
+            return [
+                'provider'     => 'the_seo_framework',
+                'label'        => 'The SEO Framework',
+                'version'      => $tsf_version,
+                'is_extension' => defined('TSFE_VERSION'),
             ];
         }
 
@@ -781,6 +898,8 @@ class Content_Controller extends Rest_Controller {
         $title    = '';
         $desc     = '';
         $noindex  = false;
+        $post     = get_post($post_id);
+        $post_type = $post ? $post->post_type : 'post';
 
         switch ($provider) {
             case 'rank_math':
@@ -789,15 +908,35 @@ class Content_Controller extends Rest_Controller {
                 $robots  = get_post_meta($post_id, 'rank_math_robots', true);
                 if (is_array($robots)) {
                     $noindex = in_array('noindex', $robots, true);
-                } elseif (is_string($robots)) {
+                } elseif (is_string($robots) && !empty($robots)) {
                     $noindex = strpos($robots, 'noindex') !== false;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'rank_math');
                 }
                 break;
 
             case 'yoast':
-                $title   = (string) get_post_meta($post_id, '_yoast_wpseo_title', true);
-                $desc    = (string) get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
-                $noindex = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-noindex', true) === 1;
+                $title        = (string) get_post_meta($post_id, '_yoast_wpseo_title', true);
+                $desc         = (string) get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
+                $noindex_meta = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-noindex', true);
+                if ($noindex_meta === 1) {
+                    $noindex = true;
+                } elseif ($noindex_meta === 2) {
+                    $noindex = false;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'yoast');
+                }
+                break;
+
+            case 'the_seo_framework':
+                $title        = (string) get_post_meta($post_id, '_genesis_title', true);
+                $desc         = (string) get_post_meta($post_id, '_genesis_description', true);
+                $noindex_meta = get_post_meta($post_id, '_genesis_noindex', true);
+                if ($noindex_meta !== '' && $noindex_meta !== false) {
+                    $noindex = (int) $noindex_meta === 1;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'the_seo_framework');
+                }
                 break;
 
             case 'seopress':
@@ -813,7 +952,6 @@ class Content_Controller extends Rest_Controller {
         }
 
         // Fallbacks
-        $post = get_post($post_id);
         $final_title = !empty($title) ? $title : ($post ? html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8') : '');
         $final_desc  = !empty($desc) ? $desc : ($post && has_excerpt($post) ? get_the_excerpt($post) : '');
 
@@ -830,19 +968,32 @@ class Content_Controller extends Rest_Controller {
      * Returns full unified SEO data normalized across SEO plugins.
      */
     public function get_full_seo_data($post, array $seo_plugin) {
-        $post_id  = $post->ID;
-        $provider = $seo_plugin['provider'];
+        $post_id   = $post->ID;
+        $post_type = $post->post_type;
+        $provider  = $seo_plugin['provider'];
 
-        $title_raw       = '';
-        $desc_raw        = '';
-        $canonical       = '';
-        $noindex         = false;
-        $nofollow        = false;
-        $og_title        = '';
-        $og_desc         = '';
-        $og_image        = '';
-        $focus_keywords  = [];
-        $schema_type     = '';
+        $title_raw           = '';
+        $desc_raw            = '';
+        $canonical           = '';
+        $noindex             = false;
+        $nofollow            = false;
+        $noarchive           = false;
+        $advanced_robots     = [];
+        $og_title            = '';
+        $og_desc             = '';
+        $og_image            = '';
+        $twitter_title       = '';
+        $twitter_desc        = '';
+        $twitter_image       = '';
+        $twitter_card_type   = '';
+        $focus_keywords      = [];
+        $seo_score           = null;
+        $readability_score   = null;
+        $primary_category_id = null;
+        $breadcrumb_title    = '';
+        $redirect_url        = '';
+        $schema_type         = '';
+        $no_blogname         = false;
 
         switch ($provider) {
             case 'rank_math':
@@ -851,36 +1002,125 @@ class Content_Controller extends Rest_Controller {
                 $canonical = (string) get_post_meta($post_id, 'rank_math_canonical_url', true);
                 $robots    = get_post_meta($post_id, 'rank_math_robots', true);
                 if (is_array($robots)) {
-                    $noindex  = in_array('noindex', $robots, true);
-                    $nofollow = in_array('nofollow', $robots, true);
-                } elseif (is_string($robots)) {
-                    $noindex  = strpos($robots, 'noindex') !== false;
-                    $nofollow = strpos($robots, 'nofollow') !== false;
+                    $noindex   = in_array('noindex', $robots, true);
+                    $nofollow  = in_array('nofollow', $robots, true);
+                    $noarchive = in_array('noarchive', $robots, true);
+                } elseif (is_string($robots) && !empty($robots)) {
+                    $noindex   = strpos($robots, 'noindex') !== false;
+                    $nofollow  = strpos($robots, 'nofollow') !== false;
+                    $noarchive = strpos($robots, 'noarchive') !== false;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'rank_math');
                 }
-                $og_title = (string) get_post_meta($post_id, 'rank_math_facebook_title', true);
-                $og_desc  = (string) get_post_meta($post_id, 'rank_math_facebook_description', true);
-                $og_image = (string) get_post_meta($post_id, 'rank_math_facebook_image', true);
-                $kw_raw   = (string) get_post_meta($post_id, 'rank_math_focus_keyword', true);
+
+                $adv_robots_meta = get_post_meta($post_id, 'rank_math_advanced_robots', true);
+                if (is_array($adv_robots_meta)) {
+                    $advanced_robots = $adv_robots_meta;
+                } elseif (is_string($adv_robots_meta) && !empty($adv_robots_meta)) {
+                    $advanced_robots = array_map('trim', explode(',', $adv_robots_meta));
+                }
+
+                $og_title          = (string) get_post_meta($post_id, 'rank_math_facebook_title', true);
+                $og_desc           = (string) get_post_meta($post_id, 'rank_math_facebook_description', true);
+                $og_image          = (string) get_post_meta($post_id, 'rank_math_facebook_image', true);
+                $twitter_title     = (string) get_post_meta($post_id, 'rank_math_twitter_title', true);
+                $twitter_desc      = (string) get_post_meta($post_id, 'rank_math_twitter_description', true);
+                $twitter_image     = (string) get_post_meta($post_id, 'rank_math_twitter_image', true);
+                $twitter_card_type = (string) get_post_meta($post_id, 'rank_math_twitter_card_type', true);
+
+                $kw_raw = (string) get_post_meta($post_id, 'rank_math_focus_keyword', true);
                 if (!empty($kw_raw)) {
                     $focus_keywords = array_map('trim', explode(',', $kw_raw));
                 }
-                $schema_type = (string) get_post_meta($post_id, 'rank_math_rich_snippet', true);
+
+                $rm_score = get_post_meta($post_id, 'rank_math_seo_score', true);
+                if (is_numeric($rm_score) && (int) $rm_score > 0) {
+                    $seo_score = (int) $rm_score;
+                }
+
+                $primary_tax         = ($post_type === 'product') ? 'product_cat' : 'category';
+                $primary_category_id = (int) (get_post_meta($post_id, 'rank_math_primary_' . $primary_tax, true) ?: get_post_meta($post_id, 'rank_math_primary_category', true));
+                $breadcrumb_title    = (string) get_post_meta($post_id, 'rank_math_breadcrumb_title', true);
+                $schema_type         = (string) get_post_meta($post_id, 'rank_math_rich_snippet', true);
                 break;
 
             case 'yoast':
-                $title_raw = (string) get_post_meta($post_id, '_yoast_wpseo_title', true);
-                $desc_raw  = (string) get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
-                $canonical = (string) get_post_meta($post_id, '_yoast_wpseo_canonical', true);
-                $noindex   = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-noindex', true) === 1;
-                $nofollow  = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-nofollow', true) === 1;
-                $og_title  = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-title', true);
-                $og_desc   = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-description', true);
-                $og_image  = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-image', true);
-                $kw_raw    = (string) get_post_meta($post_id, '_yoast_wpseo_focuskw', true);
+                $title_raw    = (string) get_post_meta($post_id, '_yoast_wpseo_title', true);
+                $desc_raw     = (string) get_post_meta($post_id, '_yoast_wpseo_metadesc', true);
+                $canonical    = (string) get_post_meta($post_id, '_yoast_wpseo_canonical', true);
+                $noindex_meta = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-noindex', true);
+                if ($noindex_meta === 1) {
+                    $noindex = true;
+                } elseif ($noindex_meta === 2) {
+                    $noindex = false;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'yoast');
+                }
+
+                $nofollow = (int) get_post_meta($post_id, '_yoast_wpseo_meta-robots-nofollow', true) === 1;
+
+                $adv_meta = (string) get_post_meta($post_id, '_yoast_wpseo_meta-robots-adv', true);
+                if (!empty($adv_meta)) {
+                    $advanced_robots = array_map('trim', explode(',', $adv_meta));
+                    $noarchive       = in_array('noarchive', $advanced_robots, true);
+                }
+
+                $og_title      = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-title', true);
+                $og_desc       = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-description', true);
+                $og_image      = (string) get_post_meta($post_id, '_yoast_wpseo_opengraph-image', true);
+                $twitter_title = (string) get_post_meta($post_id, '_yoast_wpseo_twitter-title', true);
+                $twitter_desc  = (string) get_post_meta($post_id, '_yoast_wpseo_twitter-description', true);
+                $twitter_image = (string) get_post_meta($post_id, '_yoast_wpseo_twitter-image', true);
+
+                $kw_raw = (string) get_post_meta($post_id, '_yoast_wpseo_focuskw', true);
                 if (!empty($kw_raw)) {
                     $focus_keywords = [$kw_raw];
                 }
-                $schema_type = (string) get_post_meta($post_id, '_yoast_wpseo_schema_page_type', true);
+
+                $linkdex = get_post_meta($post_id, '_yoast_wpseo_linkdex', true);
+                if (is_numeric($linkdex) && (int) $linkdex > 0) {
+                    $seo_score = (int) $linkdex;
+                }
+
+                $readability = get_post_meta($post_id, '_yoast_wpseo_content_score', true);
+                if (!empty($readability)) {
+                    $readability_score = is_numeric($readability) ? (int) $readability : (string) $readability;
+                }
+
+                $primary_tax         = ($post_type === 'product') ? 'product_cat' : 'category';
+                $primary_category_id = (int) (get_post_meta($post_id, '_yoast_wpseo_primary_' . $primary_tax, true) ?: get_post_meta($post_id, '_yoast_wpseo_primary_category', true));
+                $breadcrumb_title    = (string) get_post_meta($post_id, '_yoast_wpseo_bctitle', true);
+                $schema_type         = (string) get_post_meta($post_id, '_yoast_wpseo_schema_page_type', true);
+                break;
+
+            case 'the_seo_framework':
+                $title_raw    = (string) get_post_meta($post_id, '_genesis_title', true);
+                $no_blogname  = (int) get_post_meta($post_id, '_tsf_title_no_blogname', true) === 1;
+                $desc_raw     = (string) get_post_meta($post_id, '_genesis_description', true);
+                $canonical    = (string) get_post_meta($post_id, '_genesis_canonical_uri', true);
+                $noindex_meta = get_post_meta($post_id, '_genesis_noindex', true);
+                if ($noindex_meta !== '' && $noindex_meta !== false) {
+                    $noindex = (int) $noindex_meta === 1;
+                } else {
+                    $noindex = $this->is_post_type_globally_noindexed($post_type, 'the_seo_framework');
+                }
+
+                $nofollow  = (int) get_post_meta($post_id, '_genesis_nofollow', true) === 1;
+                $noarchive = (int) get_post_meta($post_id, '_genesis_noarchive', true) === 1;
+                if ($noarchive) {
+                    $advanced_robots[] = 'noarchive';
+                }
+
+                $og_title          = (string) get_post_meta($post_id, '_open_graph_title', true);
+                $og_desc           = (string) get_post_meta($post_id, '_open_graph_description', true);
+                $og_image          = (string) get_post_meta($post_id, '_social_image_url', true);
+                $twitter_title     = (string) get_post_meta($post_id, '_twitter_title', true);
+                $twitter_desc      = (string) get_post_meta($post_id, '_twitter_description', true);
+                $twitter_card_type = (string) get_post_meta($post_id, '_tsf_twitter_card_type', true);
+
+                $primary_tax         = ($post_type === 'product') ? 'product_cat' : 'category';
+                $primary_category_id = (int) (get_post_meta($post_id, '_primary_term_' . $primary_tax, true) ?: get_post_meta($post_id, '_primary_term_category', true));
+                $redirect_url        = (string) get_post_meta($post_id, 'redirect', true);
                 break;
 
             case 'seopress':
@@ -910,7 +1150,8 @@ class Content_Controller extends Rest_Controller {
         $site_name = html_entity_decode(get_bloginfo('name'), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $resolved_title = $this->resolve_seo_template($title_raw, $post, $site_name);
         if (empty($resolved_title)) {
-            $resolved_title = html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8') . ' - ' . $site_name;
+            $base_title = html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $resolved_title = $no_blogname ? $base_title : ($base_title . ' - ' . $site_name);
         }
 
         $resolved_desc = $this->resolve_seo_template($desc_raw, $post, $site_name);
@@ -926,27 +1167,66 @@ class Content_Controller extends Rest_Controller {
         // Global site noindex
         $global_noindex = (int) get_option('blog_public') === 0;
 
+        // Primary category info
+        $primary_category = null;
+        if ($primary_category_id > 0) {
+            $cat_term = get_term($primary_category_id);
+            if ($cat_term && !is_wp_error($cat_term)) {
+                $primary_category = [
+                    'id'   => $cat_term->term_id,
+                    'name' => html_entity_decode($cat_term->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                    'slug' => $cat_term->slug,
+                ];
+            }
+        }
+
+        $post_type_default_noindex = $this->is_post_type_globally_noindexed($post_type, $provider);
+
         return [
-            'provider'            => $provider,
-            'provider_label'      => $seo_plugin['label'],
-            'is_customized'       => !empty($title_raw) || !empty($desc_raw),
-            'title'               => $resolved_title,
-            'title_raw'           => $title_raw ?: null,
-            'description'         => $resolved_desc,
-            'description_raw'     => $desc_raw ?: null,
-            'canonical_url'       => !empty($canonical) ? $canonical : get_permalink($post_id),
-            'robots'              => [
+            'provider'                  => $provider,
+            'provider_label'            => $seo_plugin['label'],
+            'is_customized'             => !empty($title_raw) || !empty($desc_raw),
+            'title'                     => $resolved_title,
+            'title_raw'                 => $title_raw ?: null,
+            'description'               => $resolved_desc,
+            'description_raw'           => $desc_raw ?: null,
+            'canonical_url'             => !empty($canonical) ? $canonical : get_permalink($post_id),
+            'robots'                    => [
                 'noindex'                   => $noindex || $global_noindex,
                 'nofollow'                  => $nofollow,
+                'noarchive'                 => $noarchive,
+                'advanced_robots'           => !empty($advanced_robots) ? $advanced_robots : null,
+                'post_type_default_noindex' => $post_type_default_noindex,
                 'global_site_discouraged'   => $global_noindex,
             ],
-            'opengraph'           => [
+            'social'                    => [
+                'opengraph' => [
+                    'title'       => !empty($og_title) ? $og_title : $resolved_title,
+                    'description' => !empty($og_desc) ? $og_desc : $resolved_desc,
+                    'image_url'   => $og_image ?: null,
+                ],
+                'twitter'   => [
+                    'card_type'   => !empty($twitter_card_type) ? $twitter_card_type : 'summary_large_image',
+                    'title'       => !empty($twitter_title) ? $twitter_title : (!empty($og_title) ? $og_title : $resolved_title),
+                    'description' => !empty($twitter_desc) ? $twitter_desc : (!empty($og_desc) ? $og_desc : $resolved_desc),
+                    'image_url'   => !empty($twitter_image) ? $twitter_image : ($og_image ?: null),
+                ],
+            ],
+            // Backwards compatibility alias for top-level opengraph
+            'opengraph'                 => [
                 'title'       => !empty($og_title) ? $og_title : $resolved_title,
                 'description' => !empty($og_desc) ? $og_desc : $resolved_desc,
                 'image_url'   => $og_image ?: null,
             ],
-            'focus_keywords'      => $focus_keywords,
-            'schema_type'         => $schema_type ?: ($post->post_type === 'page' ? 'WebPage' : 'Article'),
+            'focus_keywords'            => $focus_keywords,
+            'scores'                    => [
+                'seo_score'         => $seo_score,
+                'readability_score' => $readability_score,
+            ],
+            'primary_category'          => $primary_category,
+            'breadcrumb_title'          => !empty($breadcrumb_title) ? $breadcrumb_title : null,
+            'redirect'                  => !empty($redirect_url) ? $redirect_url : null,
+            'schema_type'               => $schema_type ?: ($post_type === 'page' ? 'WebPage' : ($post_type === 'product' ? 'Product' : 'Article')),
         ];
     }
 
@@ -961,15 +1241,27 @@ class Content_Controller extends Rest_Controller {
         $title = html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $sep   = '-';
 
+        // Extract category name if available
+        $cat_name = '';
+        $categories = get_the_category($post->ID);
+        if (!empty($categories) && !is_wp_error($categories)) {
+            $cat_name = $categories[0]->name;
+        }
+
         $replacements = [
-            '%%title%%'     => $title,
-            '%title%'       => $title,
-            '%%sitename%%'  => $site_name,
-            '%sitename%'    => $site_name,
-            '%%sep%%'       => $sep,
-            '%sep%'         => $sep,
-            '%%date%%'      => get_the_date('', $post),
-            '%currentdate%' => get_the_date('', $post),
+            '%%title%%'            => $title,
+            '%title%'              => $title,
+            '%%sitename%%'         => $site_name,
+            '%sitename%'           => $site_name,
+            '%%sep%%'              => $sep,
+            '%sep%'                => $sep,
+            '%%date%%'             => get_the_date('', $post),
+            '%currentdate%'        => get_the_date('', $post),
+            '%%excerpt%%'          => has_excerpt($post) ? wp_strip_all_tags(get_the_excerpt($post)) : '',
+            '%excerpt%'            => has_excerpt($post) ? wp_strip_all_tags(get_the_excerpt($post)) : '',
+            '%%category%%'         => $cat_name,
+            '%category%'           => $cat_name,
+            '%%primary_category%%' => $cat_name,
         ];
 
         return trim(str_replace(array_keys($replacements), array_values($replacements), $template));
@@ -1143,5 +1435,528 @@ class Content_Controller extends Rest_Controller {
         }
 
         return Redaction::redact_data($clean);
+    }
+
+    // ==========================================
+    // HELPER METHODS: SITEMAP & DEFAULTS
+    // ==========================================
+
+    /**
+     * Detects active sitemap settings and canonical sitemap URL.
+     *
+     * @param array $seo_plugin
+     * @return array
+     */
+    protected function detect_sitemap_info(array $seo_plugin) {
+        $provider = $seo_plugin['provider'];
+        $enabled  = false;
+        $url      = null;
+
+        switch ($provider) {
+            case 'rank_math':
+                $rm_modules = get_option('rank_math_modules', []);
+                $enabled    = is_array($rm_modules) ? in_array('sitemap', $rm_modules, true) : true;
+                $url        = home_url('/sitemap_index.xml');
+                break;
+
+            case 'yoast':
+                $wpseo_opt = get_option('wpseo', []);
+                $enabled   = !isset($wpseo_opt['enable_xml_sitemap']) || !empty($wpseo_opt['enable_xml_sitemap']);
+                $url       = home_url('/sitemap_index.xml');
+                break;
+
+            case 'the_seo_framework':
+                $tsf_settings = get_option('autodescription-site-settings', []);
+                $enabled      = !isset($tsf_settings['sitemaps_output']) || !empty($tsf_settings['sitemaps_output']);
+                $url          = home_url('/sitemap.xml');
+                break;
+
+            case 'seopress':
+                $url     = home_url('/sitemaps.xml');
+                $enabled = true;
+                break;
+
+            case 'aioseo':
+                $url     = home_url('/sitemap.xml');
+                $enabled = true;
+                break;
+
+            default:
+                $enabled = function_exists('wp_sitemaps_get_server');
+                $url     = home_url('/wp-sitemap.xml');
+                break;
+        }
+
+        return [
+            'enabled'  => $enabled,
+            'url'      => $enabled ? $url : null,
+            'provider' => $provider,
+        ];
+    }
+
+    /**
+     * Checks whether a post type is globally set to noindex in the active SEO plugin settings.
+     *
+     * @param string $post_type
+     * @param string $provider
+     * @return bool
+     */
+    protected function is_post_type_globally_noindexed($post_type, $provider) {
+        if (empty($post_type)) {
+            return false;
+        }
+
+        switch ($provider) {
+            case 'yoast':
+                $wpseo_titles = get_option('wpseo_titles', []);
+                return !empty($wpseo_titles['noindex-' . $post_type]);
+
+            case 'rank_math':
+                $rm_titles = get_option('rank-math-options-titles', []);
+                if (!empty($rm_titles['pt_' . $post_type . '_custom_robots'])) {
+                    $robots = isset($rm_titles['pt_' . $post_type . '_robots']) ? $rm_titles['pt_' . $post_type . '_robots'] : [];
+                    if (is_array($robots)) {
+                        return in_array('noindex', $robots, true);
+                    }
+                    if (is_string($robots)) {
+                        return strpos($robots, 'noindex') !== false;
+                    }
+                }
+                return false;
+
+            case 'the_seo_framework':
+                $tsf_settings = get_option('autodescription-site-settings', []);
+                if (isset($tsf_settings['robots_' . $post_type . '_noindex'])) {
+                    return !empty($tsf_settings['robots_' . $post_type . '_noindex']);
+                }
+                return false;
+
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Returns high-level redirection summary for SEO audit.
+     *
+     * @return array
+     */
+    protected function get_redirections_summary() {
+        global $wpdb;
+
+        $redirection_table = $wpdb->prefix . 'redirection_items';
+        $rank_math_table   = $wpdb->prefix . 'rank_math_redirections';
+        $table_404         = $wpdb->prefix . 'redirection_404';
+
+        // 1. Redirection plugin
+        $has_redirection = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $redirection_table)) === $redirection_table;
+        if ($has_redirection) {
+            $total_redirects = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$redirection_table}");
+            $enabled_count   = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$redirection_table} WHERE status='enabled'");
+            $has_404_table   = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_404)) === $table_404;
+            $total_404       = $has_404_table ? (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_404}") : 0;
+
+            return [
+                'provider'           => 'redirection',
+                'provider_label'     => 'Redirection (John Godley)',
+                'total_redirects'    => $total_redirects,
+                'enabled_redirects'  => $enabled_count,
+                'disabled_redirects' => $total_redirects - $enabled_count,
+                'total_404_logged'   => $total_404,
+            ];
+        }
+
+        // 2. Rank Math Redirections
+        $has_rm_redir = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $rank_math_table)) === $rank_math_table;
+        if ($has_rm_redir) {
+            $total_redirects = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rank_math_table}");
+            $active_count    = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rank_math_table} WHERE status='active'");
+
+            return [
+                'provider'           => 'rank_math',
+                'provider_label'     => 'Rank Math Redirections',
+                'total_redirects'    => $total_redirects,
+                'enabled_redirects'  => $active_count,
+                'disabled_redirects' => $total_redirects - $active_count,
+                'total_404_logged'   => null,
+            ];
+        }
+
+        // 3. 301 Redirects plugin
+        $eps_redirects = get_option('eps_redirects_301');
+        if (is_array($eps_redirects) && !empty($eps_redirects)) {
+            $total = count($eps_redirects);
+            return [
+                'provider'           => '301_redirects',
+                'provider_label'     => '301 Redirects',
+                'total_redirects'    => $total,
+                'enabled_redirects'  => $total,
+                'disabled_redirects' => 0,
+                'total_404_logged'   => null,
+            ];
+        }
+
+        return [
+            'provider'           => null,
+            'provider_label'     => 'None Detected',
+            'total_redirects'    => 0,
+            'enabled_redirects'  => 0,
+            'disabled_redirects' => 0,
+            'total_404_logged'   => 0,
+        ];
+    }
+
+    // ==========================================
+    // REDIRECTIONS CONTROLLER METHODS
+    // ==========================================
+
+    /**
+     * GET /content/redirections
+     * Lists active 301, 302, 307, 410 URL redirects across Redirection plugin, Rank Math, or 301 Redirects.
+     */
+    public function get_redirections(\WP_REST_Request $request) {
+        global $wpdb;
+
+        $status   = strtolower(trim((string) ($request->get_param('status') ?: 'all')));
+        $search   = trim((string) ($request->get_param('search') ?: ''));
+        $code     = $request->get_param('code') ? absint($request->get_param('code')) : null;
+        $group    = trim((string) ($request->get_param('group') ?: ''));
+        $per_page = min(max(1, (int) ($request->get_param('per_page') ?: 50)), 200);
+        $page     = max(1, (int) ($request->get_param('page') ?: 1));
+        $offset   = ($page - 1) * $per_page;
+
+        $redirection_table = $wpdb->prefix . 'redirection_items';
+        $rank_math_table   = $wpdb->prefix . 'rank_math_redirections';
+
+        // 1. Check John Godley's Redirection plugin
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $redirection_table));
+        if ($table_exists === $redirection_table) {
+            return $this->get_redirections_from_redirection_plugin($per_page, $offset, $page, $status, $search, $code, $group);
+        }
+
+        // 2. Check Rank Math Redirections
+        $rm_table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $rank_math_table));
+        if ($rm_table_exists === $rank_math_table) {
+            return $this->get_redirections_from_rank_math($per_page, $offset, $page, $status, $search, $code);
+        }
+
+        // 3. Check 301 Redirects plugin (stored in option eps_redirects_301)
+        $eps_redirects = get_option('eps_redirects_301');
+        if (is_array($eps_redirects) && !empty($eps_redirects)) {
+            return $this->get_redirections_from_eps($eps_redirects, $per_page, $page, $search, $code);
+        }
+
+        return $this->response([
+            'provider'        => null,
+            'provider_label'  => 'None Detected',
+            'total_redirects' => 0,
+            'total_pages'     => 0,
+            'per_page'        => $per_page,
+            'page'            => $page,
+            'redirects'       => [],
+            'notice'          => esc_html__('No supported redirection plugin (Redirection, Rank Math Redirections, 301 Redirects) detected on this site.', 'woo-get-data-for-ai'),
+        ]);
+    }
+
+    /**
+     * Fetch redirects from John Godley's Redirection plugin tables.
+     */
+    protected function get_redirections_from_redirection_plugin($per_page, $offset, $page, $status, $search, $code, $group) {
+        global $wpdb;
+
+        $table_items  = $wpdb->prefix . 'redirection_items';
+        $table_groups = $wpdb->prefix . 'redirection_groups';
+
+        $where  = [];
+        $params = [];
+
+        if ($status === 'enabled') {
+            $where[] = "i.status = 'enabled'";
+        } elseif ($status === 'disabled') {
+            $where[] = "i.status != 'enabled'";
+        }
+
+        if (!empty($code)) {
+            $where[]  = "i.action_code = %d";
+            $params[] = $code;
+        }
+
+        if (!empty($search)) {
+            $like     = '%' . $wpdb->esc_like($search) . '%';
+            $where[]  = "(i.url LIKE %s OR i.action_data LIKE %s OR i.title LIKE %s)";
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        if (!empty($group)) {
+            if (is_numeric($group)) {
+                $where[]  = "i.group_id = %d";
+                $params[] = (int) $group;
+            } else {
+                $where[]  = "g.name LIKE %s";
+                $params[] = '%' . $wpdb->esc_like($group) . '%';
+            }
+        }
+
+        $where_sql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        // Count query
+        $count_sql = "SELECT COUNT(*) FROM {$table_items} i LEFT JOIN {$table_groups} g ON i.group_id = g.id {$where_sql}";
+        $total     = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+        // Fetch query
+        $query_sql = "SELECT i.id, i.url, i.match_url, i.action_data, i.action_code, i.action_type, i.match_type, i.regex, i.position, i.last_count, i.last_access, i.status, i.title, g.name AS group_name
+                      FROM {$table_items} i
+                      LEFT JOIN {$table_groups} g ON i.group_id = g.id
+                      {$where_sql}
+                      ORDER BY i.position ASC, i.id ASC
+                      LIMIT %d OFFSET %d";
+        $fetch_params = array_merge($params, [$per_page, $offset]);
+        $rows         = $wpdb->get_results($wpdb->prepare($query_sql, $fetch_params));
+
+        $redirects = [];
+        foreach ($rows as $r) {
+            $redirects[] = [
+                'id'            => (int) $r->id,
+                'source_url'    => $r->url,
+                'target_url'    => $r->action_data,
+                'status_code'   => (int) $r->action_code ?: 301,
+                'action_type'   => $r->action_type,
+                'match_type'    => $r->match_type,
+                'is_regex'      => (int) $r->regex === 1,
+                'position'      => (int) $r->position,
+                'hits'          => (int) $r->last_count,
+                'last_accessed' => !empty($r->last_access) && $r->last_access !== '0000-00-00 00:00:00' ? $r->last_access : null,
+                'status'        => $r->status === 'enabled' ? 'enabled' : 'disabled',
+                'title'         => $r->title ?: null,
+                'group'         => $r->group_name ?: 'Default',
+            ];
+        }
+
+        return $this->response([
+            'provider'        => 'redirection',
+            'provider_label'  => 'Redirection (John Godley)',
+            'total_redirects' => $total,
+            'total_pages'     => ceil($total / $per_page),
+            'per_page'        => $per_page,
+            'page'            => $page,
+            'redirects'       => $redirects,
+        ]);
+    }
+
+    /**
+     * Fetch redirects from Rank Math Redirections table.
+     */
+    protected function get_redirections_from_rank_math($per_page, $offset, $page, $status, $search, $code) {
+        global $wpdb;
+
+        $table_rm = $wpdb->prefix . 'rank_math_redirections';
+        $where    = [];
+        $params   = [];
+
+        if ($status === 'enabled') {
+            $where[] = "status = 'active'";
+        } elseif ($status === 'disabled') {
+            $where[] = "status != 'active'";
+        }
+
+        if (!empty($code)) {
+            $where[]  = "header_code = %d";
+            $params[] = $code;
+        }
+
+        if (!empty($search)) {
+            $like     = '%' . $wpdb->esc_like($search) . '%';
+            $where[]  = "(sources LIKE %s OR url_to LIKE %s)";
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $where_sql  = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+        $count_sql  = "SELECT COUNT(*) FROM {$table_rm} {$where_sql}";
+        $total      = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+        $query_sql  = "SELECT * FROM {$table_rm} {$where_sql} ORDER BY id ASC LIMIT %d OFFSET %d";
+        $fetch_params = array_merge($params, [$per_page, $offset]);
+        $rows       = $wpdb->get_results($wpdb->prepare($query_sql, $fetch_params));
+
+        $redirects = [];
+        foreach ($rows as $r) {
+            $sources_data = maybe_unserialize($r->sources);
+            $source_url   = '';
+            $is_regex     = false;
+
+            if (is_array($sources_data)) {
+                if (isset($sources_data[0]['pattern'])) {
+                    $source_url = $sources_data[0]['pattern'];
+                    $is_regex   = isset($sources_data[0]['comparison']) && $sources_data[0]['comparison'] === 'regex';
+                } else {
+                    $source_url = json_encode($sources_data);
+                }
+            } else {
+                $source_url = (string) $r->sources;
+            }
+
+            $redirects[] = [
+                'id'            => (int) $r->id,
+                'source_url'    => $source_url,
+                'target_url'    => $r->url_to,
+                'status_code'   => (int) $r->header_code ?: 301,
+                'action_type'   => 'url',
+                'match_type'    => $is_regex ? 'regex' : 'exact',
+                'is_regex'      => $is_regex,
+                'position'      => (int) $r->id,
+                'hits'          => (int) $r->hits,
+                'last_accessed' => !empty($r->last_accessed) && $r->last_accessed !== '0000-00-00 00:00:00' ? $r->last_accessed : null,
+                'status'        => $r->status === 'active' ? 'enabled' : 'disabled',
+                'title'         => null,
+                'group'         => 'Rank Math',
+            ];
+        }
+
+        return $this->response([
+            'provider'        => 'rank_math',
+            'provider_label'  => 'Rank Math Redirections',
+            'total_redirects' => $total,
+            'total_pages'     => ceil($total / $per_page),
+            'per_page'        => $per_page,
+            'page'            => $page,
+            'redirects'       => $redirects,
+        ]);
+    }
+
+    /**
+     * Fetch redirects from 301 Redirects plugin options.
+     */
+    protected function get_redirections_from_eps(array $eps_redirects, $per_page, $page, $search, $code) {
+        $filtered = [];
+        foreach ($eps_redirects as $item) {
+            $from = isset($item['url_from']) ? $item['url_from'] : '';
+            $to   = isset($item['url_to']) ? $item['url_to'] : '';
+            $sc   = isset($item['status']) ? (int) $item['status'] : 301;
+
+            if (!empty($code) && $sc !== $code) {
+                continue;
+            }
+
+            if (!empty($search)) {
+                if (stripos($from, $search) === false && stripos($to, $search) === false) {
+                    continue;
+                }
+            }
+
+            $filtered[] = [
+                'id'            => isset($item['id']) ? (int) $item['id'] : null,
+                'source_url'    => $from,
+                'target_url'    => $to,
+                'status_code'   => $sc,
+                'action_type'   => 'url',
+                'match_type'    => 'exact',
+                'is_regex'      => false,
+                'position'      => 0,
+                'hits'          => isset($item['count']) ? (int) $item['count'] : 0,
+                'last_accessed' => isset($item['last_access']) ? $item['last_access'] : null,
+                'status'        => 'enabled',
+                'title'         => null,
+                'group'         => '301 Redirects',
+            ];
+        }
+
+        $total   = count($filtered);
+        $offset  = ($page - 1) * $per_page;
+        $paged   = array_slice($filtered, $offset, $per_page);
+
+        return $this->response([
+            'provider'        => '301_redirects',
+            'provider_label'  => '301 Redirects',
+            'total_redirects' => $total,
+            'total_pages'     => ceil($total / $per_page),
+            'per_page'        => $per_page,
+            'page'            => $page,
+            'redirects'       => $paged,
+        ]);
+    }
+
+    /**
+     * GET /content/redirections/404
+     * Lists recent and top 404 monitoring logs from Redirection plugin.
+     */
+    public function get_404_logs(\WP_REST_Request $request) {
+        global $wpdb;
+
+        $limit  = min(max(10, (int) ($request->get_param('limit') ?: 50)), 200);
+        $search = trim((string) ($request->get_param('search') ?: ''));
+
+        $table_404 = $wpdb->prefix . 'redirection_404';
+        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_404));
+
+        if ($table_exists !== $table_404) {
+            return $this->response([
+                'provider'       => null,
+                'total_404_logs' => 0,
+                'top_404_urls'   => [],
+                'recent_logs'    => [],
+                'notice'         => esc_html__('No Redirection 404 monitoring table found on this site.', 'woo-get-data-for-ai'),
+            ]);
+        }
+
+        $where  = '';
+        $params = [];
+        if (!empty($search)) {
+            $where    = "WHERE url LIKE %s";
+            $params[] = '%' . $wpdb->esc_like($search) . '%';
+        }
+
+        $total = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_404} {$where}", $params)) : (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_404}");
+
+        // Top 404 URLs grouped by frequency
+        $top_sql = "SELECT url, COUNT(*) as hits_count, MAX(created) as last_seen
+                    FROM {$table_404}
+                    {$where}
+                    GROUP BY url
+                    ORDER BY hits_count DESC
+                    LIMIT %d";
+        $top_params = array_merge($params, [$limit]);
+        $top_rows = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
+
+        $top_404_urls = [];
+        foreach ($top_rows as $row) {
+            $top_404_urls[] = [
+                'url'        => $row->url,
+                'hits_count' => (int) $row->hits_count,
+                'last_seen'  => $row->last_seen,
+            ];
+        }
+
+        // Recent 404 entries
+        $recent_sql = "SELECT id, created, url, domain, agent, referrer, ip
+                       FROM {$table_404}
+                       {$where}
+                       ORDER BY id DESC
+                       LIMIT %d";
+        $recent_params = array_merge($params, [min($limit, 30)]);
+        $recent_rows   = $wpdb->get_results($wpdb->prepare($recent_sql, $recent_params));
+
+        $recent_logs = [];
+        foreach ($recent_rows as $row) {
+            $recent_logs[] = [
+                'id'       => (int) $row->id,
+                'created'  => $row->created,
+                'url'      => $row->url,
+                'domain'   => $row->domain,
+                'agent'    => $row->agent,
+                'referrer' => $row->referrer,
+                'ip'       => !empty($row->ip) ? Redaction::mask_ip($row->ip) : null,
+            ];
+        }
+
+        return $this->response([
+            'provider'       => 'redirection',
+            'provider_label' => 'Redirection 404 Monitor',
+            'total_404_logs' => $total,
+            'top_404_urls'   => $top_404_urls,
+            'recent_logs'    => $recent_logs,
+        ]);
     }
 }

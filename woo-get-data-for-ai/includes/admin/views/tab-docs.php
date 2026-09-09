@@ -219,9 +219,9 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><?php esc_html_e('Store health summary, paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
-                    <td><strong><?php esc_html_e('Pages, Content & SEO', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/content/pages</code>, <code>/content/page/{id}</code>, <code>/content/posts</code>, <code>/content/post/{id}</code>, <code>/content/seo-audit</code></td>
-                    <td><?php esc_html_e('WordPress pages and blog posts hierarchy, raw and rendered Gutenberg block trees, detected shortcodes, page templates, and unified SEO audit across pages, posts, WooCommerce products, and categories (Yoast, Rank Math, SEOPress, AIOSEO).', 'woo-get-data-for-ai'); ?></td>
+                    <td><strong><?php esc_html_e('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/content/pages</code>, <code>/content/page/{id}</code>, <code>/content/posts</code>, <code>/content/post/{id}</code>, <code>/content/seo-audit</code>, <code>/content/redirections</code>, <code>/content/redirections/404</code></td>
+                    <td><?php esc_html_e('WordPress pages and blog posts hierarchy, raw and rendered Gutenberg block trees, shortcodes, page templates, unified SEO audit across pages, posts, WooCommerce products, and categories (Rank Math, Yoast, The SEO Framework, SEOPress, AIOSEO), and URL redirections with 404 monitoring logs (Redirection, Rank Math, 301 Redirects).', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Site Performance & Profiling', 'woo-get-data-for-ai'); ?></strong></td>

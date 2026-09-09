@@ -1144,7 +1144,48 @@ async function pullContent() {
             console.warn('  ⚠️ Failed to pull /content/posts:', postErr.message);
         }
 
-        console.log('✅ Saved WordPress pages, content trees, and SEO audit to ./content/');
+        // 4. Pull Redirections & 404 logs
+        try {
+            const redirData = await makeRequest('/content/redirections?per_page=100');
+            writeJson(path.join(contentDir, 'redirections.json'), redirData);
+
+            let redirMd = `# URL Redirections Report for ${siteUrl}\n\n`;
+            redirMd += `**Generated**: ${new Date().toISOString()}\n`;
+            redirMd += `**Provider**: ${redirData.provider ? redirData.provider.label + ' (' + redirData.provider.key + ')' : 'None'}\n`;
+            redirMd += `**Total Rules**: ${redirData.total || 0}\n\n`;
+
+            if (redirData.rules && redirData.rules.length > 0) {
+                redirMd += `### Active Redirection Rules (Sample)\n\n`;
+                redirMd += `| Source URL | Target URL | HTTP Code | Hits | Last Access |\n|---|---|---|---|---|\n`;
+                redirData.rules.slice(0, 50).forEach(r => {
+                    redirMd += `| \`${r.source_url}\` | \`${r.target_url}\` | ${r.status_code || 301} | ${r.hits || 0} | ${r.last_accessed || '-'} |\n`;
+                });
+                redirMd += `\n`;
+            }
+
+            // Pull 404 logs if available
+            try {
+                const logs404 = await makeRequest('/content/redirections/404?per_page=50');
+                writeJson(path.join(contentDir, '404-logs.json'), logs404);
+
+                if (logs404.logs && logs404.logs.length > 0) {
+                    redirMd += `### Recent 404 Errors (Top Hits)\n\n`;
+                    redirMd += `| Requested URL | Hits | Referrer | Last Detected |\n|---|---|---|---|\n`;
+                    logs404.logs.slice(0, 30).forEach(l => {
+                        redirMd += `| \`${l.url}\` | ${l.hits || 1} | \`${l.referrer || '-'}\` | ${l.last_detected || '-'} |\n`;
+                    });
+                    redirMd += `\n`;
+                }
+            } catch (e404) {
+                // 404 table not available or disabled
+            }
+
+            writeText(path.join(contentDir, 'redirections.md'), redirMd);
+        } catch (redirErr) {
+            console.warn('  ⚠️ Failed to pull /content/redirections:', redirErr.message);
+        }
+
+        console.log('✅ Saved WordPress pages, content trees, SEO audit, and redirections to ./content/');
     } catch (err) {
         console.error('❌ Failed to pull content & SEO data:', err.message);
     }
