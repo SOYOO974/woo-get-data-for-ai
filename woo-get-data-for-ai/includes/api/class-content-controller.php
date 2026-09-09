@@ -158,6 +158,15 @@ class Content_Controller extends Rest_Controller {
             ],
         ]);
 
+        // GET /content/seo/settings (Audit global settings & configuration best practices of active SEO plugin)
+        register_rest_route(self::NAMESPACE, '/content/seo/settings', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_seo_settings'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'content');
+            },
+        ]);
+
         // GET /content/redirections (List URL redirects from Redirection plugin, Rank Math, or 301 Redirects)
         register_rest_route(self::NAMESPACE, '/content/redirections', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -798,6 +807,7 @@ class Content_Controller extends Rest_Controller {
             ],
             'categories_audit'        => $categories_audit,
             'redirections'            => $redirections_summary,
+            'settings_audit'          => $this->build_seo_settings_audit($seo_plugin),
         ]);
     }
 
@@ -1959,4 +1969,637 @@ class Content_Controller extends Rest_Controller {
             'recent_logs'    => $recent_logs,
         ]);
     }
+
+    /**
+     * Endpoint callback: GET /content/seo/settings
+     * Audits global settings & configuration best practices of active SEO plugin.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_seo_settings(\WP_REST_Request $request) {
+        $seo_plugin = $this->detect_seo_plugin();
+        $audit      = $this->build_seo_settings_audit($seo_plugin);
+        return $this->response($audit);
+    }
+
+    /**
+     * Build SEO settings audit with actionable recommendations.
+     *
+     * @param array $seo_plugin
+     * @return array
+     */
+    private function build_seo_settings_audit(array $seo_plugin) {
+        $is_public       = (int) get_option('blog_public') === 1;
+        $recommendations = [];
+
+        // 1. Global site visibility check
+        if ($is_public) {
+            $recommendations[] = [
+                'key'    => 'blog_public',
+                'status' => 'optimal',
+                'title'  => esc_html__('Search Engine Visibility Enabled', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Site is configured to allow search engines to index pages.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'blog_public',
+                'status' => 'critical',
+                'title'  => esc_html__('Search Engine Visibility Disabled', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('CRITICAL: "Discourage search engines from indexing this site" is checked in WordPress Settings > Reading.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 2. Provider-specific settings audit
+        $provider_data = [];
+        $provider_key  = isset($seo_plugin['provider']) ? $seo_plugin['provider'] : 'native';
+
+        switch ($provider_key) {
+            case 'rank_math':
+                $provider_data = $this->get_rank_math_settings_audit();
+                break;
+            case 'yoast':
+                $provider_data = $this->get_yoast_settings_audit();
+                break;
+            case 'the_seo_framework':
+                $provider_data = $this->get_tsf_settings_audit();
+                break;
+            default:
+                $provider_data = [
+                    'settings'        => [],
+                    'recommendations' => [
+                        [
+                            'key'    => 'no_seo_plugin',
+                            'status' => 'warning',
+                            'title'  => esc_html__('No Dedicated SEO Plugin Detected', 'woo-get-data-for-ai'),
+                            'detail' => esc_html__('The site relies on native WordPress titles. Installing Rank Math, Yoast SEO, or The SEO Framework is recommended for complete meta and sitemap management.', 'woo-get-data-for-ai'),
+                        ],
+                    ],
+                ];
+                break;
+        }
+
+        if (!empty($provider_data['recommendations'])) {
+            $recommendations = array_merge($recommendations, $provider_data['recommendations']);
+        }
+
+        // 3. Redirection plugin settings audit (if active)
+        $redir_audit = $this->get_redirection_settings_audit();
+        if ($redir_audit && !empty($redir_audit['recommendations'])) {
+            $recommendations = array_merge($recommendations, $redir_audit['recommendations']);
+        }
+
+        // Compute summary counts
+        $optimal_count  = 0;
+        $warning_count  = 0;
+        $notice_count   = 0;
+        $critical_count = 0;
+
+        foreach ($recommendations as $rec) {
+            switch ($rec['status']) {
+                case 'optimal':
+                    $optimal_count++;
+                    break;
+                case 'critical':
+                    $critical_count++;
+                    break;
+                case 'warning':
+                    $warning_count++;
+                    break;
+                case 'notice':
+                    $notice_count++;
+                    break;
+            }
+        }
+
+        $total_checks = count($recommendations);
+        $score        = $total_checks > 0 ? round(($optimal_count / $total_checks) * 100) : 100;
+
+        return [
+            'generated_at'         => current_time('mysql'),
+            'provider'             => $seo_plugin,
+            'site_visibility'      => [
+                'is_public'       => $is_public,
+                'blog_public_raw' => (int) get_option('blog_public'),
+            ],
+            'settings'             => isset($provider_data['settings']) ? $provider_data['settings'] : [],
+            'redirection_settings' => $redir_audit && isset($redir_audit['settings']) ? $redir_audit['settings'] : null,
+            'summary'              => [
+                'total_checks'   => $total_checks,
+                'optimal_count'  => $optimal_count,
+                'critical_count' => $critical_count,
+                'warning_count'  => $warning_count,
+                'notice_count'   => $notice_count,
+                'health_score'   => $score,
+            ],
+            'recommendations'      => $recommendations,
+        ];
+    }
+
+    /**
+     * Extract and audit Rank Math settings.
+     *
+     * @return array
+     */
+    private function get_rank_math_settings_audit() {
+        $general = get_option('rank-math-options-general', []);
+        $titles  = get_option('rank-math-options-titles', []);
+        $sitemap = get_option('rank-math-options-sitemap', []);
+        $modules = get_option('rank_math_modules', []);
+        if (!is_array($modules)) {
+            $modules = [];
+        }
+
+        $recommendations = [];
+
+        // 1. Attachment redirects
+        $attach_redirect = isset($general['attachment_redirect_urls']) ? $general['attachment_redirect_urls'] : 'off';
+        if ($attach_redirect === 'on') {
+            $recommendations[] = [
+                'key'    => 'attachment_redirects',
+                'status' => 'optimal',
+                'title'  => esc_html__('Media Attachment URLs Redirection', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Attachment pages are automatically redirected to parent posts (prevents thin-content zombie URLs).', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'attachment_redirects',
+                'status' => 'warning',
+                'title'  => esc_html__('Media Attachment URLs Not Redirected', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Media attachment pages are not redirected. WordPress creates an empty webpage for every uploaded image. Enable "Redirect Attachments" in Rank Math General Settings.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 2. Strip category base
+        $strip_cat = isset($general['strip_category_base']) ? $general['strip_category_base'] : 'off';
+        if ($strip_cat === 'on') {
+            $recommendations[] = [
+                'key'    => 'strip_category_base',
+                'status' => 'optimal',
+                'title'  => esc_html__('Strip Category Base', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Category base prefix is stripped from URLs for cleaner permalinks.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'strip_category_base',
+                'status' => 'notice',
+                'title'  => esc_html__('Category Base Retained (/category/)', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Category base (/category/) is retained in category URLs. Enabling "Strip Category Base" can shorten URLs if no redirect conflicts exist.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 3. Tag archives indexation (post_tag)
+        $tag_robots = isset($titles['tax_post_tag_robots']) && is_array($titles['tax_post_tag_robots']) ? $titles['tax_post_tag_robots'] : [];
+        if (in_array('noindex', $tag_robots, true)) {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'optimal',
+                'title'  => esc_html__('Tag Archives Set to Noindex', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Blog post tags (post_tag) are set to noindex, preventing thin taxonomy duplication.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'notice',
+                'title'  => esc_html__('Tag Archives Are Indexed', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Post tags are set to index. Unless you provide unique editorial text on each tag page, consider setting tags to noindex to protect your crawl budget.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 4. Product tags indexation (WooCommerce)
+        if (class_exists('WooCommerce')) {
+            $prod_tag_robots = isset($titles['tax_product_tag_robots']) && is_array($titles['tax_product_tag_robots']) ? $titles['tax_product_tag_robots'] : [];
+            if (in_array('noindex', $prod_tag_robots, true)) {
+                $recommendations[] = [
+                    'key'    => 'product_tags_indexation',
+                    'status' => 'optimal',
+                    'title'  => esc_html__('Product Tag Archives Set to Noindex', 'woo-get-data-for-ai'),
+                    'detail' => esc_html__('WooCommerce product tags (product_tag) are set to noindex.', 'woo-get-data-for-ai'),
+                ];
+            } else {
+                $recommendations[] = [
+                    'key'    => 'product_tags_indexation',
+                    'status' => 'notice',
+                    'title'  => esc_html__('Product Tag Archives Are Indexed', 'woo-get-data-for-ai'),
+                    'detail' => esc_html__('Product tags are set to index. Empty or auto-generated product tags can dilute product category rankings.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
+
+        // 5. Default OpenGraph image
+        $default_og = !empty($titles['open_graph_image']) ? $titles['open_graph_image'] : '';
+        if (!empty($default_og)) {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'optimal',
+                'title'  => esc_html__('Default OpenGraph Fallback Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('A default social sharing image is configured for pages and products without featured images.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Default OpenGraph Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('No default social fallback image is configured in Rank Math Titles & Meta > Global Meta. Social shares of content lacking featured images will display without visuals.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 6. Schema Knowledge Graph
+        $kg_type = !empty($titles['knowledgegraph_type']) ? $titles['knowledgegraph_type'] : 'company';
+        $kg_logo = !empty($titles['knowledgegraph_logo']) ? $titles['knowledgegraph_logo'] : '';
+        if (!empty($kg_logo)) {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'optimal',
+                'title'  => esc_html__('Schema Knowledge Graph & Logo', 'woo-get-data-for-ai'),
+                'detail' => sprintf(esc_html__('Knowledge Graph entity is configured as "%s" with an official logo.', 'woo-get-data-for-ai'), $kg_type),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Knowledge Graph Logo', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Organization/Person logo is missing in Rank Math Titles & Meta > Local SEO. Google uses this logo in Knowledge Panels.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 7. Breadcrumbs
+        $breadcrumbs = isset($general['breadcrumbs']) ? $general['breadcrumbs'] : 'off';
+        if ($breadcrumbs === 'on') {
+            $recommendations[] = [
+                'key'    => 'breadcrumbs',
+                'status' => 'optimal',
+                'title'  => esc_html__('Schema Breadcrumbs Active', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Rank Math Breadcrumbs function is enabled.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'breadcrumbs',
+                'status' => 'notice',
+                'title'  => esc_html__('Breadcrumbs Disabled in Rank Math', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Breadcrumbs are turned off in Rank Math. Ensure your theme provides native breadcrumbs with Schema.org markup.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 8. Key Modules status
+        $key_modules = [
+            'image-seo'    => ['title' => 'Image SEO', 'essential' => false],
+            'rich-snippet' => ['title' => 'Schema (Structured Data)', 'essential' => true],
+            '404-monitor'  => ['title' => '404 Monitor', 'essential' => true],
+            'redirections' => ['title' => 'Redirections', 'essential' => true],
+            'sitemap'      => ['title' => 'XML Sitemap', 'essential' => true],
+            'woocommerce'  => ['title' => 'WooCommerce SEO', 'essential' => class_exists('WooCommerce')],
+        ];
+        foreach ($key_modules as $mod_key => $mod_info) {
+            $is_active = in_array($mod_key, $modules, true);
+            if ($is_active) {
+                $recommendations[] = [
+                    'key'    => "module_{$mod_key}",
+                    'status' => 'optimal',
+                    'title'  => sprintf(esc_html__('Module Active: %s', 'woo-get-data-for-ai'), $mod_info['title']),
+                    'detail' => sprintf(esc_html__('Rank Math %s module is enabled and operational.', 'woo-get-data-for-ai'), $mod_info['title']),
+                ];
+            } elseif ($mod_info['essential']) {
+                $recommendations[] = [
+                    'key'    => "module_{$mod_key}",
+                    'status' => 'warning',
+                    'title'  => sprintf(esc_html__('Recommended Module Inactive: %s', 'woo-get-data-for-ai'), $mod_info['title']),
+                    'detail' => sprintf(esc_html__('Rank Math %s module is disabled in active modules.', 'woo-get-data-for-ai'), $mod_info['title']),
+                ];
+            }
+        }
+
+        return [
+            'settings'        => [
+                'strip_category_base'      => $strip_cat === 'on',
+                'attachment_redirect_urls' => $attach_redirect === 'on',
+                'breadcrumbs_enabled'      => $breadcrumbs === 'on',
+                'knowledgegraph_type'      => $kg_type,
+                'knowledgegraph_logo'      => $kg_logo,
+                'default_og_image'         => $default_og,
+                'sitemap_items_per_page'   => isset($sitemap['items_per_page']) ? (int) $sitemap['items_per_page'] : 200,
+                'sitemap_include_images'   => (isset($sitemap['include_images']) ? $sitemap['include_images'] : 'on') === 'on',
+                'active_modules'           => array_values($modules),
+            ],
+            'recommendations' => $recommendations,
+        ];
+    }
+
+    /**
+     * Extract and audit Yoast SEO settings.
+     *
+     * @return array
+     */
+    private function get_yoast_settings_audit() {
+        $wpseo  = get_option('wpseo', []);
+        $titles = get_option('wpseo_titles', []);
+        $social = get_option('wpseo_social', []);
+
+        $recommendations = [];
+
+        // 1. Tag archives indexation (post_tag)
+        $tag_noindex = !empty($titles['noindex-tax-post_tag']);
+        if ($tag_noindex) {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'optimal',
+                'title'  => esc_html__('Tag Archives Set to Noindex', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Post tags are set to noindex in Yoast, preventing duplicate taxonomy listings.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'notice',
+                'title'  => esc_html__('Tag Archives Are Indexed', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Post tags are set to index in Yoast. Setting tags to noindex avoids duplicate content unless tag pages have unique copy.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 2. Product tags indexation (WooCommerce)
+        if (class_exists('WooCommerce')) {
+            $prod_tag_noindex = !empty($titles['noindex-tax-product_tag']);
+            if ($prod_tag_noindex) {
+                $recommendations[] = [
+                    'key'    => 'product_tags_indexation',
+                    'status' => 'optimal',
+                    'title'  => esc_html__('Product Tag Archives Set to Noindex', 'woo-get-data-for-ai'),
+                    'detail' => esc_html__('WooCommerce product tags are set to noindex in Yoast.', 'woo-get-data-for-ai'),
+                ];
+            } else {
+                $recommendations[] = [
+                    'key'    => 'product_tags_indexation',
+                    'status' => 'notice',
+                    'title'  => esc_html__('Product Tag Archives Are Indexed', 'woo-get-data-for-ai'),
+                    'detail' => esc_html__('Product tags are set to index in Yoast. Consider noindex if tags lack custom content.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
+
+        // 3. Strip category base
+        $strip_cat = !empty($titles['stripcategorybase']);
+        if ($strip_cat) {
+            $recommendations[] = [
+                'key'    => 'strip_category_base',
+                'status' => 'optimal',
+                'title'  => esc_html__('Strip Category Base', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Category prefix (/category/) is stripped for cleaner URLs.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'strip_category_base',
+                'status' => 'notice',
+                'title'  => esc_html__('Category Base Retained (/category/)', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Category prefix (/category/) is retained. Removing it can shorten permalinks.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 4. Default OpenGraph Image
+        $default_og = !empty($social['og_default_image']) ? $social['og_default_image'] : '';
+        if (!empty($default_og)) {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'optimal',
+                'title'  => esc_html__('Default OpenGraph Fallback Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('A default social sharing image is configured in Yoast Social settings.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Default OpenGraph Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('No default social fallback image is configured in Yoast Settings > Social Sharing. Content shared without featured images will lack visuals.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 5. Schema Knowledge Graph
+        $company_or_person = !empty($titles['company_or_person']) ? $titles['company_or_person'] : 'company';
+        $company_logo      = !empty($titles['company_logo']) ? $titles['company_logo'] : '';
+        if (!empty($company_logo)) {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'optimal',
+                'title'  => esc_html__('Schema Organization & Logo', 'woo-get-data-for-ai'),
+                'detail' => sprintf(esc_html__('Yoast site representation is configured as "%s" with an official logo.', 'woo-get-data-for-ai'), $company_or_person),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Organization Logo', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Organization logo is missing in Yoast Site Representation settings.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 6. Breadcrumbs
+        $breadcrumbs = !empty($titles['breadcrumbs-enable']);
+        if ($breadcrumbs) {
+            $recommendations[] = [
+                'key'    => 'breadcrumbs',
+                'status' => 'optimal',
+                'title'  => esc_html__('Schema Breadcrumbs Active', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Yoast Breadcrumbs are enabled.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'breadcrumbs',
+                'status' => 'notice',
+                'title'  => esc_html__('Breadcrumbs Disabled in Yoast', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Breadcrumbs are turned off in Yoast settings.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 7. Author & Date archives
+        $author_disabled = !empty($titles['disable-author']) || !empty($titles['noindex-author-wpseo']);
+        if ($author_disabled) {
+            $recommendations[] = [
+                'key'    => 'author_archives',
+                'status' => 'optimal',
+                'title'  => esc_html__('Author Archives Protected', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Author archives are disabled or noindexed in Yoast.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'author_archives',
+                'status' => 'notice',
+                'title'  => esc_html__('Author Archives Are Active', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Author archives are enabled and indexable. On single-author sites, disabling them prevents duplicate homepage content.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        $date_disabled = !empty($titles['disable-date']) || !empty($titles['noindex-date-wpseo']);
+        if ($date_disabled) {
+            $recommendations[] = [
+                'key'    => 'date_archives',
+                'status' => 'optimal',
+                'title'  => esc_html__('Date Archives Disabled', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Date archives are disabled or noindexed in Yoast.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        return [
+            'settings'        => [
+                'strip_category_base' => $strip_cat,
+                'breadcrumbs_enabled' => $breadcrumbs,
+                'company_or_person'   => $company_or_person,
+                'company_logo'        => $company_logo,
+                'default_og_image'    => $default_og,
+                'xml_sitemap_enabled' => !empty($wpseo['enable_xml_sitemap']),
+                'tracking_enabled'    => !empty($wpseo['tracking']),
+            ],
+            'recommendations' => $recommendations,
+        ];
+    }
+
+    /**
+     * Extract and audit The SEO Framework settings.
+     *
+     * @return array
+     */
+    private function get_tsf_settings_audit() {
+        $tsf = get_option('autodescription-site-settings', []);
+        $recommendations = [];
+
+        // 1. Tag archives indexation
+        $tax_settings = isset($tsf['taxonomies']) && is_array($tsf['taxonomies']) ? $tsf['taxonomies'] : [];
+        $tag_noindex  = !empty($tax_settings['post_tag']['noindex']);
+        if ($tag_noindex) {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'optimal',
+                'title'  => esc_html__('Tag Archives Set to Noindex', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Post tags are set to noindex in The SEO Framework.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'tags_indexation',
+                'status' => 'notice',
+                'title'  => esc_html__('Tag Archives Are Indexed', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Post tags are set to index. Consider noindex to consolidate crawl budget.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 2. Default Social Fallback Image
+        $social_img = !empty($tsf['social_image_url']) ? $tsf['social_image_url'] : '';
+        if (!empty($social_img)) {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'optimal',
+                'title'  => esc_html__('Default Social Fallback Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('A default social image is set in The SEO Framework.', 'woo-get-data-for-ai'),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'default_og_image',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Default Social Image', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('No default social sharing image is configured in The SEO Framework Social settings.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 3. Schema Knowledge Graph
+        $kg_type = !empty($tsf['knowledge_type']) ? $tsf['knowledge_type'] : 'organization';
+        $kg_logo = !empty($tsf['knowledge_logo']) ? $tsf['knowledge_logo'] : '';
+        if (!empty($kg_logo)) {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'optimal',
+                'title'  => esc_html__('Schema Knowledge Graph & Logo', 'woo-get-data-for-ai'),
+                'detail' => sprintf(esc_html__('Knowledge Graph is set to "%s" with an official logo.', 'woo-get-data-for-ai'), $kg_type),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'schema_organization',
+                'status' => 'warning',
+                'title'  => esc_html__('Missing Organization Logo', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Organization logo is missing in The SEO Framework Schema settings.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 4. Author & Date archives
+        $author_noindex = !empty($tsf['author_noindex']);
+        if ($author_noindex) {
+            $recommendations[] = [
+                'key'    => 'author_archives',
+                'status' => 'optimal',
+                'title'  => esc_html__('Author Archives Protected', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Author archives are set to noindex in The SEO Framework.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        return [
+            'settings'        => [
+                'title_separator'    => isset($tsf['title_separator']) ? $tsf['title_separator'] : '-',
+                'knowledge_type'     => $kg_type,
+                'knowledge_logo'     => $kg_logo,
+                'default_social_img' => $social_img,
+                'author_noindex'     => $author_noindex,
+                'date_noindex'       => !empty($tsf['date_noindex']),
+            ],
+            'recommendations' => $recommendations,
+        ];
+    }
+
+    /**
+     * Extract and audit Redirection plugin options.
+     *
+     * @return array|null
+     */
+    private function get_redirection_settings_audit() {
+        $options = get_option('redirection_options', []);
+        if (empty($options) || !is_array($options)) {
+            return null;
+        }
+
+        $recommendations = [];
+
+        // 1. URL change monitoring
+        $monitor = isset($options['monitor_types']) && is_array($options['monitor_types']) ? $options['monitor_types'] : [];
+        if (!empty($monitor)) {
+            $recommendations[] = [
+                'key'    => 'permalink_monitor',
+                'status' => 'optimal',
+                'title'  => esc_html__('URL Permalink Change Monitoring Active', 'woo-get-data-for-ai'),
+                'detail' => sprintf(esc_html__('Automatic 301 redirects are created when URLs change for: %s.', 'woo-get-data-for-ai'), implode(', ', $monitor)),
+            ];
+        } else {
+            $recommendations[] = [
+                'key'    => 'permalink_monitor',
+                'status' => 'notice',
+                'title'  => esc_html__('Permalink Change Monitoring Inactive', 'woo-get-data-for-ai'),
+                'detail' => esc_html__('Automatic 301 redirection on slug/permalink changes is turned off in Redirection plugin.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        // 2. 404 Log retention
+        $has_404 = !empty($options['support_404']);
+        $exp_404 = isset($options['expire_404']) ? (int) $options['expire_404'] : 0;
+        if ($has_404) {
+            if ($exp_404 > 0 && $exp_404 <= 30) {
+                $recommendations[] = [
+                    'key'    => '404_retention',
+                    'status' => 'optimal',
+                    'title'  => esc_html__('404 Log Retention Healthy', 'woo-get-data-for-ai'),
+                    'detail' => sprintf(esc_html__('404 logs are automatically purged after %d days (protects database size).', 'woo-get-data-for-ai'), $exp_404),
+                ];
+            } elseif ($exp_404 > 60 || $exp_404 === 0) {
+                $recommendations[] = [
+                    'key'    => '404_retention',
+                    'status' => 'warning',
+                    'title'  => esc_html__('404 Log Retention High or Unlimited', 'woo-get-data-for-ai'),
+                    'detail' => sprintf(esc_html__('404 logs retention is set to %d days. High retention can cause database bloat in the wp_redirection_404 table.', 'woo-get-data-for-ai'), $exp_404),
+                ];
+            }
+        }
+
+        return [
+            'settings'        => [
+                'monitor_types'    => $monitor,
+                'support_404'      => $has_404,
+                'expire_404'       => $exp_404,
+                'expire_redirect'  => isset($options['expire_redirect']) ? (int) $options['expire_redirect'] : 0,
+            ],
+            'recommendations' => $recommendations,
+        ];
+    }
 }
+

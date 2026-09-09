@@ -77,7 +77,7 @@ class Permissions {
             'content' => [
                 'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, unified SEO metadata (Rank Math, Yoast, The SEO Framework), and URL redirections with 404 monitoring logs.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit', '/content/redirections', '/content/redirections/404'],
+                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit', '/content/seo/settings', '/content/redirections', '/content/redirections/404'],
             ],
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
@@ -617,6 +617,23 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['include_posts (true|false, default: false)', 'include_products (true|false, default: false)', 'include_categories (true|false, default: false)', 'limit (default: 100, max: 300)', 'limit_products (default: 50, max: 200)'],
                         'description' => esc_html__('Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/seo/settings',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Audits global settings and configuration best practices of the active SEO plugin (Rank Math, Yoast SEO, The SEO Framework) and Redirection plugin with health checks and actionable recommendations.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/redirections',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (all|enabled|disabled, default: all)', 'search', 'code (301|302|307|410)', 'per_page (default: 50, max: 200)', 'page (default: 1)', 'provider (redirection|rank_math|eps_redirects)'],
+                        'description' => esc_html__('Lists, filters, and paginates configured URL redirection rules across supported redirection plugins.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/redirections/404',
+                        'methods'     => ['GET'],
+                        'params'      => ['per_page (default: 50, max: 200)', 'page (default: 1)', 'search'],
+                        'description' => esc_html__('Inspects recent 404 error logs recorded by the Redirection plugin with hit counts and GDPR-masked client IPs.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

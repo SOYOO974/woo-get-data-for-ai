@@ -1098,6 +1098,34 @@ async function pullContent() {
                 seoMd += `\n`;
             }
 
+            // Pull SEO Plugin Settings & Optimization Audit
+            try {
+                const seoSettings = await makeRequest('/content/seo/settings');
+                writeJson(path.join(contentDir, 'seo-settings.json'), seoSettings);
+
+                if (seoSettings.summary) {
+                    seoMd += `## ⚙️ Global SEO Plugin Settings Audit\n\n`;
+                    seoMd += `- **Provider**: ${seoSettings.provider ? seoSettings.provider.label : 'N/A'}\n`;
+                    seoMd += `- **Health Score**: **${seoSettings.summary.health_score !== undefined ? seoSettings.summary.health_score + '%' : '100%'}**\n`;
+                    seoMd += `- **Optimal Settings**: 🟢 ${seoSettings.summary.optimal_count || 0}\n`;
+                    seoMd += `- **Critical Issues**: 🔴 ${seoSettings.summary.critical_count || 0}\n`;
+                    seoMd += `- **Warnings**: 🟡 ${seoSettings.summary.warning_count || 0}\n`;
+                    seoMd += `- **Notices**: ℹ️ ${seoSettings.summary.notice_count || 0}\n\n`;
+
+                    if (Array.isArray(seoSettings.recommendations) && seoSettings.recommendations.length > 0) {
+                        seoMd += `### 🛠️ SEO Settings Recommendations\n\n`;
+                        seoMd += `| Severity | Check | Issue | Recommendation |\n|---|---|---|---|\n`;
+                        seoSettings.recommendations.forEach(r => {
+                            const icon = r.severity === 'critical' ? '🔴' : (r.severity === 'warning' ? '🟡' : 'ℹ️');
+                            seoMd += `| ${icon} ${(r.severity || '').toUpperCase()} | **${r.label || r.key}** | ${r.issue || '-'} | ${r.recommendation || '-'} |\n`;
+                        });
+                        seoMd += `\n`;
+                    }
+                }
+            } catch (settingsErr) {
+                console.warn('  ⚠️ Failed to pull /content/seo/settings:', settingsErr.message);
+            }
+
             writeText(path.join(contentDir, 'seo-audit.md'), seoMd);
         } catch (seoErr) {
             console.warn('  ⚠️ Failed to pull /content/seo-audit:', seoErr.message);
@@ -1185,7 +1213,7 @@ async function pullContent() {
             console.warn('  ⚠️ Failed to pull /content/redirections:', redirErr.message);
         }
 
-        console.log('✅ Saved WordPress pages, content trees, SEO audit, and redirections to ./content/');
+        console.log('✅ Saved WordPress pages, content trees, SEO audit, SEO plugin settings, and redirections to ./content/');
     } catch (err) {
         console.error('❌ Failed to pull content & SEO data:', err.message);
     }

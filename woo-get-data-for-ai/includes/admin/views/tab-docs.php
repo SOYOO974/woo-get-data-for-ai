@@ -220,7 +220,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/content/pages</code>, <code>/content/page/{id}</code>, <code>/content/posts</code>, <code>/content/post/{id}</code>, <code>/content/seo-audit</code>, <code>/content/redirections</code>, <code>/content/redirections/404</code></td>
+                    <td><code>/content/pages</code>, <code>/content/page/{id}</code>, <code>/content/posts</code>, <code>/content/post/{id}</code>, <code>/content/seo-audit</code>, <code>/content/seo/settings</code>, <code>/content/redirections</code>, <code>/content/redirections/404</code></td>
                     <td><?php esc_html_e('WordPress pages and blog posts hierarchy, raw and rendered Gutenberg block trees, shortcodes, page templates, unified SEO audit across pages, posts, WooCommerce products, and categories (Rank Math, Yoast, The SEO Framework, SEOPress, AIOSEO), and URL redirections with 404 monitoring logs (Redirection, Rank Math, 301 Redirects).', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
