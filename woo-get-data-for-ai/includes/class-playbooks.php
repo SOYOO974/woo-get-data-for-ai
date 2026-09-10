@@ -52,6 +52,9 @@ class Playbooks {
                     'yoast settings',
                     'audit configuration seo',
                     'pièces jointes indexées',
+                    'monitoring 404',
+                    'liens brisés',
+                    'liens brises',
                 ],
                 'workflow'        => [
                     [
@@ -80,11 +83,19 @@ class Playbooks {
                     ],
                     [
                         'step'        => 4,
-                        'action'      => esc_html__('301 URL Redirections & 404 Diagnostics', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('301 URL Redirections & Migration Mapping', 'woo-get-data-for-ai'),
                         'endpoint'    => '/content/redirections',
                         'params'      => ['per_page' => 50, 'status' => 'all'],
                         'description' => esc_html__('Inspects configured 301/302/307/410 redirects across Redirection plugin, Rank Math, or 301 Redirects, monitors hit counts, and prepares migration exports.', 'woo-get-data-for-ai'),
                         'key_signals' => ['provider', 'total_redirects', 'redirects[].source_url', 'redirects[].target_url', 'redirects[].status_code', 'redirects[].hits'],
+                    ],
+                    [
+                        'step'        => 5,
+                        'action'      => esc_html__('404 Errors & Broken Links Monitoring', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/content/redirections/404',
+                        'params'      => ['limit' => 50],
+                        'description' => esc_html__('Inspects 404 error logs recorded by Redirection plugin, ranks top missing URLs by frequency, and identifies broken referrers needing urgent 301 mapping.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_404_logs', 'top_404_urls[].url', 'top_404_urls[].hits_count', 'top_404_urls[].last_seen', 'recent_logs[].url', 'recent_logs[].referrer'],
                     ],
                 ],
             ],
@@ -768,7 +779,9 @@ class Playbooks {
         $md .= "# Refresh full dynamic skill & active playbooks\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md\n\n";
         $md .= "# Pillar 1: SEO, Content & Visibility\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/redirections?per_page=50'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/redirections/404?limit=50'\n\n";
         $md .= "# Pillar 2: Frontend Performance & Core Web Vitals\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/caching'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";

@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-09  
+> **Last Updated**: 2026-09-10  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -389,11 +389,27 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.26.0: `pull:content` dumps global SEO plugin settings & optimization health audit (`seo-settings.json`) and enriches `seo-audit.md` with settings health score and actionable recommendations.
 - Optimized for v1.27.0: `purge:cache` triggers on-demand multi-layer cache purging (`POST /performance/cache/purge`) with `--scope=all|cdn|page|object`.
 - Optimized for v1.28.0: Breeze (Cloudways) cache purging (`POST /performance/cache/purge`) and settings inspection (`GET /performance/caching`) with performance optimization recommendations.
+- Optimized for v1.29.0: Playbook SEO (`seo_content_audit`) with dedicated Step 5 for 404 error monitoring (`GET /content/redirections/404`) and refined Step 4 for 301 migration mapping.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.29.0 (2026-09-10)
+- **Playbook SEO (`seo_content_audit`) : Ajout de l'Étape 5 dédiée au Monitoring des Erreurs 404 & Liens Brisés (`includes/class-playbooks.php`, `SKILL.md`)** :
+  - **Scission & Recentrage Opérationnel** :
+    - Étape 4 renommée et recentrée sur la cartographie et export des règles de redirection 301 : `301 URL Redirections & Migration Mapping` (`/content/redirections`, `params`: `per_page=50, status=all`).
+    - Étape 5 créée pour le monitoring approfondi des erreurs 404 : `404 Errors & Broken Links Monitoring` (`/content/redirections/404`, `params`: `limit=50`).
+  - **Prescription des Signaux Clés d'Audit SEO** :
+    - Exposition directe aux agents IA des signaux critiques de diagnostic : `total_404_logs`, `top_404_urls[].url`, `top_404_urls[].hits_count`, `top_404_urls[].last_seen`, `recent_logs[].url`, `recent_logs[].referrer`.
+    - Nouveaux déclencheurs d'intention ajoutés au playbook (`monitoring 404`, `liens brisés`, `liens brises`).
+  - **Synchronisation Skill IA (`SKILL.md`) & Exemples cURL** :
+    - Ajout des exemples cURL pour les étapes 4 et 5 du Pilier 1 dans `Playbooks::generate_skill_markdown()`.
+    - Actualisation synchronisée de `SKILL.md` et `.agents/skills/wp-agent-bridge/SKILL.md`.
+  - **Internationalisation (i18n) & Loco Translate 100%** :
+    - Nouvelles chaînes enveloppées dans `esc_html__()` avec domaine de texte `'woo-get-data-for-ai'`.
+    - Dictionnaire `cli/translations-fr.php` enrichi, catalogue `languages/woo-get-data-for-ai.pot`, traductions `languages/woo-get-data-for-ai-fr_FR.po` et binaire compilé `languages/woo-get-data-for-ai-fr_FR.mo` régénérés à 100% de couverture (587 chaînes).
 
 ### v1.28.0 (2026-09-10)
 - **Support Complet de Breeze (Cloudways) : Vidage de Cache Multi-Niveaux & Inspection Approfondie des Réglages (`Performance_Controller`, `Permissions`, `Playbooks`, `tab-docs.php`, `sync.js`)** :
