@@ -1936,12 +1936,16 @@ class Content_Controller extends Rest_Controller {
         }
 
         return $this->response([
-            'provider'       => null,
-            'provider_label' => 'None Detected',
-            'total_404_logs' => 0,
-            'top_404_urls'   => [],
-            'recent_logs'    => [],
-            'notice'         => esc_html__('No 404 monitoring table found on this site (checked Redirection and Rank Math).', 'woo-get-data-for-ai'),
+            'provider'                  => null,
+            'provider_label'            => 'None Detected',
+            'total_404_logs'            => 0,
+            'top_404_urls'              => [],
+            'recent_logs'               => [],
+            'patterns_summary'          => (object) [],
+            'pattern_clusters'          => (object) [],
+            'smart_snippet_recommended' => false,
+            'smart_snippet_advice'      => null,
+            'notice'                    => esc_html__('No 404 monitoring table found on this site (checked Redirection and Rank Math).', 'woo-get-data-for-ai'),
         ]);
     }
 
@@ -1962,24 +1966,29 @@ class Content_Controller extends Rest_Controller {
 
         $total = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_404} {$where}", $params)) : (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_404}");
 
-        // Top 404 URLs grouped by frequency
+        // Top 404 URLs grouped by frequency - sample up to 250 rows for robust pattern clustering
         $top_sql = "SELECT url, COUNT(*) as hits_count, MAX(created) as last_seen
                     FROM {$table_404}
                     {$where}
                     GROUP BY url
                     ORDER BY hits_count DESC
                     LIMIT %d";
-        $top_params = array_merge($params, [$limit]);
-        $top_rows   = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
+        $fetch_limit = max($limit, 250);
+        $top_params  = array_merge($params, [$fetch_limit]);
+        $top_rows    = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
 
         $top_404_urls = [];
-        foreach ($top_rows as $row) {
-            $top_404_urls[] = [
-                'url'        => $row->url,
-                'hits_count' => (int) $row->hits_count,
-                'last_seen'  => $row->last_seen,
-            ];
+        if (is_array($top_rows)) {
+            foreach (array_slice($top_rows, 0, $limit) as $row) {
+                $top_404_urls[] = [
+                    'url'        => $row->url,
+                    'hits_count' => (int) $row->hits_count,
+                    'last_seen'  => $row->last_seen,
+                ];
+            }
         }
+
+        $cluster_data = $this->build_404_patterns_summary(is_array($top_rows) ? $top_rows : [], 'url', 'hits_count');
 
         // Recent 404 entries
         $recent_sql = "SELECT id, created, url, domain, agent, referrer, ip
@@ -2004,11 +2013,15 @@ class Content_Controller extends Rest_Controller {
         }
 
         return $this->response([
-            'provider'       => 'redirection',
-            'provider_label' => 'Redirection 404 Monitor',
-            'total_404_logs' => $total,
-            'top_404_urls'   => $top_404_urls,
-            'recent_logs'    => $recent_logs,
+            'provider'                  => 'redirection',
+            'provider_label'            => 'Redirection 404 Monitor',
+            'total_404_logs'            => $total,
+            'top_404_urls'              => $top_404_urls,
+            'recent_logs'               => $recent_logs,
+            'patterns_summary'          => $cluster_data['patterns_summary'],
+            'pattern_clusters'          => $cluster_data['patterns_summary'],
+            'smart_snippet_recommended' => $cluster_data['smart_snippet_recommended'],
+            'smart_snippet_advice'      => $cluster_data['smart_snippet_advice'],
         ]);
     }
 
@@ -2035,19 +2048,20 @@ class Content_Controller extends Rest_Controller {
             $total     = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
         }
 
-        // Top 404 URLs grouped by frequency
+        // Top 404 URLs grouped by frequency - sample up to 250 rows for robust pattern clustering
         $top_sql = "SELECT uri, SUM(times_accessed) as hits_count, MAX(accessed) as last_seen
                     FROM {$table_404}
                     {$where}
                     GROUP BY uri
                     ORDER BY hits_count DESC
                     LIMIT %d";
-        $top_params = array_merge($params, [$limit]);
-        $top_rows   = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
+        $fetch_limit = max($limit, 250);
+        $top_params  = array_merge($params, [$fetch_limit]);
+        $top_rows    = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
 
         $top_404_urls = [];
         if (is_array($top_rows)) {
-            foreach ($top_rows as $row) {
+            foreach (array_slice($top_rows, 0, $limit) as $row) {
                 $top_404_urls[] = [
                     'url'        => $row->uri,
                     'hits_count' => (int) $row->hits_count ?: 1,
@@ -2055,6 +2069,8 @@ class Content_Controller extends Rest_Controller {
                 ];
             }
         }
+
+        $cluster_data = $this->build_404_patterns_summary(is_array($top_rows) ? $top_rows : [], 'uri', 'hits_count');
 
         // Recent 404 entries (Rank Math columns: id, accessed, uri, referer, user_agent)
         $recent_sql = "SELECT id, accessed, uri, referer, user_agent
@@ -2081,12 +2097,155 @@ class Content_Controller extends Rest_Controller {
         }
 
         return $this->response([
-            'provider'       => 'rank_math',
-            'provider_label' => 'Rank Math 404 Monitor',
-            'total_404_logs' => $total,
-            'top_404_urls'   => $top_404_urls,
-            'recent_logs'    => $recent_logs,
+            'provider'                  => 'rank_math',
+            'provider_label'            => 'Rank Math 404 Monitor',
+            'total_404_logs'            => $total,
+            'top_404_urls'              => $top_404_urls,
+            'recent_logs'               => $recent_logs,
+            'patterns_summary'          => $cluster_data['patterns_summary'],
+            'pattern_clusters'          => $cluster_data['patterns_summary'],
+            'smart_snippet_recommended' => $cluster_data['smart_snippet_recommended'],
+            'smart_snippet_advice'      => $cluster_data['smart_snippet_advice'],
         ]);
+    }
+
+    /**
+     * Group 404 URLs into structural pattern clusters and recommend smart snippets.
+     *
+     * Identifies high-volume structural 404 patterns (deleted products, JS pagination bugs,
+     * Apple/Safari browser queries, cache assets, security probes, legacy migrations)
+     * and recommends in-memory PHP snippet remediation (template_redirect hook at priority 1)
+     * to prevent database bloat in redirection tables (wp_rank_math_redirections).
+     *
+     * @param array  $rows      Array of DB row objects containing URLs and hits.
+     * @param string $url_col   Object property containing URL string ('url' or 'uri').
+     * @param string $hits_col  Object property containing hit count ('hits_count').
+     * @return array
+     */
+    protected function build_404_patterns_summary(array $rows, $url_col = 'url', $hits_col = 'hits_count') {
+        $product_slugs = ['produit', 'product', 'p', 'item', 'boutique'];
+        if (function_exists('wc_get_permalink_structure')) {
+            $permalinks = wc_get_permalink_structure();
+            if (!empty($permalinks['product_rewrite_slug'])) {
+                $slug = trim($permalinks['product_rewrite_slug'], '/');
+                if (!empty($slug) && !in_array($slug, $product_slugs, true)) {
+                    $product_slugs[] = preg_quote($slug, '#');
+                }
+            }
+        }
+        $product_pattern_regex = '~/(?:' . implode('|', $product_slugs) . ')/~i';
+        $product_pattern_desc  = 'produit/*, product/*';
+
+        $definitions = [
+            'browser_icons' => [
+                'regex'       => '~(?:apple-touch-icon|favicon|\.ico(?:$|\?)|browserconfig\.xml|manifest\.json|safari-pinned-tab\.svg)~i',
+                'pattern'     => 'apple-touch-icon*, favicon*, *.ico',
+                'label'       => esc_html__('Browser & Mobile System Requests', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'pagination_bugs' => [
+                'regex'       => '~(?:/page/\d+/null|/null(?:[/?#]|$)|/undefined(?:[/?#]|$)|[?&](?:page|paged|p)=(?:null|undefined))~i',
+                'pattern'     => '*/null, */undefined',
+                'label'       => esc_html__('Frontend & Pagination JS Bugs', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'products' => [
+                'regex'       => $product_pattern_regex,
+                'pattern'     => $product_pattern_desc,
+                'label'       => esc_html__('Product Pages (Deleted/Moved)', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'cache_assets' => [
+                'regex'       => '~(?:/wp-content/cache/|/breeze-min/|autoptimize|et-cache|/wpr_desktop/|\.min\.(?:js|css)(?:$|\?))~i',
+                'pattern'     => '/wp-content/cache/*, /breeze-min/*, *.min.js, *.min.css',
+                'label'       => esc_html__('CDN & Cache Minified Assets', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'security_probes' => [
+                'regex'       => '~(?:^\.?env|/\.env|\.git|xmlrpc\.php|wp-config|\.sql(?:$|\?)|\.bak(?:$|\?)|phpmyadmin|wp-login\.php|ads\.txt|app-ads\.txt|setup-config\.php|eval-stdin)~i',
+                'pattern'     => '.env, .git, xmlrpc.php, *.sql, ads.txt',
+                'label'       => esc_html__('Security Probes & Automated Scanners', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'legacy_migrations' => [
+                'regex'       => '~(?:/default/|/sud/|/catalogsearch/|/media/catalog/|\.html(?:$|\?)|\.htm(?:$|\?)|index\.php/)~i',
+                'pattern'     => '*.html, default/*, catalogsearch/*',
+                'label'       => esc_html__('Legacy CMS / Migration Remnants', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+            'other' => [
+                'regex'       => null,
+                'pattern'     => '*',
+                'label'       => esc_html__('Other URLs', 'woo-get-data-for-ai'),
+                'count'       => 0,
+                'hits'        => 0,
+                'sample_urls' => [],
+            ],
+        ];
+
+        foreach ($rows as $row) {
+            $url = trim($row->$url_col ?? '');
+            if ($url === '') {
+                continue;
+            }
+            $hits = isset($row->$hits_col) ? max(1, (int) $row->$hits_col) : 1;
+
+            $matched_key = 'other';
+            foreach ($definitions as $key => $def) {
+                if ($def['regex'] && preg_match($def['regex'], $url)) {
+                    $matched_key = $key;
+                    break;
+                }
+            }
+
+            $definitions[$matched_key]['count']++;
+            $definitions[$matched_key]['hits'] += $hits;
+            if (count($definitions[$matched_key]['sample_urls']) < 3 && !in_array($url, $definitions[$matched_key]['sample_urls'], true)) {
+                $definitions[$matched_key]['sample_urls'][] = $url;
+            }
+        }
+
+        // Build filtered summary (only categories with count > 0)
+        $summary = [];
+        foreach ($definitions as $key => $def) {
+            if ($def['count'] > 0) {
+                $summary[$key] = [
+                    'count'       => $def['count'],
+                    'hits'        => $def['hits'],
+                    'pattern'     => $def['pattern'],
+                    'label'       => $def['label'],
+                    'sample_urls' => $def['sample_urls'],
+                ];
+            }
+        }
+
+        // Smart snippet is recommended if recurring patterns (products, pagination bugs, browser icons) exist
+        $has_product_404s    = !empty($summary['products']['count']);
+        $has_pagination_bugs = !empty($summary['pagination_bugs']['count']);
+        $has_browser_icons   = !empty($summary['browser_icons']['count']);
+
+        $smart_snippet_recommended = $has_product_404s || $has_pagination_bugs || $has_browser_icons;
+
+        return [
+            'patterns_summary'          => $summary,
+            'smart_snippet_recommended' => $smart_snippet_recommended,
+            'smart_snippet_advice'      => esc_html__(
+                'Remediate repetitive 404 patterns via an in-memory PHP Code Snippet (hook template_redirect, priority 1) or global regex rules rather than bloating database redirection tables (wp_rank_math_redirections). For deleted products, implement a semantic safety net falling back to the parent category or shop catalog.',
+                'woo-get-data-for-ai'
+            ),
+        ];
     }
 
     /**

@@ -55,6 +55,13 @@ class Playbooks {
                     'monitoring 404',
                     'liens brisés',
                     'liens brises',
+                    'redirections intelligentes',
+                    'smart redirections',
+                    'snippet 404',
+                    'nettoyer les 404',
+                    'optimiser les redirections',
+                    'fallback produit 404',
+                    'safety net 404',
                 ],
                 'workflow'        => [
                     [
@@ -91,11 +98,11 @@ class Playbooks {
                     ],
                     [
                         'step'        => 5,
-                        'action'      => esc_html__('404 Errors & Broken Links Monitoring', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('404 Errors Monitoring, Pattern Clustering & Smart Redirection Strategy', 'woo-get-data-for-ai'),
                         'endpoint'    => '/content/redirections/404',
-                        'params'      => ['limit' => 50],
-                        'description' => esc_html__('Inspects 404 error logs recorded by Redirection or Rank Math plugins, ranks top missing URLs by frequency, and identifies broken referrers needing urgent 301 mapping.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['total_404_logs', 'top_404_urls[].url', 'top_404_urls[].hits_count', 'top_404_urls[].last_seen', 'recent_logs[].url', 'recent_logs[].referrer'],
+                        'params'      => ['limit' => 100],
+                        'description' => esc_html__('Analyzes 404 error logs grouped by pattern typologies (deleted products, JS pagination bugs, Apple/Safari browser requests, cache assets, security probes). Prioritizes remediation via an in-memory PHP Code Snippet (template_redirect hook at priority 1) or global regex rules to prevent SQL redirection table bloat, and prescribes a semantic safety net to direct orphan products to their respective category.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_404_logs', 'top_404_urls[].url', 'top_404_urls[].hits_count', 'top_404_urls[].last_seen', 'pattern_clusters', 'patterns_summary', 'smart_snippet_recommended'],
                     ],
                 ],
             ],
@@ -724,7 +731,13 @@ class Playbooks {
         $md .= "     - Use `GET /pmpro/levels` to verify membership level duration rules (flagging duration anomalies like 11 months vs 12 months).\n";
         $md .= "     - Use `GET /pmpro/member/{user_id}` to inspect the user's membership timeline, active status, enddate, and order transactions.\n";
         $md .= "     - Use `GET /masterstudy/courses` to inspect course durations, pricing mode, and PMPro levels allowed.\n";
-        $md .= "     - Use `GET /masterstudy/user/{user_id}/courses` to inspect course enrollments, course expiration rules, linked `subscription_id`, and detect pointer mismatches (e.g. `subscription_id` points to a changed/cancelled row while the user has another active membership).\n\n";
+        $md .= "     - Use `GET /masterstudy/user/{user_id}/courses` to inspect course enrollments, course expiration rules, linked `subscription_id`, and detect pointer mismatches (e.g. `subscription_id` points to a changed/cancelled row while the user has another active membership).\n";
+        $md .= "9. **404 REMEDIATION, PATTERN CLUSTERING & SMART CODE SNIPPETS**:\n";
+        $md .= "   - When analyzing 404 errors via `/content/redirections/404`:\n";
+        $md .= "     - Group missing URLs by pattern clusters (`patterns_summary` / `pattern_clusters`): deleted products, JS pagination bugs (`*/null`, `*/undefined`), browser/iOS requests (`apple-touch-icon*.png`), cache assets, or security probes.\n";
+        $md .= "     - **NEVER** recommend mass CSV export/import of hundreds or thousands of static 301 rules into `wp_rank_math_redirections` or Redirection plugin, as this bloats SQL tables and slows every request resolution.\n";
+        $md .= "     - **ALWAYS prioritize an in-memory PHP Code Snippet** hooked into `template_redirect` (priority 1) or global regex rules.\n";
+        $md .= "     - For deleted/orphan WooCommerce products (`/produit/*` or `/product/*`), recommend an intelligent fallback snippet that extracts the product slug, searches for similar categories or redirects cleanly to the parent category/shop rather than accumulating stale DB rows.\n\n";
 
         $md .= "---\n\n";
 

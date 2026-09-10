@@ -1205,14 +1205,28 @@ async function pullContent() {
 
             // Pull 404 logs if available
             try {
-                const logs404 = await makeRequest('/content/redirections/404?per_page=50');
+                const logs404 = await makeRequest('/content/redirections/404?limit=100');
                 writeJson(path.join(contentDir, '404-logs.json'), logs404);
 
-                if (logs404.logs && logs404.logs.length > 0) {
-                    redirMd += `### Recent 404 Errors (Top Hits)\n\n`;
-                    redirMd += `| Requested URL | Hits | Referrer | Last Detected |\n|---|---|---|---|\n`;
-                    logs404.logs.slice(0, 30).forEach(l => {
-                        redirMd += `| \`${l.url}\` | ${l.hits || 1} | \`${l.referrer || '-'}\` | ${l.last_detected || '-'} |\n`;
+                if (logs404.patterns_summary && Object.keys(logs404.patterns_summary).length > 0) {
+                    redirMd += `### 404 Structural Patterns Summary\n\n`;
+                    if (logs404.smart_snippet_recommended) {
+                        redirMd += `> 💡 **Smart Redirection Snippet Recommended**: In-memory PHP remediation (hook \`template_redirect\`, priority 1) recommended over mass SQL table imports to prevent table bloat.\n\n`;
+                    }
+                    redirMd += `| Category | Pattern | Distinct URLs | Total Hits | Sample URLs |\n|---|---|---|---|---|\n`;
+                    for (const [key, cluster] of Object.entries(logs404.patterns_summary)) {
+                        const samples = (cluster.sample_urls || []).map(u => `\`${u}\``).join(', ');
+                        redirMd += `| **${cluster.label || key}** | \`${cluster.pattern}\` | ${cluster.count} | **${cluster.hits}** | ${samples || '-'} |\n`;
+                    }
+                    redirMd += `\n`;
+                }
+
+                const topUrls = logs404.top_404_urls || logs404.logs || [];
+                if (topUrls.length > 0) {
+                    redirMd += `### Top 404 Errors\n\n`;
+                    redirMd += `| Requested URL | Hits | Last Seen |\n|---|---|---|\n`;
+                    topUrls.slice(0, 30).forEach(l => {
+                        redirMd += `| \`${l.url}\` | ${l.hits_count || l.hits || 1} | ${l.last_seen || l.last_detected || '-'} |\n`;
                     });
                     redirMd += `\n`;
                 }

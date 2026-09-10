@@ -329,7 +329,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
 - **Built-in Procedural Playbooks (7 MECE Strategic Master Pillars)**:
   To eliminate LLM attention dilution and trigger collisions while providing comprehensive agency-grade diagnostics, the playbooks are strictly organized into 7 MECE (Mutually Exclusive, Collectively Exhaustive) master pillars:
-  1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, 301/302/410 URL redirection rules / 404 error logs monitoring, and global SEO plugin settings best practices audit (`/content/seo-audit`, `/content/seo/settings`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).
+  1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, 301/302/410 URL redirection rules, 404 structural pattern clustering & smart in-memory redirection snippets recommendation, and global SEO plugin settings best practices audit (`/content/seo-audit`, `/content/seo/settings`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
   4. `order_checkout_troubleshoot` (Orders, Payment Gateways, PMPro & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), WooCommerce webhook delivery status, Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
@@ -391,11 +391,34 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.28.0: Breeze (Cloudways) cache purging (`POST /performance/cache/purge`) and settings inspection (`GET /performance/caching`) with performance optimization recommendations.
 - Optimized for v1.29.0: Playbook SEO (`seo_content_audit`) with dedicated Step 5 for 404 error monitoring (`GET /content/redirections/404`) and refined Step 4 for 301 migration mapping.
 - Optimized for v1.30.0: Unified 404 error monitoring (`GET /content/redirections/404`) supporting both Redirection (`wp_redirection_404`) and Rank Math SEO (`wp_rank_math_404_logs`) with optional `provider` filter and total 404 count in SEO summary.
+- Optimized for v1.31.0: `pull:content` pulls 404 logs (`GET /content/redirections/404?limit=100`) and summarizes structural pattern clusters (`patterns_summary`) alongside smart in-memory code snippet recommendations in `redirections.md`.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.31.0 (2026-09-10)
+- **Playbook SEO (`seo_content_audit`) : Typologies 404 & Stratégie Redirections Intelligentes en Mémoire (`includes/class-playbooks.php`, `class-content-controller.php`, `SKILL.md`)** :
+  - **Évolution de l'Étape 5 du Playbook** :
+    - Action : *Surveillance des erreurs 404, détection de patterns & stratégie de redirection* (`/content/redirections/404?limit=100`).
+    - Description prescriptive orientant les IA vers la remédiation par Code Snippets PHP en mémoire (`template_redirect`, priorité 1) ou règles Regex globales plutôt que l'accumulation de milliers de redirections exactes en base SQL (`wp_rank_math_redirections`).
+    - Signaux clés : `pattern_clusters`, `patterns_summary`, `smart_snippet_recommended`.
+    - 7 nouveaux déclencheurs d'intention (`intent_triggers`) : `redirections intelligentes`, `smart redirections`, `snippet 404`, `nettoyer les 404`, `optimiser les redirections`, `fallback produit 404`, `safety net 404`.
+  - **Clustering de Motifs 404 dans l'API (`GET /content/redirections/404`)** :
+    - Regroupement automatique (`patterns_summary` / `pattern_clusters`) en 6 catégories structurelles à haute valeur ajoutée :
+      1. `products` : fiches produits supprimées/déplacées (`produit/*`, `product/*`, détection dynamique du slug de base WooCommerce).
+      2. `browser_icons` : requêtes automatiques Safari/iOS (`apple-touch-icon*.png`, `favicon*`, `browserconfig.xml`).
+      3. `pagination_bugs` : bugs frontend JS concaténant `null` ou `undefined` (`*/null`, `*/undefined`, `/page/X/null`).
+      4. `cache_assets` : assets minifiés ou fichiers de cache CDN absents sur disque (`/wp-content/cache/*`, `/breeze-min/*`, `*.min.js`, `*.min.css`).
+      5. `security_probes` : sondes de robots et scanners malveillants (`.env`, `.git`, `xmlrpc.php`, `wp-config`, `*.sql`, `ads.txt`).
+      6. `legacy_migrations` : reliquats d'anciens CMS Magento / PrestaShop (`default/*`, `catalogsearch/*`, `*.html`).
+    - Recommandation active (`smart_snippet_recommended: true` et `smart_snippet_advice`) dès qu'un motif récurrent est détecté.
+  - **Directive Agent 9 dans le Skill Markdown (`SKILL.md`)** :
+    - Interdiction formelle aux agents IA de prescrire des imports CSV massifs saturant la table `wp_rank_math_redirections`.
+    - Prescription systématique d'un snippet PHP ultra-léger avec filet de sécurité sémantique pour rediriger les anciens produits orphelins vers leur rayon respectif.
+  - **Internationalisation & Loco Translate 100%** :
+    - Régénération automatique des fichiers `woo-get-data-for-ai.pot`, `woo-get-data-for-ai-fr_FR.po` et binaire compilé `woo-get-data-for-ai-fr_FR.mo`.
 
 ### v1.30.1 (2026-09-10)
 - **Correctif Colonnes Rank Math 404 Monitor (`includes/api/class-content-controller.php`)** :
