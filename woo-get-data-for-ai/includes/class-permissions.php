@@ -638,8 +638,8 @@ class Permissions {
                     [
                         'path'        => '/content/redirections/404',
                         'methods'     => ['GET'],
-                        'params'      => ['per_page (default: 50, max: 200)', 'page (default: 1)', 'search'],
-                        'description' => esc_html__('Inspects recent 404 error logs recorded by the Redirection plugin with hit counts and GDPR-masked client IPs.', 'woo-get-data-for-ai'),
+                        'params'      => ['limit (default: 50, max: 200)', 'search', 'provider (redirection|rank_math)'],
+                        'description' => esc_html__('Inspects recent 404 error logs recorded by Redirection or Rank Math plugins with hit counts, broken referrers, and GDPR-masked client IPs.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

@@ -94,7 +94,7 @@ class Playbooks {
                         'action'      => esc_html__('404 Errors & Broken Links Monitoring', 'woo-get-data-for-ai'),
                         'endpoint'    => '/content/redirections/404',
                         'params'      => ['limit' => 50],
-                        'description' => esc_html__('Inspects 404 error logs recorded by Redirection plugin, ranks top missing URLs by frequency, and identifies broken referrers needing urgent 301 mapping.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Inspects 404 error logs recorded by Redirection or Rank Math plugins, ranks top missing URLs by frequency, and identifies broken referrers needing urgent 301 mapping.', 'woo-get-data-for-ai'),
                         'key_signals' => ['total_404_logs', 'top_404_urls[].url', 'top_404_urls[].hits_count', 'top_404_urls[].last_seen', 'recent_logs[].url', 'recent_logs[].referrer'],
                     ],
                 ],

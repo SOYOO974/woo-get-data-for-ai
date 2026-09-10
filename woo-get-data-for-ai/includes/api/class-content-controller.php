@@ -220,6 +220,10 @@ class Content_Controller extends Rest_Controller {
                     'default'           => '',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
+                'provider' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
             ],
         ]);
     }
@@ -1557,6 +1561,7 @@ class Content_Controller extends Rest_Controller {
         $redirection_table = $wpdb->prefix . 'redirection_items';
         $rank_math_table   = $wpdb->prefix . 'rank_math_redirections';
         $table_404         = $wpdb->prefix . 'redirection_404';
+        $table_rm_404      = $wpdb->prefix . 'rank_math_404_logs';
 
         // 1. Redirection plugin
         $has_redirection = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $redirection_table)) === $redirection_table;
@@ -1581,6 +1586,14 @@ class Content_Controller extends Rest_Controller {
         if ($has_rm_redir) {
             $total_redirects = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rank_math_table}");
             $active_count    = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$rank_math_table} WHERE status='active'");
+            $has_rm_404      = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_rm_404)) === $table_rm_404;
+            $total_404       = null;
+            if ($has_rm_404) {
+                $total_404 = (int) $wpdb->get_var("SELECT SUM(times_visited) FROM {$table_rm_404}");
+                if ($total_404 === 0) {
+                    $total_404 = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_rm_404}");
+                }
+            }
 
             return [
                 'provider'           => 'rank_math',
@@ -1588,7 +1601,7 @@ class Content_Controller extends Rest_Controller {
                 'total_redirects'    => $total_redirects,
                 'enabled_redirects'  => $active_count,
                 'disabled_redirects' => $total_redirects - $active_count,
-                'total_404_logged'   => null,
+                'total_404_logged'   => $total_404,
             ];
         }
 
@@ -1890,26 +1903,55 @@ class Content_Controller extends Rest_Controller {
 
     /**
      * GET /content/redirections/404
-     * Lists recent and top 404 monitoring logs from Redirection plugin.
+     * Lists recent and top 404 monitoring logs from Redirection plugin or Rank Math SEO.
      */
     public function get_404_logs(\WP_REST_Request $request) {
         global $wpdb;
 
-        $limit  = min(max(10, (int) ($request->get_param('limit') ?: 50)), 200);
-        $search = trim((string) ($request->get_param('search') ?: ''));
+        $limit    = min(max(10, (int) ($request->get_param('limit') ?: 50)), 200);
+        $search   = trim((string) ($request->get_param('search') ?: ''));
+        $provider = strtolower(trim((string) ($request->get_param('provider') ?: '')));
+
+        $table_redirection_404 = $wpdb->prefix . 'redirection_404';
+        $table_rank_math_404   = $wpdb->prefix . 'rank_math_404_logs';
+
+        $has_redirection = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_redirection_404)) === $table_redirection_404;
+        $has_rank_math   = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_rank_math_404)) === $table_rank_math_404;
+
+        // Provider override or automatic detection
+        if ($provider === 'rank_math' && $has_rank_math) {
+            return $this->get_404_logs_from_rank_math($limit, $search);
+        }
+        if ($provider === 'redirection' && $has_redirection) {
+            return $this->get_404_logs_from_redirection($limit, $search);
+        }
+
+        // Automatic discovery: Redirection first, then Rank Math
+        if ($has_redirection) {
+            return $this->get_404_logs_from_redirection($limit, $search);
+        }
+
+        if ($has_rank_math) {
+            return $this->get_404_logs_from_rank_math($limit, $search);
+        }
+
+        return $this->response([
+            'provider'       => null,
+            'provider_label' => 'None Detected',
+            'total_404_logs' => 0,
+            'top_404_urls'   => [],
+            'recent_logs'    => [],
+            'notice'         => esc_html__('No 404 monitoring table found on this site (checked Redirection and Rank Math).', 'woo-get-data-for-ai'),
+        ]);
+    }
+
+    /**
+     * Fetch 404 error logs from John Godley's Redirection plugin table.
+     */
+    protected function get_404_logs_from_redirection($limit, $search) {
+        global $wpdb;
 
         $table_404 = $wpdb->prefix . 'redirection_404';
-        $table_exists = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_404));
-
-        if ($table_exists !== $table_404) {
-            return $this->response([
-                'provider'       => null,
-                'total_404_logs' => 0,
-                'top_404_urls'   => [],
-                'recent_logs'    => [],
-                'notice'         => esc_html__('No Redirection 404 monitoring table found on this site.', 'woo-get-data-for-ai'),
-            ]);
-        }
 
         $where  = '';
         $params = [];
@@ -1928,7 +1970,7 @@ class Content_Controller extends Rest_Controller {
                     ORDER BY hits_count DESC
                     LIMIT %d";
         $top_params = array_merge($params, [$limit]);
-        $top_rows = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
+        $top_rows   = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
 
         $top_404_urls = [];
         foreach ($top_rows as $row) {
@@ -1964,6 +2006,79 @@ class Content_Controller extends Rest_Controller {
         return $this->response([
             'provider'       => 'redirection',
             'provider_label' => 'Redirection 404 Monitor',
+            'total_404_logs' => $total,
+            'top_404_urls'   => $top_404_urls,
+            'recent_logs'    => $recent_logs,
+        ]);
+    }
+
+    /**
+     * Fetch 404 error logs from Rank Math 404 Monitor table.
+     */
+    protected function get_404_logs_from_rank_math($limit, $search) {
+        global $wpdb;
+
+        $table_404 = $wpdb->prefix . 'rank_math_404_logs';
+
+        $where  = '';
+        $params = [];
+        if (!empty($search)) {
+            $where    = "WHERE uri LIKE %s";
+            $params[] = '%' . $wpdb->esc_like($search) . '%';
+        }
+
+        // Total 404 hits: sum times_visited or count rows
+        $sum_sql = "SELECT SUM(times_visited) FROM {$table_404} {$where}";
+        $total   = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($sum_sql, $params)) : (int) $wpdb->get_var($sum_sql);
+        if ($total === 0) {
+            $count_sql = "SELECT COUNT(*) FROM {$table_404} {$where}";
+            $total     = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+        }
+
+        // Top 404 URLs grouped by frequency
+        $top_sql = "SELECT uri, SUM(times_visited) as hits_count, MAX(accessed) as last_seen
+                    FROM {$table_404}
+                    {$where}
+                    GROUP BY uri
+                    ORDER BY hits_count DESC
+                    LIMIT %d";
+        $top_params = array_merge($params, [$limit]);
+        $top_rows   = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
+
+        $top_404_urls = [];
+        foreach ($top_rows as $row) {
+            $top_404_urls[] = [
+                'url'        => $row->uri,
+                'hits_count' => (int) $row->hits_count ?: 1,
+                'last_seen'  => $row->last_seen,
+            ];
+        }
+
+        // Recent 404 entries
+        $recent_sql = "SELECT id, accessed, uri, referer, ip, user_agent
+                       FROM {$table_404}
+                       {$where}
+                       ORDER BY id DESC
+                       LIMIT %d";
+        $recent_params = array_merge($params, [min($limit, 30)]);
+        $recent_rows   = $wpdb->get_results($wpdb->prepare($recent_sql, $recent_params));
+
+        $recent_logs = [];
+        foreach ($recent_rows as $row) {
+            $recent_logs[] = [
+                'id'       => (int) $row->id,
+                'created'  => $row->accessed,
+                'url'      => $row->uri,
+                'domain'   => null,
+                'agent'    => $row->user_agent,
+                'referrer' => $row->referer,
+                'ip'       => !empty($row->ip) ? Redaction::mask_ip($row->ip) : null,
+            ];
+        }
+
+        return $this->response([
+            'provider'       => 'rank_math',
+            'provider_label' => 'Rank Math 404 Monitor',
             'total_404_logs' => $total,
             'top_404_urls'   => $top_404_urls,
             'recent_logs'    => $recent_logs,

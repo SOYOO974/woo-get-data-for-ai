@@ -390,11 +390,23 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.27.0: `purge:cache` triggers on-demand multi-layer cache purging (`POST /performance/cache/purge`) with `--scope=all|cdn|page|object`.
 - Optimized for v1.28.0: Breeze (Cloudways) cache purging (`POST /performance/cache/purge`) and settings inspection (`GET /performance/caching`) with performance optimization recommendations.
 - Optimized for v1.29.0: Playbook SEO (`seo_content_audit`) with dedicated Step 5 for 404 error monitoring (`GET /content/redirections/404`) and refined Step 4 for 301 migration mapping.
+- Optimized for v1.30.0: Unified 404 error monitoring (`GET /content/redirections/404`) supporting both Redirection (`wp_redirection_404`) and Rank Math SEO (`wp_rank_math_404_logs`) with optional `provider` filter and total 404 count in SEO summary.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.30.0 (2026-09-10)
+- **Support Natif Unifié du Module 404 Monitor de Rank Math SEO (`includes/api/class-content-controller.php`, `class-permissions.php`, `class-playbooks.php`)** :
+  - **Inspection Multi-Extensions dans `/content/redirections/404`** :
+    - Détection automatique et transparente de la table `{$wpdb->prefix}rank_math_404_logs` lorsque Rank Math 404 Monitor est actif.
+    - Support de l'argument optionnel `provider=redirection|rank_math` pour forcer un moteur spécifique.
+    - Normalisation agnostique : `uri` -> `url`, agrégation robuste `SUM(times_visited)` -> `hits_count`, `MAX(accessed)` -> `last_seen`, `referer` -> `referrer`, et anonymisation RGPD des adresses IP clientes (`Redaction::mask_ip()`).
+  - **Enrichissement du Résumé SEO (`get_redirections_summary()`)** :
+    - Calcul automatique du total des erreurs 404 (`total_404_logged`) pour Rank Math au lieu d'une valeur `null`.
+  - **Internationalisation & Loco Translate 100%** :
+    - Fichiers `languages/woo-get-data-for-ai.pot`, `languages/woo-get-data-for-ai-fr_FR.po` et binaire compilé `languages/woo-get-data-for-ai-fr_FR.mo` synchronisés avec 100% de couverture.
 
 ### v1.29.0 (2026-09-10)
 - **Playbook SEO (`seo_content_audit`) : Ajout de l'Étape 5 dédiée au Monitoring des Erreurs 404 & Liens Brisés (`includes/class-playbooks.php`, `SKILL.md`)** :
