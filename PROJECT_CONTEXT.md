@@ -397,6 +397,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.30.1 (2026-09-10)
+- **Correctif Colonnes Rank Math 404 Monitor (`includes/api/class-content-controller.php`)** :
+  - Correction du nom de colonne du décompte d'occurrences dans `wp_rank_math_404_logs` (`times_accessed` au lieu de `times_visited`).
+  - Suppression de la colonne `ip` non existante dans la requête `SELECT` des logs récents de Rank Math.
+  - Rétablissement complet de la remontée des `top_404_urls` (avec `hits_count` et `last_seen`) et des `recent_logs` (avec `referrer` et `user_agent`).
+
 ### v1.30.0 (2026-09-10)
 - **Support Natif Unifié du Module 404 Monitor de Rank Math SEO (`includes/api/class-content-controller.php`, `class-permissions.php`, `class-playbooks.php`)** :
   - **Inspection Multi-Extensions dans `/content/redirections/404`** :

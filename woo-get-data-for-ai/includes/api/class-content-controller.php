@@ -1589,7 +1589,7 @@ class Content_Controller extends Rest_Controller {
             $has_rm_404      = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_rm_404)) === $table_rm_404;
             $total_404       = null;
             if ($has_rm_404) {
-                $total_404 = (int) $wpdb->get_var("SELECT SUM(times_visited) FROM {$table_rm_404}");
+                $total_404 = (int) $wpdb->get_var("SELECT SUM(times_accessed) FROM {$table_rm_404}");
                 if ($total_404 === 0) {
                     $total_404 = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_rm_404}");
                 }
@@ -2027,8 +2027,8 @@ class Content_Controller extends Rest_Controller {
             $params[] = '%' . $wpdb->esc_like($search) . '%';
         }
 
-        // Total 404 hits: sum times_visited or count rows
-        $sum_sql = "SELECT SUM(times_visited) FROM {$table_404} {$where}";
+        // Total 404 hits: sum times_accessed or count rows
+        $sum_sql = "SELECT SUM(times_accessed) FROM {$table_404} {$where}";
         $total   = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($sum_sql, $params)) : (int) $wpdb->get_var($sum_sql);
         if ($total === 0) {
             $count_sql = "SELECT COUNT(*) FROM {$table_404} {$where}";
@@ -2036,7 +2036,7 @@ class Content_Controller extends Rest_Controller {
         }
 
         // Top 404 URLs grouped by frequency
-        $top_sql = "SELECT uri, SUM(times_visited) as hits_count, MAX(accessed) as last_seen
+        $top_sql = "SELECT uri, SUM(times_accessed) as hits_count, MAX(accessed) as last_seen
                     FROM {$table_404}
                     {$where}
                     GROUP BY uri
@@ -2046,16 +2046,18 @@ class Content_Controller extends Rest_Controller {
         $top_rows   = $wpdb->get_results($wpdb->prepare($top_sql, $top_params));
 
         $top_404_urls = [];
-        foreach ($top_rows as $row) {
-            $top_404_urls[] = [
-                'url'        => $row->uri,
-                'hits_count' => (int) $row->hits_count ?: 1,
-                'last_seen'  => $row->last_seen,
-            ];
+        if (is_array($top_rows)) {
+            foreach ($top_rows as $row) {
+                $top_404_urls[] = [
+                    'url'        => $row->uri,
+                    'hits_count' => (int) $row->hits_count ?: 1,
+                    'last_seen'  => $row->last_seen,
+                ];
+            }
         }
 
-        // Recent 404 entries
-        $recent_sql = "SELECT id, accessed, uri, referer, ip, user_agent
+        // Recent 404 entries (Rank Math columns: id, accessed, uri, referer, user_agent)
+        $recent_sql = "SELECT id, accessed, uri, referer, user_agent
                        FROM {$table_404}
                        {$where}
                        ORDER BY id DESC
@@ -2064,16 +2066,18 @@ class Content_Controller extends Rest_Controller {
         $recent_rows   = $wpdb->get_results($wpdb->prepare($recent_sql, $recent_params));
 
         $recent_logs = [];
-        foreach ($recent_rows as $row) {
-            $recent_logs[] = [
-                'id'       => (int) $row->id,
-                'created'  => $row->accessed,
-                'url'      => $row->uri,
-                'domain'   => null,
-                'agent'    => $row->user_agent,
-                'referrer' => $row->referer,
-                'ip'       => !empty($row->ip) ? Redaction::mask_ip($row->ip) : null,
-            ];
+        if (is_array($recent_rows)) {
+            foreach ($recent_rows as $row) {
+                $recent_logs[] = [
+                    'id'       => (int) $row->id,
+                    'created'  => $row->accessed,
+                    'url'      => $row->uri,
+                    'domain'   => null,
+                    'agent'    => $row->user_agent,
+                    'referrer' => $row->referer,
+                    'ip'       => isset($row->ip) && !empty($row->ip) ? Redaction::mask_ip($row->ip) : null,
+                ];
+            }
         }
 
         return $this->response([

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-10 04:53+00:00\n"
-"PO-Revision-Date: 2026-09-10 04:53+00:00\n"
+"POT-Creation-Date: 2026-09-10 05:00+00:00\n"
+"PO-Revision-Date: 2026-09-10 05:00+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -978,321 +978,321 @@ msgstr "Aucune extension de redirection supportée (Redirection, Rank Math Redir
 msgid "No 404 monitoring table found on this site (checked Redirection and Rank Math)."
 msgstr "Aucune table de surveillance 404 trouvée sur ce site (vérifié pour Redirection et Rank Math)."
 
-#: includes/api/class-content-controller.php:2116
+#: includes/api/class-content-controller.php:2120
 msgid "Search Engine Visibility Enabled"
 msgstr "Visibilité pour les moteurs de recherche activée"
 
-#: includes/api/class-content-controller.php:2117
+#: includes/api/class-content-controller.php:2121
 msgid "Site is configured to allow search engines to index pages."
 msgstr "Le site est configuré pour autoriser les moteurs de recherche à indexer les pages."
 
-#: includes/api/class-content-controller.php:2123
+#: includes/api/class-content-controller.php:2127
 msgid "Search Engine Visibility Disabled"
 msgstr "Visibilité pour les moteurs de recherche désactivée"
 
-#: includes/api/class-content-controller.php:2124
+#: includes/api/class-content-controller.php:2128
 msgid "CRITICAL: \"Discourage search engines from indexing this site\" is checked in WordPress Settings > Reading."
 msgstr "CRITIQUE : « Demander aux moteurs de recherche de ne pas indexer ce site » est coché dans Réglages WordPress > Lecture."
 
-#: includes/api/class-content-controller.php:2149
+#: includes/api/class-content-controller.php:2153
 msgid "No Dedicated SEO Plugin Detected"
 msgstr "Aucune extension SEO dédiée détectée"
 
-#: includes/api/class-content-controller.php:2150
+#: includes/api/class-content-controller.php:2154
 msgid "The site relies on native WordPress titles. Installing Rank Math, Yoast SEO, or The SEO Framework is recommended for complete meta and sitemap management."
 msgstr "Le site utilise les balises de titre natives de WordPress. L'installation de Rank Math, Yoast SEO ou The SEO Framework est recommandée pour une gestion complète des métadonnées et sitemaps."
 
-#: includes/api/class-content-controller.php:2236
+#: includes/api/class-content-controller.php:2240
 msgid "Media Attachment URLs Redirection"
 msgstr "Redirection des URLs de fichiers médias / pièces jointes"
 
-#: includes/api/class-content-controller.php:2237
+#: includes/api/class-content-controller.php:2241
 msgid "Attachment pages are automatically redirected to parent posts (prevents thin-content zombie URLs)."
 msgstr "Les pages de pièces jointes sont automatiquement redirigées vers leur publication parente (évite les URLs zombies à faible contenu)."
 
-#: includes/api/class-content-controller.php:2243
+#: includes/api/class-content-controller.php:2247
 msgid "Media Attachment URLs Not Redirected"
 msgstr "URLs de fichiers médias non redirigées"
 
-#: includes/api/class-content-controller.php:2244
+#: includes/api/class-content-controller.php:2248
 msgid "Media attachment pages are not redirected. WordPress creates an empty webpage for every uploaded image. Enable \"Redirect Attachments\" in Rank Math General Settings."
 msgstr "Les pages de pièces jointes ne sont pas redirigées. WordPress crée une page vide pour chaque image téléversée. Activez « Rediriger les pièces jointes » dans les Réglages généraux de Rank Math."
 
-#: includes/api/class-content-controller.php:2254
-#: includes/api/class-content-controller.php:2459
+#: includes/api/class-content-controller.php:2258
+#: includes/api/class-content-controller.php:2463
 msgid "Strip Category Base"
 msgstr "Suppression du préfixe des catégories"
 
-#: includes/api/class-content-controller.php:2255
+#: includes/api/class-content-controller.php:2259
 msgid "Category base prefix is stripped from URLs for cleaner permalinks."
 msgstr "Le préfixe de base des catégories est retiré des URLs pour des permaliens plus courts et plus propres."
 
-#: includes/api/class-content-controller.php:2261
-#: includes/api/class-content-controller.php:2466
+#: includes/api/class-content-controller.php:2265
+#: includes/api/class-content-controller.php:2470
 msgid "Category Base Retained (/category/)"
 msgstr "Préfixe de catégorie conservé (/category/)"
 
-#: includes/api/class-content-controller.php:2262
+#: includes/api/class-content-controller.php:2266
 msgid "Category base (/category/) is retained in category URLs. Enabling \"Strip Category Base\" can shorten URLs if no redirect conflicts exist."
 msgstr "Le préfixe de catégorie (/category/) est conservé dans les URLs de catégories. Activer la suppression peut raccourcir les URLs s'il n'y a pas de conflit de redirection."
 
-#: includes/api/class-content-controller.php:2272
-#: includes/api/class-content-controller.php:2421
-#: includes/api/class-content-controller.php:2584
+#: includes/api/class-content-controller.php:2276
+#: includes/api/class-content-controller.php:2425
+#: includes/api/class-content-controller.php:2588
 msgid "Tag Archives Set to Noindex"
 msgstr "Archives d'étiquettes configurées en Noindex"
 
-#: includes/api/class-content-controller.php:2273
+#: includes/api/class-content-controller.php:2277
 msgid "Blog post tags (post_tag) are set to noindex, preventing thin taxonomy duplication."
 msgstr "Les étiquettes d'articles (post_tag) sont configurées en noindex, évitant la duplication de contenu et le gaspillage du budget de crawl."
 
-#: includes/api/class-content-controller.php:2279
-#: includes/api/class-content-controller.php:2428
-#: includes/api/class-content-controller.php:2591
+#: includes/api/class-content-controller.php:2283
+#: includes/api/class-content-controller.php:2432
+#: includes/api/class-content-controller.php:2595
 msgid "Tag Archives Are Indexed"
 msgstr "Les archives d'étiquettes sont indexées"
 
-#: includes/api/class-content-controller.php:2280
+#: includes/api/class-content-controller.php:2284
 msgid "Post tags are set to index. Unless you provide unique editorial text on each tag page, consider setting tags to noindex to protect your crawl budget."
 msgstr "Les étiquettes d'articles sont indexées. À moins de rédiger un texte unique sur chaque page d'étiquette, envisagez de les passer en noindex pour préserver votre budget de crawl."
 
-#: includes/api/class-content-controller.php:2291
-#: includes/api/class-content-controller.php:2440
+#: includes/api/class-content-controller.php:2295
+#: includes/api/class-content-controller.php:2444
 msgid "Product Tag Archives Set to Noindex"
 msgstr "Archives d'étiquettes produits configurées en Noindex"
 
-#: includes/api/class-content-controller.php:2292
+#: includes/api/class-content-controller.php:2296
 msgid "WooCommerce product tags (product_tag) are set to noindex."
 msgstr "Les étiquettes de produits WooCommerce (product_tag) sont configurées en noindex."
 
-#: includes/api/class-content-controller.php:2298
-#: includes/api/class-content-controller.php:2447
+#: includes/api/class-content-controller.php:2302
+#: includes/api/class-content-controller.php:2451
 msgid "Product Tag Archives Are Indexed"
 msgstr "Les archives d'étiquettes produits sont indexées"
 
-#: includes/api/class-content-controller.php:2299
+#: includes/api/class-content-controller.php:2303
 msgid "Product tags are set to index. Empty or auto-generated product tags can dilute product category rankings."
 msgstr "Les étiquettes de produits sont indexées. Des étiquettes vides ou auto-générées peuvent diluer le positionnement de vos catégories de produits."
 
-#: includes/api/class-content-controller.php:2310
-#: includes/api/class-content-controller.php:2477
+#: includes/api/class-content-controller.php:2314
+#: includes/api/class-content-controller.php:2481
 msgid "Default OpenGraph Fallback Image"
 msgstr "Image OpenGraph par défaut configurée"
 
-#: includes/api/class-content-controller.php:2311
+#: includes/api/class-content-controller.php:2315
 msgid "A default social sharing image is configured for pages and products without featured images."
 msgstr "Une image de partage social par défaut est configurée pour les pages et produits sans image mise en avant."
 
-#: includes/api/class-content-controller.php:2317
-#: includes/api/class-content-controller.php:2484
+#: includes/api/class-content-controller.php:2321
+#: includes/api/class-content-controller.php:2488
 msgid "Missing Default OpenGraph Image"
 msgstr "Image OpenGraph par défaut manquante"
 
-#: includes/api/class-content-controller.php:2318
+#: includes/api/class-content-controller.php:2322
 msgid "No default social fallback image is configured in Rank Math Titles & Meta > Global Meta. Social shares of content lacking featured images will display without visuals."
 msgstr "Aucune image de secours n'est configurée dans Rank Math Titres & Métas > Métas globales. Les partages sociaux de contenus sans image à la une s'afficheront sans visuel."
 
-#: includes/api/class-content-controller.php:2329
-#: includes/api/class-content-controller.php:2621
+#: includes/api/class-content-controller.php:2333
+#: includes/api/class-content-controller.php:2625
 msgid "Schema Knowledge Graph & Logo"
 msgstr "Schema Knowledge Graph & Logo"
 
-#: includes/api/class-content-controller.php:2330
+#: includes/api/class-content-controller.php:2334
 msgid "Knowledge Graph entity is configured as \"%s\" with an official logo."
 msgstr "L'entité Knowledge Graph est configurée comme « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2336
+#: includes/api/class-content-controller.php:2340
 msgid "Missing Knowledge Graph Logo"
 msgstr "Logo Knowledge Graph manquant"
 
-#: includes/api/class-content-controller.php:2337
+#: includes/api/class-content-controller.php:2341
 msgid "Organization/Person logo is missing in Rank Math Titles & Meta > Local SEO. Google uses this logo in Knowledge Panels."
 msgstr "Le logo de l'organisation/personne est manquant dans Rank Math Titres & Métas > SEO Local. Google utilise ce logo dans les Knowledge Panels."
 
-#: includes/api/class-content-controller.php:2347
-#: includes/api/class-content-controller.php:2514
+#: includes/api/class-content-controller.php:2351
+#: includes/api/class-content-controller.php:2518
 msgid "Schema Breadcrumbs Active"
 msgstr "Fil d'Ariane Schema actif"
 
-#: includes/api/class-content-controller.php:2348
+#: includes/api/class-content-controller.php:2352
 msgid "Rank Math Breadcrumbs function is enabled."
 msgstr "La fonction fil d'Ariane de Rank Math est activée."
 
-#: includes/api/class-content-controller.php:2354
+#: includes/api/class-content-controller.php:2358
 msgid "Breadcrumbs Disabled in Rank Math"
 msgstr "Fil d'Ariane désactivé dans Rank Math"
 
-#: includes/api/class-content-controller.php:2355
+#: includes/api/class-content-controller.php:2359
 msgid "Breadcrumbs are turned off in Rank Math. Ensure your theme provides native breadcrumbs with Schema.org markup."
 msgstr "Le fil d'Ariane est désactivé dans Rank Math. Assurez-vous que votre thème intègre un fil d'Ariane natif avec balisage Schema.org."
 
-#: includes/api/class-content-controller.php:2374
+#: includes/api/class-content-controller.php:2378
 msgid "Module Active: %s"
 msgstr "Module actif : %s"
 
-#: includes/api/class-content-controller.php:2375
+#: includes/api/class-content-controller.php:2379
 msgid "Rank Math %s module is enabled and operational."
 msgstr "Le module Rank Math %s est activé et opérationnel."
 
-#: includes/api/class-content-controller.php:2381
+#: includes/api/class-content-controller.php:2385
 msgid "Recommended Module Inactive: %s"
 msgstr "Module recommandé inactif : %s"
 
-#: includes/api/class-content-controller.php:2382
+#: includes/api/class-content-controller.php:2386
 msgid "Rank Math %s module is disabled in active modules."
 msgstr "Le module Rank Math %s est désactivé dans les modules actifs."
 
-#: includes/api/class-content-controller.php:2422
+#: includes/api/class-content-controller.php:2426
 msgid "Post tags are set to noindex in Yoast, preventing duplicate taxonomy listings."
 msgstr "Les étiquettes d'articles sont configurées en noindex dans Yoast, évitant la duplication de taxonomies."
 
-#: includes/api/class-content-controller.php:2429
+#: includes/api/class-content-controller.php:2433
 msgid "Post tags are set to index in Yoast. Setting tags to noindex avoids duplicate content unless tag pages have unique copy."
 msgstr "Les étiquettes d'articles sont indexées dans Yoast. Les passer en noindex évite le contenu dupliqué, sauf si vos pages d'étiquettes disposent d'un contenu unique."
 
-#: includes/api/class-content-controller.php:2441
+#: includes/api/class-content-controller.php:2445
 msgid "WooCommerce product tags are set to noindex in Yoast."
 msgstr "Les étiquettes produits WooCommerce sont configurées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2448
+#: includes/api/class-content-controller.php:2452
 msgid "Product tags are set to index in Yoast. Consider noindex if tags lack custom content."
 msgstr "Les étiquettes produits sont indexées dans Yoast. Envisagez de les passer en noindex si elles manquent de contenu personnalisé."
 
-#: includes/api/class-content-controller.php:2460
+#: includes/api/class-content-controller.php:2464
 msgid "Category prefix (/category/) is stripped for cleaner URLs."
 msgstr "Le préfixe des catégories (/category/) est supprimé pour des URLs plus épurées."
 
-#: includes/api/class-content-controller.php:2467
+#: includes/api/class-content-controller.php:2471
 msgid "Category prefix (/category/) is retained. Removing it can shorten permalinks."
 msgstr "Le préfixe des catégories (/category/) est conservé. Le supprimer permet de raccourcir les permaliens."
 
-#: includes/api/class-content-controller.php:2478
+#: includes/api/class-content-controller.php:2482
 msgid "A default social sharing image is configured in Yoast Social settings."
 msgstr "Une image de partage social par défaut est configurée dans les réglages Réseaux sociaux de Yoast."
 
-#: includes/api/class-content-controller.php:2485
+#: includes/api/class-content-controller.php:2489
 msgid "No default social fallback image is configured in Yoast Settings > Social Sharing. Content shared without featured images will lack visuals."
 msgstr "Aucune image de secours n'est configurée dans Yoast Réglages > Partage sur les réseaux sociaux. Les contenus partagés sans image mise en avant manqueront de visuel."
 
-#: includes/api/class-content-controller.php:2496
+#: includes/api/class-content-controller.php:2500
 msgid "Schema Organization & Logo"
 msgstr "Schema Organisation & Logo"
 
-#: includes/api/class-content-controller.php:2497
+#: includes/api/class-content-controller.php:2501
 msgid "Yoast site representation is configured as \"%s\" with an official logo."
 msgstr "La représentation du site dans Yoast est configurée comme « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2503
-#: includes/api/class-content-controller.php:2628
+#: includes/api/class-content-controller.php:2507
+#: includes/api/class-content-controller.php:2632
 msgid "Missing Organization Logo"
 msgstr "Logo d'organisation manquant"
 
-#: includes/api/class-content-controller.php:2504
+#: includes/api/class-content-controller.php:2508
 msgid "Organization logo is missing in Yoast Site Representation settings."
 msgstr "Le logo d'organisation est manquant dans les réglages de Représentation du site Yoast."
 
-#: includes/api/class-content-controller.php:2515
+#: includes/api/class-content-controller.php:2519
 msgid "Yoast Breadcrumbs are enabled."
 msgstr "Le fil d'Ariane Yoast est activé."
 
-#: includes/api/class-content-controller.php:2521
+#: includes/api/class-content-controller.php:2525
 msgid "Breadcrumbs Disabled in Yoast"
 msgstr "Fil d'Ariane désactivé dans Yoast"
 
-#: includes/api/class-content-controller.php:2522
+#: includes/api/class-content-controller.php:2526
 msgid "Breadcrumbs are turned off in Yoast settings."
 msgstr "Le fil d'Ariane est désactivé dans les réglages Yoast."
 
-#: includes/api/class-content-controller.php:2532
-#: includes/api/class-content-controller.php:2639
+#: includes/api/class-content-controller.php:2536
+#: includes/api/class-content-controller.php:2643
 msgid "Author Archives Protected"
 msgstr "Archives d'auteur protégées"
 
-#: includes/api/class-content-controller.php:2533
+#: includes/api/class-content-controller.php:2537
 msgid "Author archives are disabled or noindexed in Yoast."
 msgstr "Les archives d'auteur sont désactivées ou passées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2539
+#: includes/api/class-content-controller.php:2543
 msgid "Author Archives Are Active"
 msgstr "Les archives d'auteur sont actives"
 
-#: includes/api/class-content-controller.php:2540
+#: includes/api/class-content-controller.php:2544
 msgid "Author archives are enabled and indexable. On single-author sites, disabling them prevents duplicate homepage content."
 msgstr "Les archives d'auteur sont activées et indexables. Sur les sites mono-auteur, les désactiver évite la duplication de la page d'accueil."
 
-#: includes/api/class-content-controller.php:2549
+#: includes/api/class-content-controller.php:2553
 msgid "Date Archives Disabled"
 msgstr "Archives par date désactivées"
 
-#: includes/api/class-content-controller.php:2550
+#: includes/api/class-content-controller.php:2554
 msgid "Date archives are disabled or noindexed in Yoast."
 msgstr "Les archives par date sont désactivées ou passées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2585
+#: includes/api/class-content-controller.php:2589
 msgid "Post tags are set to noindex in The SEO Framework."
 msgstr "Les étiquettes d'articles sont configurées en noindex dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2592
+#: includes/api/class-content-controller.php:2596
 msgid "Post tags are set to index. Consider noindex to consolidate crawl budget."
 msgstr "Les étiquettes d'articles sont indexées. Envisagez de les passer en noindex pour concentrer le budget de crawl."
 
-#: includes/api/class-content-controller.php:2602
+#: includes/api/class-content-controller.php:2606
 msgid "Default Social Fallback Image"
 msgstr "Image sociale par défaut"
 
-#: includes/api/class-content-controller.php:2603
+#: includes/api/class-content-controller.php:2607
 msgid "A default social image is set in The SEO Framework."
 msgstr "Une image sociale par défaut est configurée dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2609
+#: includes/api/class-content-controller.php:2613
 msgid "Missing Default Social Image"
 msgstr "Image sociale par défaut manquante"
 
-#: includes/api/class-content-controller.php:2610
+#: includes/api/class-content-controller.php:2614
 msgid "No default social sharing image is configured in The SEO Framework Social settings."
 msgstr "Aucune image de partage social par défaut n'est configurée dans les réglages Réseaux Sociaux de The SEO Framework."
 
-#: includes/api/class-content-controller.php:2622
+#: includes/api/class-content-controller.php:2626
 msgid "Knowledge Graph is set to \"%s\" with an official logo."
 msgstr "Le Knowledge Graph est configuré sur « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2629
+#: includes/api/class-content-controller.php:2633
 msgid "Organization logo is missing in The SEO Framework Schema settings."
 msgstr "Le logo d'organisation est manquant dans les réglages Schema de The SEO Framework."
 
-#: includes/api/class-content-controller.php:2640
+#: includes/api/class-content-controller.php:2644
 msgid "Author archives are set to noindex in The SEO Framework."
 msgstr "Les archives d'auteur sont configurées en noindex dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2676
+#: includes/api/class-content-controller.php:2680
 msgid "URL Permalink Change Monitoring Active"
 msgstr "Surveillance des changements de permaliens d'URL active"
 
-#: includes/api/class-content-controller.php:2677
+#: includes/api/class-content-controller.php:2681
 msgid "Automatic 301 redirects are created when URLs change for: %s."
 msgstr "Des redirections 301 automatiques sont créées lors des modifications d'URL pour : %s."
 
-#: includes/api/class-content-controller.php:2683
+#: includes/api/class-content-controller.php:2687
 msgid "Permalink Change Monitoring Inactive"
 msgstr "Surveillance des changements de permaliens inactive"
 
-#: includes/api/class-content-controller.php:2684
+#: includes/api/class-content-controller.php:2688
 msgid "Automatic 301 redirection on slug/permalink changes is turned off in Redirection plugin."
 msgstr "La création automatique de redirections 301 lors du changement de permalien est désactivée dans l'extension Redirection."
 
-#: includes/api/class-content-controller.php:2696
+#: includes/api/class-content-controller.php:2700
 msgid "404 Log Retention Healthy"
 msgstr "Rétention des journaux 404 saine"
 
-#: includes/api/class-content-controller.php:2697
+#: includes/api/class-content-controller.php:2701
 msgid "404 logs are automatically purged after %d days (protects database size)."
 msgstr "Les journaux 404 sont automatiquement purgés après %d jours (protège la taille de la base de données)."
 
-#: includes/api/class-content-controller.php:2703
+#: includes/api/class-content-controller.php:2707
 msgid "404 Log Retention High or Unlimited"
 msgstr "Rétention des journaux 404 élevée ou illimitée"
 
-#: includes/api/class-content-controller.php:2704
+#: includes/api/class-content-controller.php:2708
 msgid "404 logs retention is set to %d days. High retention can cause database bloat in the wp_redirection_404 table."
 msgstr "La rétention des logs 404 est configurée à %d jours. Une rétention trop longue peut provoquer une surcharge de la table wp_redirection_404."
 
