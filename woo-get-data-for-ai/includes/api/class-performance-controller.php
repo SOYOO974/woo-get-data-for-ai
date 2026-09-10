@@ -113,7 +113,7 @@ class Performance_Controller extends Rest_Controller {
             },
         ]);
 
-        // POST /performance/cache/purge (Multi-layer defensive cache purge: Rocket.net CDN, WP Rocket, Object Cache Pro / Redis)
+        // POST /performance/cache/purge (Multi-layer defensive cache purge: Rocket.net CDN, WP Rocket, Breeze, Object Cache Pro / Redis)
         register_rest_route(self::NAMESPACE, '/performance/cache/purge', [
             'methods'             => \WP_REST_Server::CREATABLE,
             'callback'            => [$this, 'purge_caches'],
@@ -1197,6 +1197,16 @@ class Performance_Controller extends Rest_Controller {
             }
         }
 
+        if (defined('BREEZE_VERSION') || class_exists('Breeze_Admin') || class_exists('Breeze_Configuration') || in_array('breeze/breeze.php', (array) get_option('active_plugins', []))) {
+            $detected_plugins[] = [
+                'name'    => 'Breeze',
+                'version' => defined('BREEZE_VERSION') ? BREEZE_VERSION : null,
+            ];
+            if ($active_engine === 'None') {
+                $active_engine = 'Breeze';
+            }
+        }
+
         if (defined('W3TC')) {
             $detected_plugins[] = [
                 'name'    => 'W3 Total Cache',
@@ -1207,10 +1217,14 @@ class Performance_Controller extends Rest_Controller {
             }
         }
 
-        if (defined('ADVANCEDCACHEPROBLEM') || function_exists('wp_cache_init')) {
+        $is_wpsc = defined('WPSC_VERSION')
+            || function_exists('wp_cache_clean_cache')
+            || (defined('ADVANCEDCACHEPROBLEM') && file_exists(WP_CONTENT_DIR . '/wp-cache-phase1.php'))
+            || in_array('wp-super-cache/wp-cache.php', (array) get_option('active_plugins', []));
+        if ($is_wpsc) {
             $detected_plugins[] = [
                 'name'    => 'WP Super Cache',
-                'version' => null,
+                'version' => defined('WPSC_VERSION') ? WPSC_VERSION : null,
             ];
             if ($active_engine === 'None') {
                 $active_engine = 'WP Super Cache';
@@ -1370,6 +1384,90 @@ class Performance_Controller extends Rest_Controller {
             ];
         }
 
+        // 4. Breeze (Cloudways) in-depth inspection
+        $is_breeze_active = defined('BREEZE_VERSION')
+            || class_exists('Breeze_Admin')
+            || class_exists('Breeze_Configuration')
+            || (function_exists('is_plugin_active') && is_plugin_active('breeze/breeze.php'))
+            || in_array('breeze/breeze.php', (array) get_option('active_plugins', []));
+
+        $breeze_data = [
+            'is_active' => (bool) $is_breeze_active,
+        ];
+
+        if ($is_breeze_active) {
+            $breeze_version = defined('BREEZE_VERSION') ? BREEZE_VERSION : null;
+            if (!$breeze_version && file_exists(WP_PLUGIN_DIR . '/breeze/breeze.php') && function_exists('get_file_data')) {
+                $b_data = get_file_data(WP_PLUGIN_DIR . '/breeze/breeze.php', ['Version' => 'Version']);
+                $breeze_version = $b_data['Version'] ?? null;
+            }
+            $breeze_data['version'] = $breeze_version;
+
+            $breeze_basic    = (array) get_option('breeze_basic_settings', []);
+            $breeze_file     = (array) get_option('breeze_file_settings', []);
+            $breeze_preload  = (array) get_option('breeze_preload_settings', []);
+            $breeze_advanced = (array) get_option('breeze_advanced_settings', []);
+            $breeze_varnish  = (array) get_option('breeze_varnish_cache', []);
+            $breeze_cdn      = (array) get_option('breeze_cdn_integration', []);
+
+            $get_breeze_opt = function ($group_arr, $key, $default = 0) {
+                if (isset($group_arr[$key])) {
+                    return $group_arr[$key];
+                }
+                if (class_exists('Breeze_Options_Reader') && method_exists('Breeze_Options_Reader', 'get_option_value')) {
+                    $val = \Breeze_Options_Reader::get_option_value($key);
+                    if ($val !== null) {
+                        return $val;
+                    }
+                }
+                return $default;
+            };
+
+            $breeze_data['basic'] = [
+                'cache_system'      => (bool) $get_breeze_opt($breeze_basic, 'breeze-active', 0),
+                'cache_ttl_min'     => (int) $get_breeze_opt($breeze_basic, 'breeze-ttl', 1440),
+                'gzip_compression'  => (bool) $get_breeze_opt($breeze_basic, 'breeze-gzip-compression', 0),
+                'browser_cache'     => (bool) $get_breeze_opt($breeze_basic, 'breeze-browser-cache', 0),
+                'lazy_load_images'  => (bool) $get_breeze_opt($breeze_basic, 'breeze-lazy-load', 0),
+                'lazy_load_iframes' => (bool) $get_breeze_opt($breeze_basic, 'breeze-lazy-load-iframes', 0),
+                'mobile_cache'      => (bool) $get_breeze_opt($breeze_basic, 'breeze-mobile-cache', 0),
+            ];
+
+            $delayed_scripts_raw = $get_breeze_opt($breeze_file, 'breeze-delay-js-scripts', []);
+            $delayed_scripts     = is_array($delayed_scripts_raw) ? array_values(array_filter($delayed_scripts_raw, 'is_string')) : [];
+
+            $breeze_data['file_optimization'] = [
+                'minify_html'       => (bool) $get_breeze_opt($breeze_file, 'breeze-minify-html', 0),
+                'minify_css'        => (bool) $get_breeze_opt($breeze_file, 'breeze-minify-css', 0),
+                'group_css'         => (bool) $get_breeze_opt($breeze_file, 'breeze-group-css', 0),
+                'font_display_swap' => (bool) $get_breeze_opt($breeze_file, 'breeze-font-display-swap', 0),
+                'minify_js'         => (bool) $get_breeze_opt($breeze_file, 'breeze-minify-js', 0),
+                'group_js'          => (bool) $get_breeze_opt($breeze_file, 'breeze-group-js', 0),
+                'defer_js_count'    => is_array($breeze_file['breeze-defer-js'] ?? null) ? count($breeze_file['breeze-defer-js']) : 0,
+                'delay_js'          => (bool) ($get_breeze_opt($breeze_file, 'breeze-enable-js-delay', 0) || $get_breeze_opt($breeze_file, 'breeze-delay-all-js', 0)),
+                'delay_all_js'      => (bool) $get_breeze_opt($breeze_file, 'breeze-delay-all-js', 0),
+                'delayed_scripts'   => $delayed_scripts,
+            ];
+
+            $preload_fonts_raw = $get_breeze_opt($breeze_preload, 'breeze-preload-fonts', []);
+            $breeze_data['preload'] = [
+                'preload_links'        => (bool) $get_breeze_opt($breeze_preload, 'breeze-preload-links', 0),
+                'cache_warmup_enabled' => (bool) $get_breeze_opt($breeze_preload, 'breeze-cache-warmup-enabled', 0),
+                'preload_fonts_count'  => is_array($preload_fonts_raw) ? count($preload_fonts_raw) : 0,
+            ];
+
+            $breeze_data['varnish'] = [
+                'auto_purge' => (bool) $get_breeze_opt($breeze_varnish, 'auto-purge-varnish', 0),
+                'server_ip'  => (string) $get_breeze_opt($breeze_varnish, 'breeze-varnish-server-ip', '127.0.0.1'),
+                'ttl'        => (int) $get_breeze_opt($breeze_varnish, 'breeze-ttl', 1440),
+            ];
+
+            $breeze_data['cdn'] = [
+                'active' => (bool) $get_breeze_opt($breeze_cdn, 'cdn-active', 0),
+                'url'    => (string) $get_breeze_opt($breeze_cdn, 'cdn-url', ''),
+            ];
+        }
+
         // Actionable performance & caching recommendations
         $recommendations = [];
         if (!$ext_object_cache) {
@@ -1402,6 +1500,29 @@ class Performance_Controller extends Rest_Controller {
                 ];
             }
         }
+        if ($is_breeze_active) {
+            if (empty($breeze_data['basic']['cache_system'])) {
+                $recommendations[] = [
+                    'type'     => 'breeze_cache_disabled',
+                    'severity' => 'high',
+                    'message'  => esc_html__('Breeze caching plugin is active but its cache system is disabled in settings.', 'woo-get-data-for-ai'),
+                ];
+            }
+            if (empty($breeze_data['file_optimization']['delay_js'])) {
+                $recommendations[] = [
+                    'type'     => 'breeze_delay_js',
+                    'severity' => 'low',
+                    'message'  => esc_html__('Breeze JS Delay is disabled. Enabling Delay JS can significantly improve Total Blocking Time (TBT) and mobile speed scores.', 'woo-get-data-for-ai'),
+                ];
+            }
+            if (empty($breeze_data['basic']['gzip_compression']) || empty($breeze_data['basic']['browser_cache'])) {
+                $recommendations[] = [
+                    'type'     => 'breeze_browser_cache',
+                    'severity' => 'medium',
+                    'message'  => esc_html__('Breeze Gzip compression or Browser Cache is disabled. Enabling them ensures static assets are compressed and cached by visitor browsers.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
 
         return $this->response([
             'object_cache' => [
@@ -1415,6 +1536,7 @@ class Performance_Controller extends Rest_Controller {
                 'active_engine'         => $active_engine,
             ],
             'wp_rocket'                => $wp_rocket_data,
+            'breeze'                   => $breeze_data,
             'detected_caching_plugins' => $detected_plugins,
             'recommendations'          => $recommendations,
         ]);
@@ -1422,7 +1544,7 @@ class Performance_Controller extends Rest_Controller {
 
     /**
      * POST /performance/cache/purge & POST /system/cache/purge
-     * Multi-layer defensive cache purge: Rocket.net Edge CDN, WP Rocket (domain, minify, busting, RUCSS), Object Cache Pro / Redis, LiteSpeed, Autoptimize, WP Super Cache, W3 Total Cache.
+     * Multi-layer defensive cache purge: Rocket.net Edge CDN, WP Rocket (domain, minify, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed, Autoptimize, WP Super Cache, W3 Total Cache.
      *
      * @param \WP_REST_Request $request
      * @return \WP_REST_Response
@@ -1435,7 +1557,7 @@ class Performance_Controller extends Rest_Controller {
 
         $status = [];
 
-        // Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)
+        // Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge) & Varnish
         if ('all' === $scope || 'cdn' === $scope) {
             if (function_exists('purge_cache')) {
                 purge_cache();
@@ -1448,9 +1570,22 @@ class Performance_Controller extends Rest_Controller {
                     'status' => 'not_detected',
                 ];
             }
+
+            // Breeze Varnish Cache (Cloudways Edge / Reverse Proxy)
+            $is_breeze_installed = defined('BREEZE_VERSION')
+                || class_exists('Breeze_Configuration')
+                || class_exists('Breeze_Admin')
+                || in_array('breeze/breeze.php', (array) get_option('active_plugins', []));
+            if ($is_breeze_installed) {
+                do_action('breeze_clear_varnish');
+                $status['breeze_varnish'] = [
+                    'status' => 'cleared',
+                    'engine' => 'Breeze Varnish Cache',
+                ];
+            }
         }
 
-        // Couche 2 : WP Rocket (Page Cache, Minification & RUCSS)
+        // Couche 2 : WP Rocket (Page Cache, Minification & RUCSS) & Breeze (Cloudways)
         if ('all' === $scope || 'page' === $scope) {
             if (function_exists('rocket_clean_domain')) {
                 rocket_clean_domain();
@@ -1469,6 +1604,46 @@ class Performance_Controller extends Rest_Controller {
                 ];
             } else {
                 $status['wp_rocket'] = [
+                    'status' => 'not_detected',
+                ];
+            }
+
+            // Breeze (Cloudways) Page Cache & Minification
+            $is_breeze_active = defined('BREEZE_VERSION')
+                || class_exists('Breeze_Configuration')
+                || class_exists('Breeze_Admin')
+                || (function_exists('is_plugin_active') && is_plugin_active('breeze/breeze.php'))
+                || in_array('breeze/breeze.php', (array) get_option('active_plugins', []));
+
+            if ($is_breeze_active) {
+                $breeze_cleared = false;
+                $cleaned_size   = null;
+
+                if (class_exists('Breeze_Configuration') && method_exists('Breeze_Configuration', 'breeze_clean_cache')) {
+                    // breeze_clean_cache(true) clears minification, local page cache, and dispatches breeze_clear_all_cache
+                    $cleaned_size   = \Breeze_Configuration::breeze_clean_cache('all' === $scope);
+                    $breeze_cleared = true;
+                } elseif (class_exists('Breeze_PurgeCache') && method_exists('Breeze_PurgeCache', 'breeze_cache_flush')) {
+                    \Breeze_PurgeCache::breeze_cache_flush(true, true, true);
+                    if (class_exists('Breeze_MinificationCache') && method_exists('Breeze_MinificationCache', 'clear_minification')) {
+                        \Breeze_MinificationCache::clear_minification();
+                    }
+                    if ('all' === $scope) {
+                        do_action('breeze_clear_all_cache');
+                    }
+                    $breeze_cleared = true;
+                } else {
+                    do_action('breeze_clear_all_cache');
+                    $breeze_cleared = true;
+                }
+
+                $status['breeze'] = [
+                    'status'       => $breeze_cleared ? 'cleared' : 'error',
+                    'version'      => defined('BREEZE_VERSION') ? BREEZE_VERSION : null,
+                    'cleaned_size' => $cleaned_size,
+                ];
+            } else {
+                $status['breeze'] = [
                     'status' => 'not_detected',
                 ];
             }

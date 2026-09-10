@@ -226,7 +226,7 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 <tr>
                     <td><strong><?php esc_html_e('Site Performance & Profiling', 'woo-get-data-for-ai'); ?></strong></td>
                     <td><code>/performance/templates-urls</code>, <code>/performance/profile</code>, <code>/performance/autoload</code>, <code>/performance/plugins-summary</code>, <code>/performance/caching</code>, <code>/performance/cache/purge</code></td>
-                    <td><?php esc_html_e('Auto-discovery of 5 template archetypes (home, shop, category, product, cart), on-demand URL profiler (SQL queries and execution time attributed per plugin, memory, TTFB, duplicate/slow queries), 100% native Core Web Vitals & frontend signals (DOM size & Elementor %, CLS missing image dimensions, legacy formats, Google Fonts swap, WP core bloat scripts, cart fragments), autoload bloat, and plugins database footprint.', 'woo-get-data-for-ai'); ?></td>
+                    <td><?php esc_html_e('Auto-discovery of 5 template archetypes (home, shop, category, product, cart), on-demand URL profiler (SQL queries and execution time attributed per plugin, memory, TTFB, duplicate/slow queries), 100% native Core Web Vitals & frontend signals, autoload bloat, plugins database footprint, universal caching diagnostic (Object Cache, WP Rocket, Breeze), and multi-layer cache purging.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
             </tbody>
         </table>

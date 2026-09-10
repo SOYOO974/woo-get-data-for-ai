@@ -388,11 +388,31 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.25.0: `pull:content` dumps URL redirections (`redirections.json`), 404 hit logs (`404-logs.json`), and generates an executive report (`redirections.md`) with top 404 hits.
 - Optimized for v1.26.0: `pull:content` dumps global SEO plugin settings & optimization health audit (`seo-settings.json`) and enriches `seo-audit.md` with settings health score and actionable recommendations.
 - Optimized for v1.27.0: `purge:cache` triggers on-demand multi-layer cache purging (`POST /performance/cache/purge`) with `--scope=all|cdn|page|object`.
+- Optimized for v1.28.0: Breeze (Cloudways) cache purging (`POST /performance/cache/purge`) and settings inspection (`GET /performance/caching`) with performance optimization recommendations.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.28.0 (2026-09-10)
+- **Support Complet de Breeze (Cloudways) : Vidage de Cache Multi-Niveaux & Inspection Approfondie des Réglages (`Performance_Controller`, `Permissions`, `Playbooks`, `tab-docs.php`, `sync.js`)** :
+  - **Vidage de Cache Breeze dans `POST /performance/cache/purge` & Alias `POST /system/cache/purge`** :
+    - Invalidation native de Cloudways Breeze via `\Breeze_Configuration::breeze_clean_cache()` : minification (`Breeze_MinificationCache::clear_minification()`), cache de page local (`Breeze_PurgeCache::breeze_cache_flush()`), et dispatch de l'action WordPress `breeze_clear_all_cache` (Varnish, Cloudflare si configuré, et cache objet).
+    - Support de la purge Varnish dédiée lors des purges avec `--scope=cdn` via `do_action('breeze_clear_varnish')`.
+    - Retour d'information enrichi avec le statut (`cleared`), la version de Breeze et le volume de cache nettoyé (`cleaned_size`).
+  - **Inspection des Options & Audit d'Optimisation Breeze dans `GET /performance/caching` & `GET /system/caching`** :
+    - Détection proactive et fiable de Breeze (`defined('BREEZE_VERSION')`, `class_exists('Breeze_Configuration')`, `in_array('breeze/breeze.php', active_plugins)`).
+    - Correction d'un faux-positif où `function_exists('wp_cache_init')` attribuait à tort WP Super Cache sur les environnements Redis / Breeze.
+    - Extraction défensive complète des 6 groupes de réglages (`breeze_basic_settings`, `breeze_file_settings`, `breeze_preload_settings`, `breeze_advanced_settings`, `breeze_varnish_cache`, `breeze_cdn_integration`).
+    - Métriques exposées : état d'activation du système de cache, TTL, compression Gzip, cache navigateur, lazyload images/iframes, cache mobile, minification HTML/CSS/JS, regroupement CSS/JS, font-display swap, décompte de scripts JS différés, activation du différé JS (`delay_js`, `delay_all_js`, liste des scripts différés), préchargement de liens, cache warmup, polices préchargées, auto-purge Varnish et intégration CDN.
+    - Recommandations d'optimisation actionnables : alertes si le système de cache Breeze est inactif, si le différé JS (Delay JS) est désactivé, ou si la compression Gzip / cache navigateur est éteinte.
+  - **Pilier 2 des Playbooks MECE & Skill IA** :
+    - Mise à jour du Pilier 2 (`agency_performance_audit`) avec nouveaux déclencheurs (`breeze`, `vider cache breeze`, `purge breeze`, `cloudways breeze`, `breeze settings`, `optimiser breeze`).
+    - Intégration de l'inspection Breeze et du vidage dans la trame procédurale et dans le générateur de compétences `SKILL.md`.
+  - **Internationalisation (i18n) & Loco Translate 100%** :
+    - Toutes les chaînes UI, d'audit et de recommandations enveloppées dans `esc_html__()` avec domaine `'woo-get-data-for-ai'`.
+    - 585 chaînes traduites à 100% en français, `.pot`, `.po` et binaire `.mo` synchronisés.
 
 ### v1.27.0 (2026-09-09)
 - **Endpoint REST Sécurisé de Vidage de Cache Multi-Niveaux (`Performance_Controller`, `Security`, `Permissions`, `Playbooks`, `sync.js`)** :

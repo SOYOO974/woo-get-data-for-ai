@@ -129,15 +129,21 @@ class Playbooks {
                     'purge object cache',
                     'flush cache',
                     'invalider cache',
+                    'breeze',
+                    'vider cache breeze',
+                    'purge breeze',
+                    'cloudways breeze',
+                    'breeze settings',
+                    'optimiser breeze',
                 ],
                 'workflow'        => [
                     [
                         'step'        => 1,
-                        'action'      => esc_html__('Caching Infrastructure & WP Rocket Settings Audit', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('Caching Infrastructure, Breeze & WP Rocket Audit', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/caching',
                         'params'      => [],
-                        'description' => esc_html__('Inspects external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), and in-depth WP Rocket configuration (CSS mode RUCSS vs CPCSS, safelist, Delay JS exclusions and safe mode, lazyload, mobile caching).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['object_cache.enabled', 'page_cache.advanced_cache_dropin', 'wp_rocket.is_active', 'wp_rocket.css.mode', 'wp_rocket.javascript.delay_js', 'wp_rocket.javascript.delay_js_exclusions'],
+                        'description' => esc_html__('Inspects external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), Cloudways Breeze settings (basic cache, Gzip, browser cache, delay JS, varnish), and in-depth WP Rocket configuration (CSS mode RUCSS vs CPCSS, safelist, Delay JS exclusions and safe mode, lazyload, mobile caching).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['object_cache.enabled', 'page_cache.advanced_cache_dropin', 'breeze.is_active', 'breeze.basic.cache_system', 'breeze.file_optimization.delay_js', 'wp_rocket.is_active', 'wp_rocket.css.mode', 'wp_rocket.javascript.delay_js'],
                     ],
                     [
                         'step'        => 2,
@@ -176,8 +182,8 @@ class Playbooks {
                         'action'      => esc_html__('Multi-Layer Cache Invalidation & Purge', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/cache/purge',
                         'params'      => ['scope' => 'all'],
-                        'description' => esc_html__('Safely and selectively invalidates edge CDN (Rocket.net Cloudflare Enterprise), page cache & RUCSS (WP Rocket, LiteSpeed, Autoptimize), and persistent object cache (Object Cache Pro / Redis) across the stack.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['scope', 'cleared.rocket_net_cdn.status', 'cleared.wp_rocket.status', 'cleared.object_cache.status'],
+                        'description' => esc_html__('Safely and selectively invalidates edge CDN (Rocket.net Cloudflare Enterprise), page cache & minification (WP Rocket, Breeze, LiteSpeed, Autoptimize), and persistent object cache (Object Cache Pro / Redis) across the stack.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['scope', 'cleared.rocket_net_cdn.status', 'cleared.wp_rocket.status', 'cleared.breeze.status', 'cleared.object_cache.status'],
                     ],
                 ],
             ],
@@ -690,10 +696,14 @@ class Playbooks {
         $md .= "     - Use `GET /woocommerce/coupons` to list active/expired/exhausted coupons with usage counts, limits, and held counts.\n";
         $md .= "     - Use `GET /woocommerce/coupon/{id}` (by numeric ID or code slug) to check real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and recent associated orders.\n";
         $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n";
-        $md .= "7. **UNIVERSAL CACHING & OPTIMIZATION AUDIT (WP ROCKET / OBJECT CACHE)**:\n";
+        $md .= "7. **UNIVERSAL CACHING & OPTIMIZATION AUDIT (WP ROCKET / BREEZE / OBJECT CACHE)**:\n";
         $md .= "   - Run `GET /performance/caching` (or alias `GET /system/caching`) to inspect caching infrastructure:\n";
         $md .= "     - **External Object Cache (`object_cache.enabled`)**: Must be active on high-traffic WooCommerce stores to relieve database pressure.\n";
         $md .= "     - **Page Cache (`page_cache.advanced_cache_dropin`)**: Verifies `advanced-cache.php` drop-in and active caching engine.\n";
+        $md .= "     - **Breeze Deep Inspection (`breeze.is_active`)**:\n";
+        $md .= "       - `basic.cache_system`: Verifies if Cloudways Breeze page caching is enabled.\n";
+        $md .= "       - `file_optimization.delay_js`: Inspects Delay JS state and delayed scripts list.\n";
+        $md .= "       - `varnish`: Checks Varnish auto-purge and server IP.\n";
         $md .= "     - **WP Rocket Deep Inspection (`wp_rocket.is_active`)**:\n";
         $md .= "       - `css.mode`: Inspect active CSS delivery optimization (`remove_unused_css`, `async_css`, or `disabled`) and `safelist` patterns.\n";
         $md .= "       - `javascript.delay_js`: Inspect Delay JS execution state, safe mode, and `delay_js_exclusions`.\n";

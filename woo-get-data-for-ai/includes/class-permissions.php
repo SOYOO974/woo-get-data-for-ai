@@ -675,13 +675,13 @@ class Permissions {
                     [
                         'path'        => '/performance/caching',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/performance/cache/purge',
                         'methods'     => ['POST'],
                         'params'      => ['scope (all|cdn|page|object, default: all)'],
-                        'description' => esc_html__('Multi-layer cache invalidation supporting Rocket.net CDN (Cloudflare Enterprise Edge), WP Rocket (domain, minify, busting, RUCSS), Object Cache Pro / Redis, LiteSpeed, and Autoptimize.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Multi-layer cache invalidation supporting Rocket.net CDN (Cloudflare Enterprise Edge), WP Rocket (domain, minify, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed, and Autoptimize.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

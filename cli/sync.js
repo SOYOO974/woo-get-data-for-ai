@@ -1451,6 +1451,14 @@ async function pullPerformance() {
                 md += `- **JavaScript Optimization**: Delay JS = **${rk.javascript && rk.javascript.delay_js ? 'Enabled' : 'Disabled'}**, Defer = ${rk.javascript && rk.javascript.defer ? 'Yes' : 'No'}, Minify = ${rk.javascript && rk.javascript.minify ? 'Yes' : 'No'}, Exclusions = ${rk.javascript && rk.javascript.delay_js_exclusions ? rk.javascript.delay_js_exclusions.length : 0} rules\n`;
                 md += `- **Media Optimization**: Lazyload Images = ${rk.media && rk.media.lazyload_images ? 'Yes' : 'No'}, Iframes = ${rk.media && rk.media.lazyload_iframes ? 'Yes' : 'No'}, CSS BG = ${rk.media && rk.media.lazyload_css_bg ? 'Yes' : 'No'}, Image Dimensions = ${rk.media && rk.media.image_dimensions ? 'Yes' : 'No'}\n`;
             }
+            if (caching.breeze && caching.breeze.is_active) {
+                const bz = caching.breeze;
+                md += `\n### Breeze Configuration (v${bz.version || 'unknown'})\n\n`;
+                md += `- **Cache System**: ${bz.basic && bz.basic.cache_system ? '🟢 Enabled' : '🔴 Disabled'} (TTL: ${bz.basic ? bz.basic.cache_ttl_min : 1440} min, Gzip: ${bz.basic && bz.basic.gzip_compression ? 'Yes' : 'No'}, Browser Cache: ${bz.basic && bz.basic.browser_cache ? 'Yes' : 'No'})\n`;
+                md += `- **File Optimization**: Minify HTML = ${bz.file_optimization && bz.file_optimization.minify_html ? 'Yes' : 'No'}, CSS = ${bz.file_optimization && bz.file_optimization.minify_css ? 'Yes' : 'No'}, JS = ${bz.file_optimization && bz.file_optimization.minify_js ? 'Yes' : 'No'}, Group CSS = ${bz.file_optimization && bz.file_optimization.group_css ? 'Yes' : 'No'}, Group JS = ${bz.file_optimization && bz.file_optimization.group_js ? 'Yes' : 'No'}\n`;
+                md += `- **JavaScript Optimization**: Delay JS = **${bz.file_optimization && bz.file_optimization.delay_js ? 'Enabled' : 'Disabled'}**, Delayed Scripts = ${bz.file_optimization && bz.file_optimization.delayed_scripts ? bz.file_optimization.delayed_scripts.length : 0} rules, Defer JS = ${bz.file_optimization ? bz.file_optimization.defer_js_count : 0} rules\n`;
+                md += `- **Varnish & Edge**: Auto-Purge = ${bz.varnish && bz.varnish.auto_purge ? 'Yes' : 'No'} (Server IP: ${bz.varnish ? bz.varnish.server_ip : '127.0.0.1'}), CDN Active = ${bz.cdn && bz.cdn.active ? 'Yes' : 'No'}\n`;
+            }
             md += `\n`;
         }
 
