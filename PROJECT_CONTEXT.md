@@ -402,6 +402,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.32.1 (2026-09-15)
+- **Fix Défensif Critique WooCommerce Emails (`includes/api/class-woocommerce-controller.php`)** :
+  - Correction d'une erreur fatale `Uncaught Error: Call to a member function has_status() on null` dans `GET /woocommerce/emails` provoquée par `WC_Email_Customer_Invoice::get_heading()` (et méthodes similaires) lorsque l'objet commande `$email->object` est `null`.
+  - Priorisation systématique des propriétés brutes (`$email->heading`, `$email->subject`, `$email->recipient`, `$email->enabled`, `$email->title`, `$email->description`) et fallback sur `get_option()` avant d'appeler les getters dynamiques WooCommerce.
+  - Encapsulation défensive systématique de chaque getter dynamique et de chaque itération d'e-mail dans un bloc `try { ... } catch (\Throwable $e)` pour garantir qu'aucune classe d'e-mail tierce exotique ou corrompue ne puisse faire crasher l'endpoint.
+
 ### v1.32.0 (2026-09-15)
 - **Support Natif MailPoet & MailPoet Sending Service (MSS) (`includes/api/class-system-controller.php`)** :
   - Détection automatique et transparente du MailPoet Sending Service (MSS) dans `GET /system/mail` pour neutraliser le faux-positif critique PHP `mail()`.

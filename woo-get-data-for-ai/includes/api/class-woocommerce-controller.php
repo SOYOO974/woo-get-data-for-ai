@@ -2821,108 +2821,225 @@ class Woocommerce_Controller extends Rest_Controller {
                 continue;
             }
 
-            $id          = isset($email->id) ? $email->id : $email_key;
-            $title       = method_exists($email, 'get_title') ? $email->get_title() : (isset($email->title) ? $email->title : $id);
-            $description = method_exists($email, 'get_description') ? $email->get_description() : (isset($email->description) ? $email->description : '');
-            $is_enabled  = method_exists($email, 'is_enabled') ? $email->is_enabled() : ($email->enabled === 'yes' || $email->enabled === true);
-            $recipient   = method_exists($email, 'get_recipient') ? $email->get_recipient() : (isset($email->recipient) ? $email->recipient : '');
-            $heading     = method_exists($email, 'get_heading') ? $email->get_heading() : (isset($email->heading) ? $email->heading : '');
-            $subject     = method_exists($email, 'get_subject') ? $email->get_subject() : (isset($email->subject) ? $email->subject : '');
-            $email_type  = method_exists($email, 'get_email_type') ? $email->get_email_type() : (isset($email->email_type) ? $email->email_type : 'html');
-            $class_name  = get_class($email);
+            try {
+                $id = !empty($email->id) ? (string) $email->id : (string) $email_key;
 
-            // Determine recipient type
-            $is_customer = false;
-            if (empty($recipient) || $recipient === '{customer}' || stripos($id, 'customer_') === 0 || (isset($email->customer_email) && $email->customer_email)) {
-                $is_customer = true;
-                if (empty($recipient)) {
-                    $recipient = '{customer}';
+                // 1. Title
+                $title = '';
+                if (isset($email->title) && is_string($email->title) && $email->title !== '') {
+                    $title = $email->title;
+                } elseif (method_exists($email, 'get_title')) {
+                    try {
+                        $title = (string) $email->get_title();
+                    } catch (\Throwable $t) {
+                        $title = $id;
+                    }
                 }
-            }
+                if (empty($title)) {
+                    $title = $id;
+                }
 
-            // Detect WooCommerce Order Status Manager custom email & conditions
-            $is_order_status_manager = (is_a($email, 'WC_Order_Status_Manager_Order_Status_Email') || isset($email->dispatch_conditions));
-            $osm_details = null;
-            $triggered_statuses = [];
-
-            if ($is_order_status_manager) {
-                $dispatch_conditions   = isset($email->dispatch_conditions) && is_array($email->dispatch_conditions) ? $email->dispatch_conditions : [];
-                $dispatch_on_new_order = !empty($email->dispatch_on_new_order) && ($email->dispatch_on_new_order === 'yes' || $email->dispatch_on_new_order === true);
-                $post_id               = isset($email->post_id) ? (int) $email->post_id : null;
-                $osm_type              = isset($email->type) ? $email->type : ($is_customer ? 'customer' : 'admin');
-
-                $parsed_conditions = [];
-                foreach ($dispatch_conditions as $condition) {
-                    if (preg_match('/^([a-z0-9_\-]+)_to_([a-z0-9_\-]+)$/i', $condition, $m)) {
-                        $from = $m[1];
-                        $to   = $m[2];
-                        $parsed_conditions[] = [
-                            'condition'   => $condition,
-                            'from_status' => $from,
-                            'to_status'   => $to,
-                        ];
-
-                        if ($to === 'any') {
-                            foreach (array_keys($all_statuses) as $st) {
-                                $triggered_statuses[] = $st;
-                            }
-                        } else {
-                            $clean_to = strpos($to, 'wc-') === 0 ? substr($to, 3) : $to;
-                            $triggered_statuses[] = $clean_to;
-                        }
+                // 2. Description
+                $description = '';
+                if (isset($email->description) && is_string($email->description)) {
+                    $description = $email->description;
+                } elseif (method_exists($email, 'get_description')) {
+                    try {
+                        $description = (string) $email->get_description();
+                    } catch (\Throwable $t) {
+                        $description = '';
                     }
                 }
 
-                $osm_details = [
-                    'is_custom_osm'         => true,
-                    'post_id'               => $post_id,
-                    'type'                  => $osm_type,
-                    'dispatch_on_new_order' => $dispatch_on_new_order,
-                    'dispatch_conditions'   => $parsed_conditions,
-                ];
+                // 3. Enabled
+                $is_enabled = false;
+                if (isset($email->enabled)) {
+                    $is_enabled = ($email->enabled === 'yes' || $email->enabled === true);
+                } elseif (method_exists($email, 'is_enabled')) {
+                    try {
+                        $is_enabled = (bool) $email->is_enabled();
+                    } catch (\Throwable $t) {
+                        $is_enabled = false;
+                    }
+                }
 
-                if ($osm_type === 'customer') {
+                // 4. Recipient
+                $recipient = '';
+                if (isset($email->recipient) && is_string($email->recipient)) {
+                    $recipient = $email->recipient;
+                } elseif (method_exists($email, 'get_recipient')) {
+                    try {
+                        $recipient = (string) $email->get_recipient();
+                    } catch (\Throwable $t) {
+                        $recipient = '';
+                    }
+                }
+
+                // 5. Heading
+                // IMPORTANT: Do NOT call get_heading() directly as WooCommerce classes (e.g. WC_Email_Customer_Invoice)
+                // evaluate placeholders or $this->object->has_status() which throws Fatal Error if $this->object is null.
+                $heading = '';
+                if (isset($email->heading) && is_string($email->heading) && $email->heading !== '') {
+                    $heading = $email->heading;
+                } elseif (method_exists($email, 'get_option')) {
+                    try {
+                        $heading = (string) $email->get_option('heading', '');
+                    } catch (\Throwable $t) {
+                        $heading = '';
+                    }
+                }
+                if (empty($heading) && method_exists($email, 'get_heading')) {
+                    try {
+                        $heading = (string) $email->get_heading();
+                    } catch (\Throwable $t) {
+                        $heading = '';
+                    }
+                }
+
+                // 6. Subject
+                $subject = '';
+                if (isset($email->subject) && is_string($email->subject) && $email->subject !== '') {
+                    $subject = $email->subject;
+                } elseif (method_exists($email, 'get_option')) {
+                    try {
+                        $subject = (string) $email->get_option('subject', '');
+                    } catch (\Throwable $t) {
+                        $subject = '';
+                    }
+                }
+                if (empty($subject) && method_exists($email, 'get_subject')) {
+                    try {
+                        $subject = (string) $email->get_subject();
+                    } catch (\Throwable $t) {
+                        $subject = '';
+                    }
+                }
+
+                // 7. Email Type
+                $email_type = 'html';
+                if (isset($email->email_type) && is_string($email->email_type)) {
+                    $email_type = $email->email_type;
+                } elseif (method_exists($email, 'get_email_type')) {
+                    try {
+                        $email_type = (string) $email->get_email_type();
+                    } catch (\Throwable $t) {
+                        $email_type = 'html';
+                    }
+                }
+
+                $class_name = get_class($email);
+
+                // Determine recipient type
+                $is_customer = false;
+                if (empty($recipient) || $recipient === '{customer}' || stripos($id, 'customer_') === 0 || (isset($email->customer_email) && $email->customer_email)) {
                     $is_customer = true;
-                }
-            } elseif (isset($core_status_email_map[$id])) {
-                foreach ($core_status_email_map[$id] as $type => $st_list) {
-                    foreach ($st_list as $st) {
-                        $triggered_statuses[] = $st;
+                    if (empty($recipient)) {
+                        $recipient = '{customer}';
                     }
                 }
-            }
 
-            $triggered_statuses = array_values(array_unique($triggered_statuses));
+                // Detect WooCommerce Order Status Manager custom email & conditions
+                $is_order_status_manager = (is_a($email, 'WC_Order_Status_Manager_Order_Status_Email') || isset($email->dispatch_conditions));
+                $osm_details = null;
+                $triggered_statuses = [];
 
-            // Update status coverage if this email is enabled
-            if ($is_enabled) {
-                foreach ($triggered_statuses as $st) {
-                    if (isset($all_statuses[$st])) {
-                        $all_statuses[$st]['is_silent'] = false;
-                        if ($is_customer) {
-                            $all_statuses[$st]['customer_emails'][] = $id;
-                        } else {
-                            $all_statuses[$st]['admin_emails'][] = $id;
+                if ($is_order_status_manager) {
+                    $dispatch_conditions   = isset($email->dispatch_conditions) && is_array($email->dispatch_conditions) ? $email->dispatch_conditions : [];
+                    $dispatch_on_new_order = !empty($email->dispatch_on_new_order) && ($email->dispatch_on_new_order === 'yes' || $email->dispatch_on_new_order === true);
+                    $post_id               = isset($email->post_id) ? (int) $email->post_id : null;
+                    $osm_type              = isset($email->type) ? $email->type : ($is_customer ? 'customer' : 'admin');
+
+                    $parsed_conditions = [];
+                    foreach ($dispatch_conditions as $condition) {
+                        if (preg_match('/^([a-z0-9_\-]+)_to_([a-z0-9_\-]+)$/i', $condition, $m)) {
+                            $from = $m[1];
+                            $to   = $m[2];
+                            $parsed_conditions[] = [
+                                'condition'   => $condition,
+                                'from_status' => $from,
+                                'to_status'   => $to,
+                            ];
+
+                            if ($to === 'any') {
+                                foreach (array_keys($all_statuses) as $st) {
+                                    $triggered_statuses[] = $st;
+                                }
+                            } else {
+                                $clean_to = strpos($to, 'wc-') === 0 ? substr($to, 3) : $to;
+                                $triggered_statuses[] = $clean_to;
+                            }
+                        }
+                    }
+
+                    $osm_details = [
+                        'is_custom_osm'         => true,
+                        'post_id'               => $post_id,
+                        'type'                  => $osm_type,
+                        'dispatch_on_new_order' => $dispatch_on_new_order,
+                        'dispatch_conditions'   => $parsed_conditions,
+                    ];
+
+                    if ($osm_type === 'customer') {
+                        $is_customer = true;
+                    }
+                } elseif (isset($core_status_email_map[$id])) {
+                    foreach ($core_status_email_map[$id] as $type => $st_list) {
+                        foreach ($st_list as $st) {
+                            $triggered_statuses[] = $st;
                         }
                     }
                 }
-            }
 
-            $email_list[] = [
-                'id'                      => $id,
-                'title'                   => sanitize_text_field($title),
-                'description'             => sanitize_text_field($description),
-                'enabled'                 => (bool) $is_enabled,
-                'recipient'               => $recipient === '{customer}' ? '{customer}' : Redaction::redact_email($recipient),
-                'is_customer_email'       => $is_customer,
-                'heading'                 => sanitize_text_field($heading),
-                'subject'                 => sanitize_text_field($subject),
-                'email_type'              => $email_type,
-                'class'                   => $class_name,
-                'is_order_status_manager' => $is_order_status_manager,
-                'order_status_manager'    => $osm_details,
-                'target_statuses'         => $triggered_statuses,
-            ];
+                $triggered_statuses = array_values(array_unique($triggered_statuses));
+
+                // Update status coverage if this email is enabled
+                if ($is_enabled) {
+                    foreach ($triggered_statuses as $st) {
+                        if (isset($all_statuses[$st])) {
+                            $all_statuses[$st]['is_silent'] = false;
+                            if ($is_customer) {
+                                $all_statuses[$st]['customer_emails'][] = $id;
+                            } else {
+                                $all_statuses[$st]['admin_emails'][] = $id;
+                            }
+                        }
+                    }
+                }
+
+                $email_list[] = [
+                    'id'                      => $id,
+                    'title'                   => sanitize_text_field($title),
+                    'description'             => sanitize_text_field($description),
+                    'enabled'                 => (bool) $is_enabled,
+                    'recipient'               => $recipient === '{customer}' ? '{customer}' : Redaction::redact_email($recipient),
+                    'is_customer_email'       => $is_customer,
+                    'heading'                 => sanitize_text_field($heading),
+                    'subject'                 => sanitize_text_field($subject),
+                    'email_type'              => $email_type,
+                    'class'                   => $class_name,
+                    'is_order_status_manager' => $is_order_status_manager,
+                    'order_status_manager'    => $osm_details,
+                    'target_statuses'         => $triggered_statuses,
+                ];
+            } catch (\Throwable $e) {
+                // Catch any unexpected exception in exotic email classes to prevent taking down the endpoint
+                $email_list[] = [
+                    'id'                      => !empty($email->id) ? (string) $email->id : (string) $email_key,
+                    'title'                   => is_object($email) ? get_class($email) : (string) $email_key,
+                    'description'             => '',
+                    'enabled'                 => false,
+                    'recipient'               => '',
+                    'is_customer_email'       => false,
+                    'heading'                 => '',
+                    'subject'                 => '',
+                    'email_type'              => 'unknown',
+                    'class'                   => is_object($email) ? get_class($email) : 'unknown',
+                    'is_order_status_manager' => false,
+                    'order_status_manager'    => null,
+                    'target_statuses'         => [],
+                    'error'                   => $e->getMessage(),
+                ];
+            }
         }
 
         // Analyze silent order statuses

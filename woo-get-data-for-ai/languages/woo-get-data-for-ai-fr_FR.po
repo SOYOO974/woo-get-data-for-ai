@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-15 06:33+00:00\n"
-"PO-Revision-Date: 2026-09-15 06:33+00:00\n"
+"POT-Creation-Date: 2026-09-15 06:43+00:00\n"
+"PO-Revision-Date: 2026-09-15 06:43+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -1632,7 +1632,7 @@ msgstr "Code promo introuvable."
 msgid "Order not found."
 msgstr "Commande introuvable."
 
-#: includes/api/class-woocommerce-controller.php:2946
+#: includes/api/class-woocommerce-controller.php:3063
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr "Aucun e-mail client ou administrateur actif n'est configuré pour être envoyé lors du passage à cet état de commande."
 
