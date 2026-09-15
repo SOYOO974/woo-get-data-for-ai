@@ -71,6 +71,24 @@ class System_Controller extends Rest_Controller {
             },
         ]);
 
+        // GET /system/mail/subscriber (MailPoet subscriber status, bounce diagnostic, and segment membership)
+        register_rest_route(self::NAMESPACE, '/system/mail/subscriber', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_mail_subscriber'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'system');
+            },
+            'args'                => [
+                'email' => [
+                    'required'          => true,
+                    'sanitize_callback' => 'sanitize_email',
+                    'validate_callback' => function ($param) {
+                        return is_email($param);
+                    },
+                ],
+            ],
+        ]);
+
         // GET /system/security (Hardening audit, file editing constants, XML-RPC, security & cache plugins)
         register_rest_route(self::NAMESPACE, '/system/security', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -569,7 +587,7 @@ class System_Controller extends Rest_Controller {
                         foreach ($f_logs as $f_log) {
                             $recent_failures[] = [
                                 'id'         => (int) $f_log['id'],
-                                'recipient'  => Redaction::redact_string($f_log['recipient'] ?? '', true),
+                                'recipient'  => Redaction::redact_email($f_log['recipient'] ?? ''),
                                 'subject'    => sanitize_text_field($f_log['subject'] ?? ''),
                                 'status'     => $f_log['status'],
                                 'error'      => sanitize_text_field(substr($f_log['response'] ?? '', 0, 200)),
@@ -649,27 +667,247 @@ class System_Controller extends Rest_Controller {
             }
         }
 
-        // Default / PHP mail evaluation
-        $is_using_php_mail = ($active_provider === 'php_mail' || $active_provider === 'mail');
-        $health_status     = $is_using_php_mail ? 'warning' : (!empty($recent_failures) ? 'notice' : 'healthy');
+        // Check MailPoet & MailPoet Sending Service (MSS)
+        $has_mailpoet = defined('MAILPOET_VERSION') || class_exists('\MailPoet\Settings\SettingsController') || class_exists('\MailPoet\Config\ServicesChecker');
+        $mailpoet_settings_table = $wpdb->prefix . 'mailpoet_settings';
+        $has_mailpoet_table = ($wpdb->get_var("SHOW TABLES LIKE '{$mailpoet_settings_table}'") === $mailpoet_settings_table);
+
+        $mailpoet_config = null;
+        if ($has_mailpoet || $has_mailpoet_table) {
+            $detected_plugins[] = 'MailPoet';
+
+            $mp_send_transactional = false;
+            $mp_mta = [];
+            $mp_mta_group = '';
+            $mp_api_key_state = [];
+            $mp_has_api_key = false;
+            $mp_sender = [];
+
+            if (class_exists('\MailPoet\Settings\SettingsController')) {
+                try {
+                    $mp_settings = \MailPoet\Settings\SettingsController::getInstance();
+                    $mp_send_transactional = (bool) $mp_settings->get('send_transactional_emails', false);
+                    $mp_mta = $mp_settings->get('mta', []) ?: [];
+                    $mp_mta_group = $mp_settings->get('mta_group', '') ?: '';
+                    $mp_api_key_state = $mp_settings->get('mta.mailpoet_api_key_state', []) ?: [];
+                    $mp_has_api_key = !empty($mp_settings->get('mta.mailpoet_api_key'));
+                    $mp_sender = $mp_settings->get('sender', []) ?: [];
+                } catch (\Throwable $e) {
+                    // fallback to database queries below
+                }
+            }
+
+            if (empty($mp_mta) && $has_mailpoet_table) {
+                $mp_rows = $wpdb->get_results("SELECT name, value FROM {$mailpoet_settings_table} WHERE name IN ('mta', 'mta_group', 'send_transactional_emails', 'sender')", OBJECT_K);
+                if (!empty($mp_rows)) {
+                    if (isset($mp_rows['send_transactional_emails'])) {
+                        $val = maybe_unserialize($mp_rows['send_transactional_emails']->value);
+                        $mp_send_transactional = ($val === true || $val === '1' || $val === 1);
+                    }
+                    if (isset($mp_rows['mta'])) {
+                        $mp_mta = maybe_unserialize($mp_rows['mta']->value) ?: [];
+                    }
+                    if (isset($mp_rows['mta_group'])) {
+                        $mp_mta_group = maybe_unserialize($mp_rows['mta_group']->value) ?: '';
+                    }
+                    if (isset($mp_rows['sender'])) {
+                        $mp_sender = maybe_unserialize($mp_rows['sender']->value) ?: [];
+                    }
+                }
+            }
+
+            $mp_method = $mp_mta['method'] ?? ($mp_mta_group ?: 'unknown');
+            $is_mss = ($mp_method === 'MailPoet');
+            $key_state = $mp_api_key_state['state'] ?? ($mp_mta['mailpoet_api_key_state']['state'] ?? ($mp_has_api_key ? 'specified' : 'none'));
+            $is_mss_valid = ($key_state === 'valid' || $key_state === 'expiring');
+
+            if ($is_mss && class_exists('\MailPoet\Config\ServicesChecker')) {
+                try {
+                    $services_checker = new \MailPoet\Config\ServicesChecker();
+                    $sc_valid = $services_checker->isMailPoetAPIKeyValid(false);
+                    if ($sc_valid !== null) {
+                        $is_mss_valid = (bool) $sc_valid;
+                    }
+                } catch (\Throwable $e) {
+                    // keep current evaluation
+                }
+            }
+
+            $mailpoet_config = [
+                'provider'                  => $is_mss ? 'mailpoet_sending_service' : 'mailpoet_' . strtolower($mp_method),
+                'send_transactional_emails' => $mp_send_transactional,
+                'mta_group'                 => $mp_mta_group,
+                'mta_method'                => $mp_method,
+                'is_mss_active'             => $is_mss,
+                'mss_key_specified'         => $mp_has_api_key,
+                'mss_key_state'             => $key_state,
+                'mss_key_valid'             => $is_mss_valid,
+                'sender_email'              => !empty($mp_sender['address']) ? $mp_sender['address'] : get_option('admin_email'),
+                'sender_name'               => !empty($mp_sender['name']) ? $mp_sender['name'] : get_bloginfo('name'),
+            ];
+
+            // If MailPoet has taken over transactional emails, or if no other dedicated SMTP was active
+            if ($mp_send_transactional || $active_provider === 'php_mail') {
+                if ($mp_send_transactional) {
+                    $active_plugin = 'MailPoet';
+                    $active_provider = $is_mss ? 'mailpoet_sending_service' : 'mailpoet_' . strtolower($mp_method);
+                    $config_details = $mailpoet_config;
+                } else {
+                    $config_details['mailpoet'] = $mailpoet_config;
+                }
+            } else {
+                $config_details['mailpoet'] = $mailpoet_config;
+            }
+        }
+
+        // Authentication & Health evaluation
+        $is_using_php_mail = ($active_provider === 'php_mail' || $active_provider === 'mail' || $active_provider === 'mailpoet_phpmail');
+        $is_mss_auth       = ($active_provider === 'mailpoet_sending_service' && !empty($mailpoet_config['mss_key_valid']));
+        $is_authenticated  = (!$is_using_php_mail && $active_provider !== 'php_mail') || $is_mss_auth;
+        $health_status     = !$is_authenticated ? 'warning' : (!empty($recent_failures) ? 'notice' : 'healthy');
 
         $alerts = [];
-        if ($is_using_php_mail) {
-            $alerts[] = 'CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo.';
+        if (!$is_authenticated) {
+            $alerts[] = esc_html__('CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo.', 'woo-get-data-for-ai');
+        } elseif ($active_provider === 'mailpoet_sending_service' && empty($mailpoet_config['mss_key_valid'])) {
+            $alerts[] = sprintf(
+                /* translators: %s: MSS key status */
+                esc_html__('CRITICAL: MailPoet Sending Service is configured for transactional emails, but the API key state is invalid or unapproved (%s). Delivery of emails may be paused.', 'woo-get-data-for-ai'),
+                esc_html($mailpoet_config['mss_key_state'])
+            );
         }
+
         if (!empty($recent_failures)) {
-            $alerts[] = sprintf('%d recent email delivery failure(s) recorded in mail log.', count($recent_failures));
+            $alerts[] = sprintf(
+                /* translators: %d: Failures count */
+                esc_html__('%d recent email delivery failure(s) recorded in mail log.', 'woo-get-data-for-ai'),
+                count($recent_failures)
+            );
         }
 
         return $this->response([
             'health'             => $health_status,
             'active_plugin'      => $active_plugin,
             'transport_provider' => $active_provider,
-            'is_authenticated'   => !$is_using_php_mail,
+            'is_authenticated'   => $is_authenticated,
             'detected_plugins'   => $detected_plugins,
             'configuration'      => $config_details,
             'recent_failures'    => $recent_failures,
             'alerts'             => $alerts,
+        ]);
+    }
+
+    /**
+     * GET /system/mail/subscriber
+     * MailPoet subscriber diagnostic: checks subscription status, bounces, and segment memberships.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_mail_subscriber(\WP_REST_Request $request) {
+        global $wpdb;
+
+        $email = sanitize_email((string) $request->get_param('email'));
+        if (empty($email) || !is_email($email)) {
+            return new \WP_Error(
+                'agent_bridge_invalid_email',
+                esc_html__('A valid email parameter is required for subscriber diagnostic.', 'woo-get-data-for-ai'),
+                ['status' => 400]
+            );
+        }
+
+        $subscribers_table = $wpdb->prefix . 'mailpoet_subscribers';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$subscribers_table}'") !== $subscribers_table) {
+            return $this->response([
+                'mailpoet_active' => false,
+                'found'           => false,
+                'email'           => Redaction::redact_email($email),
+                'message'         => esc_html__('MailPoet subscribers table does not exist or MailPoet is not installed.', 'woo-get-data-for-ai'),
+            ]);
+        }
+
+        $subscriber = $wpdb->get_row($wpdb->prepare("
+            SELECT id, wp_user_id, first_name, last_name, email, status, source, count_confirmations,
+                   confirmed_at, confirmed_ip, created_at, updated_at, deleted_at, last_subscribed_at, last_engagement_at
+            FROM {$subscribers_table}
+            WHERE email = %s
+            LIMIT 1
+        ", $email));
+
+        if (!$subscriber) {
+            return $this->response([
+                'mailpoet_active' => true,
+                'found'           => false,
+                'email'           => Redaction::redact_email($email),
+                'status'          => 'not_found',
+                'message'         => esc_html__('No MailPoet subscriber record found for this email address.', 'woo-get-data-for-ai'),
+                'alerts'          => [],
+            ]);
+        }
+
+        // Retrieve lists and segments
+        $lists = [];
+        $sub_segments_table = $wpdb->prefix . 'mailpoet_subscriber_segment';
+        $segments_table     = $wpdb->prefix . 'mailpoet_segments';
+
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$sub_segments_table}'") === $sub_segments_table &&
+            $wpdb->get_var("SHOW TABLES LIKE '{$segments_table}'") === $segments_table) {
+
+            $seg_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT s.id, s.name, s.type, ss.status as subscription_status, ss.created_at, ss.updated_at
+                FROM {$sub_segments_table} ss
+                JOIN {$segments_table} s ON s.id = ss.segment_id
+                WHERE ss.subscriber_id = %d
+                ORDER BY s.name ASC
+            ", (int) $subscriber->id), ARRAY_A);
+
+            if (!empty($seg_rows)) {
+                foreach ($seg_rows as $row) {
+                    $lists[] = [
+                        'id'                  => (int) $row['id'],
+                        'name'                => sanitize_text_field($row['name']),
+                        'type'                => sanitize_text_field($row['type']),
+                        'subscription_status' => sanitize_text_field($row['subscription_status']),
+                        'created_at'          => $row['created_at'],
+                        'updated_at'          => $row['updated_at'],
+                    ];
+                }
+            }
+        }
+
+        // Status analysis & diagnostic alerts
+        $alerts = [];
+        $is_bounced = ($subscriber->status === 'bounced');
+
+        if ($is_bounced) {
+            $alerts[] = esc_html__('CRITICAL BOUNCE ALERT: Address is marked as "bounced" in MailPoet. The MailPoet Sending Service (MSS) silently drops/blocks all transactional emails (order confirmations, status updates, password resets) sent to bounced addresses to protect sender reputation. The bounce status must be cleared or reset in MailPoet > Subscribers.', 'woo-get-data-for-ai');
+        } elseif ($subscriber->status === 'unsubscribed') {
+            $alerts[] = esc_html__('NOTICE: Address is marked as "unsubscribed". Marketing campaigns will not be sent. Transactional emails will still dispatch only if send_transactional_emails is enabled in MailPoet.', 'woo-get-data-for-ai');
+        } elseif ($subscriber->status === 'unconfirmed') {
+            $alerts[] = esc_html__('NOTICE: Address is unconfirmed (pending double opt-in confirmation).', 'woo-get-data-for-ai');
+        } elseif ($subscriber->status === 'inactive') {
+            $alerts[] = esc_html__('NOTICE: Subscriber marked inactive due to prolonged engagement dormancy.', 'woo-get-data-for-ai');
+        }
+
+        return $this->response([
+            'mailpoet_active'     => true,
+            'found'               => true,
+            'subscriber_id'       => (int) $subscriber->id,
+            'wp_user_id'          => !empty($subscriber->wp_user_id) ? (int) $subscriber->wp_user_id : null,
+            'email'               => Redaction::redact_email($subscriber->email),
+            'first_name'          => Redaction::redact_string($subscriber->first_name ?? ''),
+            'last_name'           => Redaction::redact_string($subscriber->last_name ?? ''),
+            'status'              => $subscriber->status,
+            'is_bounced'          => $is_bounced,
+            'source'              => $subscriber->source,
+            'count_confirmations' => (int) $subscriber->count_confirmations,
+            'confirmed_at'        => $subscriber->confirmed_at,
+            'last_subscribed_at'  => $subscriber->last_subscribed_at,
+            'last_engagement_at'  => $subscriber->last_engagement_at,
+            'created_at'          => $subscriber->created_at,
+            'updated_at'          => $subscriber->updated_at,
+            'lists'               => $lists,
+            'alerts'              => $alerts,
         ]);
     }
 

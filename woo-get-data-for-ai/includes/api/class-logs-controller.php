@@ -65,6 +65,33 @@ class Logs_Controller extends Rest_Controller {
                 ],
             ],
         ]);
+
+        // GET /logs/emails (Search database email logs across WP Mail Logging, FluentSMTP, Post SMTP, WP Mail SMTP)
+        register_rest_route(self::NAMESPACE, '/logs/emails', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_email_logs'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'logs');
+            },
+            'args'                => [
+                'search' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'status' => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'limit'  => [
+                    'default'           => 20,
+                    'sanitize_callback' => 'absint',
+                ],
+                'offset' => [
+                    'default'           => 0,
+                    'sanitize_callback' => 'absint',
+                ],
+            ],
+        ]);
     }
 
     public function get_log_sources(\WP_REST_Request $request) {
@@ -507,6 +534,248 @@ class Logs_Controller extends Rest_Controller {
             'unique_issues_count'=> count($unique_errors),
             'reported_count'     => count($top_errors),
             'recent_crashes'     => $top_errors,
+        ]);
+    }
+
+    /**
+     * GET /logs/emails
+     * Search database email logs across WP Mail Logging, FluentSMTP, Post SMTP, and WP Mail SMTP.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_email_logs(\WP_REST_Request $request) {
+        global $wpdb;
+
+        $search = trim((string) $request->get_param('search'));
+        $status = strtolower(trim((string) $request->get_param('status'))) ?: 'all';
+        $limit  = min(100, max(1, (int) $request->get_param('limit') ?: 20));
+        $offset = max(0, (int) $request->get_param('offset') ?: 0);
+
+        // Detect supported database logging tables
+        $table_wpml    = $wpdb->prefix . 'wpml_mails';
+        $table_fluent  = $wpdb->prefix . 'fluentmail_log';
+        $table_postman = $wpdb->prefix . 'postman_logs';
+        $table_wpms    = $wpdb->prefix . 'wpmailsmtp_emails_log';
+
+        $detected_providers = [];
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_wpml}'") === $table_wpml) {
+            $detected_providers[] = 'wp_mail_logging';
+        }
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_fluent}'") === $table_fluent) {
+            $detected_providers[] = 'fluentsmtp';
+        }
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_postman}'") === $table_postman) {
+            $detected_providers[] = 'post_smtp';
+        }
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table_wpms}'") === $table_wpms) {
+            $detected_providers[] = 'wp_mail_smtp';
+        }
+
+        if (empty($detected_providers)) {
+            return $this->response([
+                'active_log_provider' => null,
+                'detected_providers'  => [],
+                'total_matched'       => 0,
+                'limit'               => $limit,
+                'offset'              => $offset,
+                'returned_count'      => 0,
+                'notice'              => esc_html__('No supported database email logging plugin tables found (WP Mail Logging, FluentSMTP, Post SMTP, or WP Mail SMTP).', 'woo-get-data-for-ai'),
+                'logs'                => [],
+            ]);
+        }
+
+        $primary_provider = $detected_providers[0];
+        $items = [];
+        $total_matched = 0;
+
+        if ($primary_provider === 'wp_mail_logging') {
+            $where = ['1=1'];
+            $params = [];
+
+            if ($status === 'sent') {
+                $where[] = "(error IS NULL OR error = '' OR error = '0')";
+            } elseif ($status === 'failed') {
+                $where[] = "(error IS NOT NULL AND error != '' AND error != '0')";
+            }
+
+            if (!empty($search)) {
+                $where[] = "(receiver LIKE %s OR subject LIKE %s OR message LIKE %s)";
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $params[] = $like;
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = implode(' AND ', $where);
+
+            // Total matched count
+            $count_sql = "SELECT COUNT(*) FROM {$table_wpml} WHERE {$where_sql}";
+            $total_matched = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+            // Retrieve paginated rows
+            $query_sql = "SELECT mail_id as id, timestamp, receiver, subject, error, attachments FROM {$table_wpml} WHERE {$where_sql} ORDER BY mail_id DESC LIMIT %d OFFSET %d";
+            $query_params = $params;
+            $query_params[] = $limit;
+            $query_params[] = $offset;
+
+            $rows = $wpdb->get_results($wpdb->prepare($query_sql, $query_params));
+            if (!empty($rows)) {
+                foreach ($rows as $row) {
+                    $is_failed = (!empty($row->error) && $row->error !== '0');
+                    $items[] = [
+                        'id'              => (int) $row->id,
+                        'source'          => 'WP Mail Logging',
+                        'timestamp'       => $row->timestamp,
+                        'recipient'       => Redaction::redact_email($row->receiver),
+                        'subject'         => sanitize_text_field($row->subject),
+                        'status'          => $is_failed ? 'failed' : 'sent',
+                        'error'           => $is_failed ? sanitize_text_field(substr((string) $row->error, 0, 500)) : null,
+                        'has_attachments' => !empty($row->attachments),
+                    ];
+                }
+            }
+        } elseif ($primary_provider === 'fluentsmtp') {
+            $where = ['1=1'];
+            $params = [];
+
+            if ($status === 'sent') {
+                $where[] = "status = 'sent'";
+            } elseif ($status === 'failed') {
+                $where[] = "status != 'sent'";
+            }
+
+            if (!empty($search)) {
+                $where[] = "(`to` LIKE %s OR subject LIKE %s)";
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = implode(' AND ', $where);
+            $count_sql = "SELECT COUNT(*) FROM {$table_fluent} WHERE {$where_sql}";
+            $total_matched = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+            $query_sql = "SELECT id, `to` as recipient, subject, status, response, created_at FROM {$table_fluent} WHERE {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d";
+            $query_params = $params;
+            $query_params[] = $limit;
+            $query_params[] = $offset;
+
+            $rows = $wpdb->get_results($wpdb->prepare($query_sql, $query_params));
+            if (!empty($rows)) {
+                foreach ($rows as $row) {
+                    $is_failed = ($row->status !== 'sent');
+                    $items[] = [
+                        'id'              => (int) $row->id,
+                        'source'          => 'FluentSMTP',
+                        'timestamp'       => $row->created_at,
+                        'recipient'       => Redaction::redact_email($row->recipient),
+                        'subject'         => sanitize_text_field($row->subject),
+                        'status'          => $is_failed ? 'failed' : 'sent',
+                        'error'           => $is_failed ? sanitize_text_field(substr((string) $row->response, 0, 500)) : null,
+                        'has_attachments' => false,
+                    ];
+                }
+            }
+        } elseif ($primary_provider === 'post_smtp') {
+            $where = ['1=1'];
+            $params = [];
+
+            if ($status === 'sent') {
+                $where[] = "success = 1";
+            } elseif ($status === 'failed') {
+                $where[] = "success = 0";
+            }
+
+            if (!empty($search)) {
+                $where[] = "(original_to LIKE %s OR original_subject LIKE %s)";
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = implode(' AND ', $where);
+            $count_sql = "SELECT COUNT(*) FROM {$table_postman} WHERE {$where_sql}";
+            $total_matched = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+            $query_sql = "SELECT id, original_to, original_subject, success, solution, time FROM {$table_postman} WHERE {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d";
+            $query_params = $params;
+            $query_params[] = $limit;
+            $query_params[] = $offset;
+
+            $rows = $wpdb->get_results($wpdb->prepare($query_sql, $query_params));
+            if (!empty($rows)) {
+                foreach ($rows as $row) {
+                    $is_failed = empty($row->success);
+                    $date_str = is_numeric($row->time) ? date('c', (int) $row->time) : $row->time;
+                    $items[] = [
+                        'id'              => (int) $row->id,
+                        'source'          => 'Post SMTP',
+                        'timestamp'       => $date_str,
+                        'recipient'       => Redaction::redact_email($row->original_to),
+                        'subject'         => sanitize_text_field($row->original_subject),
+                        'status'          => $is_failed ? 'failed' : 'sent',
+                        'error'           => $is_failed ? sanitize_text_field(substr((string) $row->solution, 0, 500)) : null,
+                        'has_attachments' => false,
+                    ];
+                }
+            }
+        } elseif ($primary_provider === 'wp_mail_smtp') {
+            $where = ['1=1'];
+            $params = [];
+
+            if ($status === 'sent') {
+                $where[] = "status = 1";
+            } elseif ($status === 'failed') {
+                $where[] = "status = 2";
+            }
+
+            if (!empty($search)) {
+                $where[] = "(to_address LIKE %s OR subject LIKE %s)";
+                $like = '%' . $wpdb->esc_like($search) . '%';
+                $params[] = $like;
+                $params[] = $like;
+            }
+
+            $where_sql = implode(' AND ', $where);
+            $count_sql = "SELECT COUNT(*) FROM {$table_wpms} WHERE {$where_sql}";
+            $total_matched = !empty($params) ? (int) $wpdb->get_var($wpdb->prepare($count_sql, $params)) : (int) $wpdb->get_var($count_sql);
+
+            $query_sql = "SELECT id, to_address, subject, status, error_text, date_sent FROM {$table_wpms} WHERE {$where_sql} ORDER BY id DESC LIMIT %d OFFSET %d";
+            $query_params = $params;
+            $query_params[] = $limit;
+            $query_params[] = $offset;
+
+            $rows = $wpdb->get_results($wpdb->prepare($query_sql, $query_params));
+            if (!empty($rows)) {
+                foreach ($rows as $row) {
+                    $is_failed = ((int) $row->status === 2);
+                    $items[] = [
+                        'id'              => (int) $row->id,
+                        'source'          => 'WP Mail SMTP',
+                        'timestamp'       => $row->date_sent,
+                        'recipient'       => Redaction::redact_email($row->to_address),
+                        'subject'         => sanitize_text_field($row->subject),
+                        'status'          => $is_failed ? 'failed' : 'sent',
+                        'error'           => $is_failed ? sanitize_text_field(substr((string) $row->error_text, 0, 500)) : null,
+                        'has_attachments' => false,
+                    ];
+                }
+            }
+        }
+
+        return $this->response([
+            'active_log_provider' => $primary_provider,
+            'detected_providers'  => $detected_providers,
+            'total_matched'       => $total_matched,
+            'limit'               => $limit,
+            'offset'              => $offset,
+            'returned_count'      => count($items),
+            'filters'             => [
+                'search' => $search,
+                'status' => $status,
+            ],
+            'logs'                => $items,
         ]);
     }
 }

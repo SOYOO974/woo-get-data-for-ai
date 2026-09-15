@@ -107,15 +107,85 @@ class Redaction {
         // Mask emails if requested (PII protection)
         if ($redact_emails) {
             $text = preg_replace_callback(
-                '/[a-zA-Z0-9_.+-]+@([a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)/',
+                '/[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/',
                 function ($matches) {
-                    return '[REDACTED_EMAIL@' . $matches[1] . ']';
+                    return self::redact_email($matches[0]);
                 },
                 $text
             );
         }
 
         return $text;
+    }
+
+    /**
+     * Intelligently redact email address to preserve the first 2 characters
+     * and the last 2 characters of the local part (e.g. doriane.hoareau@hotmail.fr -> do***au@hotmail.fr).
+     * Preserves GDPR compliance while allowing diagnosis of account typos and mismatches.
+     *
+     * @param string $email
+     * @return string
+     */
+    public static function redact_email($email) {
+        if (!is_string($email) || empty(trim($email))) {
+            return '';
+        }
+
+        $email = trim($email);
+
+        // Handle comma or semicolon separated lists of emails
+        if (strpos($email, ',') !== false || strpos($email, ';') !== false) {
+            $delimiter = strpos($email, ',') !== false ? ',' : ';';
+            $parts = explode($delimiter, $email);
+            $redacted_parts = array_map([self::class, 'redact_email'], array_map('trim', $parts));
+            return implode(', ', $redacted_parts);
+        }
+
+        // Handle "Name <email@domain.com>" format
+        if (preg_match('/^(.*?)<([^>]+)>$/', $email, $matches)) {
+            $name = trim($matches[1]);
+            $inner_email = trim($matches[2]);
+            $redacted_inner = self::redact_single_email($inner_email);
+            return $name ? "$name <$redacted_inner>" : "<$redacted_inner>";
+        }
+
+        return self::redact_single_email($email);
+    }
+
+    /**
+     * Redact a single raw email address.
+     *
+     * @param string $email
+     * @return string
+     */
+    protected static function redact_single_email($email) {
+        if (strpos($email, '@') === false) {
+            return self::redact_string($email, false);
+        }
+
+        $parts = explode('@', $email, 2);
+        $local = $parts[0];
+        $domain = $parts[1];
+
+        $len = function_exists('mb_strlen') ? mb_strlen($local, 'UTF-8') : strlen($local);
+
+        if ($len >= 5) {
+            // Keep first 2 and last 2 characters (e.g. doriane.hoareau -> do***au, dodokisss -> do***ss)
+            $first = function_exists('mb_substr') ? mb_substr($local, 0, 2, 'UTF-8') : substr($local, 0, 2);
+            $last  = function_exists('mb_substr') ? mb_substr($local, -2, null, 'UTF-8') : substr($local, -2);
+            $masked_local = $first . '***' . $last;
+        } elseif ($len === 4 || $len === 3) {
+            $first = function_exists('mb_substr') ? mb_substr($local, 0, 1, 'UTF-8') : substr($local, 0, 1);
+            $last  = function_exists('mb_substr') ? mb_substr($local, -1, null, 'UTF-8') : substr($local, -1);
+            $masked_local = $first . '***' . $last;
+        } elseif ($len === 2) {
+            $first = function_exists('mb_substr') ? mb_substr($local, 0, 1, 'UTF-8') : substr($local, 0, 1);
+            $masked_local = $first . '***';
+        } else {
+            $masked_local = '***';
+        }
+
+        return $masked_local . '@' . $domain;
     }
 
     /**

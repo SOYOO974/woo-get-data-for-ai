@@ -17,7 +17,7 @@ class Permissions {
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, security hardening, and caching configuration.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/security', '/system/caching', '/system/cache/purge'],
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/mail/subscriber', '/system/security', '/system/caching', '/system/cache/purge'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -46,8 +46,8 @@ class Permissions {
             ],
             'logs' => [
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom', '/logs/errors-summary'],
+                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, database email logs, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom', '/logs/errors-summary', '/logs/emails'],
             ],
             'scheduler' => [
                 'label'       => esc_html__('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'),
@@ -71,8 +71,8 @@ class Permissions {
             ],
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks'],
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
@@ -201,7 +201,13 @@ class Permissions {
                     [
                         'path'        => '/system/mail',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('SMTP & transactional email diagnostic: active mail plugin (FluentSMTP, WP Mail SMTP, Post SMTP), provider, sanitization of secrets, and recent delivery failures.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('SMTP & transactional email diagnostic: active mail plugin (FluentSMTP, WP Mail SMTP, Post SMTP, MailPoet / MSS), provider, authentication status, sanitization of secrets, and recent delivery failures.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/mail/subscriber',
+                        'methods'     => ['GET'],
+                        'params'      => ['email (required)'],
+                        'description' => esc_html__('MailPoet subscriber status diagnostic: checks subscription status (subscribed, unconfirmed, unsubscribed, bounced, inactive), segment memberships, and alerts on silent bounce suppression.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/security',
@@ -380,6 +386,12 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['limit (default: 15, max: 50)'],
                         'description' => esc_html__('Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from debug.log and wc-logs.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/logs/emails',
+                        'methods'     => ['GET'],
+                        'params'      => ['search (optional)', 'status (all|sent|failed, default: all)', 'limit (default: 20, max: 100)', 'offset (default: 0)'],
+                        'description' => esc_html__('Search database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), and WP Mail SMTP with PII email redaction.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -587,6 +599,11 @@ class Permissions {
                         'path'        => '/woocommerce/webhooks',
                         'methods'     => ['GET'],
                         'description' => esc_html__('WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/emails',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

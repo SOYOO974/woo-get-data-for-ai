@@ -300,6 +300,15 @@ class Woocommerce_Controller extends Rest_Controller {
                 return $this->check_access($request, 'woocommerce');
             },
         ]);
+
+        // GET /woocommerce/emails (WooCommerce transactional emails, Order Status Manager triggers, and silent statuses)
+        register_rest_route(self::NAMESPACE, '/woocommerce/emails', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_emails'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+        ]);
     }
 
     /**
@@ -2749,6 +2758,205 @@ class Woocommerce_Controller extends Rest_Controller {
                 'alert'         => $failing_count > 0 ? sprintf('%d webhook(s) have failed repeatedly (failure count >= 5 or disabled). Integrations with external ERP/CRM may be broken.', $failing_count) : null,
             ],
             'webhooks' => $webhooks,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/emails
+     * Inspect registered WooCommerce transactional emails, Order Status Manager triggers,
+     * recipient routing, and detect silent/uncovered order statuses.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_emails(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active() || !function_exists('WC') || !WC()->mailer()) {
+            return $this->response([
+                'total_emails'          => 0,
+                'enabled_emails'        => 0,
+                'disabled_emails'       => 0,
+                'has_order_status_mgr'  => false,
+                'silent_statuses_count' => 0,
+                'silent_statuses'       => [],
+                'order_statuses_health' => [],
+                'emails'                => [],
+            ]);
+        }
+
+        $mailer = WC()->mailer();
+        $emails = $mailer ? $mailer->get_emails() : [];
+
+        $has_osm = class_exists('WC_Order_Status_Manager') || class_exists('WC_Order_Status_Manager_Order_Status_Email');
+
+        // Retrieve registered order statuses
+        $raw_statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
+        $all_statuses = [];
+        foreach ($raw_statuses as $key => $label) {
+            $clean_slug = strpos($key, 'wc-') === 0 ? substr($key, 3) : $key;
+            $all_statuses[$clean_slug] = [
+                'key'             => $key,
+                'slug'            => $clean_slug,
+                'name'            => $label,
+                'customer_emails' => [],
+                'admin_emails'    => [],
+                'is_silent'       => true,
+            ];
+        }
+
+        // Map core WooCommerce status email triggers
+        $core_status_email_map = [
+            'new_order'                 => ['admin' => ['pending', 'processing', 'on-hold']],
+            'customer_processing_order' => ['customer' => ['processing']],
+            'customer_completed_order'  => ['customer' => ['completed']],
+            'customer_on_hold_order'    => ['customer' => ['on-hold']],
+            'customer_refunded_order'   => ['customer' => ['refunded']],
+            'cancelled_order'           => ['admin' => ['cancelled']],
+            'failed_order'              => ['admin' => ['failed']],
+        ];
+
+        $email_list = [];
+
+        foreach ($emails as $email_key => $email) {
+            if (!is_object($email)) {
+                continue;
+            }
+
+            $id          = isset($email->id) ? $email->id : $email_key;
+            $title       = method_exists($email, 'get_title') ? $email->get_title() : (isset($email->title) ? $email->title : $id);
+            $description = method_exists($email, 'get_description') ? $email->get_description() : (isset($email->description) ? $email->description : '');
+            $is_enabled  = method_exists($email, 'is_enabled') ? $email->is_enabled() : ($email->enabled === 'yes' || $email->enabled === true);
+            $recipient   = method_exists($email, 'get_recipient') ? $email->get_recipient() : (isset($email->recipient) ? $email->recipient : '');
+            $heading     = method_exists($email, 'get_heading') ? $email->get_heading() : (isset($email->heading) ? $email->heading : '');
+            $subject     = method_exists($email, 'get_subject') ? $email->get_subject() : (isset($email->subject) ? $email->subject : '');
+            $email_type  = method_exists($email, 'get_email_type') ? $email->get_email_type() : (isset($email->email_type) ? $email->email_type : 'html');
+            $class_name  = get_class($email);
+
+            // Determine recipient type
+            $is_customer = false;
+            if (empty($recipient) || $recipient === '{customer}' || stripos($id, 'customer_') === 0 || (isset($email->customer_email) && $email->customer_email)) {
+                $is_customer = true;
+                if (empty($recipient)) {
+                    $recipient = '{customer}';
+                }
+            }
+
+            // Detect WooCommerce Order Status Manager custom email & conditions
+            $is_order_status_manager = (is_a($email, 'WC_Order_Status_Manager_Order_Status_Email') || isset($email->dispatch_conditions));
+            $osm_details = null;
+            $triggered_statuses = [];
+
+            if ($is_order_status_manager) {
+                $dispatch_conditions   = isset($email->dispatch_conditions) && is_array($email->dispatch_conditions) ? $email->dispatch_conditions : [];
+                $dispatch_on_new_order = !empty($email->dispatch_on_new_order) && ($email->dispatch_on_new_order === 'yes' || $email->dispatch_on_new_order === true);
+                $post_id               = isset($email->post_id) ? (int) $email->post_id : null;
+                $osm_type              = isset($email->type) ? $email->type : ($is_customer ? 'customer' : 'admin');
+
+                $parsed_conditions = [];
+                foreach ($dispatch_conditions as $condition) {
+                    if (preg_match('/^([a-z0-9_\-]+)_to_([a-z0-9_\-]+)$/i', $condition, $m)) {
+                        $from = $m[1];
+                        $to   = $m[2];
+                        $parsed_conditions[] = [
+                            'condition'   => $condition,
+                            'from_status' => $from,
+                            'to_status'   => $to,
+                        ];
+
+                        if ($to === 'any') {
+                            foreach (array_keys($all_statuses) as $st) {
+                                $triggered_statuses[] = $st;
+                            }
+                        } else {
+                            $clean_to = strpos($to, 'wc-') === 0 ? substr($to, 3) : $to;
+                            $triggered_statuses[] = $clean_to;
+                        }
+                    }
+                }
+
+                $osm_details = [
+                    'is_custom_osm'         => true,
+                    'post_id'               => $post_id,
+                    'type'                  => $osm_type,
+                    'dispatch_on_new_order' => $dispatch_on_new_order,
+                    'dispatch_conditions'   => $parsed_conditions,
+                ];
+
+                if ($osm_type === 'customer') {
+                    $is_customer = true;
+                }
+            } elseif (isset($core_status_email_map[$id])) {
+                foreach ($core_status_email_map[$id] as $type => $st_list) {
+                    foreach ($st_list as $st) {
+                        $triggered_statuses[] = $st;
+                    }
+                }
+            }
+
+            $triggered_statuses = array_values(array_unique($triggered_statuses));
+
+            // Update status coverage if this email is enabled
+            if ($is_enabled) {
+                foreach ($triggered_statuses as $st) {
+                    if (isset($all_statuses[$st])) {
+                        $all_statuses[$st]['is_silent'] = false;
+                        if ($is_customer) {
+                            $all_statuses[$st]['customer_emails'][] = $id;
+                        } else {
+                            $all_statuses[$st]['admin_emails'][] = $id;
+                        }
+                    }
+                }
+            }
+
+            $email_list[] = [
+                'id'                      => $id,
+                'title'                   => sanitize_text_field($title),
+                'description'             => sanitize_text_field($description),
+                'enabled'                 => (bool) $is_enabled,
+                'recipient'               => $recipient === '{customer}' ? '{customer}' : Redaction::redact_email($recipient),
+                'is_customer_email'       => $is_customer,
+                'heading'                 => sanitize_text_field($heading),
+                'subject'                 => sanitize_text_field($subject),
+                'email_type'              => $email_type,
+                'class'                   => $class_name,
+                'is_order_status_manager' => $is_order_status_manager,
+                'order_status_manager'    => $osm_details,
+                'target_statuses'         => $triggered_statuses,
+            ];
+        }
+
+        // Analyze silent order statuses
+        $silent_statuses = [];
+        $active_statuses_summary = [];
+
+        foreach ($all_statuses as $slug => $st_info) {
+            $active_statuses_summary[$slug] = [
+                'name'                   => $st_info['name'],
+                'is_silent'              => $st_info['is_silent'],
+                'has_customer_email'     => !empty($st_info['customer_emails']),
+                'has_admin_email'        => !empty($st_info['admin_emails']),
+                'active_customer_emails' => array_values(array_unique($st_info['customer_emails'])),
+                'active_admin_emails'    => array_values(array_unique($st_info['admin_emails'])),
+            ];
+
+            if ($st_info['is_silent']) {
+                $silent_statuses[] = [
+                    'slug'   => $slug,
+                    'name'   => $st_info['name'],
+                    'reason' => esc_html__('No active customer or admin email configured to dispatch on transition to this order status.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
+
+        return $this->response([
+            'total_emails'           => count($email_list),
+            'enabled_emails'         => count(array_filter($email_list, function ($e) { return !empty($e['enabled']); })),
+            'disabled_emails'        => count(array_filter($email_list, function ($e) { return empty($e['enabled']); })),
+            'has_order_status_mgr'   => $has_osm,
+            'silent_statuses_count'  => count($silent_statuses),
+            'silent_statuses'        => $silent_statuses,
+            'order_statuses_health'  => $active_statuses_summary,
+            'emails'                 => $email_list,
         ]);
     }
 }

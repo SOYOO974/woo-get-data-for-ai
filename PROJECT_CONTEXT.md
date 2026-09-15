@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-10  
+> **Last Updated**: 2026-09-15  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -48,10 +48,10 @@ For the strategic and technical product roadmap targeting web agencies and the B
     1. **Version Bump**: Increment the version number in both the plugin header (`Version: X.Y.Z`) and the constant `WOO_GET_DATA_AI_VERSION` in `woo-get-data-for-ai/woo-get-data-for-ai.php`.
     2. **Synchronize Procedural Playbooks**: Ensure any added endpoints fit within the 7 Strategic MECE Master Pillars.
     3. **Synchronize Internationalization (i18n) & Loco Translate (MANDATORY)**: Run `php cli/sync-i18n.php` to regenerate `.pot`, update French `.po`, and compile `.mo` (100% coverage mandatory).
-    4. **Changelog & Documentation**: Document all new features, bugfixes, and breaking changes in `PROJECT_CONTEXT.md` and `README.md`.
-    5. **Commit & Push**: Push commits to GitHub `main` branch.
-    6. **Generate Release Asset**: Package the clean plugin folder into `woo-get-data-for-ai.zip` (`tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai` — CRITICAL: enforce forward slashes for Linux compatibility, do NOT use PowerShell `Compress-Archive`).
-    7. **Publish GitHub Release**: Create the official GitHub Release with tag `vX.Y.Z` and attach `woo-get-data-for-ai.zip` via `gh release create`.
+    4. **Update Documentation**: Update `PROJECT_CONTEXT.md`, `README.md`, `SKILL.md`, and `cli/sync.js`.
+    5. **Commit & Push**: `git add . && git commit -m "..." && git push origin main`.
+    6. **Release Archive & GitHub Release**: Use `tar -a -cf woo-get-data-for-ai.zip woo-get-data-for-ai` (NEVER PowerShell Compress-Archive due to backslash corruption on Linux) and `gh release create`.
+    7. **FTP Deployment Table**: Systematically output a summary table of modified/created files grouped by remote directory.
     > ⚠️ **CRITICAL WHY**: Client WordPress sites use `plugin-update-checker` (PUC v5.6). Sites will **ONLY** detect and install auto-updates if a formal GitHub Release exists with `woo-get-data-for-ai.zip` attached. Without this, client sites never receive the updates. Also, archives must use forward slashes (`/`) so Linux unzippers don't flatten files or fail class autoloading.
 
 
@@ -249,7 +249,8 @@ Enables/disables modules on a per-site basis:
 | `GET /capabilities` | GET | Dynamic schema, active permissions, procedural diagnostic Playbooks, and ready-to-use Agent SKILL.md generator (`?format=skill\|markdown`) |
 | `GET /system` | GET | Server, WP/WC/PHP/MySQL versions, active plugins list & summary counts (`?plugins=active\|inactive\|all`, default: `active`), HPOS status, Action Scheduler queue & retention policy |
 | `GET /system/database` | GET | In-depth database diagnostic: table sizes, top 15 largest tables, autoload footprint analysis with 800KB alert threshold and orphaned options from inactive plugins, transient counts, and object cache status |
-| `GET /system/mail` | GET | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures |
+| `GET /system/mail` | GET | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP, MailPoet / MSS), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures |
+| `GET /system/mail/subscriber` | GET | MailPoet subscriber status diagnostic: subscription status (subscribed, unconfirmed, unsubscribed, bounced, inactive), segment memberships, and critical bounce alert (`?email=`) |
 | `GET /system/security` | GET | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins |
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
@@ -271,6 +272,7 @@ Enables/disables modules on a per-site basis:
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
 | `GET /logs/custom` | GET | Memory-safe tail inspection of specific log files in `wp-content/` with strict path sandboxing (`?file=nom-du-log`) |
 | `GET /logs/errors-summary` | GET | Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from `debug.log` and `wc-logs` with component attribution (`?limit=15`) |
+| `GET /logs/emails` | GET | Search database email delivery logs across WP Mail Logging (`wp_wpml_mails`), FluentSMTP (`fluentmail_log`), Post SMTP (`postman_logs`), and WP Mail SMTP with PII email redaction (`?search=`, `?status=all\|sent\|failed`, `?limit=50`, `?offset=`) |
 | `GET /crons` | GET | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments |
 | `GET /action-scheduler` | GET | Action Scheduler queue (in-progress, failed, pending), hook, group, attempts, arguments, retention policy in days, bloat alert, and error logs from `actionscheduler_logs` |
 | `GET /flowmattic/export-all` | GET | Bulk export of all FlowMattic workflows in 1 optimized request (`?status=all|active|inactive`, default: `all`) |
@@ -300,6 +302,7 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold, and top coupons with discount totals (`?limit=10`, `?range=last_30_days`) |
 | `GET /woocommerce/analytics/stock` | GET | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days) (`?low_stock_threshold=`) |
 | `GET /woocommerce/webhooks` | GET | WooCommerce webhooks inventory, delivery URLs, topics, and failure counters (`failure_count >= 5`) |
+| `GET /woocommerce/emails` | GET | Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses |
 | `GET /content/pages` | GET | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview (`?status=publish\|draft\|all`, `?parent=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
 | `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
@@ -332,7 +335,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, 301/302/410 URL redirection rules, 404 structural pattern clustering & smart in-memory redirection snippets recommendation, and global SEO plugin settings best practices audit (`/content/seo-audit`, `/content/seo/settings`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
   3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
-  4. `order_checkout_troubleshoot` (Orders, Payment Gateways, PMPro & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP mail delivery diagnostics (provider detection, credentials redaction, PHP mail() spam risk), WooCommerce webhook delivery status, Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/webhooks`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
+  4. `order_checkout_troubleshoot` (Orders, Payment Gateways, Emails, PMPro & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP & MailPoet Sending Service (MSS) deliverability diagnostics (provider detection, credentials redaction, PHP mail() spam risk, bounce alerts), WooCommerce transactional emails inspection with Order Status Manager trigger rules and silent status detection, database email logs search (WP Mail Logging, FluentSMTP, Post SMTP, WP Mail SMTP), MailPoet subscriber bounce check, WooCommerce webhook delivery status, Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/emails`, `/logs/emails`, `/system/mail/subscriber`, `/woocommerce/webhooks`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic & Conversion Analytics): Complete commercial & CRO intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, alongside traffic channels, UTM marketing campaigns, and device breakdowns (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`).
   6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
   7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).
@@ -392,11 +395,33 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.29.0: Playbook SEO (`seo_content_audit`) with dedicated Step 5 for 404 error monitoring (`GET /content/redirections/404`) and refined Step 4 for 301 migration mapping.
 - Optimized for v1.30.0: Unified 404 error monitoring (`GET /content/redirections/404`) supporting both Redirection (`wp_redirection_404`) and Rank Math SEO (`wp_rank_math_404_logs`) with optional `provider` filter and total 404 count in SEO summary.
 - Optimized for v1.31.0: `pull:content` pulls 404 logs (`GET /content/redirections/404?limit=100`) and summarizes structural pattern clusters (`patterns_summary`) alongside smart in-memory code snippet recommendations in `redirections.md`.
+- Optimized for v1.32.0: `pull:woocommerce` pulls registered transactional emails (`emails.json`) and detects silent statuses; `pull:logs` pulls database email logs (`email-logs.json`) across WP Mail Logging, FluentSMTP, Post SMTP, and WP Mail SMTP.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.32.0 (2026-09-15)
+- **Support Natif MailPoet & MailPoet Sending Service (MSS) (`includes/api/class-system-controller.php`)** :
+  - Détection automatique et transparente du MailPoet Sending Service (MSS) dans `GET /system/mail` pour neutraliser le faux-positif critique PHP `mail()`.
+  - Remontée de l'état d'approbation et de validité de la clé API MailPoet MSS (`mailpoet.mss_key_state`, `mailpoet.send_transactional`).
+  - Nouvel endpoint `GET /system/mail/subscriber?email=<email>` : diagnostic en profondeur du profil d'abonné (`subscribed`, `unconfirmed`, `unsubscribed`, `bounced`, `inactive`), appartenance aux segments, et détection critique des rejets silencieux de notifications de commande (`bounced`).
+- **Inspection Complète des E-mails WooCommerce & Déclencheurs Personnalisés (`includes/api/class-woocommerce-controller.php`)** :
+  - Nouvel endpoint `GET /woocommerce/emails` : inventaire exhaustif de tous les e-mails transactionnels enregistrés dans `WC()->mailer()->get_emails()`.
+  - Extraction des conditions de déclenchement personnalisées de WooCommerce Order Status Manager (`from_status_to_to_status`, ex. `any_to_expediee`, `any_to_remis-au-transporteur`).
+  - Analyse de santé des états de commande (`order_statuses_health`) et alerte automatique sur les états « silencieux » (`silent_statuses`) sans aucune notification e-mail configurée.
+- **Recherche & Inspection des Logs d'E-mails en Base de Données (`includes/api/class-logs-controller.php`)** :
+  - Nouvel endpoint `GET /logs/emails` supportant WP Mail Logging (`wp_wpml_mails`), FluentSMTP (`fluentmail_log`), Post SMTP (`postman_logs`), et WP Mail SMTP (`wpmailsmtp_emails_log`).
+  - Filtres par mot-clé (`search`), statut (`all`, `sent`, `failed`), pagination (`limit`, `offset`), avec caviardage intelligent des adresses e-mails (`Redaction::redact_email()`, ex. `do***au@domain.com`).
+- **Évolution du Playbook MECE Pilier 4 (`order_checkout_troubleshoot`) (`includes/class-playbooks.php`, `SKILL.md`)** :
+  - Intégration de 3 nouvelles étapes diagnostiques indispensables sans prolifération de playbooks : Étape 6 (`/woocommerce/emails`), Étape 7 (`/logs/emails`), Étape 8 (`/system/mail/subscriber`).
+  - Enrichissement des mots-clés d'intention (`mailpoet`, `rebond email`, `mailpoet bounce`, `emails woocommerce`, `statut silencieux`, `logs emails`, `wp mail logging`, `emails bloqués`).
+- **Client CLI Node.js (`cli/sync.js`)** :
+  - Enrichissement de `pull:woocommerce` avec `emails.json` et section dédiée aux e-mails dans `summary.md`.
+  - Enrichissement de `pull:logs` avec `email-logs.json`, suppression de la fonction redondante et consolidation des tails de logs.
+- **Internationalisation & Loco Translate 100%** :
+  - 617/617 chaînes traduites en français, régénération complète des fichiers `.pot`, `.po` et binaire compilé `.mo`.
 
 ### v1.31.0 (2026-09-10)
 - **Playbook SEO (`seo_content_audit`) : Typologies 404 & Stratégie Redirections Intelligentes en Mémoire (`includes/class-playbooks.php`, `class-content-controller.php`, `SKILL.md`)** :

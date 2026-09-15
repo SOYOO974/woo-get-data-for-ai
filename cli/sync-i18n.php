@@ -223,6 +223,7 @@ $poContent .= '"X-Domain: woo-get-data-for-ai\n"' . "\n\n";
 
 $translatedCount = 0;
 $missingCount = 0;
+$missingStrings = [];
 $moEntries = [];
 
 // Header entry for MO file
@@ -245,6 +246,7 @@ foreach ($strings as $key => $item) {
     } else {
         $poContent .= 'msgstr ""' . "\n\n";
         $missingCount++;
+        $missingStrings[] = $item['msgid'];
     }
 }
 
@@ -252,7 +254,11 @@ file_put_contents($poFile, $poContent);
 echo "   Written " . strlen($poContent) . " bytes to woo-get-data-for-ai-fr_FR.po\n";
 echo "   Translations status: {$translatedCount}/" . count($strings) . " translated (" . round(($translatedCount / count($strings)) * 100, 1) . "%)\n";
 if ($missingCount > 0) {
-    echo "   ⚠️ Warning: {$missingCount} strings are still untranslated in French!\n\n";
+    echo "   ⚠️ Warning: {$missingCount} strings are still untranslated in French!\n";
+    foreach ($missingStrings as $ms) {
+        echo "      - \"$ms\"\n";
+    }
+    echo "\n";
 } else {
     echo "   ✨ 100% of strings translated in French!\n\n";
 }

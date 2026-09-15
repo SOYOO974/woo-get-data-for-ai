@@ -444,43 +444,6 @@ async function pullSnippets() {
     }
 }
 
-async function pullLogs() {
-    console.log('⏳ Pulling Error & WooCommerce Logs...');
-    try {
-        const sourcesData = await makeRequest('/logs/sources');
-        const sources = sourcesData.sources || [];
-
-        // Pull debug.log if present
-        const hasDebug = sources.find(s => s.name === 'debug.log');
-        if (hasDebug) {
-            const logData = await makeRequest('/logs/view?source=debug.log&lines=300');
-            writeText(path.join(outputDir, 'logs/debug-tail.log'), (logData.lines || []).join('\n'));
-        }
-
-        // Pull top 3 recent WC logs
-        const wcLogs = sources.filter(s => s.source_type === 'woocommerce').slice(0, 3);
-        for (const wcLog of wcLogs) {
-            const logData = await makeRequest(`/logs/view?source=${encodeURIComponent(wcLog.path)}&lines=200`);
-            writeText(path.join(outputDir, `logs/${wcLog.name}`), (logData.lines || []).join('\n'));
-        }
-
-        // Pull custom logs found in wp-content/ (e.g. komela-order-status-sync.log)
-        const customLogs = sources.filter(s => s.source_type === 'custom');
-        for (const cLog of customLogs) {
-            try {
-                const logData = await makeRequest(`/logs/custom?file=${encodeURIComponent(cLog.name)}&lines=200`);
-                writeText(path.join(outputDir, `logs/${cLog.name}`), (logData.lines || []).join('\n'));
-            } catch (e) {
-                // Silently skip if custom log read fails
-            }
-        }
-
-        console.log('✅ Recent logs downloaded to ./logs/');
-    } catch (err) {
-        console.error('❌ Failed to pull logs:', err.message);
-    }
-}
-
 async function pullScheduler() {
     console.log('⏳ Pulling WP-Cron & Action Scheduler...');
     try {
@@ -845,6 +808,16 @@ async function pullWooCommerce() {
             console.warn('  ⚠️ Could not fetch /woocommerce/shipping:', shipErr.message);
         }
 
+        // 2c. Pull Transactional Emails & Custom Triggers
+        console.log('   📧 Fetching Transactional Emails & Custom Triggers...');
+        let emailsData = null;
+        try {
+            emailsData = await makeRequest('/woocommerce/emails');
+            writeJson(path.join(wcDir, 'emails.json'), emailsData);
+        } catch (emailErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/emails:', emailErr.message);
+        }
+
         // 3. Pull Products
         console.log(`   🛍️  Fetching Products (status: ${statusFilter === 'all' ? 'publish' : statusFilter})...`);
         const prodStatus = statusFilter === 'all' ? 'publish' : statusFilter;
@@ -1019,6 +992,21 @@ async function pullWooCommerce() {
             }
         }
 
+        if (emailsData) {
+            md += `## 📧 Transactional Emails & Status Notifications\n`;
+            md += `- **Registered Emails**: ${emailsData.total_registered || 0} (${emailsData.enabled_count || 0} enabled, ${emailsData.disabled_count || 0} disabled)\n`;
+            if (emailsData.order_status_manager_active) {
+                md += `- **Order Status Manager**: 🟢 Active (${emailsData.custom_status_emails_count || 0} custom status emails)\n`;
+            }
+            if (emailsData.order_statuses_health) {
+                const h = emailsData.order_statuses_health;
+                if (h.has_silent_statuses) {
+                    md += `> ⚠️ **Silent Statuses Alert**: ${h.silent_count} order status(es) have NO configured email notifications: ${(h.silent_statuses || []).map(s => `\`${s}\``).join(', ')}\n\n`;
+                }
+            }
+            md += `\n`;
+        }
+
         md += `## 💳 Payment Gateways\n`;
         if (summary.payment_gateways && Array.isArray(summary.payment_gateways.active_gateways)) {
             md += `- **Active Gateways (${summary.payment_gateways.active_count}/${summary.payment_gateways.total_installed})**: `;
@@ -1051,7 +1039,7 @@ async function pullWooCommerce() {
         md += `- **Registered Customers**: ${summary.customers ? summary.customers.total_registered : 0}\n`;
 
         writeText(path.join(wcDir, 'summary.md'), md);
-        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, shipping.json, products.json, orders.json, analytics-sales.json, stock-analytics.json, webhooks.json, summary.md, sales-report.md, stock-health.md)');
+        console.log('✅ Saved WooCommerce store data to ./woocommerce/ (summary.json, settings.json, shipping.json, emails.json, products.json, orders.json, analytics-sales.json, stock-analytics.json, webhooks.json, summary.md, sales-report.md, stock-health.md)');
     } catch (err) {
         console.error('❌ Failed to pull WooCommerce data:', err.message);
     }
@@ -1297,11 +1285,48 @@ async function pullLogs() {
                     // Ignore tail error
                 }
             }
+
+            // Tail top 3 recent WooCommerce logs
+            const wcLogs = (Array.isArray(sourcesData) ? sourcesData : (sourcesData.sources || [])).filter(s => s.source_type === 'woocommerce').slice(0, 3);
+            for (const wcLog of wcLogs) {
+                try {
+                    const logData = await makeRequest(`/logs/view?source=${encodeURIComponent(wcLog.path || wcLog.name)}&lines=200`);
+                    if (logData && Array.isArray(logData.lines)) {
+                        writeText(path.join(logsDir, wcLog.name), logData.lines.join('\n'));
+                    }
+                } catch (wcErr) {
+                    // Ignore error
+                }
+            }
+
+            // Tail custom logs found in wp-content/
+            const customLogs = (Array.isArray(sourcesData) ? sourcesData : (sourcesData.sources || [])).filter(s => s.source_type === 'custom');
+            for (const cLog of customLogs) {
+                try {
+                    const logData = await makeRequest(`/logs/custom?file=${encodeURIComponent(cLog.name)}&lines=200`);
+                    if (logData && Array.isArray(logData.lines)) {
+                        writeText(path.join(logsDir, cLog.name), logData.lines.join('\n'));
+                    }
+                } catch (cErr) {
+                    // Ignore error
+                }
+            }
         } catch (srcErr) {
             console.warn('  ⚠️ Failed to pull /logs/sources:', srcErr.message);
         }
 
-        console.log('✅ Saved Logs & Crash Watch report to ./logs/ (errors-summary.md, errors-summary.json, sources.json)');
+        // 3. Database Email Delivery Logs (WP Mail Logging, FluentSMTP, Post SMTP, WP Mail SMTP)
+        try {
+            const emailLogs = await makeRequest('/logs/emails?limit=50');
+            if (emailLogs && emailLogs.source_table) {
+                writeJson(path.join(logsDir, 'email-logs.json'), emailLogs);
+                console.log(`  📧 Fetched ${emailLogs.total_logged || (emailLogs.emails || []).length} database email log entries from ${emailLogs.source_table}`);
+            }
+        } catch (mailLogErr) {
+            // Silently ignore if no supported db mail logging table is found
+        }
+
+        console.log('✅ Saved Logs, Crash Watch & Email logs to ./logs/ (errors-summary.md, errors-summary.json, sources.json, email-logs.json)');
     } catch (err) {
         console.error('❌ Failed to pull logs:', err.message);
     }
