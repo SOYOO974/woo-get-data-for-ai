@@ -82,6 +82,7 @@ class Plugin {
             Api\Performance_Controller::class,
             Api\Pmpro_Controller::class,
             Api\Masterstudy_Controller::class,
+            Api\Tracking_Controller::class,
         ];
 
         foreach ($controller_classes as $class) {

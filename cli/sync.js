@@ -51,7 +51,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:logs, purge:cache');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:tracking, pull:logs, purge:cache');
     process.exit(1);
 }
 
@@ -1683,6 +1683,70 @@ async function purgeCache() {
     }
 }
 
+// Pull Server-Side Tracking & GDPR Consent
+async function pullTracking() {
+    console.log('⏳ Pulling Server-Side Tracking & GDPR Consent...');
+    try {
+        const trackingDir = path.join(outputDir, 'tracking');
+        ensureDir(trackingDir);
+
+        const audit = await makeRequest('/tracking/audit');
+        writeJson(path.join(trackingDir, 'audit.json'), audit);
+
+        if (audit && audit.summary) {
+            console.log(`  ✓ Tracking status: ${audit.summary.status.toUpperCase()} (${audit.summary.total_alerts} alerts)`);
+            let tmd = `# Server-Side Tracking & GDPR Consent Audit\n\n`;
+            tmd += `**Global Status**: ${audit.summary.status.toUpperCase()}\n`;
+            tmd += `**Total Alerts**: ${audit.summary.total_alerts} (${audit.summary.critical_alerts} critical, ${audit.summary.warning_alerts} warnings)\n\n`;
+
+            tmd += `## 1. Active Providers\n\n`;
+            tmd += `- **Meta Hybrid Tracking (Pixel + CAPI)**: ${audit.meta_tracking?.plugin?.is_active ? '✅ Active' : '❌ Inactive'}\n`;
+            tmd += `- **Google Ads Server-Side**: ${audit.google_ads_tracking?.plugin?.is_active ? '✅ Active' : '❌ Inactive'}\n`;
+            tmd += `- **CMP / Cookie Banner**: ${audit.gdpr_cookie_banner?.cmp_detected?.name || 'None'}\n\n`;
+
+            if (audit.summary.alerts && audit.summary.alerts.length > 0) {
+                tmd += `## 2. Diagnostic Alerts\n\n`;
+                tmd += `| Level | Code | Message | Recommendation |\n`;
+                tmd += `|---|---|---|---|\n`;
+                audit.summary.alerts.forEach(a => {
+                    const badge = a.level === 'critical' ? '🔴 CRITICAL' : (a.level === 'warning' ? '🟡 WARNING' : 'ℹ️ INFO');
+                    tmd += `| ${badge} | \`${a.code}\` | ${a.message} | ${a.recommendation || '-'} |\n`;
+                });
+                tmd += `\n`;
+            }
+
+            if (audit.recommendations && audit.recommendations.length > 0) {
+                tmd += `## 3. Actionable Recommendations\n\n`;
+                audit.recommendations.forEach((r, i) => {
+                    tmd += `${i + 1}. **[${r.priority.toUpperCase()}]** ${r.recommendation}\n`;
+                });
+            }
+
+            writeText(path.join(trackingDir, 'audit-report.md'), tmd);
+        }
+
+        try {
+            const orders = await makeRequest('/tracking/orders?limit=50');
+            writeJson(path.join(trackingDir, 'orders.json'), orders);
+            console.log(`  ✓ Successfully fetched ${orders.orders ? orders.orders.length : 0} orders tracking records.`);
+        } catch (oErr) {
+            console.warn('  ⚠️ Could not fetch /tracking/orders:', oErr.message);
+        }
+
+        try {
+            const logs = await makeRequest('/tracking/logs?limit=50');
+            writeJson(path.join(trackingDir, 'logs.json'), logs);
+            console.log(`  ✓ Successfully fetched tracking logs.`);
+        } catch (lErr) {
+            console.warn('  ⚠️ Could not fetch /tracking/logs:', lErr.message);
+        }
+
+        console.log('✅ Tracking & Consent data saved to ./tracking/ (audit.json, audit-report.md, orders.json, logs.json)');
+    } catch (err) {
+        console.warn('  ⚠️ Tracking audit skipped or not enabled:', err.message);
+    }
+}
+
 // Main Runner
 async function run() {
     console.log(`\n🚀 WP Agent Bridge CLI connecting to: ${siteUrl}`);
@@ -1750,6 +1814,9 @@ async function run() {
         case 'pull:lms':
             await pullMasterstudy();
             break;
+        case 'pull:tracking':
+            await pullTracking();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -1771,6 +1838,7 @@ async function run() {
             await pullPerformance();
             await pullPmpro();
             await pullMasterstudy();
+            await pullTracking();
             await pullLogs();
             break;
     }

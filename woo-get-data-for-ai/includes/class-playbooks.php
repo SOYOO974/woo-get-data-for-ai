@@ -293,7 +293,7 @@ class Playbooks {
                 'title'           => esc_html__('Orders, Payment Gateways & Delivery Troubleshooting', 'woo-get-data-for-ai'),
                 'description'     => esc_html__('Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['woocommerce'],
-                'optional_modules'=> ['logs', 'wpcode', 'system', 'pmpro', 'masterstudy'],
+                'optional_modules'=> ['logs', 'wpcode', 'system', 'pmpro', 'masterstudy', 'tracking'],
                 'intent_triggers' => [
                     'commande échouée',
                     'problème commande',
@@ -427,7 +427,7 @@ class Playbooks {
                 'title'           => esc_html__('360° E-Commerce Sales, Traffic & Conversion Analytics', 'woo-get-data-for-ai'),
                 'description'     => esc_html__('Executive commercial report combining native WooCommerce sales KPIs, paid orders, net sales growth %, average order value (AOV), traffic audience, page conversion rates, marketing UTM campaign ROI, top products, top coupons, and inventory valuation with dormant stock alerts.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['woocommerce'],
-                'optional_modules'=> ['analytics'],
+                'optional_modules'=> ['analytics', 'tracking'],
                 'intent_triggers' => [
                     'ventes woocommerce',
                     'chiffre d affaires',
@@ -444,6 +444,23 @@ class Playbooks {
                     'roi campagnes',
                     'utm analytics',
                     'bilan e-commerce',
+                    'audit tracking',
+                    'tracking server side',
+                    'meta capi',
+                    'pixel meta',
+                    'pixel facebook',
+                    'google ads server side',
+                    'gads server side',
+                    'conversions api',
+                    'consent mode',
+                    'consent mode v2',
+                    'bannière cookies',
+                    'banniere cookies',
+                    'rgpd tracking',
+                    'audit rgpd cookies',
+                    'diagnostic tracking',
+                    'vérifier le tracking',
+                    'suivi des conversions',
                 ],
                 'workflow'        => [
                     [
@@ -485,6 +502,14 @@ class Playbooks {
                         'params'      => ['range' => 'last_30_days'],
                         'description' => esc_html__('Tracks marketing campaigns by source and medium (Google Ads, Meta, Newsletters) with direct order and net sales attribution.', 'woo-get-data-for-ai'),
                         'key_signals' => ['campaigns[].utm_campaign', 'campaigns[].orders', 'campaigns[].net_sales', 'campaigns[].conversion_rate'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Server-Side Tracking & GDPR Consent Compliance Audit', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/tracking/audit',
+                        'params'      => [],
+                        'description' => esc_html__('Audits Meta CAPI v21.0 (Pixel ID, Access Token, test event code in production, Action Scheduler queue, recent order syncs), Google Ads Server-Side (OAuth Refresh Token, Merchant ID, Conversion Action ID, database error logs), cookie banner (native woo_gads_consent or CMP like Complianz/Axeptio), and Google Consent Mode v2 signal coherence.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['summary.status', 'summary.alerts', 'meta_tracking.configuration.pixel_id_valid_format', 'meta_tracking.action_scheduler.failed_last_7d', 'meta_tracking.recent_orders_summary.success_rate_pct', 'google_ads_tracking.configuration.refresh_token_status', 'google_ads_tracking.database_logs.error_count', 'gdpr_cookie_banner.cmp_detected.name', 'gdpr_cookie_banner.coherence_check.is_cookie_coherent', 'recommendations'],
                     ],
                 ],
             ],
@@ -686,6 +711,7 @@ class Playbooks {
         if (strpos($endpoint, '/performance') === 0) return 'performance';
         if (strpos($endpoint, '/pmpro') === 0) return 'pmpro';
         if (strpos($endpoint, '/masterstudy') === 0) return 'masterstudy';
+        if (strpos($endpoint, '/tracking') === 0) return 'tracking';
 
         return null;
     }

@@ -228,6 +228,11 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><code>/performance/templates-urls</code>, <code>/performance/profile</code>, <code>/performance/autoload</code>, <code>/performance/plugins-summary</code>, <code>/performance/caching</code>, <code>/performance/cache/purge</code></td>
                     <td><?php esc_html_e('Auto-discovery of 5 template archetypes (home, shop, category, product, cart), on-demand URL profiler (SQL queries and execution time attributed per plugin, memory, TTFB, duplicate/slow queries), 100% native Core Web Vitals & frontend signals, autoload bloat, plugins database footprint, universal caching diagnostic (Object Cache, WP Rocket, Breeze), and multi-layer cache purging.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('Server-Side Tracking & GDPR Consent', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/tracking/audit</code>, <code>/tracking/orders</code>, <code>/tracking/logs</code></td>
+                    <td><?php esc_html_e('Complete 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0) and Google Ads Server-Side conversions: checks API credentials, Action Scheduler health, database log tables, CMP/cookie banner detection, Google Consent Mode v2 signals, inter-plugin cookie name coherence, and recent order transmission status with click identifiers (gclid, wbraid, gbraid, fbp, fbc).', 'woo-get-data-for-ai'); ?></td>
+                </tr>
             </tbody>
         </table>
     </div>

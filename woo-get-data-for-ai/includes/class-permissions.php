@@ -94,6 +94,11 @@ class Permissions {
                 'description' => esc_html__('Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course durations, user course enrollments, and PMPro subscription link synchronization.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/masterstudy/courses', '/masterstudy/user/{user_id}/courses'],
             ],
+            'tracking' => [
+                'label'       => esc_html__('Server-Side Tracking & GDPR Consent', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting Meta CAPI & Pixel status, Google Ads Server-Side tracking, Action Scheduler queues, database conversion logs, cookie banner configuration (native/CMP), and Google Consent Mode v2 compliance.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/tracking/audit', '/tracking/orders', '/tracking/logs'],
+            ],
         ];
     }
 
@@ -120,6 +125,7 @@ class Permissions {
             'performance'  => 1,
             'pmpro'        => 1,
             'masterstudy'  => 1,
+            'tracking'     => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
