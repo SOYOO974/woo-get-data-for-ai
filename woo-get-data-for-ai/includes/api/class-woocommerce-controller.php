@@ -309,6 +309,15 @@ class Woocommerce_Controller extends Rest_Controller {
                 return $this->check_access($request, 'woocommerce');
             },
         ]);
+
+        // GET /woocommerce/account-tabs (WooCommerce My Account tabs, endpoint hooks, and attached Woodmart/Elementor templates)
+        register_rest_route(self::NAMESPACE, '/woocommerce/account-tabs', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_account_tabs'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+        ]);
     }
 
     /**
@@ -3074,6 +3083,229 @@ class Woocommerce_Controller extends Rest_Controller {
             'silent_statuses'        => $silent_statuses,
             'order_statuses_health'  => $active_statuses_summary,
             'emails'                 => $email_list,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/account-tabs
+     * Inspects WooCommerce My Account tabs, endpoint hooks, callbacks, and attached Woodmart/Elementor templates.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_account_tabs(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error(
+                'woocommerce_not_active',
+                esc_html__('WooCommerce is not active on this site.', 'woo-get-data-for-ai'),
+                400
+            );
+        }
+
+        if (!function_exists('wc_get_account_menu_items')) {
+            return $this->error(
+                'woocommerce_functions_missing',
+                esc_html__('WooCommerce account functions are not loaded.', 'woo-get-data-for-ai'),
+                500
+            );
+        }
+
+        $menu_items = wc_get_account_menu_items();
+        if (!is_array($menu_items)) {
+            $menu_items = [];
+        }
+
+        // Detect Woodmart options
+        $woodmart_opts = get_option('xts-woodmart-options');
+        if (empty($woodmart_opts)) {
+            $woodmart_opts = get_option('woodmart_options');
+        }
+        if (is_string($woodmart_opts)) {
+            $woodmart_opts = json_decode($woodmart_opts, true) ?: [];
+        }
+        if (!is_array($woodmart_opts)) {
+            $woodmart_opts = [];
+        }
+
+        $woodmart_active = !empty($woodmart_opts) || (function_exists('woodmart_get_opt') || defined('WOODMART_THEME_DIR'));
+        $woodmart_custom_tabs = $woodmart_opts['my_account_custom_tabs'] ?? [];
+        if (!is_array($woodmart_custom_tabs)) {
+            $woodmart_custom_tabs = [];
+        }
+
+        $woodmart_dashboard_text = $woodmart_opts['my_account_dashboard_custom_text'] ?? ($woodmart_opts['my_account_text'] ?? '');
+
+        $core_endpoints = ['dashboard', 'orders', 'downloads', 'edit-address', 'payment-methods', 'edit-account', 'customer-logout'];
+
+        $tabs_result = [];
+
+        foreach ($menu_items as $endpoint => $title) {
+            $is_core = in_array($endpoint, $core_endpoints, true);
+
+            // Compute URL
+            if ($endpoint === 'dashboard') {
+                $url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : '';
+            } elseif ($endpoint === 'customer-logout') {
+                $url = function_exists('wc_logout_url') ? wc_logout_url() : '';
+            } else {
+                $url = function_exists('wc_get_account_endpoint_url') ? wc_get_account_endpoint_url($endpoint) : '';
+            }
+
+            // Hook determination
+            $hook_name = ($endpoint === 'dashboard') ? 'woocommerce_account_dashboard' : 'woocommerce_account_' . $endpoint . '_endpoint';
+
+            $callbacks_data = [];
+            $detected_template_ids = [];
+
+            if (!empty($GLOBALS['wp_filter'][$hook_name])) {
+                $hook_obj = $GLOBALS['wp_filter'][$hook_name];
+                $cb_groups = ($hook_obj instanceof \WP_Hook) ? $hook_obj->callbacks : (is_array($hook_obj) ? $hook_obj : []);
+
+                foreach ($cb_groups as $priority => $callbacks) {
+                    foreach ($callbacks as $cb) {
+                        $func = $cb['function'] ?? null;
+                        $cb_name = 'unknown';
+                        $file = null;
+                        $line = null;
+                        $source_snippet = '';
+
+                        try {
+                            if (is_string($func)) {
+                                $cb_name = $func;
+                                if (function_exists($func)) {
+                                    $ref = new \ReflectionFunction($func);
+                                }
+                            } elseif (is_array($func) && isset($func[0], $func[1])) {
+                                $class = is_object($func[0]) ? get_class($func[0]) : (string) $func[0];
+                                $method = (string) $func[1];
+                                $cb_name = $class . (is_object($func[0]) ? '->' : '::') . $method;
+                                if (method_exists($class, $method)) {
+                                    $ref = new \ReflectionMethod($class, $method);
+                                }
+                            } elseif ($func instanceof \Closure) {
+                                $cb_name = 'Closure';
+                                $ref = new \ReflectionFunction($func);
+                            }
+
+                            if (isset($ref) && $ref->getFileName() && file_exists($ref->getFileName())) {
+                                $full_file = str_replace('\\', '/', $ref->getFileName());
+                                $wp_content_norm = str_replace('\\', '/', WP_CONTENT_DIR);
+                                $file = str_replace($wp_content_norm, 'wp-content', $full_file);
+                                $line = $ref->getStartLine();
+                                $start_line = max(0, $ref->getStartLine() - 1);
+                                $num_lines = min(150, max(1, $ref->getEndLine() - $ref->getStartLine() + 1));
+                                $lines = @file($ref->getFileName());
+                                if ($lines) {
+                                    $source_snippet = implode('', array_slice($lines, $start_line, $num_lines));
+                                    if (preg_match('/(?:woodmart_get_html_block|html_block)\s*[\(\[]\s*["\']?(?:id=["\']?)?(\d+)/i', $source_snippet, $m)) {
+                                        $detected_template_ids[(int) $m[1]] = 'hook_callback';
+                                    } elseif (preg_match('/elementor-template\s+id=["\']?(\d+)["\']?/i', $source_snippet, $m)) {
+                                        $detected_template_ids[(int) $m[1]] = 'hook_callback';
+                                    }
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            // Suppress reflection exceptions defensively
+                        }
+
+                        $callbacks_data[] = [
+                            'priority'      => $priority,
+                            'name'          => $cb_name,
+                            'file'          => $file,
+                            'line'          => $line,
+                            'accepted_args' => (int) ($cb['accepted_args'] ?? 1),
+                        ];
+                    }
+                }
+            }
+
+            // Check Woodmart custom tabs match
+            $matched_woodmart_tab = null;
+            foreach ($woodmart_custom_tabs as $w_tab) {
+                if (!is_array($w_tab)) {
+                    continue;
+                }
+                $tab_id = $w_tab['id'] ?? ($w_tab['key'] ?? '');
+                $tab_title_slug = sanitize_title($w_tab['title'] ?? ($w_tab['name'] ?? ''));
+
+                if ($tab_id === $endpoint || $tab_title_slug === $endpoint) {
+                    $matched_woodmart_tab = $w_tab;
+                    if (!empty($w_tab['html_block']) && is_numeric($w_tab['html_block'])) {
+                        $detected_template_ids[(int) $w_tab['html_block']] = 'woodmart_custom_tabs';
+                    }
+                    // Check if content field has shortcode
+                    $tab_content = $w_tab['content'] ?? ($w_tab['text'] ?? '');
+                    if (is_string($tab_content) && !empty($tab_content)) {
+                        if (preg_match('/(?:html_block|woodmart_get_html_block)\s+id=["\']?(\d+)["\']?/i', $tab_content, $m)) {
+                            $detected_template_ids[(int) $m[1]] = 'woodmart_custom_tabs_content';
+                        } elseif (preg_match('/elementor-template\s+id=["\']?(\d+)["\']?/i', $tab_content, $m)) {
+                            $detected_template_ids[(int) $m[1]] = 'woodmart_custom_tabs_content';
+                        }
+                    }
+                    break;
+                }
+            }
+
+            // Check dashboard Woodmart custom text / template
+            if ($endpoint === 'dashboard' && !empty($woodmart_dashboard_text) && is_string($woodmart_dashboard_text)) {
+                if (preg_match('/(?:html_block|woodmart_get_html_block)\s+id=["\']?(\d+)["\']?/i', $woodmart_dashboard_text, $m)) {
+                    $detected_template_ids[(int) $m[1]] = 'woodmart_dashboard_option';
+                } elseif (preg_match('/elementor-template\s+id=["\']?(\d+)["\']?/i', $woodmart_dashboard_text, $m)) {
+                    $detected_template_ids[(int) $m[1]] = 'woodmart_dashboard_option';
+                }
+            }
+
+            // Resolve attached templates details
+            $attached_templates = [];
+            foreach ($detected_template_ids as $tpl_id => $source_origin) {
+                $post = get_post($tpl_id);
+                if ($post) {
+                    $attached_templates[] = [
+                        'id'            => $post->ID,
+                        'post_type'     => $post->post_type,
+                        'title'         => html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                        'status'        => $post->post_status,
+                        'detected_via'  => $source_origin,
+                        'word_count'    => str_word_count(wp_strip_all_tags($post->post_content)),
+                        'raw_content'   => $post->post_content,
+                    ];
+                }
+            }
+
+            $tab_entry = [
+                'endpoint'            => $endpoint,
+                'title'               => html_entity_decode((string) $title, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                'url'                 => $url,
+                'is_core'             => $is_core,
+                'hook'                => $hook_name,
+                'callbacks_count'     => count($callbacks_data),
+                'callbacks'           => $callbacks_data,
+                'has_template'        => !empty($attached_templates),
+                'attached_templates'  => $attached_templates,
+            ];
+
+            if ($matched_woodmart_tab) {
+                $tab_entry['woodmart_custom_tab'] = [
+                    'id'           => $matched_woodmart_tab['id'] ?? '',
+                    'title'        => $matched_woodmart_tab['title'] ?? ($matched_woodmart_tab['name'] ?? ''),
+                    'content_type' => $matched_woodmart_tab['content_type'] ?? 'unknown',
+                    'html_block'   => $matched_woodmart_tab['html_block'] ?? null,
+                ];
+            }
+
+            $tabs_result[] = $tab_entry;
+        }
+
+        return $this->response([
+            'total_tabs'            => count($tabs_result),
+            'core_tabs_count'       => count(array_filter($tabs_result, function ($t) { return !empty($t['is_core']); })),
+            'custom_tabs_count'     => count(array_filter($tabs_result, function ($t) { return empty($t['is_core']); })),
+            'woodmart'              => [
+                'active'                 => $woodmart_active,
+                'custom_tabs_configured' => count($woodmart_custom_tabs),
+                'has_dashboard_custom'   => !empty($woodmart_dashboard_text),
+            ],
+            'tabs'                  => $tabs_result,
         ]);
     }
 }

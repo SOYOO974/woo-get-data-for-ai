@@ -97,6 +97,37 @@ class System_Controller extends Rest_Controller {
                 return $this->check_access($request, 'system');
             },
         ]);
+
+        // GET /system/search (Global read-only search across wp_posts, sanitized wp_options, and WPCode / Code Snippets)
+        register_rest_route(self::NAMESPACE, '/system/search', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'search_system'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'system');
+            },
+            'args'                => [
+                'query'     => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'q'         => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'target'    => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'limit'     => [
+                    'default'           => 20,
+                    'sanitize_callback' => 'absint',
+                ],
+                'post_type' => [
+                    'default'           => 'any',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
     }
 
     public function get_ping(\WP_REST_Request $request) {
@@ -1032,6 +1063,281 @@ class System_Controller extends Rest_Controller {
             'security_plugins'   => $security_plugins,
             'caching_plugins'    => $cache_plugins,
             'recommendations'    => $recommendations,
+        ]);
+    }
+
+    /**
+     * GET /system/search
+     * Global read-only search across wp_posts, sanitized wp_options, and WPCode / Code Snippets.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function search_system(\WP_REST_Request $request) {
+        $raw_query = $request->get_param('query') ?: $request->get_param('q');
+        $query     = trim((string) $raw_query);
+
+        if (mb_strlen($query) < 2) {
+            return $this->error(
+                'query_too_short',
+                esc_html__('Search query must be at least 2 characters long.', 'woo-get-data-for-ai'),
+                400
+            );
+        }
+
+        $target        = strtolower(trim((string) ($request->get_param('target') ?: 'all')));
+        $limit         = min(max(1, (int) ($request->get_param('limit') ?: 20)), 50);
+        $raw_post_type = $request->get_param('post_type') ?: 'any';
+
+        global $wpdb;
+        $like = '%' . $wpdb->esc_like($query) . '%';
+
+        // Snippet extractor helper (returns ±80 chars around match without HTML tags)
+        $extract_snippet = function ($text, $term, $radius = 80) {
+            if (empty($text) || !is_string($text)) {
+                return '';
+            }
+            $clean = wp_strip_all_tags($text);
+            $pos   = mb_stripos($clean, $term);
+            if ($pos === false) {
+                return mb_substr($clean, 0, $radius * 2);
+            }
+            $start   = max(0, $pos - $radius);
+            $length  = ($pos - $start) + mb_strlen($term) + $radius;
+            $snippet = mb_substr($clean, $start, $length);
+            $prefix  = ($start > 0) ? '...' : '';
+            $suffix  = (mb_strlen($clean) > ($start + $length)) ? '...' : '';
+            return $prefix . trim(preg_replace('/\s+/', ' ', $snippet)) . $suffix;
+        };
+
+        $posts_matches    = [];
+        $options_matches  = [];
+        $snippets_matches = [];
+
+        // 1. Search in wp_posts
+        if ($target === 'all' || $target === 'posts') {
+            $post_type_sql = "";
+            if ($raw_post_type === 'any') {
+                $post_type_sql = "AND post_type NOT IN ('revision')";
+            } elseif (strpos($raw_post_type, ',') !== false) {
+                $types = array_filter(array_map('sanitize_key', explode(',', $raw_post_type)));
+                if (!empty($types)) {
+                    $types_in      = "'" . implode("','", array_map('esc_sql', $types)) . "'";
+                    $post_type_sql = "AND post_type IN ($types_in)";
+                }
+            } else {
+                $single_type   = sanitize_key($raw_post_type);
+                $post_type_sql = $wpdb->prepare("AND post_type = %s", $single_type);
+            }
+
+            $posts_sql = $wpdb->prepare(
+                "SELECT ID, post_title, post_name, post_type, post_status, post_date, post_modified, post_content, post_excerpt
+                 FROM {$wpdb->posts}
+                 WHERE (post_title LIKE %s OR post_content LIKE %s OR post_name LIKE %s OR post_excerpt LIKE %s)
+                 {$post_type_sql}
+                 ORDER BY post_modified DESC
+                 LIMIT %d",
+                $like, $like, $like, $like, $limit
+            );
+
+            $posts_rows = $wpdb->get_results($posts_sql);
+            if ($posts_rows) {
+                foreach ($posts_rows as $row) {
+                    $in_title   = (mb_stripos($row->post_title, $query) !== false);
+                    $in_slug    = (mb_stripos($row->post_name, $query) !== false);
+                    $in_excerpt = (mb_stripos($row->post_excerpt, $query) !== false);
+                    $in_content = (mb_stripos($row->post_content, $query) !== false);
+
+                    $snippet_text = $in_content ? $row->post_content : ($in_excerpt ? $row->post_excerpt : $row->post_title);
+                    $snippet      = $extract_snippet($snippet_text, $query, 80);
+
+                    $posts_matches[] = [
+                        'id'          => (int) $row->ID,
+                        'title'       => html_entity_decode($row->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                        'slug'        => $row->post_name,
+                        'post_type'   => $row->post_type,
+                        'post_status' => $row->post_status,
+                        'modified'    => $row->post_modified,
+                        'url'         => get_permalink($row->ID),
+                        'match_in'    => array_values(array_filter([
+                            $in_title ? 'title' : null,
+                            $in_slug ? 'slug' : null,
+                            $in_excerpt ? 'excerpt' : null,
+                            $in_content ? 'content' : null,
+                        ])),
+                        'snippet'     => $snippet,
+                    ];
+                }
+            }
+        }
+
+        // 2. Search in wp_options (Strictly sanitized & sensitive keys redacted)
+        if ($target === 'all' || $target === 'options') {
+            $options_sql = $wpdb->prepare(
+                "SELECT option_name, option_value, autoload
+                 FROM {$wpdb->options}
+                 WHERE (option_name LIKE %s OR option_value LIKE %s)
+                 AND option_name NOT LIKE '_transient_%'
+                 AND option_name NOT LIKE '_site_transient_%'
+                 ORDER BY option_name ASC
+                 LIMIT %d",
+                $like, $like, $limit * 3
+            );
+            $options_rows = $wpdb->get_results($options_sql);
+
+            if ($options_rows) {
+                foreach ($options_rows as $row) {
+                    if (count($options_matches) >= $limit) {
+                        break;
+                    }
+
+                    $opt_name     = $row->option_name;
+                    $is_sensitive = \WPAgentBridge\Redaction::is_sensitive_key($opt_name);
+
+                    $in_name = (mb_stripos($opt_name, $query) !== false);
+                    $in_val  = false;
+                    $snippet = '';
+
+                    if ($is_sensitive) {
+                        $snippet = '[REDACTED_SENSITIVE_OPTION]';
+                    } else {
+                        $raw_val = $row->option_value;
+                        $in_val  = (mb_stripos($raw_val, $query) !== false);
+
+                        $decoded = maybe_unserialize($raw_val);
+                        if (is_array($decoded) || is_object($decoded)) {
+                            $cleaned   = \WPAgentBridge\Redaction::redact_array((array) $decoded);
+                            $as_string = wp_json_encode($cleaned);
+                        } else {
+                            $as_string = \WPAgentBridge\Redaction::redact_string($raw_val);
+                        }
+
+                        $snippet = $extract_snippet($as_string, $query, 80);
+                    }
+
+                    $options_matches[] = [
+                        'option_name'  => $opt_name,
+                        'autoload'     => $row->autoload,
+                        'is_sensitive' => $is_sensitive,
+                        'match_in'     => array_values(array_filter([
+                            $in_name ? 'option_name' : null,
+                            $in_val ? 'option_value' : null,
+                        ])),
+                        'snippet'      => $snippet,
+                    ];
+                }
+            }
+        }
+
+        // 3. Search in WPCode and Code Snippets
+        if ($target === 'all' || $target === 'snippets') {
+            // A. WPCode Custom Post Type
+            $wpcode_posts = get_posts([
+                'post_type'      => 'wpcode',
+                'post_status'    => ['publish', 'draft'],
+                'posts_per_page' => 100,
+            ]);
+
+            $seen_wpcode_ids = [];
+            foreach ($wpcode_posts as $p) {
+                if (isset($seen_wpcode_ids[$p->ID])) {
+                    continue;
+                }
+                $seen_wpcode_ids[$p->ID] = true;
+
+                $code = get_post_meta($p->ID, '_wpcode_code', true);
+                if (empty($code)) {
+                    $code = $p->post_content;
+                }
+                $notes        = get_post_meta($p->ID, '_wpcode_note', true) ?: '';
+                $snippet_type = get_post_meta($p->ID, '_wpcode_snippet_type', true) ?: 'php';
+
+                $in_title = (mb_stripos($p->post_title, $query) !== false);
+                $in_code  = (mb_stripos($code, $query) !== false);
+                $in_notes = (mb_stripos($notes, $query) !== false);
+
+                if ($in_title || $in_code || $in_notes) {
+                    $match_text           = $in_code ? $code : ($in_notes ? $notes : $p->post_title);
+                    $snippet_code_excerpt = $extract_snippet($match_text, $query, 80);
+
+                    $snippets_matches[] = [
+                        'id'             => $p->ID,
+                        'name'           => html_entity_decode($p->post_title, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                        'source'         => 'wpcode',
+                        'active'         => ($p->post_status === 'publish'),
+                        'type'           => $snippet_type,
+                        'match_in'       => array_values(array_filter([
+                            $in_title ? 'title' : null,
+                            $in_code ? 'code' : null,
+                            $in_notes ? 'notes' : null,
+                        ])),
+                        'snippet'        => $snippet_code_excerpt,
+                        'admin_edit_url' => admin_url('admin.php?page=wpcode-snippet-manager&snippet_id=' . $p->ID),
+                    ];
+                }
+
+                if (count($snippets_matches) >= $limit) {
+                    break;
+                }
+            }
+
+            // B. Code Snippets table
+            $table_snippets = $wpdb->prefix . 'snippets';
+            $has_cs_table   = ($wpdb->get_var("SHOW TABLES LIKE '$table_snippets'") === $table_snippets);
+
+            if ($has_cs_table && count($snippets_matches) < $limit) {
+                $cs_sql = $wpdb->prepare(
+                    "SELECT id, name, description, code, tags, scope, priority, active
+                     FROM `{$table_snippets}`
+                     WHERE (name LIKE %s OR description LIKE %s OR code LIKE %s OR tags LIKE %s)
+                     ORDER BY name ASC
+                     LIMIT %d",
+                    $like, $like, $like, $like, ($limit - count($snippets_matches))
+                );
+                $cs_rows = $wpdb->get_results($cs_sql);
+
+                if ($cs_rows) {
+                    foreach ($cs_rows as $row) {
+                        $in_name = (mb_stripos($row->name, $query) !== false);
+                        $in_desc = (mb_stripos($row->description, $query) !== false);
+                        $in_code = (mb_stripos($row->code, $query) !== false);
+                        $in_tags = (mb_stripos($row->tags, $query) !== false);
+
+                        $match_text           = $in_code ? $row->code : ($in_desc ? $row->description : $row->name);
+                        $snippet_code_excerpt = $extract_snippet($match_text, $query, 80);
+
+                        $snippets_matches[] = [
+                            'id'             => (int) $row->id,
+                            'name'           => html_entity_decode($row->name, ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                            'source'         => 'code-snippets',
+                            'active'         => ((int) $row->active === 1),
+                            'type'           => $row->scope ?? 'global',
+                            'match_in'       => array_values(array_filter([
+                                $in_name ? 'name' : null,
+                                $in_desc ? 'description' : null,
+                                $in_code ? 'code' : null,
+                                $in_tags ? 'tags' : null,
+                            ])),
+                            'snippet'        => $snippet_code_excerpt,
+                            'admin_edit_url' => admin_url('admin.php?page=edit-snippet&id=' . $row->id),
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $this->response([
+            'query'   => $query,
+            'target'  => $target,
+            'counts'  => [
+                'posts'    => count($posts_matches),
+                'options'  => count($options_matches),
+                'snippets' => count($snippets_matches),
+                'total'    => count($posts_matches) + count($options_matches) + count($snippets_matches),
+            ],
+            'posts'    => $posts_matches,
+            'options'  => $options_matches,
+            'snippets' => $snippets_matches,
         ]);
     }
 }

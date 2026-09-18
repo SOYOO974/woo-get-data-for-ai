@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-15  
+> **Last Updated**: 2026-09-18  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -187,7 +187,7 @@ Located under **WordPress Admin > Settings > Agent Bridge**:
 
 ### Tab 2: Granular Permissions Matrix
 Enables/disables modules on a per-site basis:
-- `[x] System & Server Environment` (`/system`, `/capabilities`, `/ping`)
+- `[x] System & Server Environment` (`/system`, `/capabilities`, `/ping`, `/system/database`, `/system/mail`, `/system/mail/subscriber`, `/system/security`, `/system/caching`, `/system/search`)
 - `[x] WooCommerce Diagnosis & Overrides` (`/theme/overrides`, HPOS state)
 - `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`)
 - `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`, `/code/checksums`, `/code/zip`)
@@ -197,8 +197,8 @@ Enables/disables modules on a per-site basis:
 - `[x] FlowMattic Workflows` (`/flowmattic/export-all`, `/flowmattic/workflows`, `/flowmattic/workflow/{id}`)
 - `[x] Independent Analytics (Visits & Conversion Rates)` (`/analytics/overview`, `/analytics/summary`, `/analytics/pages`, `/analytics/referrers`, `/analytics/campaigns`, `/analytics/devices`, `/analytics/geo`, `/analytics/conversions`)
 - `[x] Custom Fields & Meta (ACF & Code)` (`/meta/fields`, `/meta/acf`, `/meta/post/{id}`)
-- `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`)
-- `[x] Pages, Content, SEO & Redirections` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/seo-audit`, `/content/seo/settings`, `/content/redirections`, `/content/redirections/404`)
+- `[x] WooCommerce Store Data (Products, Orders, Settings, Shipping, Account Tabs)` (`/woocommerce/summary`, `/woocommerce/products`, `/woocommerce/product/{id}`, `/woocommerce/orders`, `/woocommerce/order/{id}`, `/woocommerce/settings`, `/woocommerce/shipping`, `/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/woocommerce/webhooks`, `/woocommerce/emails`, `/woocommerce/account-tabs`)
+- `[x] Pages, Content, SEO & Redirections` (`/content/pages`, `/content/page/{id}`, `/content/posts`, `/content/post/{id}`, `/content/custom-post-types`, `/content/seo-audit`, `/content/seo/settings`, `/content/redirections`, `/content/redirections/404`)
 - `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`)
 - `[x] Paid Memberships Pro (PMPro)` (`/pmpro/levels`, `/pmpro/members`, `/pmpro/member/{user_id}`)
 - `[x] MasterStudy LMS` (`/masterstudy/courses`, `/masterstudy/user/{user_id}/courses`)
@@ -252,6 +252,7 @@ Enables/disables modules on a per-site basis:
 | `GET /system/mail` | GET | SMTP & transactional email diagnostic: active provider (FluentSMTP, WP Mail SMTP, Post SMTP, MailPoet / MSS), credentials redaction, PHP `mail()` spam risk detection, and recent delivery failures |
 | `GET /system/mail/subscriber` | GET | MailPoet subscriber status diagnostic: subscription status (subscribed, unconfirmed, unsubscribed, bounced, inactive), segment memberships, and critical bounce alert (`?email=`) |
 | `GET /system/security` | GET | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins |
+| `GET /system/search` | GET | Global read-only site search across `wp_posts`, non-sensitive `wp_options` (transients excluded, secrets redacted), and WPCode / Code Snippets with contextual snippets (`?q=keyword`, `?scope=all\|posts\|options\|snippets`, `?limit=20`) |
 | `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
 | `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
@@ -303,10 +304,12 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/analytics/stock` | GET | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days) (`?low_stock_threshold=`) |
 | `GET /woocommerce/webhooks` | GET | WooCommerce webhooks inventory, delivery URLs, topics, and failure counters (`failure_count >= 5`) |
 | `GET /woocommerce/emails` | GET | Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses |
+| `GET /woocommerce/account-tabs` | GET | WooCommerce "My Account" area inspection: navigation tabs, endpoint slugs, URLs, hook callbacks via Reflection, Woodmart theme custom tabs (`xts-woodmart-options['my_account_custom_tabs']`), and attached templates (`cms_block`, Elementor) with raw content |
 | `GET /content/pages` | GET | Paginated WordPress pages list with hierarchy, slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview (`?status=publish\|draft\|all`, `?parent=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /content/page/{id}` | GET | Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified normalized SEO metadata |
-| `GET /content/posts` | GET | Paginated blog posts list with categories, tags, author, editor type, and quick SEO preview (`?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
+| `GET /content/posts` | GET | Paginated blog posts and Custom Post Types list with categories, tags, author, editor type, and quick SEO preview (`?post_type=post\|any\|cpt1,cpt2`, `?status=publish\|draft\|all`, `?category=`, `?tag=`, `?search=`, `?per_page=20`) |
 | `GET /content/post/{id}` | GET | Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object |
+| `GET /content/custom-post-types` | GET | Inventory of registered public & accessible custom post types with publication status counts (`publish`, `draft`, `trash`, `private`, `total`), supported features, and associated taxonomies |
 | `GET /content/seo-audit` | GET | Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, category descriptions, global settings audit, and redirection status summary (Rank Math, Yoast SEO, The SEO Framework, SEOPress, AIOSEO) (`?include_posts=true\|false`, `?include_products=true\|false`, `?include_categories=true\|false`, `?limit=100`, `?limit_products=50`) |
 | `GET /content/seo/settings` | GET | Audits global settings and configuration best practices of the active SEO plugin (Rank Math, Yoast SEO, The SEO Framework) and Redirection plugin: attachment redirects, category base stripping, tag/product_tag noindex, default OpenGraph image, schema entity & logo, active modules, and 404 log retention |
 | `GET /content/redirections` | GET | List and filter configured URL redirection rules (301/302/307/410) across supported plugins (Redirection by John Godley, Rank Math Redirections, 301 Redirects): source URL, target URL, status code, hit count, last access date, regex flag, and provider details (`?provider=`, `?status_code=`, `?search=`, `?per_page=50`, `?page=1`) |
@@ -335,13 +338,13 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - **Permission-Adaptive Workflows**: When an administrator disables a module in the Permissions matrix, dependent Playbooks and individual workflow steps are automatically excluded from the catalog so the AI never triggers `403 Forbidden` errors.
 - **Built-in Procedural Playbooks (7 MECE Strategic Master Pillars)**:
   To eliminate LLM attention dilution and trigger collisions while providing comprehensive agency-grade diagnostics, the playbooks are strictly organized into 7 MECE (Mutually Exclusive, Collectively Exhaustive) master pillars:
-  1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, 301/302/410 URL redirection rules, 404 structural pattern clustering & smart in-memory redirection snippets recommendation, and global SEO plugin settings best practices audit (`/content/seo-audit`, `/content/seo/settings`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`).
+  1. `seo_content_audit` (360° SEO, Content Hierarchy, Redirections & Visibility Audit): Meta tags, critical noindex detection on pages/products, OpenGraph coverage, canonical audit, Gutenberg content hierarchy, 301/302/410 URL redirection rules, 404 structural pattern clustering & smart in-memory redirection snippets recommendation, registered custom post types inventory with publication status counts, and global SEO plugin settings best practices audit (`/content/seo-audit`, `/content/seo/settings`, `/content/pages`, `/content/page/{id}`, `/content/redirections`, `/content/redirections/404`, `/content/custom-post-types`).
   2. `agency_performance_audit` (Agency Multi-Template Performance & Core Web Vitals Audit): Strategic caching and optimization audit (Object Cache, Page Cache drop-in, WP Rocket RUCSS vs CPCSS, Delay JS exclusions & safe mode, lazyload, mobile caching), 5-template archetypes discovery (Home, Shop, Category, Product, Cart), on-demand profiling (SQL duration/queries per plugin, TTFB, memory), 100% native server-side Core Web Vitals (DOM size, Elementor nodes %, CLS missing dimensions, legacy image formats, Google Fonts display=swap, core bloat scripts, wc-cart-fragments, server compression), and active plugins database footprint (`/performance/caching`, `/performance/templates-urls`, `/performance/profile`, `/performance/plugins-summary`).
-  3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, and Crash Watch fatal error summary (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`).
+  3. `database_system_hygiene` (System Health, Database Bloat & Background Hygiene Audit): Unified system infrastructure, memory limits, database size & top heavy tables, autoload memory bloat with orphaned options detection from inactive plugins, WooCommerce order status distribution & stale unpaid orders (> 1y), Action Scheduler queue backlog & retention policy with bloat alerts, overdue WP-Cron jobs, Crash Watch fatal error summary, and global read-only database/options/snippets search (`/system`, `/system/database`, `/woocommerce/summary`, `/action-scheduler`, `/crons`, `/logs/errors-summary`, `/system/search`).
   4. `order_checkout_troubleshoot` (Orders, Payment Gateways, Emails, PMPro, Tracking & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP & MailPoet Sending Service (MSS) deliverability diagnostics (provider detection, credentials redaction, PHP mail() spam risk, bounce alerts), WooCommerce transactional emails inspection with Order Status Manager trigger rules and silent status detection, database email logs search (WP Mail Logging, FluentSMTP, Post SMTP, WP Mail SMTP), MailPoet subscriber bounce check, WooCommerce webhook delivery status, server-side tracking failed order correlation (`/tracking/orders?tracking_filter=failed`), Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/emails`, `/logs/emails`, `/system/mail/subscriber`, `/woocommerce/webhooks`, `/tracking/orders`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic, Conversion & Tracking Analytics): Complete commercial, CRO & tracking intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, traffic channels, UTM marketing campaigns, device breakdowns, and Server-Side Tracking & GDPR Consent Compliance Audit (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`, `/tracking/audit`).
   6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
-  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), and custom ACF/code meta fields (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`).
+  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), custom ACF/code meta fields, WooCommerce "My Account" area navigation tabs & attached templates (Woodmart `cms_block`, Elementor), and global system search (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`, `/woocommerce/account-tabs`, `/system/search`).
 
 ---
 
@@ -400,11 +403,51 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.31.0: `pull:content` pulls 404 logs (`GET /content/redirections/404?limit=100`) and summarizes structural pattern clusters (`patterns_summary`) alongside smart in-memory code snippet recommendations in `redirections.md`.
 - Optimized for v1.32.0: `pull:woocommerce` pulls registered transactional emails (`emails.json`) and detects silent statuses; `pull:logs` pulls database email logs (`email-logs.json`) across WP Mail Logging, FluentSMTP, Post SMTP, and WP Mail SMTP.
 - Optimized for v1.33.0: `pull:tracking` pulls server-side tracking audit (`tracking-audit.json`), order conversion attribution signals (`tracking-orders.json`), and CAPI/Google Ads transmission logs (`tracking-logs.json`) with an executive diagnostic report (`tracking-report.md`).
+- Optimized for v1.34.0: `pull:woocommerce` dumps account tabs (`account-tabs.json`) with Woodmart/Elementor templates; `pull:content` dumps registered custom post types (`custom-post-types.json`) with publication status counts.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.34.0 (2026-09-18)
+- **Support des Custom Post Types sur l'Endpoint Content & Nouvel Inventaire CPT (`includes/api/class-content-controller.php`, `class-permissions.php`, `class-playbooks.php`, `cli/sync.js`)** :
+  - **Support Dynamique `post_type` sur `GET /content/posts`** :
+    - Prise en charge du paramètre `post_type` dynamique au lieu d'être restreint à `'post'`.
+    - Support de `post_type=any` (avec exclusion automatique et sécurisée des types techniques internes : `revision`, `attachment`, `nav_menu_item`, `custom_css`, `customize_changeset`, `oembed_cache`, `user_request`).
+    - Support des listes séparées par des virgules (ex: `post_type=cms_block,elementor_library,woodmart_layout`).
+    - Exposition explicite du champ `'post_type' => $post->post_type` dans chaque objet retourné.
+  - **Nouvel Endpoint Dédié `GET /content/custom-post-types`** :
+    - Liste tous les Custom Post Types publics ou accessibles enregistrés (`get_post_types(['show_ui' => true])`).
+    - Dénombrement optimisé des statuts de publication (`publish`, `draft`, `trash`, `private`, `total`) via `wp_count_posts()`.
+    - Exposition des labels, fonctionnalités supportées (`supports`), taxonomies associées, et paramètres de visibilité (`public`, `hierarchical`, `show_in_rest`, `has_archive`).
+- **Nouvel Endpoint d'Inspection de l'Espace Client WooCommerce (`includes/api/class-woocommerce-controller.php`, `class-permissions.php`, `class-playbooks.php`, `cli/sync.js`)** :
+  - **Route REST `GET /woocommerce/account-tabs`** en 100% lecture seule sous le namespace `agent-bridge/v1/woocommerce/` :
+    - Exécute et cartographie `wc_get_account_menu_items()` avec les libellés et slugs d'endpoints associés.
+    - Résout les URLs complètes via `wc_get_endpoint_url()`.
+    - Inspecte les hooks d'affichage correspondants (`woocommerce_account_{endpoint}_endpoint`).
+    - Utilise la Réflexion PHP (`ReflectionFunction` / `ReflectionMethod`) pour identifier le fichier source et les lignes exactes des callbacks enregistrés sans exécuter directement les actions (protection contre les effets de bord de session ou mutations d'état).
+    - Extrait la configuration native des onglets personnalisés du thème Woodmart depuis `xts-woodmart-options['my_account_custom_tabs']` (titre, statut, position, type de contenu, et ID de template HTML).
+    - Détecte le modèle d'espace client Elementor ou texte personnalisé du tableau de bord Woodmart (`xts-woodmart-options['my_account_text']`).
+    - Récupère automatiquement le contenu brut et les métadonnées de tout template HTML Woodmart (`cms_block`) ou template Elementor (`elementor_library`) rattaché aux onglets.
+- **Nouvel Endpoint de Recherche Globale Sécurisée (`includes/api/class-system-controller.php`, `class-permissions.php`, `class-playbooks.php`)** :
+  - **Route REST `GET /system/search`** :
+    - Paramètres supportés : `q` (terme de recherche obligatoire, min 2 car.), `scope` (`all` [défaut], `posts`, `options`, `snippets`), `limit` (défaut : 20, max : 50).
+    - Scope `posts` : Recherche dans `$wpdb->posts` (`post_title`, `post_content`, `post_excerpt`, `post_name`) sur les CPTs pertinents (`cms_block`, `woodmart_layout`, `elementor_library`, `page`, `post`) avec extrait textuel contextuel de ±80 caractères autour de la correspondance pour préserver la mémoire PHP.
+    - Scope `options` : Recherche préparée dans `$wpdb->options` (`option_name`, `option_value`) avec exclusion stricte des transients/tokens de session et caviardage automatique des clés sensibles via `Redaction::is_sensitive_key()`.
+    - Scope `snippets` : Recherche plein texte dans les snippets actifs et inactifs WPCode et Code Snippets (titre et code source) avec lien d'édition direct dans l'administration WordPress (`admin_edit_url`).
+- **Gouvernance des Playbooks (Préservation Stricte des 7 Piliers MECE)** :
+  - Aucun 8ème playbook n'a été créé :
+    - **Pilier 1 (`seo_content_audit`)** : Intégration de l'Étape 6 (`/content/custom-post-types`) et des déclencheurs `custom post types`, `cpt`, `cms block`, `elementor library`.
+    - **Pilier 3 (`database_system_hygiene`)** : Intégration de l'Étape 7 (`/system/search`) et des déclencheurs `chercher dans la base`, `recherche globale`.
+    - **Pilier 7 (`code_theme_integrations`)** : Intégration de l'Étape 8 (`/woocommerce/account-tabs`) et de l'Étape 9 (`/system/search`), ajout des modules optionnels `woocommerce` et `system`, et des déclencheurs `espace client`, `account tabs`, `parrainage woocommerce`, `woodmart custom tabs`.
+    - Ajout de la **Directive Agent 10** dans le template de génération de skill Markdown.
+- **Client Local CLI (`cli/sync.js`)** :
+  - `pull:woocommerce` extrait et enregistre désormais `account-tabs.json`.
+  - `pull:content` extrait et enregistre désormais `custom-post-types.json`.
+- **Internationalisation & Loco Translate 100%** :
+  - Ajout de 14 nouvelles chaînes dans `cli/translations-fr.php`.
+  - Exécution de `php cli/sync-i18n.php` : 684/684 chaînes traduites (100%), fichiers `.pot`, `.po` et binaire compilé `.mo` synchronisés.
 
 ### v1.33.0 (2026-09-15)
 - **Module d'Audit Tracking Server-Side (Meta CAPI & Google Ads) & Conformité RGPD / Consent Mode v2 (`Tracking_Controller`, `Permissions`, `Playbooks`, `sync.js`)** :

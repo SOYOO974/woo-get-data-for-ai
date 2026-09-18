@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-15 12:51+00:00\n"
-"PO-Revision-Date: 2026-09-15 12:51+00:00\n"
+"POT-Creation-Date: 2026-09-18 13:54+00:00\n"
+"PO-Revision-Date: 2026-09-18 13:54+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -398,7 +398,7 @@ msgstr "Arborescences des extensions et mu-plugins (supporte ?status=active|inac
 
 #: includes/admin/views/tab-docs.php:182
 #: includes/class-permissions.php:38
-#: includes/class-permissions.php:302
+#: includes/class-permissions.php:308
 msgid "Elementor Architecture"
 msgstr "Architecture Elementor"
 
@@ -408,7 +408,7 @@ msgstr "Export groupé et liste des pages et modèles avec filtre de statut (?st
 
 #: includes/admin/views/tab-docs.php:187
 #: includes/class-permissions.php:43
-#: includes/class-permissions.php:337
+#: includes/class-permissions.php:343
 msgid "Code Snippets (WPCode & Code Snippets Pro)"
 msgstr "Extraits de code (WPCode & Code Snippets Pro)"
 
@@ -426,7 +426,7 @@ msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log
 
 #: includes/admin/views/tab-docs.php:197
 #: includes/class-permissions.php:53
-#: includes/class-permissions.php:406
+#: includes/class-permissions.php:412
 msgid "WP-Cron & Action Scheduler"
 msgstr "WP-Cron & Action Scheduler"
 
@@ -436,7 +436,7 @@ msgstr "Inspection des tâches planifiées WP-Cron, intervalles, tâches en reta
 
 #: includes/admin/views/tab-docs.php:202
 #: includes/class-permissions.php:58
-#: includes/class-permissions.php:426
+#: includes/class-permissions.php:432
 msgid "FlowMattic Workflows"
 msgstr "Workflows FlowMattic"
 
@@ -454,7 +454,7 @@ msgstr "Suivi de l'audience et des conversions : visites, vues, taux de rebond, 
 
 #: includes/admin/views/tab-docs.php:212
 #: includes/class-permissions.php:68
-#: includes/class-permissions.php:508
+#: includes/class-permissions.php:514
 msgid "Custom Fields & Meta (ACF & Code)"
 msgstr "Champs Personnalisés & Métadonnées (ACF & Code)"
 
@@ -967,373 +967,373 @@ msgstr "Le répertoire contient plus de %d fichiers. Limite de sécurité dépas
 msgid "Directory total size exceeds %d MB. Safety limit exceeded."
 msgstr "La taille totale du répertoire dépasse %d Mo. Limite de sécurité dépassée."
 
-#: includes/api/class-content-controller.php:767
+#: includes/api/class-content-controller.php:879
 msgid "WARNING: The entire site has search engine visibility disabled (discourage search engines from indexing this site is checked)!"
 msgstr "AVERTISSEMENT : La visibilité pour les moteurs de recherche est désactivée sur l'ensemble du site (« Demander aux moteurs de recherche de ne pas indexer ce site » est coché) !"
 
-#: includes/api/class-content-controller.php:770
+#: includes/api/class-content-controller.php:882
 msgid "CRITICAL ALERT: All WooCommerce products are set to noindex by default in global SEO settings!"
 msgstr "ALERTE CRITIQUE : Tous les produits WooCommerce sont configurés en noindex par défaut dans les réglages SEO globaux !"
 
-#: includes/api/class-content-controller.php:773
+#: includes/api/class-content-controller.php:885
 msgid "WARNING: All WordPress pages are set to noindex by default in global SEO settings!"
 msgstr "AVERTISSEMENT : Toutes les pages WordPress sont configurées en noindex par défaut dans les réglages SEO globaux !"
 
-#: includes/api/class-content-controller.php:1680
+#: includes/api/class-content-controller.php:1792
 msgid "No supported redirection plugin (Redirection, Rank Math Redirections, 301 Redirects) detected on this site."
 msgstr "Aucune extension de redirection supportée (Redirection, Rank Math Redirections, 301 Redirects) n'a été détectée sur ce site."
 
-#: includes/api/class-content-controller.php:1948
+#: includes/api/class-content-controller.php:2060
 msgid "No 404 monitoring table found on this site (checked Redirection and Rank Math)."
 msgstr "Aucune table de surveillance 404 trouvée sur ce site (vérifié pour Redirection et Rank Math)."
 
-#: includes/api/class-content-controller.php:2143
+#: includes/api/class-content-controller.php:2255
 msgid "Browser & Mobile System Requests"
 msgstr "Requêtes système des navigateurs & mobiles"
 
-#: includes/api/class-content-controller.php:2151
+#: includes/api/class-content-controller.php:2263
 msgid "Frontend & Pagination JS Bugs"
 msgstr "Bugs frontend & pagination JS"
 
-#: includes/api/class-content-controller.php:2159
+#: includes/api/class-content-controller.php:2271
 msgid "Product Pages (Deleted/Moved)"
 msgstr "Fiches produits (supprimées ou déplacées)"
 
-#: includes/api/class-content-controller.php:2167
+#: includes/api/class-content-controller.php:2279
 msgid "CDN & Cache Minified Assets"
 msgstr "Assets CDN & cache minifiés"
 
-#: includes/api/class-content-controller.php:2175
+#: includes/api/class-content-controller.php:2287
 msgid "Security Probes & Automated Scanners"
 msgstr "Sondes de sécurité & robots d'exploration"
 
-#: includes/api/class-content-controller.php:2183
+#: includes/api/class-content-controller.php:2295
 msgid "Legacy CMS / Migration Remnants"
 msgstr "Reliquats de migration / anciens CMS"
 
-#: includes/api/class-content-controller.php:2191
+#: includes/api/class-content-controller.php:2303
 msgid "Other URLs"
 msgstr "Autres URLs"
 
-#: includes/api/class-content-controller.php:2244
+#: includes/api/class-content-controller.php:2356
 msgid "Remediate repetitive 404 patterns via an in-memory PHP Code Snippet (hook template_redirect, priority 1) or global regex rules rather than bloating database redirection tables (wp_rank_math_redirections). For deleted products, implement a semantic safety net falling back to the parent category or shop catalog."
 msgstr "Remédiez aux motifs 404 récurrents via un Code Snippet PHP en mémoire (hook template_redirect, priorité 1) ou des règles Regex globales plutôt que de gonfler les tables de redirection en base de données (wp_rank_math_redirections). Pour les produits supprimés, déployez un filet de sécurité sémantique redirigeant vers le rayon parent ou le catalogue."
 
-#: includes/api/class-content-controller.php:2279
+#: includes/api/class-content-controller.php:2391
 msgid "Search Engine Visibility Enabled"
 msgstr "Visibilité pour les moteurs de recherche activée"
 
-#: includes/api/class-content-controller.php:2280
+#: includes/api/class-content-controller.php:2392
 msgid "Site is configured to allow search engines to index pages."
 msgstr "Le site est configuré pour autoriser les moteurs de recherche à indexer les pages."
 
-#: includes/api/class-content-controller.php:2286
+#: includes/api/class-content-controller.php:2398
 msgid "Search Engine Visibility Disabled"
 msgstr "Visibilité pour les moteurs de recherche désactivée"
 
-#: includes/api/class-content-controller.php:2287
+#: includes/api/class-content-controller.php:2399
 msgid "CRITICAL: \"Discourage search engines from indexing this site\" is checked in WordPress Settings > Reading."
 msgstr "CRITIQUE : « Demander aux moteurs de recherche de ne pas indexer ce site » est coché dans Réglages WordPress > Lecture."
 
-#: includes/api/class-content-controller.php:2312
+#: includes/api/class-content-controller.php:2424
 msgid "No Dedicated SEO Plugin Detected"
 msgstr "Aucune extension SEO dédiée détectée"
 
-#: includes/api/class-content-controller.php:2313
+#: includes/api/class-content-controller.php:2425
 msgid "The site relies on native WordPress titles. Installing Rank Math, Yoast SEO, or The SEO Framework is recommended for complete meta and sitemap management."
 msgstr "Le site utilise les balises de titre natives de WordPress. L'installation de Rank Math, Yoast SEO ou The SEO Framework est recommandée pour une gestion complète des métadonnées et sitemaps."
 
-#: includes/api/class-content-controller.php:2399
+#: includes/api/class-content-controller.php:2511
 msgid "Media Attachment URLs Redirection"
 msgstr "Redirection des URLs de fichiers médias / pièces jointes"
 
-#: includes/api/class-content-controller.php:2400
+#: includes/api/class-content-controller.php:2512
 msgid "Attachment pages are automatically redirected to parent posts (prevents thin-content zombie URLs)."
 msgstr "Les pages de pièces jointes sont automatiquement redirigées vers leur publication parente (évite les URLs zombies à faible contenu)."
 
-#: includes/api/class-content-controller.php:2406
+#: includes/api/class-content-controller.php:2518
 msgid "Media Attachment URLs Not Redirected"
 msgstr "URLs de fichiers médias non redirigées"
 
-#: includes/api/class-content-controller.php:2407
+#: includes/api/class-content-controller.php:2519
 msgid "Media attachment pages are not redirected. WordPress creates an empty webpage for every uploaded image. Enable \"Redirect Attachments\" in Rank Math General Settings."
 msgstr "Les pages de pièces jointes ne sont pas redirigées. WordPress crée une page vide pour chaque image téléversée. Activez « Rediriger les pièces jointes » dans les Réglages généraux de Rank Math."
 
-#: includes/api/class-content-controller.php:2417
-#: includes/api/class-content-controller.php:2622
+#: includes/api/class-content-controller.php:2529
+#: includes/api/class-content-controller.php:2734
 msgid "Strip Category Base"
 msgstr "Suppression du préfixe des catégories"
 
-#: includes/api/class-content-controller.php:2418
+#: includes/api/class-content-controller.php:2530
 msgid "Category base prefix is stripped from URLs for cleaner permalinks."
 msgstr "Le préfixe de base des catégories est retiré des URLs pour des permaliens plus courts et plus propres."
 
-#: includes/api/class-content-controller.php:2424
-#: includes/api/class-content-controller.php:2629
+#: includes/api/class-content-controller.php:2536
+#: includes/api/class-content-controller.php:2741
 msgid "Category Base Retained (/category/)"
 msgstr "Préfixe de catégorie conservé (/category/)"
 
-#: includes/api/class-content-controller.php:2425
+#: includes/api/class-content-controller.php:2537
 msgid "Category base (/category/) is retained in category URLs. Enabling \"Strip Category Base\" can shorten URLs if no redirect conflicts exist."
 msgstr "Le préfixe de catégorie (/category/) est conservé dans les URLs de catégories. Activer la suppression peut raccourcir les URLs s'il n'y a pas de conflit de redirection."
 
-#: includes/api/class-content-controller.php:2435
-#: includes/api/class-content-controller.php:2584
-#: includes/api/class-content-controller.php:2747
+#: includes/api/class-content-controller.php:2547
+#: includes/api/class-content-controller.php:2696
+#: includes/api/class-content-controller.php:2859
 msgid "Tag Archives Set to Noindex"
 msgstr "Archives d'étiquettes configurées en Noindex"
 
-#: includes/api/class-content-controller.php:2436
+#: includes/api/class-content-controller.php:2548
 msgid "Blog post tags (post_tag) are set to noindex, preventing thin taxonomy duplication."
 msgstr "Les étiquettes d'articles (post_tag) sont configurées en noindex, évitant la duplication de contenu et le gaspillage du budget de crawl."
 
-#: includes/api/class-content-controller.php:2442
-#: includes/api/class-content-controller.php:2591
-#: includes/api/class-content-controller.php:2754
+#: includes/api/class-content-controller.php:2554
+#: includes/api/class-content-controller.php:2703
+#: includes/api/class-content-controller.php:2866
 msgid "Tag Archives Are Indexed"
 msgstr "Les archives d'étiquettes sont indexées"
 
-#: includes/api/class-content-controller.php:2443
+#: includes/api/class-content-controller.php:2555
 msgid "Post tags are set to index. Unless you provide unique editorial text on each tag page, consider setting tags to noindex to protect your crawl budget."
 msgstr "Les étiquettes d'articles sont indexées. À moins de rédiger un texte unique sur chaque page d'étiquette, envisagez de les passer en noindex pour préserver votre budget de crawl."
 
-#: includes/api/class-content-controller.php:2454
-#: includes/api/class-content-controller.php:2603
+#: includes/api/class-content-controller.php:2566
+#: includes/api/class-content-controller.php:2715
 msgid "Product Tag Archives Set to Noindex"
 msgstr "Archives d'étiquettes produits configurées en Noindex"
 
-#: includes/api/class-content-controller.php:2455
+#: includes/api/class-content-controller.php:2567
 msgid "WooCommerce product tags (product_tag) are set to noindex."
 msgstr "Les étiquettes de produits WooCommerce (product_tag) sont configurées en noindex."
 
-#: includes/api/class-content-controller.php:2461
-#: includes/api/class-content-controller.php:2610
+#: includes/api/class-content-controller.php:2573
+#: includes/api/class-content-controller.php:2722
 msgid "Product Tag Archives Are Indexed"
 msgstr "Les archives d'étiquettes produits sont indexées"
 
-#: includes/api/class-content-controller.php:2462
+#: includes/api/class-content-controller.php:2574
 msgid "Product tags are set to index. Empty or auto-generated product tags can dilute product category rankings."
 msgstr "Les étiquettes de produits sont indexées. Des étiquettes vides ou auto-générées peuvent diluer le positionnement de vos catégories de produits."
 
-#: includes/api/class-content-controller.php:2473
-#: includes/api/class-content-controller.php:2640
+#: includes/api/class-content-controller.php:2585
+#: includes/api/class-content-controller.php:2752
 msgid "Default OpenGraph Fallback Image"
 msgstr "Image OpenGraph par défaut configurée"
 
-#: includes/api/class-content-controller.php:2474
+#: includes/api/class-content-controller.php:2586
 msgid "A default social sharing image is configured for pages and products without featured images."
 msgstr "Une image de partage social par défaut est configurée pour les pages et produits sans image mise en avant."
 
-#: includes/api/class-content-controller.php:2480
-#: includes/api/class-content-controller.php:2647
+#: includes/api/class-content-controller.php:2592
+#: includes/api/class-content-controller.php:2759
 msgid "Missing Default OpenGraph Image"
 msgstr "Image OpenGraph par défaut manquante"
 
-#: includes/api/class-content-controller.php:2481
+#: includes/api/class-content-controller.php:2593
 msgid "No default social fallback image is configured in Rank Math Titles & Meta > Global Meta. Social shares of content lacking featured images will display without visuals."
 msgstr "Aucune image de secours n'est configurée dans Rank Math Titres & Métas > Métas globales. Les partages sociaux de contenus sans image à la une s'afficheront sans visuel."
 
-#: includes/api/class-content-controller.php:2492
-#: includes/api/class-content-controller.php:2784
+#: includes/api/class-content-controller.php:2604
+#: includes/api/class-content-controller.php:2896
 msgid "Schema Knowledge Graph & Logo"
 msgstr "Schema Knowledge Graph & Logo"
 
-#: includes/api/class-content-controller.php:2493
+#: includes/api/class-content-controller.php:2605
 msgid "Knowledge Graph entity is configured as \"%s\" with an official logo."
 msgstr "L'entité Knowledge Graph est configurée comme « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2499
+#: includes/api/class-content-controller.php:2611
 msgid "Missing Knowledge Graph Logo"
 msgstr "Logo Knowledge Graph manquant"
 
-#: includes/api/class-content-controller.php:2500
+#: includes/api/class-content-controller.php:2612
 msgid "Organization/Person logo is missing in Rank Math Titles & Meta > Local SEO. Google uses this logo in Knowledge Panels."
 msgstr "Le logo de l'organisation/personne est manquant dans Rank Math Titres & Métas > SEO Local. Google utilise ce logo dans les Knowledge Panels."
 
-#: includes/api/class-content-controller.php:2510
-#: includes/api/class-content-controller.php:2677
+#: includes/api/class-content-controller.php:2622
+#: includes/api/class-content-controller.php:2789
 msgid "Schema Breadcrumbs Active"
 msgstr "Fil d'Ariane Schema actif"
 
-#: includes/api/class-content-controller.php:2511
+#: includes/api/class-content-controller.php:2623
 msgid "Rank Math Breadcrumbs function is enabled."
 msgstr "La fonction fil d'Ariane de Rank Math est activée."
 
-#: includes/api/class-content-controller.php:2517
+#: includes/api/class-content-controller.php:2629
 msgid "Breadcrumbs Disabled in Rank Math"
 msgstr "Fil d'Ariane désactivé dans Rank Math"
 
-#: includes/api/class-content-controller.php:2518
+#: includes/api/class-content-controller.php:2630
 msgid "Breadcrumbs are turned off in Rank Math. Ensure your theme provides native breadcrumbs with Schema.org markup."
 msgstr "Le fil d'Ariane est désactivé dans Rank Math. Assurez-vous que votre thème intègre un fil d'Ariane natif avec balisage Schema.org."
 
-#: includes/api/class-content-controller.php:2537
+#: includes/api/class-content-controller.php:2649
 msgid "Module Active: %s"
 msgstr "Module actif : %s"
 
-#: includes/api/class-content-controller.php:2538
+#: includes/api/class-content-controller.php:2650
 msgid "Rank Math %s module is enabled and operational."
 msgstr "Le module Rank Math %s est activé et opérationnel."
 
-#: includes/api/class-content-controller.php:2544
+#: includes/api/class-content-controller.php:2656
 msgid "Recommended Module Inactive: %s"
 msgstr "Module recommandé inactif : %s"
 
-#: includes/api/class-content-controller.php:2545
+#: includes/api/class-content-controller.php:2657
 msgid "Rank Math %s module is disabled in active modules."
 msgstr "Le module Rank Math %s est désactivé dans les modules actifs."
 
-#: includes/api/class-content-controller.php:2585
+#: includes/api/class-content-controller.php:2697
 msgid "Post tags are set to noindex in Yoast, preventing duplicate taxonomy listings."
 msgstr "Les étiquettes d'articles sont configurées en noindex dans Yoast, évitant la duplication de taxonomies."
 
-#: includes/api/class-content-controller.php:2592
+#: includes/api/class-content-controller.php:2704
 msgid "Post tags are set to index in Yoast. Setting tags to noindex avoids duplicate content unless tag pages have unique copy."
 msgstr "Les étiquettes d'articles sont indexées dans Yoast. Les passer en noindex évite le contenu dupliqué, sauf si vos pages d'étiquettes disposent d'un contenu unique."
 
-#: includes/api/class-content-controller.php:2604
+#: includes/api/class-content-controller.php:2716
 msgid "WooCommerce product tags are set to noindex in Yoast."
 msgstr "Les étiquettes produits WooCommerce sont configurées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2611
+#: includes/api/class-content-controller.php:2723
 msgid "Product tags are set to index in Yoast. Consider noindex if tags lack custom content."
 msgstr "Les étiquettes produits sont indexées dans Yoast. Envisagez de les passer en noindex si elles manquent de contenu personnalisé."
 
-#: includes/api/class-content-controller.php:2623
+#: includes/api/class-content-controller.php:2735
 msgid "Category prefix (/category/) is stripped for cleaner URLs."
 msgstr "Le préfixe des catégories (/category/) est supprimé pour des URLs plus épurées."
 
-#: includes/api/class-content-controller.php:2630
+#: includes/api/class-content-controller.php:2742
 msgid "Category prefix (/category/) is retained. Removing it can shorten permalinks."
 msgstr "Le préfixe des catégories (/category/) est conservé. Le supprimer permet de raccourcir les permaliens."
 
-#: includes/api/class-content-controller.php:2641
+#: includes/api/class-content-controller.php:2753
 msgid "A default social sharing image is configured in Yoast Social settings."
 msgstr "Une image de partage social par défaut est configurée dans les réglages Réseaux sociaux de Yoast."
 
-#: includes/api/class-content-controller.php:2648
+#: includes/api/class-content-controller.php:2760
 msgid "No default social fallback image is configured in Yoast Settings > Social Sharing. Content shared without featured images will lack visuals."
 msgstr "Aucune image de secours n'est configurée dans Yoast Réglages > Partage sur les réseaux sociaux. Les contenus partagés sans image mise en avant manqueront de visuel."
 
-#: includes/api/class-content-controller.php:2659
+#: includes/api/class-content-controller.php:2771
 msgid "Schema Organization & Logo"
 msgstr "Schema Organisation & Logo"
 
-#: includes/api/class-content-controller.php:2660
+#: includes/api/class-content-controller.php:2772
 msgid "Yoast site representation is configured as \"%s\" with an official logo."
 msgstr "La représentation du site dans Yoast est configurée comme « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2666
-#: includes/api/class-content-controller.php:2791
+#: includes/api/class-content-controller.php:2778
+#: includes/api/class-content-controller.php:2903
 msgid "Missing Organization Logo"
 msgstr "Logo d'organisation manquant"
 
-#: includes/api/class-content-controller.php:2667
+#: includes/api/class-content-controller.php:2779
 msgid "Organization logo is missing in Yoast Site Representation settings."
 msgstr "Le logo d'organisation est manquant dans les réglages de Représentation du site Yoast."
 
-#: includes/api/class-content-controller.php:2678
+#: includes/api/class-content-controller.php:2790
 msgid "Yoast Breadcrumbs are enabled."
 msgstr "Le fil d'Ariane Yoast est activé."
 
-#: includes/api/class-content-controller.php:2684
+#: includes/api/class-content-controller.php:2796
 msgid "Breadcrumbs Disabled in Yoast"
 msgstr "Fil d'Ariane désactivé dans Yoast"
 
-#: includes/api/class-content-controller.php:2685
+#: includes/api/class-content-controller.php:2797
 msgid "Breadcrumbs are turned off in Yoast settings."
 msgstr "Le fil d'Ariane est désactivé dans les réglages Yoast."
 
-#: includes/api/class-content-controller.php:2695
-#: includes/api/class-content-controller.php:2802
+#: includes/api/class-content-controller.php:2807
+#: includes/api/class-content-controller.php:2914
 msgid "Author Archives Protected"
 msgstr "Archives d'auteur protégées"
 
-#: includes/api/class-content-controller.php:2696
+#: includes/api/class-content-controller.php:2808
 msgid "Author archives are disabled or noindexed in Yoast."
 msgstr "Les archives d'auteur sont désactivées ou passées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2702
+#: includes/api/class-content-controller.php:2814
 msgid "Author Archives Are Active"
 msgstr "Les archives d'auteur sont actives"
 
-#: includes/api/class-content-controller.php:2703
+#: includes/api/class-content-controller.php:2815
 msgid "Author archives are enabled and indexable. On single-author sites, disabling them prevents duplicate homepage content."
 msgstr "Les archives d'auteur sont activées et indexables. Sur les sites mono-auteur, les désactiver évite la duplication de la page d'accueil."
 
-#: includes/api/class-content-controller.php:2712
+#: includes/api/class-content-controller.php:2824
 msgid "Date Archives Disabled"
 msgstr "Archives par date désactivées"
 
-#: includes/api/class-content-controller.php:2713
+#: includes/api/class-content-controller.php:2825
 msgid "Date archives are disabled or noindexed in Yoast."
 msgstr "Les archives par date sont désactivées ou passées en noindex dans Yoast."
 
-#: includes/api/class-content-controller.php:2748
+#: includes/api/class-content-controller.php:2860
 msgid "Post tags are set to noindex in The SEO Framework."
 msgstr "Les étiquettes d'articles sont configurées en noindex dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2755
+#: includes/api/class-content-controller.php:2867
 msgid "Post tags are set to index. Consider noindex to consolidate crawl budget."
 msgstr "Les étiquettes d'articles sont indexées. Envisagez de les passer en noindex pour concentrer le budget de crawl."
 
-#: includes/api/class-content-controller.php:2765
+#: includes/api/class-content-controller.php:2877
 msgid "Default Social Fallback Image"
 msgstr "Image sociale par défaut"
 
-#: includes/api/class-content-controller.php:2766
+#: includes/api/class-content-controller.php:2878
 msgid "A default social image is set in The SEO Framework."
 msgstr "Une image sociale par défaut est configurée dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2772
+#: includes/api/class-content-controller.php:2884
 msgid "Missing Default Social Image"
 msgstr "Image sociale par défaut manquante"
 
-#: includes/api/class-content-controller.php:2773
+#: includes/api/class-content-controller.php:2885
 msgid "No default social sharing image is configured in The SEO Framework Social settings."
 msgstr "Aucune image de partage social par défaut n'est configurée dans les réglages Réseaux Sociaux de The SEO Framework."
 
-#: includes/api/class-content-controller.php:2785
+#: includes/api/class-content-controller.php:2897
 msgid "Knowledge Graph is set to \"%s\" with an official logo."
 msgstr "Le Knowledge Graph est configuré sur « %s » avec un logo officiel."
 
-#: includes/api/class-content-controller.php:2792
+#: includes/api/class-content-controller.php:2904
 msgid "Organization logo is missing in The SEO Framework Schema settings."
 msgstr "Le logo d'organisation est manquant dans les réglages Schema de The SEO Framework."
 
-#: includes/api/class-content-controller.php:2803
+#: includes/api/class-content-controller.php:2915
 msgid "Author archives are set to noindex in The SEO Framework."
 msgstr "Les archives d'auteur sont configurées en noindex dans The SEO Framework."
 
-#: includes/api/class-content-controller.php:2839
+#: includes/api/class-content-controller.php:2951
 msgid "URL Permalink Change Monitoring Active"
 msgstr "Surveillance des changements de permaliens d'URL active"
 
-#: includes/api/class-content-controller.php:2840
+#: includes/api/class-content-controller.php:2952
 msgid "Automatic 301 redirects are created when URLs change for: %s."
 msgstr "Des redirections 301 automatiques sont créées lors des modifications d'URL pour : %s."
 
-#: includes/api/class-content-controller.php:2846
+#: includes/api/class-content-controller.php:2958
 msgid "Permalink Change Monitoring Inactive"
 msgstr "Surveillance des changements de permaliens inactive"
 
-#: includes/api/class-content-controller.php:2847
+#: includes/api/class-content-controller.php:2959
 msgid "Automatic 301 redirection on slug/permalink changes is turned off in Redirection plugin."
 msgstr "La création automatique de redirections 301 lors du changement de permalien est désactivée dans l'extension Redirection."
 
-#: includes/api/class-content-controller.php:2859
+#: includes/api/class-content-controller.php:2971
 msgid "404 Log Retention Healthy"
 msgstr "Rétention des journaux 404 saine"
 
-#: includes/api/class-content-controller.php:2860
+#: includes/api/class-content-controller.php:2972
 msgid "404 logs are automatically purged after %d days (protects database size)."
 msgstr "Les journaux 404 sont automatiquement purgés après %d jours (protège la taille de la base de données)."
 
-#: includes/api/class-content-controller.php:2866
+#: includes/api/class-content-controller.php:2978
 msgid "404 Log Retention High or Unlimited"
 msgstr "Rétention des journaux 404 élevée ou illimitée"
 
-#: includes/api/class-content-controller.php:2867
+#: includes/api/class-content-controller.php:2979
 msgid "404 logs retention is set to %d days. High retention can cause database bloat in the wp_redirection_404 table."
 msgstr "La rétention des logs 404 est configurée à %d jours. Une rétention trop longue peut provoquer une surcharge de la table wp_redirection_404."
 
@@ -1536,57 +1536,62 @@ msgstr "il y a %s (EN RETARD)"
 msgid "Action Scheduler tables not found in database."
 msgstr "Tables Action Scheduler introuvables dans la base de données."
 
-#: includes/api/class-system-controller.php:771
+#: includes/api/class-system-controller.php:802
 msgid "CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo."
 msgstr "CRITIQUE : Aucun fournisseur SMTP authentifié n'est actif. WordPress utilise la fonction PHP mail() non authentifiée. Les e-mails (confirmations de commande, reçus clients, réinitialisations de mot de passe) présentent un score de spam élevé et seront rejetés ou mis en quarantaine par Gmail, Outlook, Yahoo."
 
-#: includes/api/class-system-controller.php:775
+#: includes/api/class-system-controller.php:806
 msgid "CRITICAL: MailPoet Sending Service is configured for transactional emails, but the API key state is invalid or unapproved (%s). Delivery of emails may be paused."
 msgstr "CRITIQUE : Le service d'envoi MailPoet (MSS) est configuré pour les e-mails transactionnels, mais l'état de la clé API est invalide ou non approuvé (%s). La délivrabilité des e-mails peut être suspendue."
 
-#: includes/api/class-system-controller.php:783
+#: includes/api/class-system-controller.php:814
 msgid "%d recent email delivery failure(s) recorded in mail log."
 msgstr "%d échec(s) récent(s) de livraison d'e-mail enregistré(s) dans le journal des e-mails."
 
-#: includes/api/class-system-controller.php:814
+#: includes/api/class-system-controller.php:845
 msgid "A valid email parameter is required for subscriber diagnostic."
 msgstr "Un paramètre d'e-mail valide est requis pour le diagnostic d'abonné."
 
-#: includes/api/class-system-controller.php:825
+#: includes/api/class-system-controller.php:856
 msgid "MailPoet subscribers table does not exist or MailPoet is not installed."
 msgstr "La table des abonnés MailPoet n'existe pas ou MailPoet n'est pas installé."
 
-#: includes/api/class-system-controller.php:843
+#: includes/api/class-system-controller.php:874
 msgid "No MailPoet subscriber record found for this email address."
 msgstr "Aucun enregistrement d'abonné MailPoet trouvé pour cette adresse e-mail."
 
-#: includes/api/class-system-controller.php:883
+#: includes/api/class-system-controller.php:914
 msgid "CRITICAL BOUNCE ALERT: Address is marked as \"bounced\" in MailPoet. The MailPoet Sending Service (MSS) silently drops/blocks all transactional emails (order confirmations, status updates, password resets) sent to bounced addresses to protect sender reputation. The bounce status must be cleared or reset in MailPoet > Subscribers."
 msgstr "ALERTE REBOND CRITIQUE : L'adresse est marquée comme « rejetée » (bounced) dans MailPoet. Le service d'envoi MailPoet (MSS) abandonne et bloque silencieusement tous les e-mails transactionnels (confirmations de commande, mises à jour de statut, réinitialisations de mot de passe) envoyés aux adresses rejetées pour protéger la réputation d'expéditeur. Le statut de rebond doit être réinitialisé dans MailPoet > Abonnés."
 
-#: includes/api/class-system-controller.php:885
+#: includes/api/class-system-controller.php:916
 msgid "NOTICE: Address is marked as \"unsubscribed\". Marketing campaigns will not be sent. Transactional emails will still dispatch only if send_transactional_emails is enabled in MailPoet."
 msgstr "NOTE : L'adresse est marquée comme « désabonnée » (unsubscribed). Les campagnes marketing ne seront pas envoyées. Les e-mails transactionnels continueront d'être distribués uniquement si send_transactional_emails est activé dans MailPoet."
 
-#: includes/api/class-system-controller.php:887
+#: includes/api/class-system-controller.php:918
 msgid "NOTICE: Address is unconfirmed (pending double opt-in confirmation)."
 msgstr "NOTE : L'adresse est non confirmée (en attente de confirmation par double opt-in)."
 
-#: includes/api/class-system-controller.php:889
+#: includes/api/class-system-controller.php:920
 msgid "NOTICE: Subscriber marked inactive due to prolonged engagement dormancy."
 msgstr "NOTE : Abonné marqué comme inactif en raison d'une période prolongée d'inactivité d'engagement."
 
+#: includes/api/class-system-controller.php:1083
+msgid "Search query must be at least 2 characters long."
+msgstr "Le terme de recherche doit comporter au moins 2 caractères."
+
 #: includes/api/class-theme-controller.php:81
 #: includes/api/class-tracking-controller.php:153
-#: includes/api/class-woocommerce-controller.php:406
-#: includes/api/class-woocommerce-controller.php:731
-#: includes/api/class-woocommerce-controller.php:878
-#: includes/api/class-woocommerce-controller.php:1034
-#: includes/api/class-woocommerce-controller.php:1263
-#: includes/api/class-woocommerce-controller.php:1466
-#: includes/api/class-woocommerce-controller.php:1657
-#: includes/api/class-woocommerce-controller.php:1816
-#: includes/api/class-woocommerce-controller.php:1906
+#: includes/api/class-woocommerce-controller.php:415
+#: includes/api/class-woocommerce-controller.php:740
+#: includes/api/class-woocommerce-controller.php:887
+#: includes/api/class-woocommerce-controller.php:1043
+#: includes/api/class-woocommerce-controller.php:1272
+#: includes/api/class-woocommerce-controller.php:1475
+#: includes/api/class-woocommerce-controller.php:1666
+#: includes/api/class-woocommerce-controller.php:1825
+#: includes/api/class-woocommerce-controller.php:1915
+#: includes/api/class-woocommerce-controller.php:3100
 msgid "WooCommerce is not active on this site."
 msgstr "WooCommerce n'est pas actif sur ce site."
 
@@ -1786,61 +1791,65 @@ msgstr "Désynchronisation potentielle de cookie : la CMP utilise « %s », mais
 msgid "Verify that Meta CAPI cookie name is configured to \"%s\"."
 msgstr "Vérifiez que le nom de cookie Meta CAPI est bien configuré sur « %s »."
 
-#: includes/api/class-woocommerce-controller.php:624
+#: includes/api/class-woocommerce-controller.php:633
 msgid "Enable High-Performance Order Storage (HPOS)"
 msgstr "Activer le stockage des commandes haute performance (HPOS)"
 
-#: includes/api/class-woocommerce-controller.php:625
+#: includes/api/class-woocommerce-controller.php:634
 msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
 msgstr "Déplacer le stockage des commandes de wp_posts/wp_postmeta vers des tables dédiées accélère le processus de commande et améliore l'évolutivité de la base de données."
 
-#: includes/api/class-woocommerce-controller.php:632
+#: includes/api/class-woocommerce-controller.php:641
 msgid "Enable HPOS Data Caching"
 msgstr "Activer la mise en cache des données HPOS"
 
-#: includes/api/class-woocommerce-controller.php:633
+#: includes/api/class-woocommerce-controller.php:642
 msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
 msgstr "Un cache objet externe (Redis/Memcached) est détecté. Activer la mise en cache des données HPOS réduira significativement les requêtes redondantes sur les commandes."
 
-#: includes/api/class-woocommerce-controller.php:640
+#: includes/api/class-woocommerce-controller.php:649
 msgid "Defer Transactional Emails"
 msgstr "Différer les e-mails transactionnels"
 
-#: includes/api/class-woocommerce-controller.php:641
+#: includes/api/class-woocommerce-controller.php:650
 msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
 msgstr "L'envoi synchrone des e-mails transactionnels lors du paiement peut ralentir le checkout de plusieurs secondes voire provoquer des timeouts sur la page de remerciement. Le différé via l'Action Scheduler rend la confirmation de commande quasi instantanée."
 
-#: includes/api/class-woocommerce-controller.php:648
+#: includes/api/class-woocommerce-controller.php:657
 msgid "Enable Checkout Rate Limiting"
 msgstr "Activer la limitation du débit Checkout"
 
-#: includes/api/class-woocommerce-controller.php:649
+#: includes/api/class-woocommerce-controller.php:658
 msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
 msgstr "Protège votre boutique et vos passerelles de paiement contre les attaques de robots testeurs de cartes bancaires et la surcharge du serveur lors du checkout."
 
-#: includes/api/class-woocommerce-controller.php:656
+#: includes/api/class-woocommerce-controller.php:665
 msgid "Consider HPOS Full-Text Search Indexes"
 msgstr "Envisager les index de recherche plein texte HPOS"
 
-#: includes/api/class-woocommerce-controller.php:657
+#: includes/api/class-woocommerce-controller.php:666
 msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
 msgstr "Avec plus de 5 000 commandes, l'activation des index de recherche plein texte peut considérablement accélérer les recherches de commandes dans l'administration (fonctionnalité expérimentale)."
 
-#: includes/api/class-woocommerce-controller.php:885
+#: includes/api/class-woocommerce-controller.php:894
 msgid "Product not found."
 msgstr "Produit introuvable."
 
-#: includes/api/class-woocommerce-controller.php:1278
+#: includes/api/class-woocommerce-controller.php:1287
 msgid "Coupon not found."
 msgstr "Code promo introuvable."
 
-#: includes/api/class-woocommerce-controller.php:1664
+#: includes/api/class-woocommerce-controller.php:1673
 msgid "Order not found."
 msgstr "Commande introuvable."
 
-#: includes/api/class-woocommerce-controller.php:3063
+#: includes/api/class-woocommerce-controller.php:3072
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr "Aucun e-mail client ou administrateur actif n'est configuré pour être envoyé lors du passage à cet état de commande."
+
+#: includes/api/class-woocommerce-controller.php:3108
+msgid "WooCommerce account functions are not loaded."
+msgstr "Les fonctions de compte WooCommerce ne sont pas chargées."
 
 #: includes/api/class-wpcode-controller.php:233
 msgid "Snippet not found."
@@ -1860,27 +1869,27 @@ msgid "Allows inspecting WordPress, PHP, MySQL versions, active plugins list, se
 msgstr "Permet d'inspecter les versions de WordPress, PHP, MySQL, la liste des extensions actives, les limites serveur, les crons Action Scheduler, l'empreinte autoload, le diagnostic e-mail SMTP, le durcissement de sécurité et la configuration du cache."
 
 #: includes/class-permissions.php:23
-#: includes/class-permissions.php:238
+#: includes/class-permissions.php:244
 msgid "WooCommerce Diagnostic & Overrides"
 msgstr "Diagnostic WooCommerce & Surcharges"
 
 #: includes/class-permissions.php:24
-#: includes/class-permissions.php:239
+#: includes/class-permissions.php:245
 msgid "Allows auditing template overrides in active themes, detecting outdated WooCommerce templates, and HPOS status."
 msgstr "Permet d'auditer les templates WooCommerce surchargés dans le thème actif, de détecter les versions obsolètes et le statut HPOS."
 
 #: includes/class-permissions.php:28
-#: includes/class-permissions.php:251
+#: includes/class-permissions.php:257
 msgid "Theme Settings & Child Theme"
 msgstr "Réglages Thème & Thème Enfant"
 
 #: includes/class-permissions.php:29
-#: includes/class-permissions.php:252
+#: includes/class-permissions.php:258
 msgid "Allows exporting Woodmart (xts-woodmart-options), Elessi (elessi_options) settings, and child theme functions.php/style.css."
 msgstr "Permet d'exporter les options Woodmart (xts-woodmart-options), Elessi (elessi_options) et le code du thème enfant."
 
 #: includes/class-permissions.php:33
-#: includes/class-permissions.php:270
+#: includes/class-permissions.php:276
 msgid "Code & Plugin File Inspector"
 msgstr "Inspecteur de Code & Extensions"
 
@@ -1889,17 +1898,17 @@ msgid "Allows browsing active plugins/mu-plugins structures, reading sandboxed s
 msgstr "Permet de parcourir les extensions/mu-plugins actives, de lire le code source sandboxé, de générer des sommes de contrôle et d'exporter des archives ZIP d'extensions/thèmes."
 
 #: includes/class-permissions.php:39
-#: includes/class-permissions.php:303
+#: includes/class-permissions.php:309
 msgid "Allows reading Elementor page trees, global kit styles, and mapping form widgets with webhooks."
 msgstr "Permet de lire les arbres JSON Elementor, les styles globaux du kit et de cartographier les formulaires et webhooks."
 
 #: includes/class-permissions.php:44
-#: includes/class-permissions.php:338
+#: includes/class-permissions.php:344
 msgid "Allows listing and inspecting custom PHP, JS, CSS, and HTML snippets stored in WPCode and Code Snippets (Free/Pro) plugins."
 msgstr "Permet de lister et d'inspecter les extraits de code PHP, JS, CSS et HTML personnalisés stockés dans les extensions WPCode et Code Snippets (Free/Pro)."
 
 #: includes/class-permissions.php:48
-#: includes/class-permissions.php:369
+#: includes/class-permissions.php:375
 msgid "Error & WooCommerce Logs"
 msgstr "Journaux d'Erreurs & Logs WooCommerce"
 
@@ -1908,27 +1917,27 @@ msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, databas
 msgstr "Permet de lister et de lire la fin de debug.log, uploads/wc-logs/*.log, des journaux d'e-mails en base de données et des logs personnalisés de wp-content/ avec protection mémoire."
 
 #: includes/class-permissions.php:54
-#: includes/class-permissions.php:407
+#: includes/class-permissions.php:413
 msgid "Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks)."
 msgstr "Permet d'inspecter les tâches planifiées WP-Cron, intervalles, tâches en retard et les files d'attente d'Action Scheduler (tâches en cours, échouées, en attente)."
 
 #: includes/class-permissions.php:59
-#: includes/class-permissions.php:427
+#: includes/class-permissions.php:433
 msgid "Allows listing and exporting FlowMattic workflows, steps, triggers, and configurations in native JSON format."
 msgstr "Permet de lister et d'exporter les workflows FlowMattic, étapes, déclencheurs et réglages au format JSON natif."
 
 #: includes/class-permissions.php:63
-#: includes/class-permissions.php:452
+#: includes/class-permissions.php:458
 msgid "Independent Analytics (Visits & Conversion Rates)"
 msgstr "Independent Analytics (Visites & Taux de Conversion)"
 
 #: includes/class-permissions.php:64
-#: includes/class-permissions.php:453
+#: includes/class-permissions.php:459
 msgid "Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics."
 msgstr "Permet d'inspecter les statistiques de visites, canaux de trafic, campagnes UTM, répartition par appareil et taux de conversion WooCommerce suivis par Independent Analytics."
 
 #: includes/class-permissions.php:69
-#: includes/class-permissions.php:509
+#: includes/class-permissions.php:515
 msgid "Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta."
 msgstr "Permet d'inspecter les champs personnalisés déclarés dans le code (register_post_meta), les groupes de champs ACF et leurs champs, ainsi que la table postmeta."
 
@@ -1945,7 +1954,7 @@ msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw G
 msgstr "Permet d'inspecter la hiérarchie des pages et articles WordPress, le contenu brut et rendu des blocs Gutenberg, les modèles, les métadonnées SEO unifiées (Rank Math, Yoast, The SEO Framework) et les redirections d'URL avec logs de surveillance 404."
 
 #: includes/class-permissions.php:83
-#: includes/class-permissions.php:671
+#: includes/class-permissions.php:688
 msgid "Site Performance & Plugin Profiler"
 msgstr "Performance du Site & Profileur d'Extensions"
 
@@ -1954,22 +1963,22 @@ msgid "Allows profiling URL response times, attributing SQL queries and duration
 msgstr "Permet de profiler le temps de réponse des URLs, d'attribuer les requêtes SQL et leur durée par plugin, de détecter les requêtes lentes/doublons, de mesurer l'empreinte des scripts/styles frontend, de découvrir 5 URLs représentatives de templates, d'exécuter des audits Core Web Vitals 100% natifs, d'auditer l'autoload et d'inspecter le cache et WP Rocket."
 
 #: includes/class-permissions.php:88
-#: includes/class-permissions.php:713
+#: includes/class-permissions.php:730
 msgid "Paid Memberships Pro (PMPro)"
 msgstr "Paid Memberships Pro (PMPro)"
 
 #: includes/class-permissions.php:89
-#: includes/class-permissions.php:714
+#: includes/class-permissions.php:731
 msgid "Allows inspecting Paid Memberships Pro levels, durations, recurring billing cycles, user membership records, status timeline, and associated PMPro orders."
 msgstr "Permet d'inspecter les niveaux Paid Memberships Pro, les durées, les cycles de facturation récurrente, les adhésions utilisateurs, la chronologie des statuts et les commandes PMPro associées."
 
 #: includes/class-permissions.php:93
-#: includes/class-permissions.php:737
+#: includes/class-permissions.php:754
 msgid "MasterStudy LMS"
 msgstr "MasterStudy LMS"
 
 #: includes/class-permissions.php:94
-#: includes/class-permissions.php:738
+#: includes/class-permissions.php:755
 msgid "Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course durations, user course enrollments, and PMPro subscription link synchronization."
 msgstr "Permet d'inspecter les cours MasterStudy LMS, la tarification, le nombre de leçons, la durée des cours, les inscriptions des utilisateurs et la synchronisation des liens d'abonnements PMPro."
 
@@ -2021,311 +2030,323 @@ msgstr "Diagnostic universel du cache et de l'optimisation : Cache objet (Redis/
 msgid "Alias for /performance/cache/purge: Multi-layer cache invalidation supporting Rocket.net CDN, WP Rocket, Object Cache Pro / Redis, LiteSpeed, and Autoptimize."
 msgstr "Alias de /performance/cache/purge : Invalidation multi-niveaux du cache prenant en charge le CDN Rocket.net, WP Rocket, Object Cache Pro / Redis, LiteSpeed et Autoptimize."
 
-#: includes/class-permissions.php:245
+#: includes/class-permissions.php:238
+msgid "Global read-only search across all post types (wp_posts), site options (wp_options with sensitive secrets auto-redacted and transients excluded), and active/inactive snippets (WPCode & Code Snippets) with contextual text snippets and direct admin edit links."
+msgstr "Recherche globale en lecture seule à travers tous les types de publication (wp_posts), les options du site (wp_options avec caviardage automatique des secrets et exclusion des transients) et les extraits actifs/inactifs (WPCode & Code Snippets) avec extraits textuels contextuels et liens d'édition admin directs."
+
+#: includes/class-permissions.php:251
 msgid "Audits WooCommerce template overrides in active theme with version comparison to core WC."
 msgstr "Audite les templates WooCommerce surchargés dans le thème actif avec comparaison de version par rapport au cœur WooCommerce."
 
-#: includes/class-permissions.php:259
+#: includes/class-permissions.php:265
 msgid "Decoded theme settings and Customizer theme mods with sensitive keys redacted."
 msgstr "Réglages de thèmes décodés et options du Customizer avec clés sensibles masquées."
 
-#: includes/class-permissions.php:264
+#: includes/class-permissions.php:270
 msgid "Full source code and header info of the active child theme functions.php and style.css."
 msgstr "Code source complet et informations d'en-tête de functions.php et style.css du thème enfant actif."
 
-#: includes/class-permissions.php:271
+#: includes/class-permissions.php:277
 msgid "Allows browsing active plugins and mu-plugins file structures, reading specific files in sandbox, computing directory checksums, and exporting clean ZIP archives."
 msgstr "Permet de parcourir les arborescences des extensions et mu-plugins, de lire des fichiers sous sandbox, de calculer des checksums et d'exporter des archives ZIP."
 
-#: includes/class-permissions.php:278
+#: includes/class-permissions.php:284
 msgid "Hierarchical directory and file trees of plugins and wp-content/mu-plugins/."
 msgstr "Arborescence hiérarchique des dossiers et fichiers d'extensions et wp-content/mu-plugins/."
 
-#: includes/class-permissions.php:284
+#: includes/class-permissions.php:290
 msgid "Sandboxed source code reader for PHP, JS, and CSS files."
 msgstr "Lecteur de code source sandboxé pour fichiers PHP, JS et CSS."
 
-#: includes/class-permissions.php:290
+#: includes/class-permissions.php:296
 msgid "Directory checksum fingerprint map of all code files with modified timestamps and byte sizes for instant local vs prod drift detection."
 msgstr "Cartographie des empreintes checksum de tous les fichiers de code avec dates de modification et tailles en octets pour une détection immédiate des écarts entre local et production."
 
-#: includes/class-permissions.php:296
+#: includes/class-permissions.php:302
 msgid "Generates and streams a clean on-the-fly ZIP archive of a target plugin or child theme directory (excluding .git, logs, and sensitive files)."
 msgstr "Génère et diffuse à la volée une archive ZIP propre d'une extension ou d'un thème enfant cible (en excluant .git, les logs et les fichiers sensibles)."
 
-#: includes/class-permissions.php:310
+#: includes/class-permissions.php:316
 msgid "Bulk export of all Elementor pages, templates, kit & forms in 1 optimized HTTP request."
 msgstr "Export groupé de toutes les pages Elementor, modèles, kit et formulaires en 1 seule requête HTTP optimisée."
 
-#: includes/class-permissions.php:316
+#: includes/class-permissions.php:322
 msgid "List all Elementor pages, posts, and saved library templates."
 msgstr "Liste de toutes les pages Elementor, articles et modèles enregistrés dans la bibliothèque."
 
-#: includes/class-permissions.php:321
+#: includes/class-permissions.php:327
 msgid "Full decoded _elementor_data JSON tree and page settings for a specific post/template."
 msgstr "Arbre JSON _elementor_data complet décodé et réglages de page pour une publication ou un modèle spécifique."
 
-#: includes/class-permissions.php:326
+#: includes/class-permissions.php:332
 msgid "Inventory of all Elementor Pro form widgets, field configurations, webhooks, and recipient emails."
 msgstr "Inventaire de tous les widgets de formulaire Elementor Pro, configurations de champs, webhooks et adresses emails de réception."
 
-#: includes/class-permissions.php:331
+#: includes/class-permissions.php:337
 msgid "Global design system: colors, system fonts, and design tokens from active Elementor Kit."
 msgstr "Design system global : couleurs, polices système et jetons de design du Kit Elementor actif."
 
-#: includes/class-permissions.php:345
+#: includes/class-permissions.php:351
 msgid "List active snippets by default across WPCode and Code Snippets (use ?status=all for full history or ?status=inactive for dormant snippets) with source plugin, execution location, priority, tags, direct admin edit link, and full source code."
 msgstr "Liste par défaut les extraits actifs dans WPCode et Code Snippets (utiliser ?status=all pour tout l'historique ou ?status=inactive pour les extraits dormants) avec l'extension source, l'emplacement d'exécution, la priorité, les étiquettes, le lien direct d'édition dans l'admin et le code source complet."
 
-#: includes/class-permissions.php:351
+#: includes/class-permissions.php:357
 msgid "Full source code, execution location, priority, tags, and direct WordPress Admin edit link for a specific snippet with collision resolution."
 msgstr "Code source complet, emplacement d'exécution, priorité, étiquettes et lien direct d'édition dans l'administration WordPress pour un extrait spécifique avec résolution de collisions."
 
-#: includes/class-permissions.php:357
+#: includes/class-permissions.php:363
 msgid "Legacy alias: List active snippets by default across WPCode and Code Snippets (?status=all for all)."
 msgstr "Alias historique : Liste par défaut les extraits actifs dans WPCode et Code Snippets (?status=all pour tout lister)."
 
-#: includes/class-permissions.php:363
+#: includes/class-permissions.php:369
 msgid "Legacy alias: Full source code and settings for a specific snippet."
 msgstr "Alias historique : Code source complet et réglages pour un extrait spécifique."
 
-#: includes/class-permissions.php:370
+#: includes/class-permissions.php:376
 msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, and custom wp-content/ logs with memory protection."
 msgstr "Permet de lister et lire en streaming mémoire sécurisé debug.log, uploads/wc-logs/*.log et les logs wp-content/ personnalisés."
 
-#: includes/class-permissions.php:376
+#: includes/class-permissions.php:382
 msgid "List available log files (debug.log, uploads/wc-logs/*.log, custom logs) with sizes and timestamps."
 msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log, logs personnalisés) avec tailles et horodatages."
 
-#: includes/class-permissions.php:382
+#: includes/class-permissions.php:388
 msgid "Memory-safe reverse tail extraction of last N lines with optional error filtering."
 msgstr "Extraction mémoire sécurisée des N dernières lignes en ordre inverse avec filtrage d'erreurs optionnel."
 
-#: includes/class-permissions.php:388
+#: includes/class-permissions.php:394
 msgid "Memory-safe reverse tail extraction of specific log files in wp-content/ with path sandboxing."
 msgstr "Extraction mémoire sécurisée des dernières lignes d'un fichier log spécifique dans wp-content/ avec sandbox de chemin."
 
-#: includes/class-permissions.php:394
+#: includes/class-permissions.php:400
 msgid "Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from debug.log and wc-logs."
 msgstr "Crash Watch : erreurs fatales PHP et exceptions récentes agrégées et dédupliquées depuis debug.log et wc-logs."
 
-#: includes/class-permissions.php:400
+#: includes/class-permissions.php:406
 msgid "Search database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), and WP Mail SMTP with PII email redaction."
 msgstr "Recherche dans les journaux d'e-mails en base de données sur WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs) et WP Mail SMTP avec caviardage de confidentialité des e-mails."
 
-#: includes/class-permissions.php:414
+#: includes/class-permissions.php:420
 msgid "List registered WP-Cron jobs, execution timestamps, overdue detection, recurrence intervals, and hook arguments."
 msgstr "Liste des tâches WP-Cron enregistrées, horodatages d'exécution, détection des retards, intervalles et arguments de hooks."
 
-#: includes/class-permissions.php:420
+#: includes/class-permissions.php:426
 msgid "Inspect Action Scheduler queue with status summary, retention policy in days, scheduled dates, attempts, arguments, and failure log messages."
 msgstr "Inspection de la file Action Scheduler avec résumé des statuts, politique de rétention en jours, dates planifiées, tentatives, arguments et messages d'erreur."
 
-#: includes/class-permissions.php:434
+#: includes/class-permissions.php:440
 msgid "Bulk export of all FlowMattic workflows in native importable JSON format in 1 request."
 msgstr "Export groupé de tous les workflows FlowMattic au format JSON importable natif en 1 seule requête."
 
-#: includes/class-permissions.php:440
+#: includes/class-permissions.php:446
 msgid "List all FlowMattic workflows (ID, name, status, trigger, actions, tasks count)."
 msgstr "Liste de tous les workflows FlowMattic (ID, nom, statut, déclencheur, actions, nombre de tâches)."
 
-#: includes/class-permissions.php:446
+#: includes/class-permissions.php:452
 msgid "Single FlowMattic workflow detail or native importable JSON backup."
 msgstr "Détail d'un workflow FlowMattic spécifique ou sauvegarde JSON importable native."
 
-#: includes/class-permissions.php:460
+#: includes/class-permissions.php:466
 msgid "Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices)."
 msgstr "Audit consolidé de trafic et conversion 360° en 1 seul appel (synthèse, top pages, référents, campagnes, appareils)."
 
-#: includes/class-permissions.php:466
+#: includes/class-permissions.php:472
 msgid "Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth."
 msgstr "KPIs de trafic (visiteurs, vues, taux de rebond, durée) et taux de conversion WooCommerce, ventes nettes, panier moyen, % de croissance."
 
-#: includes/class-permissions.php:472
+#: includes/class-permissions.php:478
 msgid "Performance & conversion rate per page / WooCommerce product."
 msgstr "Performance et taux de conversion par page / produit WooCommerce."
 
-#: includes/class-permissions.php:478
+#: includes/class-permissions.php:484
 msgid "Traffic acquisition sources & referring domains with associated orders, sales, and conversion rates."
 msgstr "Sources d'acquisition de trafic et domaines référents avec commandes, chiffre d'affaires et taux de conversion associés."
 
-#: includes/class-permissions.php:484
+#: includes/class-permissions.php:490
 msgid "Marketing UTM campaigns ROI tracking (utm_source, utm_medium, utm_campaign, orders, net_sales)."
 msgstr "Suivi du ROI des campagnes marketing UTM (utm_source, utm_medium, utm_campaign, commandes, ventes nettes)."
 
-#: includes/class-permissions.php:490
+#: includes/class-permissions.php:496
 msgid "Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS."
 msgstr "Répartition et comparaison des conversions par type d'appareil (ordinateur, mobile, tablette), navigateurs et systèmes d'exploitation."
 
-#: includes/class-permissions.php:496
+#: includes/class-permissions.php:502
 msgid "Geographic distribution of visitors and orders by country and city."
 msgstr "Répartition géographique des visiteurs et des commandes par pays et ville."
 
-#: includes/class-permissions.php:502
+#: includes/class-permissions.php:508
 msgid "Recent order and conversion stream with attribution (landing page, country, device, browser, amount)."
 msgstr "Flux des commandes récentes et conversions avec attribution (page d'atterrissage, pays, appareil, navigateur, montant)."
 
-#: includes/class-permissions.php:516
+#: includes/class-permissions.php:522
 msgid "Unified catalog of all declared custom meta fields (WordPress code register_post_meta and ACF plugin field groups/fields)."
 msgstr "Catalogue unifié de tous les champs personnalisés déclarés (code WordPress register_post_meta et groupes/champs ACF)."
 
-#: includes/class-permissions.php:522
+#: includes/class-permissions.php:528
 msgid "Deep ACF inspection: field groups, hierarchy, recursive subfields, location rules, and registered options pages."
 msgstr "Inspection approfondie ACF : groupes de champs, hiérarchie, sous-champs récursifs, règles d'emplacement et pages d'options."
 
-#: includes/class-permissions.php:527
+#: includes/class-permissions.php:533
 msgid "Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta)."
 msgstr "Inspection des métadonnées d'une publication, d'un produit ou d'une commande (champs ACF résolus, meta du code et postmeta brutes catégorisées)."
 
-#: includes/class-permissions.php:533
+#: includes/class-permissions.php:539
 msgid "WooCommerce Store Data (Products, Orders, Settings)"
 msgstr "Données Boutique WooCommerce (Produits, Commandes, Réglages)"
 
-#: includes/class-permissions.php:534
+#: includes/class-permissions.php:540
 msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings."
 msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/sans PII), résumé de la boutique et réglages e-commerce."
 
-#: includes/class-permissions.php:540
+#: includes/class-permissions.php:546
 msgid "High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones."
 msgstr "Santé globale de la boutique, compteurs de produits par statut/stock/type, volume de commandes et analyse d'hygiène (taux d'annulation, commandes impayées > 1 an), état HPOS, passerelles de paiement actives et zones de livraison."
 
-#: includes/class-permissions.php:546
+#: includes/class-permissions.php:552
 msgid "Paginated WooCommerce products catalog with SKU, prices, stock, categories, tags, and attributes."
 msgstr "Catalogue paginé des produits WooCommerce avec référence SKU, prix, stock, catégories, étiquettes et attributs."
 
-#: includes/class-permissions.php:551
+#: includes/class-permissions.php:557
 msgid "Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields."
 msgstr "Fiche produit détaillée comprenant la décomposition des déclinaisons, dimensions, visuels et champs personnalisés postmeta assainis."
 
-#: includes/class-permissions.php:557
+#: includes/class-permissions.php:563
 msgid "List and filter WooCommerce promotional coupons with status, expiration, usage counts, limits, held count, and PII-masked email restrictions."
 msgstr "Liste et filtre les codes promos WooCommerce avec statut, expiration, compteurs d'utilisation, limites, réservations en cours et restrictions e-mail masquées RGPD."
 
-#: includes/class-permissions.php:563
+#: includes/class-permissions.php:569
 msgid "Deep inspection of a single coupon: discount rules, real-time availability (is_valid_now, usage_left), active held checkout sessions (_coupon_held_keys), and last 10 associated orders."
 msgstr "Inspection approfondie d'un code promo unitaire : règles de remise, disponibilité en temps réel (is_valid_now, usage_left), sessions de commande en attente retenant le coupon (_coupon_held_keys) et 10 dernières commandes associées."
 
-#: includes/class-permissions.php:569
+#: includes/class-permissions.php:575
 msgid "Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, coupon lines and applied coupon codes, totals, and gateways."
 msgstr "Commandes récentes avec anonymisation stricte RGPD (noms masqués, e-mails/téléphones/adresses caviardés), lignes d'articles, codes promos appliqués avec montants de remise, totaux et passerelles."
 
-#: includes/class-permissions.php:574
+#: includes/class-permissions.php:580
 msgid "Deep order diagnostics: item line metadata, shipping lines with decoded metadata (e.g. Flexible Shipping fs_costs base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata."
 msgstr "Diagnostic approfondi de commande : métadonnées des articles, lignes de livraison avec métadonnées décodées (ex. Flexible Shipping fs_costs coût de base & coûts additionnels), frais, codes promo, remboursements, notes de commande et métadonnées assainies."
 
-#: includes/class-permissions.php:579
+#: includes/class-permissions.php:585
 msgid "Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules."
 msgstr "Configuration de la boutique : devise, taxes, gestion des stocks, passerelles de paiement actives (clés secrètes masquées) et zones/méthodes d'expédition avec règles matricielles Flexible Shipping."
 
-#: includes/class-permissions.php:584
+#: includes/class-permissions.php:590
 msgid "Dedicated shipping & logistics inspection: zones, geographic locations (postcodes, regions, countries), native method parameters, flat_rate table rate rules, Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and sanitized raw instance settings."
 msgstr "Inspection dédiée expédition & logistique : zones, localisations géographiques (codes postaux, régions, pays), paramètres des méthodes natives, règles forfait table rate, règles matricielles Flexible Shipping & Flexible Shipping PRO (paliers poids/prix, classes de livraison) et réglages bruts assainis."
 
-#: includes/class-permissions.php:590
+#: includes/class-permissions.php:596
 msgid "100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period."
 msgstr "Rapport de ventes 100% natif WooCommerce : ventes nettes, ventes brutes, nombre de commandes, panier moyen, remboursements, tendance journalière et pourcentage de croissance par rapport à la période précédente."
 
-#: includes/class-permissions.php:596
+#: includes/class-permissions.php:602
 msgid "Top selling products by net revenue and units sold, and top discount coupons with usage counts."
 msgstr "Meilleures ventes de produits par chiffre d'affaires net et unités vendues, et top des codes promo avec compteurs d'utilisation."
 
-#: includes/class-permissions.php:602
+#: includes/class-permissions.php:608
 msgid "Stock health and financial valuation: total managed units, total retail valuation, low stock alerts, and dormant stock (0 sales in last 90 days)."
 msgstr "Santé et valorisation financière du stock : total des unités gérées, valeur marchande totale, alertes stock faible et stocks dormants (0 vente sur les 90 derniers jours)."
 
-#: includes/class-permissions.php:607
+#: includes/class-permissions.php:613
 msgid "WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures."
 msgstr "Inventaire des webhooks WooCommerce : URL de livraison, sujet, statut (actif/suspendu/désactivé), compteurs d'échecs et alertes en cas de pannes répétées."
 
-#: includes/class-permissions.php:612
+#: includes/class-permissions.php:618
 msgid "Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses."
 msgstr "Inspecte les e-mails transactionnels WooCommerce enregistrés, l'état activé, les destinataires, les modèles d'objet/en-tête, les déclencheurs personnalisés d'Order Status Manager et détecte les états silencieux."
 
-#: includes/class-permissions.php:618
+#: includes/class-permissions.php:623
+msgid "Inspects WooCommerce My Account tabs, URLs, associated action hooks and callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content."
+msgstr "Inspecte les onglets Mon Compte WooCommerce, les URLs, les hooks d'action et callbacks associés via Reflection, ainsi que les Blocs HTML Woodmart (cms_block) ou templates Elementor rattachés avec leur contenu brut."
+
+#: includes/class-permissions.php:629
 msgid "Pages, Content & SEO"
 msgstr "Pages, Contenus & SEO"
 
-#: includes/class-permissions.php:619
+#: includes/class-permissions.php:630
 msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO)."
 msgstr "Permet d'inspecter la hiérarchie des pages et articles WordPress, le contenu des blocs Gutenberg bruts et rendus, les modèles et les métadonnées SEO unifiées (Yoast, Rank Math, SEOPress, AIOSEO)."
 
-#: includes/class-permissions.php:626
+#: includes/class-permissions.php:637
 msgid "Lists WordPress pages with hierarchy (parent/child), slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview."
 msgstr "Liste des pages WordPress avec hiérarchie (parent/enfant), identifiant, statut, modèle PHP, type d'éditeur (Gutenberg/Classique/Elementor), marqueurs de pages spéciales et aperçu SEO rapide."
 
-#: includes/class-permissions.php:631
+#: includes/class-permissions.php:642
 msgid "Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified SEO metadata."
 msgstr "Inspection approfondie d'une page : contenu brut/rendu, résumé des blocs Gutenberg, shortcodes détectés, nombre de mots, hiérarchie parent/enfant et métadonnées SEO unifiées."
 
-#: includes/class-permissions.php:637
-msgid "Lists WordPress blog posts with categories, tags, author, editor type, and quick SEO preview."
-msgstr "Liste des articles de blog WordPress avec catégories, étiquettes, auteur, type d'éditeur et aperçu SEO rapide."
+#: includes/class-permissions.php:648
+msgid "Lists WordPress blog posts or custom post types (e.g. cms_block, elementor_library, woodmart_layout) with categories, tags, author, editor type, and quick SEO preview."
+msgstr "Liste les articles WordPress ou types de publication personnalisés (ex: cms_block, elementor_library, woodmart_layout) avec catégories, étiquettes, auteur, type d'éditeur et aperçu SEO rapide."
 
-#: includes/class-permissions.php:642
+#: includes/class-permissions.php:653
 msgid "Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object."
 msgstr "Inspection approfondie d'un article ou type de publication sur mesure : contenu brut/rendu, blocs, taxonomies, postmeta assainies et objet SEO unifié complet."
 
-#: includes/class-permissions.php:648
+#: includes/class-permissions.php:659
+msgid "Lists all registered custom post types with live post counts per status (publish, draft, trash, private), supported features (title, editor, thumbnail, etc.), and associated taxonomies."
+msgstr "Liste tous les types de publication personnalisés enregistrés avec décompte en direct par statut (publié, brouillon, corbeille, privé), fonctionnalités supportées (titre, éditeur, image mise en avant, etc.) et taxonomies associées."
+
+#: includes/class-permissions.php:665
 msgid "Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions."
 msgstr "Rapport d'audit SEO à l'échelle du site sur les pages, articles, produits WooCommerce et catégories : méta-descriptions manquantes, problèmes de titres, alertes noindex sur produits publiés/panier, contenu faible et descriptions de catégories."
 
-#: includes/class-permissions.php:653
+#: includes/class-permissions.php:670
 msgid "Audits global settings and configuration best practices of the active SEO plugin (Rank Math, Yoast SEO, The SEO Framework) and Redirection plugin with health checks and actionable recommendations."
 msgstr "Audite les réglages globaux et les bonnes pratiques de configuration de l'extension SEO active (Rank Math, Yoast SEO, The SEO Framework) et de l'extension Redirection avec vérifications de santé et recommandations concrètes."
 
-#: includes/class-permissions.php:659
+#: includes/class-permissions.php:676
 msgid "Lists, filters, and paginates configured URL redirection rules across supported redirection plugins."
 msgstr "Liste, filtre et pagine les règles de redirection d'URL configurées sur les extensions de redirection compatibles."
 
-#: includes/class-permissions.php:665
+#: includes/class-permissions.php:682
 msgid "Inspects recent 404 error logs recorded by Redirection or Rank Math plugins with hit counts, broken referrers, and GDPR-masked client IPs."
 msgstr "Inspecte les journaux d'erreurs 404 récents enregistrés par les extensions Redirection ou Rank Math avec nombre de visites, référents cassés et adresses IP masquées RGPD."
 
-#: includes/class-permissions.php:672
+#: includes/class-permissions.php:689
 msgid "Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, 100% native server-side Core Web Vitals checks (DOM size, CLS image dimensions, legacy image formats, render-blocking resources, Google Fonts, WP core bloat scripts, cart fragments), autoload bloat audit, and plugin resource footprint."
 msgstr "Permet le benchmark d'URLs à la demande (TTFB, mémoire, requêtes SQL par extension, requêtes lentes/doublons, assets JS/CSS par extension), découverte des archétypes de templates, signaux Core Web Vitals 100% natifs côté serveur (taille DOM, dimensions images pour CLS, formats d'images obsolètes, ressources bloquantes, Google Fonts, scripts superflus du cœur WP, fragments panier), audit autoload et empreinte des extensions."
 
-#: includes/class-permissions.php:678
+#: includes/class-permissions.php:695
 msgid "Automatic discovery and resolution of 5 key representative template URLs: Homepage, Shop / Catalog, Product Category, Single Product, and Cart / Checkout."
 msgstr "Découverte et résolution automatiques des 5 URLs modèles représentatives clés : Accueil, Boutique / Catalogue, Catégorie Produit, Fiche Produit et Panier / Commande."
 
-#: includes/class-permissions.php:684
+#: includes/class-permissions.php:701
 msgid "Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native Web Vitals checks (DOM size, CLS image dimensions, legacy format PNG/JPEG, render-blocking in <head>, external Google Fonts, core bloat scripts, and WooCommerce cart-fragments detection)."
 msgstr "Profileur ciblé d'URL : mesure le TTFB, le pic mémoire, attribue les requêtes SQL et leur durée à des extensions spécifiques via backtrace, signale les requêtes lentes et doublons, mesure les assets JS/CSS par extension et exécute les vérifications natives Web Vitals (taille DOM, dimensions images CLS, formats obsolètes PNG/JPEG, ressources bloquantes dans <head>, Google Fonts externes, scripts superflus du cœur et détection cart-fragments de WooCommerce)."
 
-#: includes/class-permissions.php:690
+#: includes/class-permissions.php:707
 msgid "Audits wp_options autoload bloat: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix."
 msgstr "Audite la surcharge de wp_options en autoload : taille totale par rapport au seuil de 800 Ko, top des options les plus lourdes et répartition du volume groupée par préfixe d'extension."
 
-#: includes/class-permissions.php:696
+#: includes/class-permissions.php:713
 msgid "Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts."
 msgstr "Empreinte consolidée des ressources par extension : statut d'activation, nombre de tables de base de données associées, taille disque et nombre de lignes des tables."
 
-#: includes/class-permissions.php:701
+#: includes/class-permissions.php:718
 msgid "Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction."
 msgstr "Diagnostic universel de cache & d'optimisation : Object Cache (Redis/Memcached), drop-in Page Cache, Breeze (Cloudways) et réglages détaillés de WP Rocket (RUCSS vs CPCSS, Delay JS, listes d'exclusion, lazyload, cache mobile) avec caviardage de sécurité."
 
-#: includes/class-permissions.php:707
+#: includes/class-permissions.php:724
 msgid "Multi-layer cache invalidation supporting Rocket.net CDN (Cloudflare Enterprise Edge), WP Rocket (domain, minify, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed, and Autoptimize."
 msgstr "Invalidation de cache multi-couches prenant en charge le CDN Rocket.net (Cloudflare Enterprise Edge), WP Rocket (domaine, minification, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed et Autoptimize."
 
-#: includes/class-permissions.php:720
+#: includes/class-permissions.php:737
 msgid "Lists all PMPro membership levels with duration rules (expiration_number/period, cycle_number/period), pricing, and active member counts with duration anomaly detection."
 msgstr "Liste tous les niveaux d'adhésion PMPro avec règles de durée (expiration_number/period, cycle_number/period), tarifs et nombre de membres actifs avec détection d'anomalies de durée."
 
-#: includes/class-permissions.php:726
+#: includes/class-permissions.php:743
 msgid "Lists membership records from pmpro_memberships_users with startdate, enddate, status, masked PII, and computed expiration indicators."
 msgstr "Liste les enregistrements d'adhésion de pmpro_memberships_users avec startdate, enddate, statut, données PII masquées et indicateurs d'expiration calculés."
 
-#: includes/class-permissions.php:731
+#: includes/class-permissions.php:748
 msgid "Deep member diagnostic: active level, membership history timeline, associated PMPro orders, and access anomaly flags (e.g. active status with past expiration date)."
 msgstr "Diagnostic approfondi de membre : niveau actif, chronologie d'adhésion, commandes PMPro associées et alertes d'anomalies d'accès (ex. statut actif avec date d'expiration dépassée)."
 
-#: includes/class-permissions.php:745
+#: includes/class-permissions.php:762
 msgid "Lists MasterStudy LMS courses with pricing configuration, linked WooCommerce product ID, course duration/expiration rules, total students, lessons count, and allowed PMPro membership levels."
 msgstr "Liste les cours MasterStudy LMS avec configuration tarifaire, ID produit WooCommerce lié, règles de durée/expiration de cours, total d'étudiants, nombre de leçons et niveaux PMPro autorisés."
 
-#: includes/class-permissions.php:750
+#: includes/class-permissions.php:767
 msgid "Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription record, and root cause diagnosis for premature access expirations or pointer desync."
 msgstr "Audit détaillé des inscriptions utilisateur : progression, dates de début/fin, enregistrement d'abonnement PMPro lié et diagnostic de cause racine pour les expirations prématurées ou désynchronisations de pointeur."
 
@@ -2337,405 +2358,437 @@ msgstr "Audit 360° SEO, Hiérarchie des Contenus & Visibilité"
 msgid "Comprehensive audit protocol to identify indexation blockers, critical noindex on products/pages, missing meta descriptions, title anomalies, Gutenberg content structure, and 301 URL redirections / 404 monitoring."
 msgstr "Protocole d'audit complet pour identifier les blocages d'indexation, les noindex critiques sur les produits/pages, les méta-descriptions manquantes, les anomalies de titre, la structure Gutenberg et les redirections 301 / surveillance 404."
 
-#: includes/class-playbooks.php:69
+#: includes/class-playbooks.php:74
 msgid "Site-wide SEO Audit Report & Settings Best Practices"
 msgstr "Rapport d'Audit SEO Global & Bonnes Pratiques de Réglages"
 
-#: includes/class-playbooks.php:72
+#: includes/class-playbooks.php:77
 msgid "Detects active SEO provider (Rank Math, Yoast SEO, The SEO Framework, SEOPress, AIOSEO), sitemap status, global post-type noindex defaults, critical indexation blockers, and audits global settings (attachment redirects, strip category base, tags indexation, default OpenGraph image, schema entity, active modules)."
 msgstr "Détecte le fournisseur SEO actif (Rank Math, Yoast SEO, The SEO Framework, SEOPress, AIOSEO), le statut du sitemap, les réglages noindex globaux, les blocages d'indexation critiques et audite les réglages globaux (redirection des pièces jointes, suppression de la base de catégorie, indexation des étiquettes, image OpenGraph par défaut, entité Schema, modules actifs)."
 
-#: includes/class-playbooks.php:77
+#: includes/class-playbooks.php:82
 msgid "Strategic Pages Structure & Hierarchy"
 msgstr "Structure & Hiérarchie des Pages Stratégiques"
 
-#: includes/class-playbooks.php:80
+#: includes/class-playbooks.php:85
 msgid "Inspects page hierarchy (parent/child relationships), templates (PHP template files), and editor type (Gutenberg, Classic, Elementor)."
 msgstr "Inspecte la hiérarchie des pages (relations parent/enfant), les modèles PHP et le type d'éditeur (Gutenberg, Classique, Elementor)."
 
-#: includes/class-playbooks.php:85
+#: includes/class-playbooks.php:90
 msgid "Deep Inspection of Flagged Pages"
 msgstr "Inspection Approfondie des Pages Signalées"
 
-#: includes/class-playbooks.php:88
+#: includes/class-playbooks.php:93
 msgid "Examines raw vs rendered content, Gutenberg block list, shortcodes, and unified normalized SEO metadata for flagged pages."
 msgstr "Examine le contenu brut vs rendu, la liste des blocs Gutenberg, les shortcodes et les métadonnées SEO normalisées unifiées pour les pages signalées."
 
-#: includes/class-playbooks.php:93
+#: includes/class-playbooks.php:98
 msgid "301 URL Redirections & Migration Mapping"
 msgstr "Redirections d'URL 301 & cartographie de migration"
 
-#: includes/class-playbooks.php:96
+#: includes/class-playbooks.php:101
 msgid "Inspects configured 301/302/307/410 redirects across Redirection plugin, Rank Math, or 301 Redirects, monitors hit counts, and prepares migration exports."
 msgstr "Inspecte les redirections 301/302/307/410 configurées via l'extension Redirection, Rank Math ou 301 Redirects, surveille les compteurs de requêtes et prépare les exports de migration."
 
-#: includes/class-playbooks.php:101
+#: includes/class-playbooks.php:106
 msgid "404 Errors Monitoring, Pattern Clustering & Smart Redirection Strategy"
 msgstr "Surveillance des erreurs 404, détection de patterns & stratégie de redirection"
 
-#: includes/class-playbooks.php:104
+#: includes/class-playbooks.php:109
 msgid "Analyzes 404 error logs grouped by pattern typologies (deleted products, JS pagination bugs, Apple/Safari browser requests, cache assets, security probes). Prioritizes remediation via an in-memory PHP Code Snippet (template_redirect hook at priority 1) or global regex rules to prevent SQL redirection table bloat, and prescribes a semantic safety net to direct orphan products to their respective category."
 msgstr "Analyse les journaux d'erreurs 404 en les regroupant par typologies (fiches produits supprimées, bugs de pagination JS, requêtes navigateurs Apple/Safari, assets de cache, sondes de sécurité). Recommande en priorité la remédiation par Code Snippet PHP en mémoire (hook template_redirect, priorité 1) ou règles Regex globales pour éviter le gonflement SQL des tables de redirection, et prescrit un filet de sécurité sémantique pour orienter les produits orphelins vers leur rayon respectif."
 
-#: includes/class-playbooks.php:115
+#: includes/class-playbooks.php:114
+msgid "Custom Post Types Inventory & Multi-Type Content Inspection"
+msgstr "Inventaire des Custom Post Types & Inspection de Contenus Multi-Types"
+
+#: includes/class-playbooks.php:117
+msgid "Discovers all registered public CPTs with publication counts (Woodmart HTML blocks, Elementor templates, custom products/entities). Then allows targeting specific CPTs via /content/posts?post_type=cms_block,elementor_library for SEO and structure inspection."
+msgstr "Découvre tous les CPTs publics enregistrés avec le nombre de publications (Blocs HTML Woodmart, templates Elementor, produits/entités sur-mesure). Permet ensuite de cibler des CPTs spécifiques via /content/posts?post_type=cms_block,elementor_library pour l'audit SEO et structurel."
+
+#: includes/class-playbooks.php:128
 msgid "Agency Multi-Template Performance & Core Web Vitals Audit"
 msgstr "Audit de Performance Multi-Modèles & Core Web Vitals"
 
-#: includes/class-playbooks.php:116
+#: includes/class-playbooks.php:129
 msgid "Front-facing page speed diagnostic benchmarking 5 key e-commerce page archetypes, measuring TTFB, memory peak, SQL queries attributed per plugin, 100% native Core Web Vitals signals (DOM size, Elementor footprint %, CLS image dimensions, legacy formats, render-blocking scripts), and caching infrastructure (Object Cache, Page Cache, WP Rocket RUCSS vs CPCSS, Delay JS, safelist)."
 msgstr "Diagnostic de vitesse de chargement benchmarkant 5 archétypes de pages e-commerce, mesurant le TTFB, le pic mémoire, les requêtes SQL attribuées par plugin, les signaux Core Web Vitals natifs (taille du DOM, empreinte Elementor %, dimensions d'images CLS, formats anciens, scripts bloquants) et l'infrastructure de cache (Cache Objet, Cache Page, WP Rocket RUCSS vs CPCSS, Delay JS, safelist)."
 
-#: includes/class-playbooks.php:160
+#: includes/class-playbooks.php:173
 msgid "Caching Infrastructure, Breeze & WP Rocket Audit"
 msgstr "Audit de l'infrastructure de cache, Breeze & WP Rocket"
 
-#: includes/class-playbooks.php:163
+#: includes/class-playbooks.php:176
 msgid "Inspects external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), Cloudways Breeze settings (basic cache, Gzip, browser cache, delay JS, varnish), and in-depth WP Rocket configuration (CSS mode RUCSS vs CPCSS, safelist, Delay JS exclusions and safe mode, lazyload, mobile caching)."
 msgstr "Inspecte l'Object Cache externe (Redis/Memcached), le drop-in de Page Cache (advanced-cache.php), les réglages Cloudways Breeze (cache basique, Gzip, cache navigateur, delay JS, varnish) et la configuration détaillée de WP Rocket (mode CSS RUCSS vs CPCSS, safelist, exclusions Delay JS et mode sans échec, lazyload, cache mobile)."
 
-#: includes/class-playbooks.php:168
+#: includes/class-playbooks.php:181
 msgid "Strategic Multi-Template URLs Discovery"
 msgstr "Découverte Stratégique des URLs Multi-Modèles"
 
-#: includes/class-playbooks.php:171
+#: includes/class-playbooks.php:184
 msgid "Discovers and resolves representative URLs for 5 key e-commerce page archetypes: Homepage (/), Shop (/shop/), Product Category, Single Product, and Cart/Checkout."
 msgstr "Découvre et résout les URLs représentatives pour 5 archétypes de pages e-commerce : Accueil (/), Boutique (/boutique/), Catégorie Produit, Fiche Produit et Panier/Commande."
 
-#: includes/class-playbooks.php:176
+#: includes/class-playbooks.php:189
 msgid "Multi-Template Benchmarking & Plugin SQL Attribution"
 msgstr "Benchmark Multi-Modèles & Attribution SQL par Extension"
 
-#: includes/class-playbooks.php:179
+#: includes/class-playbooks.php:192
 msgid "Profiles each key template archetype: attributes SQL queries and duration per plugin via stack backtraces, detects duplicate/slow queries (>50ms), and measures TTFB and peak memory."
 msgstr "Profile chaque archétype de modèle clé : attribue les requêtes SQL et leur durée par extension via backtrace d'appels, détecte les requêtes lentes/doublons (>50ms) et mesure le TTFB et la mémoire pic."
 
-#: includes/class-playbooks.php:184
+#: includes/class-playbooks.php:197
 msgid "Native Web Vitals & Frontend Performance Signals Audit"
 msgstr "Audit des Signaux Natifs Web Vitals & Performance Frontend"
 
-#: includes/class-playbooks.php:187
+#: includes/class-playbooks.php:200
 msgid "Performs 100% native server-side Core Web Vitals & frontend diagnostics on the rendered HTML: DOM size & Elementor bloat, images missing dimensions (CLS), legacy PNG/JPEG images (WebP/AVIF recommendation), render-blocking resources, Google Fonts swap status, core script bloat (emojis, embeds, migrate, dashicons), and WooCommerce cart fragments."
 msgstr "Exécute un diagnostic 100% natif Core Web Vitals & frontend côté serveur sur le HTML rendu : taille du DOM & surcharge Elementor, images sans dimensions (CLS), images au format ancien PNG/JPEG (recommandation WebP/AVIF), ressources bloquantes, statut du swap Google Fonts, scripts superflus du cœur (emojis, embeds, migrate, dashicons) et fragments panier WooCommerce."
 
-#: includes/class-playbooks.php:192
+#: includes/class-playbooks.php:205
 msgid "Active Plugins Database & Disk Footprint"
 msgstr "Empreinte Disque & Base de Données des Extensions Actives"
 
-#: includes/class-playbooks.php:195
+#: includes/class-playbooks.php:208
 msgid "Inventories database tables, disk storage size (data + index in KB), and row counts per active plugin to isolate bloated extensions."
 msgstr "Inventorie les tables de la base de données, l'espace disque occupé (données + index en Ko) et le nombre de lignes par extension active pour isoler les extensions volumineuses."
 
-#: includes/class-playbooks.php:200
+#: includes/class-playbooks.php:213
 msgid "Multi-Layer Cache Invalidation & Purge"
 msgstr "Invalidation & Purge Multi-Niveaux du Cache"
 
-#: includes/class-playbooks.php:203
+#: includes/class-playbooks.php:216
 msgid "Safely and selectively invalidates edge CDN (Rocket.net Cloudflare Enterprise), page cache & minification (WP Rocket, Breeze, LiteSpeed, Autoptimize), and persistent object cache (Object Cache Pro / Redis) across the stack."
 msgstr "Invalide de manière sûre et sélective le CDN edge (Rocket.net Cloudflare Enterprise), le cache de page et la minification (WP Rocket, Breeze, LiteSpeed, Autoptimize) ainsi que le cache objet persistant (Object Cache Pro / Redis) à travers toute la pile."
 
-#: includes/class-playbooks.php:214
+#: includes/class-playbooks.php:227
 msgid "System Health, Database Bloat & Background Hygiene Audit"
 msgstr "Audit Santé Système, Nettoyage BDD & Hygiène d'Arrière-Plan"
 
-#: includes/class-playbooks.php:215
+#: includes/class-playbooks.php:228
 msgid "In-depth technical health and database hygiene check-up: PHP/MySQL limits, security constants, total database size, autoload memory bloat with orphaned options detection from inactive plugins, Action Scheduler queue & retention policy, stale abandoned orders older than 1 year, overdue WP-Cron jobs, and Crash Watch PHP fatal errors."
 msgstr "Bilan de santé technique et d'hygiène de base de données approfondi : limites PHP/MySQL, constantes de sécurité, taille totale de la base, surcharge autoload avec détection des options orphelines d'extensions inactives, file Action Scheduler & rétention, commandes abandonnées de plus d'un an, crons en retard et erreurs fatales PHP Crash Watch."
 
-#: includes/class-playbooks.php:239
+#: includes/class-playbooks.php:256
 msgid "Server Limits & Environment Diagnostic"
 msgstr "Diagnostic des Limites Serveur & Environnement"
 
-#: includes/class-playbooks.php:242
+#: includes/class-playbooks.php:259
 msgid "Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security)."
 msgstr "Vérifie la version de PHP, memory_limit (minimum 256M conseillé pour Woo), max_execution_time, version MySQL, OPcache, extensions actives avec statut des mises à jour et constantes de sécurité (DISALLOW_FILE_EDIT, exposition XML-RPC, WP_DEBUG_DISPLAY via /system/security)."
 
-#: includes/class-playbooks.php:247
+#: includes/class-playbooks.php:264
 msgid "Database Size & Autoload Orphaned Options"
 msgstr "Taille de la Base & Options Autoload Orphelines"
 
-#: includes/class-playbooks.php:250
+#: includes/class-playbooks.php:267
 msgid "Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options left behind by inactive plugins."
 msgstr "Inspecte la taille de la BDD, le top 15 des tables les plus volumineuses, l'autoload par rapport au seuil de 800 Ko et les options orphelines laissées par d'anciennes extensions."
 
-#: includes/class-playbooks.php:255
+#: includes/class-playbooks.php:272
 msgid "WooCommerce Order Volume & HPOS Performance Features"
 msgstr "Volume de Commandes WooCommerce & Options de Performance HPOS"
 
-#: includes/class-playbooks.php:258
+#: includes/class-playbooks.php:275
 msgid "Audits total orders, cancellation ratio, stale unpaid orders older than 1 year, and high-performance order storage (HPOS, HPOS datastore caching, full-text search indexes)."
 msgstr "Audite le total des commandes, le ratio d'annulations, les commandes impayées obsolètes de plus d'un an et le stockage haute performance (HPOS, cache datastore HPOS, index de recherche plein texte)."
 
-#: includes/class-playbooks.php:263
+#: includes/class-playbooks.php:280
 msgid "Action Scheduler Queue & Retention Policy"
 msgstr "File Action Scheduler & Politique de Rétention"
 
-#: includes/class-playbooks.php:266
+#: includes/class-playbooks.php:283
 msgid "Evaluates completed actions accumulation, active retention period in days, cleanup batch size, and bloat alert."
 msgstr "Évalue l'accumulation d'actions terminées, la durée de rétention en jours, la taille des lots de nettoyage et les alertes d'engorgement."
 
-#: includes/class-playbooks.php:271
+#: includes/class-playbooks.php:288
 msgid "Overdue Crons & Ghost Hooks"
 msgstr "Crons en Retard & Hooks Fantômes"
 
-#: includes/class-playbooks.php:274
+#: includes/class-playbooks.php:291
 msgid "Detects overdue WP-Cron jobs and orphan background hooks that may fail repeatedly or delay maintenance cleanup."
 msgstr "Détecte les tâches WP-Cron en retard et les hooks orphelins en arrière-plan susceptibles d'échouer en boucle ou de ralentir le site."
 
-#: includes/class-playbooks.php:279
+#: includes/class-playbooks.php:296
 msgid "Crash Watch Fatal Errors Scan"
 msgstr "Analyse des Erreurs Fatales Crash Watch"
 
-#: includes/class-playbooks.php:282
+#: includes/class-playbooks.php:299
 msgid "Verifies whether recurrent PHP fatal errors, memory exhaustions, or exceptions are flooding debug.log and choking disk I/O."
 msgstr "Vérifie si des erreurs fatales PHP récurrentes, des dépassements de mémoire ou des exceptions saturent debug.log et le disque serveur."
 
-#: includes/class-playbooks.php:293
+#: includes/class-playbooks.php:304
+msgid "Targeted String & Settings Deep Search"
+msgstr "Recherche Approfondie de Chaînes & Réglages Ciblés"
+
+#: includes/class-playbooks.php:307
+msgid "Locates specific configuration strings, obsolete plugin options, or custom snippet references across wp_posts, wp_options (with secret redaction), and WPCode / Code Snippets."
+msgstr "Localise des chaînes de configuration spécifiques, des options d'extensions obsolètes ou des références de snippets personnalisés dans wp_posts, wp_options (avec caviardage des secrets) et WPCode / Code Snippets."
+
+#: includes/class-playbooks.php:318
 msgid "Orders, Payment Gateways & Delivery Troubleshooting"
 msgstr "Dépannage Commandes, Passerelles de Paiement & Livraison"
 
-#: includes/class-playbooks.php:294
+#: includes/class-playbooks.php:319
 msgid "Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks."
 msgstr "Diagnostic d'urgence de commande en cas d'échec de paiement ou de réclamation client : inspecte les commandes échouées, les notes de passerelle, les logs de paiement, les snippets de validation, la délivrabilité SMTP et les webhooks en erreur."
 
-#: includes/class-playbooks.php:333
+#: includes/class-playbooks.php:358
 msgid "Recent Failed Orders Inspection"
 msgstr "Inspection des Commandes Échouées Récentes"
 
-#: includes/class-playbooks.php:336
+#: includes/class-playbooks.php:361
 msgid "Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, applied coupons, and order totals. Supports direct filtering by coupon code (?coupon=...)."
 msgstr "Extrait les commandes récentes échouées, annulées ou en attente avec anonymisation RGPD pour identifier les causes d'échec, les passerelles utilisées, les codes promos appliqués et les montants totaux. Supporte le filtrage direct par code promo (?coupon=...)."
 
-#: includes/class-playbooks.php:341
+#: includes/class-playbooks.php:366
 msgid "Deep Order & Gateway Diagnosis"
 msgstr "Diagnostic Approfondi Commande & Passerelle"
 
-#: includes/class-playbooks.php:344
+#: includes/class-playbooks.php:369
 msgid "Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and applied coupon lines. For coupon-specific checkout stalls, inspect /woocommerce/coupon/{id} to verify validity, remaining usage quotas, and active held checkout sessions."
 msgstr "Inspecte les notes de commande pour identifier les motifs de refus de paiement, l'historique des remboursements, les métadonnées d'articles, de livraison (fs_costs) et les codes promos appliqués. En cas de blocage lié à un coupon, inspecter /woocommerce/coupon/{id} pour vérifier la validité, le quota restant et les sessions en attente."
 
-#: includes/class-playbooks.php:349
+#: includes/class-playbooks.php:374
 msgid "Gateway Error Logs Inspection"
 msgstr "Inspection des Logs d'Erreurs de Passerelles"
 
-#: includes/class-playbooks.php:352
+#: includes/class-playbooks.php:377
 msgid "Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion."
 msgstr "Inspecte les logs récents de passerelles WooCommerce (Stripe, Alma, PayPal) et les crashs PHP récents sans risque de saturation mémoire."
 
-#: includes/class-playbooks.php:357
+#: includes/class-playbooks.php:382
 msgid "Active Custom Checkout Hooks"
 msgstr "Hooks Personnalisés Actifs sur la Commande"
 
-#: includes/class-playbooks.php:360
+#: includes/class-playbooks.php:385
 msgid "Inventories active custom PHP snippets running on the site (WPCode & Code Snippets) to spot buggy hooks attached to woocommerce_checkout_* or order status transitions."
 msgstr "Inventorie les extraits PHP personnalisés actifs s'exécutant sur le site (WPCode & Code Snippets) pour repérer d'éventuels hooks défectueux attachés à woocommerce_checkout_* ou aux transitions de statut de commande."
 
-#: includes/class-playbooks.php:365
+#: includes/class-playbooks.php:390
 msgid "SMTP, MailPoet MSS & Deliverability Diagnostic"
 msgstr "Diagnostic SMTP, MailPoet MSS & Délivrabilité"
 
-#: includes/class-playbooks.php:368
+#: includes/class-playbooks.php:393
 msgid "Detects active mail provider (FluentSMTP, WP Mail SMTP, Post SMTP, or MailPoet Sending Service / MSS), credentials authentication status, delivery failures, and verifies with /woocommerce/summary whether deferred transactional emails and checkout rate limiting are enabled to prevent checkout timeouts."
 msgstr "Détecte le fournisseur d'e-mails actif (FluentSMTP, WP Mail SMTP, Post SMTP ou MailPoet Sending Service / MSS), l'état d'authentification des identifiants, les échecs de livraison et vérifie avec /woocommerce/summary si l'envoi différé des e-mails transactionnels et la limitation du débit de paiement sont activés pour éviter les timeouts au checkout."
 
-#: includes/class-playbooks.php:373
+#: includes/class-playbooks.php:398
 msgid "WooCommerce Transactional Emails & Silent Statuses"
 msgstr "E-mails transactionnels WooCommerce & États silencieux"
 
-#: includes/class-playbooks.php:376
+#: includes/class-playbooks.php:401
 msgid "Inspects all registered WooCommerce transactional emails, enabled statuses, customer vs admin recipient routing, Order Status Manager custom trigger conditions (from_status_to_to_status), and flags silent order statuses that lack configured notifications."
 msgstr "Inspecte tous les e-mails transactionnels WooCommerce enregistrés, les états activés, le routage des destinataires client vs administrateur, les conditions de déclenchement personnalisées d'Order Status Manager (from_status_to_to_status) et signale les états de commande silencieux sans notification configurée."
 
-#: includes/class-playbooks.php:381
+#: includes/class-playbooks.php:406
 msgid "Database Email Delivery Logs & Search"
 msgstr "Journaux & Recherche de Livraison d'E-mails en Base"
 
-#: includes/class-playbooks.php:384
+#: includes/class-playbooks.php:409
 msgid "Searches database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), or WP Mail SMTP to track exact email dispatch dates, recipients, subjects, and delivery error messages."
 msgstr "Recherche dans les journaux d'e-mails en base de données (WP Mail Logging wp_wpml_mails, FluentSMTP fluentmail_log, Post SMTP postman_logs ou WP Mail SMTP) pour retracer les dates d'envoi exactes, les destinataires, les objets et les messages d'erreur de livraison."
 
-#: includes/class-playbooks.php:389
+#: includes/class-playbooks.php:414
 msgid "MailPoet Subscriber & Silent Bounce Suppression Check"
 msgstr "Vérification d'Abonné MailPoet & Blocage Silencieux de Rebond"
 
-#: includes/class-playbooks.php:392
+#: includes/class-playbooks.php:417
 msgid "Checks subscriber profile in MailPoet (wp_mailpoet_subscribers) to detect whether the recipient email is marked as bounced, unconfirmed, or unsubscribed, causing MailPoet Sending Service (MSS) to silently drop order receipts and receipts."
 msgstr "Vérifie le profil d'abonné dans MailPoet (wp_mailpoet_subscribers) pour détecter si l'e-mail destinataire est marqué comme rejeté (bounced), non confirmé ou désabonné, provoquant l'abandon silencieux des confirmations de commande par le MailPoet Sending Service (MSS)."
 
-#: includes/class-playbooks.php:397
+#: includes/class-playbooks.php:422
 msgid "WooCommerce Webhooks Delivery Health"
 msgstr "Santé de Délivrance des Webhooks WooCommerce"
 
-#: includes/class-playbooks.php:400
+#: includes/class-playbooks.php:425
 msgid "Inventories WooCommerce webhooks, topics (e.g. order.created), delivery URLs, and alerts on failure counters (failure_count >= 5)."
 msgstr "Inventorie les webhooks WooCommerce, les sujets (ex. order.created), les URLs cibles et alerte sur les compteurs d'échecs (failure_count >= 5)."
 
-#: includes/class-playbooks.php:405
+#: includes/class-playbooks.php:430
 msgid "Paid Memberships Pro Member & Level Audit"
 msgstr "Audit des Membres & Niveaux Paid Memberships Pro"
 
-#: includes/class-playbooks.php:408
+#: includes/class-playbooks.php:433
 msgid "Examines user membership history timeline, active level vs past expiration dates, recurring cycle rules, and associated PMPro order payment statuses to diagnose membership loss."
 msgstr "Examine l'historique d'adhésion de l'utilisateur, le niveau actif vs les dates d'expiration passées, les règles de récurrence et les statuts de paiement des commandes PMPro pour diagnostiquer la perte d'accès."
 
-#: includes/class-playbooks.php:413
+#: includes/class-playbooks.php:438
 msgid "MasterStudy LMS User Course Enrollment & Expiration Diagnostic"
 msgstr "Diagnostic des Inscriptions & Expirations de Cours MasterStudy LMS"
 
-#: includes/class-playbooks.php:416
+#: includes/class-playbooks.php:441
 msgid "Examines course enrollments, course duration limits, linked PMPro subscription ID integrity, and identifies root causes for premature course access expirations or pointer desync."
 msgstr "Examine les inscriptions aux cours, les limites de durée de cours, l'intégrité de l'ID d'abonnement PMPro lié et identifie les causes racines des expirations prématurées ou désynchronisations de pointeurs."
 
-#: includes/class-playbooks.php:427
+#: includes/class-playbooks.php:452
 msgid "360° E-Commerce Sales, Traffic & Conversion Analytics"
 msgstr "Analytics Ventes, Trafic & Conversion E-Commerce 360°"
 
-#: includes/class-playbooks.php:428
+#: includes/class-playbooks.php:453
 msgid "Executive commercial report combining native WooCommerce sales KPIs, paid orders, net sales growth %, average order value (AOV), traffic audience, page conversion rates, marketing UTM campaign ROI, top products, top coupons, and inventory valuation with dormant stock alerts."
 msgstr "Rapport commercial combinant les KPIs de ventes WooCommerce natifs, commandes payées, % de croissance des ventes nettes, panier moyen (AOV), audience, taux de conversion des pages, ROI des campagnes marketing UTM, top produits, top codes promo et valorisation des stocks avec alertes stocks dormants."
 
-#: includes/class-playbooks.php:468
+#: includes/class-playbooks.php:493
 msgid "Native WooCommerce Sales KPIs & Growth"
 msgstr "KPIs de Ventes Natifs WooCommerce & Croissance"
 
-#: includes/class-playbooks.php:471
+#: includes/class-playbooks.php:496
 msgid "Extracts net sales, gross sales, paid orders count, AOV, refunds, daily trend, and % growth comparison against prior period."
 msgstr "Extrait les ventes nettes, ventes brutes, nombre de commandes payées, panier moyen, remboursements, tendance journalière et comparaison de croissance en % par rapport à la période précédente."
 
-#: includes/class-playbooks.php:476
+#: includes/class-playbooks.php:501
 msgid "Top Performing Products & Coupons"
 msgstr "Top Produits les Plus Performants & Codes Promo"
 
-#: includes/class-playbooks.php:479
+#: includes/class-playbooks.php:504
 msgid "Identifies best-selling products by net revenue and units sold, plus top discount coupons used with totals."
 msgstr "Identifie les meilleures ventes de produits par chiffre d'affaires net et quantités vendues, ainsi que les codes de réduction les plus utilisés."
 
-#: includes/class-playbooks.php:484
+#: includes/class-playbooks.php:509
 msgid "Inventory Valuation & Dormant Stock Alerts"
 msgstr "Valorisation des Stocks & Alertes Stocks Dormants"
 
-#: includes/class-playbooks.php:487
+#: includes/class-playbooks.php:512
 msgid "Calculates stock financial valuation (cost vs retail value), low stock alerts, and dormant stock (products with 0 sales in last 90 days)."
 msgstr "Calcule la valorisation financière des stocks (prix d'achat vs prix de vente), les alertes stock faible et les stocks dormants (produits sans vente depuis 90 jours)."
 
-#: includes/class-playbooks.php:492
+#: includes/class-playbooks.php:517
 msgid "Traffic KPIs & Overall Conversion Rate"
 msgstr "KPIs de Trafic & Taux de Conversion Global"
 
-#: includes/class-playbooks.php:495
+#: includes/class-playbooks.php:520
 msgid "Consolidates visitors, sessions, pageviews, bounce rate, device breakdown, and store conversion rate in 1 request."
 msgstr "Consolide les visiteurs, sessions, pages vues, taux de rebond, répartition par appareil et taux de conversion de la boutique en 1 seule requête."
 
-#: includes/class-playbooks.php:500
+#: includes/class-playbooks.php:525
 msgid "Marketing Campaigns (UTM) ROI Attribution"
 msgstr "Attribution & ROI des Campagnes Marketing (UTM)"
 
-#: includes/class-playbooks.php:503
+#: includes/class-playbooks.php:528
 msgid "Tracks marketing campaigns by source and medium (Google Ads, Meta, Newsletters) with direct order and net sales attribution."
 msgstr "Suit les campagnes marketing par source et support (Google Ads, Meta, Newsletters) avec attribution directe des commandes et des ventes nettes."
 
-#: includes/class-playbooks.php:508
+#: includes/class-playbooks.php:533
 msgid "Server-Side Tracking & GDPR Consent Compliance Audit"
 msgstr "Audit de Conformité du Tracking Server-Side & Consentement RGPD"
 
-#: includes/class-playbooks.php:511
+#: includes/class-playbooks.php:536
 msgid "Audits Meta CAPI v21.0 (Pixel ID, Access Token, test event code in production, Action Scheduler queue, recent order syncs), Google Ads Server-Side (OAuth Refresh Token, Merchant ID, Conversion Action ID, database error logs), cookie banner (native woo_gads_consent or CMP like Complianz/Axeptio), and Google Consent Mode v2 signal coherence."
 msgstr "Audite Meta CAPI v21.0 (Pixel ID, Access Token, code d'événement de test en production, file Action Scheduler, syncs des commandes récentes), Google Ads Server-Side (OAuth Refresh Token, Merchant ID, Conversion Action ID, journaux d'erreurs en base), la bannière cookies (cookie natif woo_gads_consent ou CMP Complianz/Axeptio) et la cohérence des signaux Google Consent Mode v2."
 
-#: includes/class-playbooks.php:522
+#: includes/class-playbooks.php:547
 msgid "Shipping Zones, Methods & Flexible Shipping Rules Audit"
 msgstr "Audit Zones, Méthodes & Règles de Calcul Flexible Shipping"
 
-#: includes/class-playbooks.php:523
+#: includes/class-playbooks.php:548
 msgid "Logistics and shipping calculation audit: verifies shipping zones, geographic locations (postcodes, regions, countries), native method configurations (flat rate, free shipping threshold), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (including Table Rate on flat rate), and order shipping metadata."
 msgstr "Audit logistique et calcul des frais de port : vérifie les zones d'expédition, les zones géographiques (codes postaux, régions, pays), les méthodes natives (forfait, seuil de gratuité), les règles de calcul matricielles Flexible Shipping & Flexible Shipping PRO (dont Table Rate) et les métadonnées de commande."
 
-#: includes/class-playbooks.php:539
+#: includes/class-playbooks.php:564
 msgid "Shipping Zones & Matrix Calculation Rules"
 msgstr "Zones d'Expédition & Règles Matricielles de Calcul"
 
-#: includes/class-playbooks.php:542
+#: includes/class-playbooks.php:567
 msgid "Extracts configured shipping zones, geographic locations (postcodes, regions, countries), native method parameters, and decoded Flexible Shipping matrix calculation rules (including flat_rate table rate)."
 msgstr "Extrait les zones d'expédition configurées, les zones géographiques (codes postaux, régions, pays), les paramètres des méthodes natives et les règles de calcul matricielles Flexible Shipping décodées."
 
-#: includes/class-playbooks.php:547
+#: includes/class-playbooks.php:572
 msgid "General Store Shipping Settings"
 msgstr "Réglages Généraux d'Expédition de la Boutique"
 
-#: includes/class-playbooks.php:550
+#: includes/class-playbooks.php:575
 msgid "Cross-references shipping methods against general store configuration, tax settings, and shipping calculation options."
 msgstr "Croise les méthodes de livraison avec la configuration générale de la boutique, les options de taxes et les calculs d'expédition."
 
-#: includes/class-playbooks.php:555
+#: includes/class-playbooks.php:580
 msgid "Recent Orders Shipping Line Metadata"
 msgstr "Métadonnées de Livraison des Commandes Récentes"
 
-#: includes/class-playbooks.php:558
+#: includes/class-playbooks.php:583
 msgid "Inspects shipping_lines[].meta_data on live orders, including decoded fs_costs (base + additional costs) to verify calculation accuracy."
 msgstr "Inspecte les métadonnées shipping_lines[].meta_data sur les commandes réelles, y compris les coûts fs_costs décodés pour vérifier la justesse du calcul."
 
-#: includes/class-playbooks.php:569
+#: includes/class-playbooks.php:594
 msgid "Code Architecture, Theme Settings & Automations Map"
 msgstr "Architecture Code, Réglages Thème & Cartographie Automatisations"
 
-#: includes/class-playbooks.php:570
+#: includes/class-playbooks.php:595
 msgid "Technical customization inventory: WooCommerce template overrides drift, child theme functions.php/style.css, Woodmart/Elessi theme options, FlowMattic automation workflows, Elementor forms & webhooks, active WPCode snippets, custom ACF/code meta fields, and local vs production file checksums drift."
 msgstr "Inventaire des personnalisations techniques : surcharges de templates WooCommerce, thème enfant functions.php/style.css, options de thème Woodmart/Elessi, workflows FlowMattic, formulaires et webhooks Elementor, snippets WPCode actifs, métadonnées ACF et écarts de checksums entre local et production."
 
-#: includes/class-playbooks.php:595
+#: includes/class-playbooks.php:626
 msgid "WooCommerce Template Overrides Drift"
 msgstr "Écart des Surcharges de Templates WooCommerce"
 
-#: includes/class-playbooks.php:598
+#: includes/class-playbooks.php:629
 msgid "Identifies overridden WooCommerce PHP templates in active theme and checks for outdated templates requiring updates."
 msgstr "Identifie les templates PHP WooCommerce surchargés dans le thème actif et signale les templates obsolètes nécessitant une mise à jour."
 
-#: includes/class-playbooks.php:603
+#: includes/class-playbooks.php:634
 msgid "Child Theme Code & Theme Options"
 msgstr "Code du Thème Enfant & Options de Thème"
 
-#: includes/class-playbooks.php:606
+#: includes/class-playbooks.php:637
 msgid "Inspects active child theme functions.php and style.css, and decodes Woodmart / Elessi theme options via /theme/options."
 msgstr "Inspecte functions.php et style.css du thème enfant actif et décode les réglages de thèmes Woodmart / Elessi via /theme/options."
 
-#: includes/class-playbooks.php:611
+#: includes/class-playbooks.php:642
 msgid "Code Drift Verification via Checksums"
 msgstr "Vérification des Écarts de Code via Checksums"
 
-#: includes/class-playbooks.php:614
+#: includes/class-playbooks.php:645
 msgid "Computes cryptographic file hashes (MD5 / SHA256) of local vs production files to detect drift or unversioned hotfixes."
 msgstr "Calcule les empreintes cryptographiques (MD5 / SHA256) des fichiers locaux vs production pour détecter tout correctif non versionné."
 
-#: includes/class-playbooks.php:619
+#: includes/class-playbooks.php:650
 msgid "FlowMattic Automation Workflows Map"
 msgstr "Cartographie des Workflows d'Automatisation FlowMattic"
 
-#: includes/class-playbooks.php:622
+#: includes/class-playbooks.php:653
 msgid "Lists active FlowMattic automation recipes, triggers (e.g. order placed), action steps, and task execution counts."
 msgstr "Liste les recettes d'automatisation FlowMattic actives, déclencheurs (ex. commande passée), étapes d'action et compteurs d'exécution."
 
-#: includes/class-playbooks.php:627
+#: includes/class-playbooks.php:658
 msgid "Elementor Forms & Webhook Endpoints"
 msgstr "Formulaires Elementor & Endpoints Webhooks"
 
-#: includes/class-playbooks.php:630
+#: includes/class-playbooks.php:661
 msgid "Maps all Elementor forms across the site, their submit actions, and connected webhook integration URLs."
 msgstr "Cartographie tous les formulaires Elementor du site, leurs actions après soumission et les URLs de webhooks connectées."
 
-#: includes/class-playbooks.php:635
+#: includes/class-playbooks.php:666
 msgid "Active Custom Snippets (WPCode & Code Snippets)"
 msgstr "Extraits de Code Personnalisés Actifs (WPCode & Code Snippets)"
 
-#: includes/class-playbooks.php:638
+#: includes/class-playbooks.php:669
 msgid "Inventories active custom PHP/JS/CSS/HTML snippets running in production (WPCode and Code Snippets) with direct admin edit URLs."
 msgstr "Inventorie les extraits personnalisés PHP/JS/CSS/HTML exécutés en production (WPCode et Code Snippets) avec URLs directes d'édition dans l'admin."
 
-#: includes/class-playbooks.php:643
+#: includes/class-playbooks.php:674
 msgid "Custom Fields & ACF Meta Schema"
 msgstr "Champs Personnalisés & Schéma de Métadonnées ACF"
 
-#: includes/class-playbooks.php:646
+#: includes/class-playbooks.php:677
 msgid "Discovers custom meta fields registered in code (register_post_meta) and ACF field groups with recursive subfield hierarchies."
 msgstr "Découvre les champs personnalisés déclarés dans le code (register_post_meta) et les groupes de champs ACF avec hiérarchies récursives de sous-champs."
+
+#: includes/class-playbooks.php:682
+msgid "Customer My Account Tabs & Attached Templates"
+msgstr "Onglets Espace Client Mon Compte & Templates Rattachés"
+
+#: includes/class-playbooks.php:685
+msgid "Maps WooCommerce My Account tabs, endpoint hooks, callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content."
+msgstr "Mappe les onglets Mon Compte WooCommerce, les hooks d'endpoint, les callbacks via Reflection, ainsi que les Blocs HTML Woodmart (cms_block) ou templates Elementor rattachés avec leur contenu brut."
+
+#: includes/class-playbooks.php:690
+msgid "Cross-System String & Hook Discovery Search"
+msgstr "Recherche Transversale de Découverte de Chaînes & Hooks"
+
+#: includes/class-playbooks.php:693
+msgid "Traces any feature, hook, or keyword (e.g. \"parrainage\", \"sponsorship\", \"referral\") across posts (HTML blocks, templates), site options, and custom snippets simultaneously."
+msgstr "Piste toute fonctionnalité, hook ou mot-clé (ex: \"parrainage\", \"sponsorship\", \"referral\") simultanément dans les publications (blocs HTML, templates), les options du site et les snippets personnalisés."
 
 #: includes/class-security.php:294
 msgid "Only GET (Read-Only) requests are permitted by WP Agent Bridge."

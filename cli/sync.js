@@ -839,6 +839,16 @@ async function pullWooCommerce() {
             console.warn('  ⚠️ Could not fetch /woocommerce/coupons:', coupErr.message);
         }
 
+        // 4c. Pull My Account Tabs & Attached Templates
+        console.log('   👤 Fetching WooCommerce Account Tabs & Attached Templates...');
+        let accountTabsData = null;
+        try {
+            accountTabsData = await makeRequest('/woocommerce/account-tabs');
+            writeJson(path.join(wcDir, 'account-tabs.json'), accountTabsData);
+        } catch (tabErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/account-tabs:', tabErr.message);
+        }
+
         // 5. Pull Sales Analytics
         console.log('   📈 Fetching WooCommerce Native Sales Analytics...');
         let salesData = null;
@@ -1225,6 +1235,14 @@ async function pullContent() {
             writeText(path.join(contentDir, 'redirections.md'), redirMd);
         } catch (redirErr) {
             console.warn('  ⚠️ Failed to pull /content/redirections:', redirErr.message);
+        }
+
+        // 4. Pull Custom Post Types inventory
+        try {
+            const cptData = await makeRequest('/content/custom-post-types');
+            writeJson(path.join(contentDir, 'custom-post-types.json'), cptData);
+        } catch (cptErr) {
+            console.warn('  ⚠️ Failed to pull /content/custom-post-types:', cptErr.message);
         }
 
         console.log('✅ Saved WordPress pages, content trees, SEO audit, SEO plugin settings, and redirections to ./content/');

@@ -62,6 +62,11 @@ class Playbooks {
                     'optimiser les redirections',
                     'fallback produit 404',
                     'safety net 404',
+                    'custom post types',
+                    'cpt',
+                    'post types',
+                    'cms block',
+                    'elementor library',
                 ],
                 'workflow'        => [
                     [
@@ -103,6 +108,14 @@ class Playbooks {
                         'params'      => ['limit' => 100],
                         'description' => esc_html__('Analyzes 404 error logs grouped by pattern typologies (deleted products, JS pagination bugs, Apple/Safari browser requests, cache assets, security probes). Prioritizes remediation via an in-memory PHP Code Snippet (template_redirect hook at priority 1) or global regex rules to prevent SQL redirection table bloat, and prescribes a semantic safety net to direct orphan products to their respective category.', 'woo-get-data-for-ai'),
                         'key_signals' => ['total_404_logs', 'top_404_urls[].url', 'top_404_urls[].hits_count', 'top_404_urls[].last_seen', 'pattern_clusters', 'patterns_summary', 'smart_snippet_recommended'],
+                    ],
+                    [
+                        'step'        => 6,
+                        'action'      => esc_html__('Custom Post Types Inventory & Multi-Type Content Inspection', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/content/custom-post-types',
+                        'params'      => ['public' => 'true'],
+                        'description' => esc_html__('Discovers all registered public CPTs with publication counts (Woodmart HTML blocks, Elementor templates, custom products/entities). Then allows targeting specific CPTs via /content/posts?post_type=cms_block,elementor_library for SEO and structure inspection.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_post_types', 'post_types[].name', 'post_types[].counts.publish', 'post_types[].supports'],
                     ],
                 ],
             ],
@@ -232,6 +245,10 @@ class Playbooks {
                     'nettoyer woocommerce',
                     'database bloat',
                     'clean database',
+                    'chercher dans la base',
+                    'rechercher réglage',
+                    'recherche globale',
+                    'trouver option',
                 ],
                 'workflow'        => [
                     [
@@ -281,6 +298,14 @@ class Playbooks {
                         'params'      => ['limit' => 15],
                         'description' => esc_html__('Verifies whether recurrent PHP fatal errors, memory exhaustions, or exceptions are flooding debug.log and choking disk I/O.', 'woo-get-data-for-ai'),
                         'key_signals' => ['total_fatal_errors', 'grouped_errors[].file', 'grouped_errors[].occurrences'],
+                    ],
+                    [
+                        'step'        => 7,
+                        'action'      => esc_html__('Targeted String & Settings Deep Search', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system/search',
+                        'params'      => ['query' => '<search_term>', 'target' => 'all', 'limit' => 20],
+                        'description' => esc_html__('Locates specific configuration strings, obsolete plugin options, or custom snippet references across wp_posts, wp_options (with secret redaction), and WPCode / Code Snippets.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['counts.total', 'posts[].title', 'options[].option_name', 'snippets[].name'],
                     ],
                 ],
             ],
@@ -569,7 +594,7 @@ class Playbooks {
                 'title'           => esc_html__('Code Architecture, Theme Settings & Automations Map', 'woo-get-data-for-ai'),
                 'description'     => esc_html__('Technical customization inventory: WooCommerce template overrides drift, child theme functions.php/style.css, Woodmart/Elessi theme options, FlowMattic automation workflows, Elementor forms & webhooks, active WPCode snippets, custom ACF/code meta fields, and local vs production file checksums drift.', 'woo-get-data-for-ai'),
                 'required_modules'=> ['theme'],
-                'optional_modules'=> ['code', 'flowmattic', 'elementor', 'wpcode', 'meta'],
+                'optional_modules'=> ['code', 'flowmattic', 'elementor', 'wpcode', 'meta', 'woocommerce', 'system'],
                 'intent_triggers' => [
                     'overrides woocommerce',
                     'fichiers obsolètes',
@@ -588,6 +613,12 @@ class Playbooks {
                     'drift code',
                     'diff prod local',
                     'code integrity',
+                    'espace client',
+                    'my account',
+                    'onglets mon compte',
+                    'account tabs',
+                    'parrainage woocommerce',
+                    'woodmart custom tabs',
                 ],
                 'workflow'        => [
                     [
@@ -645,6 +676,22 @@ class Playbooks {
                         'params'      => ['source' => 'all'],
                         'description' => esc_html__('Discovers custom meta fields registered in code (register_post_meta) and ACF field groups with recursive subfield hierarchies.', 'woo-get-data-for-ai'),
                         'key_signals' => ['code_registered_meta.count', 'acf_field_groups.count', 'acf_field_groups.groups[].title'],
+                    ],
+                    [
+                        'step'        => 8,
+                        'action'      => esc_html__('Customer My Account Tabs & Attached Templates', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/account-tabs',
+                        'params'      => [],
+                        'description' => esc_html__('Maps WooCommerce My Account tabs, endpoint hooks, callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['total_tabs', 'tabs[].endpoint', 'tabs[].hook', 'tabs[].callbacks[].name', 'tabs[].attached_templates[].id', 'woodmart.custom_tabs_configured'],
+                    ],
+                    [
+                        'step'        => 9,
+                        'action'      => esc_html__('Cross-System String & Hook Discovery Search', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/system/search',
+                        'params'      => ['query' => '<feature_name>', 'target' => 'all'],
+                        'description' => esc_html__('Traces any feature, hook, or keyword (e.g. "parrainage", "sponsorship", "referral") across posts (HTML blocks, templates), site options, and custom snippets simultaneously.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['counts.total', 'posts[].post_type', 'options[].option_name', 'snippets[].admin_edit_url'],
                     ],
                 ],
             ],
@@ -796,7 +843,12 @@ class Playbooks {
         $md .= "     - Group missing URLs by pattern clusters (`patterns_summary` / `pattern_clusters`): deleted products, JS pagination bugs (`*/null`, `*/undefined`), browser/iOS requests (`apple-touch-icon*.png`), cache assets, or security probes.\n";
         $md .= "     - **NEVER** recommend mass CSV export/import of hundreds or thousands of static 301 rules into `wp_rank_math_redirections` or Redirection plugin, as this bloats SQL tables and slows every request resolution.\n";
         $md .= "     - **ALWAYS prioritize an in-memory PHP Code Snippet** hooked into `template_redirect` (priority 1) or global regex rules.\n";
-        $md .= "     - For deleted/orphan WooCommerce products (`/produit/*` or `/product/*`), recommend an intelligent fallback snippet that extracts the product slug, searches for similar categories or redirects cleanly to the parent category/shop rather than accumulating stale DB rows.\n\n";
+        $md .= "     - For deleted/orphan WooCommerce products (`/produit/*` or `/product/*`), recommend an intelligent fallback snippet that extracts the product slug, searches for similar categories or redirects cleanly to the parent category/shop rather than accumulating stale DB rows.\n";
+        $md .= "10. **CUSTOMER ACCOUNT, CUSTOM POST TYPES & GLOBAL SEARCH AUDITS**:\n";
+        $md .= "   - When diagnosing client account customizations, loyalty/referral programs, or theme overrides (e.g. Woodmart, Elementor):\n";
+        $md .= "     - Use `GET /woocommerce/account-tabs` to inspect all My Account menu tabs, endpoints, action hooks (`woocommerce_account_{endpoint}_endpoint`), registered callbacks via Reflection, and attached Woodmart HTML blocks (`cms_block`) or Elementor templates with raw content.\n";
+        $md .= "     - Use `GET /content/custom-post-types` to discover all registered CPTs, followed by `GET /content/posts?post_type=cms_block,elementor_library` for multi-CPT content inspection.\n";
+        $md .= "     - Use `GET /system/search?query=<term>` to immediately locate any keyword (e.g. \"parrainage\", \"points\", \"referral\") across `wp_posts`, non-sensitive `wp_options`, and active/inactive snippets (WPCode / Code Snippets) with contextual snippets and direct edit URLs.\n\n";
 
         $md .= "---\n\n";
 

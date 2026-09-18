@@ -17,7 +17,7 @@ class Permissions {
             'system' => [
                 'label'       => esc_html__('System & Environment', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WordPress, PHP, MySQL versions, active plugins list, server limits, Action Scheduler crons, database autoload footprint, SMTP mail diagnostic, security hardening, and caching configuration.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/mail/subscriber', '/system/security', '/system/caching', '/system/cache/purge'],
+                'endpoints'   => ['/ping', '/capabilities', '/system', '/system/database', '/system/mail', '/system/mail/subscriber', '/system/security', '/system/caching', '/system/cache/purge', '/system/search'],
             ],
             'wc_overrides' => [
                 'label'       => esc_html__('WooCommerce Diagnostic & Overrides', 'woo-get-data-for-ai'),
@@ -72,12 +72,12 @@ class Permissions {
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails'],
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails', '/woocommerce/account-tabs'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, unified SEO metadata (Rank Math, Yoast, The SEO Framework), and URL redirections with 404 monitoring logs.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/seo-audit', '/content/seo/settings', '/content/redirections', '/content/redirections/404'],
+                'endpoints'   => ['/content/pages', '/content/page/{id}', '/content/posts', '/content/post/{id}', '/content/custom-post-types', '/content/seo-audit', '/content/seo/settings', '/content/redirections', '/content/redirections/404'],
             ],
             'performance' => [
                 'label'       => esc_html__('Site Performance & Plugin Profiler', 'woo-get-data-for-ai'),
@@ -230,6 +230,12 @@ class Permissions {
                         'methods'     => ['POST'],
                         'params'      => ['scope (all|cdn|page|object, default: all)'],
                         'description' => esc_html__('Alias for /performance/cache/purge: Multi-layer cache invalidation supporting Rocket.net CDN, WP Rocket, Object Cache Pro / Redis, LiteSpeed, and Autoptimize.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/system/search',
+                        'methods'     => ['GET'],
+                        'params'      => ['query (or q, min 2 chars, required)', 'target (all|posts|options|snippets, default: all)', 'limit (1-50, default: 20)', 'post_type (any|comma-separated, default: any)'],
+                        'description' => esc_html__('Global read-only search across all post types (wp_posts), site options (wp_options with sensitive secrets auto-redacted and transients excluded), and active/inactive snippets (WPCode & Code Snippets) with contextual text snippets and direct admin edit links.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],
@@ -611,6 +617,11 @@ class Permissions {
                         'methods'     => ['GET'],
                         'description' => esc_html__('Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses.', 'woo-get-data-for-ai'),
                     ],
+                    [
+                        'path'        => '/woocommerce/account-tabs',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Inspects WooCommerce My Account tabs, URLs, associated action hooks and callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content.', 'woo-get-data-for-ai'),
+                    ],
                 ],
             ],
             [
@@ -633,13 +644,19 @@ class Permissions {
                     [
                         'path'        => '/content/posts',
                         'methods'     => ['GET'],
-                        'params'      => ['status (publish|draft|all, default: publish)', 'category', 'tag', 'search', 'per_page (default: 20, max: 100)', 'page', 'orderby (date|title|modified)', 'order (DESC|ASC)'],
-                        'description' => esc_html__('Lists WordPress blog posts with categories, tags, author, editor type, and quick SEO preview.', 'woo-get-data-for-ai'),
+                        'params'      => ['post_type (post|any|comma-separated, default: post)', 'status (publish|draft|all, default: publish)', 'category', 'tag', 'search', 'per_page (default: 20, max: 100)', 'page', 'orderby (date|title|modified)', 'order (DESC|ASC)'],
+                        'description' => esc_html__('Lists WordPress blog posts or custom post types (e.g. cms_block, elementor_library, woodmart_layout) with categories, tags, author, editor type, and quick SEO preview.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/content/post/{id}',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/content/custom-post-types',
+                        'methods'     => ['GET'],
+                        'params'      => ['public (true|false, default: true)', 'include_builtin (true|false, default: true)'],
+                        'description' => esc_html__('Lists all registered custom post types with live post counts per status (publish, draft, trash, private), supported features (title, editor, thumbnail, etc.), and associated taxonomies.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/content/seo-audit',

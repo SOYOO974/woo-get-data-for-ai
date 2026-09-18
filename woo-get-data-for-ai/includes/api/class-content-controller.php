@@ -76,6 +76,10 @@ class Content_Controller extends Rest_Controller {
                 return $this->check_access($request, 'content');
             },
             'args'                => [
+                'post_type' => [
+                    'default'           => 'post',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
                 'status'   => [
                     'default'           => 'publish',
                     'sanitize_callback' => 'sanitize_text_field',
@@ -107,6 +111,25 @@ class Content_Controller extends Rest_Controller {
                 'order'    => [
                     'default'           => 'DESC',
                     'sanitize_callback' => 'sanitize_key',
+                ],
+            ],
+        ]);
+
+        // GET /content/custom-post-types (List registered post types with post counts, features, and taxonomies)
+        register_rest_route(self::NAMESPACE, '/content/custom-post-types', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_custom_post_types'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'content');
+            },
+            'args'                => [
+                'public'          => [
+                    'default'           => true,
+                    'sanitize_callback' => 'rest_sanitize_boolean',
+                ],
+                'include_builtin' => [
+                    'default'           => true,
+                    'sanitize_callback' => 'rest_sanitize_boolean',
                 ],
             ],
         ]);
@@ -416,6 +439,21 @@ class Content_Controller extends Rest_Controller {
      * Lists WordPress blog posts with categories, tags, and quick SEO preview.
      */
     public function get_posts_list(\WP_REST_Request $request) {
+        $raw_post_type = $request->get_param('post_type') ?: 'post';
+        if ($raw_post_type === 'any') {
+            $public_types = get_post_types(['public' => true]);
+            $excluded = ['revision', 'attachment', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache', 'user_request'];
+            $post_type = array_values(array_diff(array_keys($public_types), $excluded));
+            if (empty($post_type)) {
+                $post_type = 'any';
+            }
+        } elseif (strpos($raw_post_type, ',') !== false) {
+            $types = array_filter(array_map('sanitize_key', explode(',', $raw_post_type)));
+            $post_type = !empty($types) ? array_values($types) : 'post';
+        } else {
+            $post_type = sanitize_key($raw_post_type) ?: 'post';
+        }
+
         $status   = $request->get_param('status') ?: 'publish';
         $category = $request->get_param('category');
         $tag      = $request->get_param('tag');
@@ -426,7 +464,7 @@ class Content_Controller extends Rest_Controller {
         $order    = strtoupper($request->get_param('order') ?: 'DESC');
 
         $query_args = [
-            'post_type'      => 'post',
+            'post_type'      => $post_type,
             'posts_per_page' => $per_page,
             'paged'          => $page,
             'orderby'        => $orderby,
@@ -468,6 +506,7 @@ class Content_Controller extends Rest_Controller {
                 'id'          => $post->ID,
                 'title'       => html_entity_decode(get_the_title($post), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 'slug'        => $post->post_name,
+                'post_type'   => $post->post_type,
                 'status'      => $post->post_status,
                 'date'        => $post->post_date,
                 'modified'    => $post->post_modified,
@@ -489,8 +528,81 @@ class Content_Controller extends Rest_Controller {
             'total_pages' => (int) $query->max_num_pages,
             'per_page'    => $per_page,
             'page'        => $page,
+            'post_type'   => $raw_post_type,
             'seo_plugin'  => $seo_plugin,
             'posts'       => $posts,
+        ]);
+    }
+
+    /**
+     * GET /content/custom-post-types
+     * Lists registered custom post types with post counts, features, and taxonomies.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_custom_post_types(\WP_REST_Request $request) {
+        $only_public     = $request->get_param('public') !== false;
+        $include_builtin = $request->get_param('include_builtin') !== false;
+
+        $args = $only_public ? ['public' => true] : [];
+        $registered_types = get_post_types($args, 'objects');
+
+        $cpt_list = [];
+
+        foreach ($registered_types as $slug => $obj) {
+            $is_builtin = !empty($obj->_builtin);
+            if (!$include_builtin && $is_builtin) {
+                continue;
+            }
+
+            // Count posts per status
+            $counts  = wp_count_posts($slug);
+            $publish = isset($counts->publish) ? (int) $counts->publish : 0;
+            $draft   = isset($counts->draft) ? (int) $counts->draft : 0;
+            $trash   = isset($counts->trash) ? (int) $counts->trash : 0;
+            $future  = isset($counts->future) ? (int) $counts->future : 0;
+            $private = isset($counts->private) ? (int) $counts->private : 0;
+            $pending = isset($counts->pending) ? (int) $counts->pending : 0;
+            $total   = $publish + $draft + $future + $private + $pending;
+
+            // Get supported features
+            $supports = [];
+            $all_features = ['title', 'editor', 'author', 'thumbnail', 'excerpt', 'trackbacks', 'custom-fields', 'comments', 'revisions', 'page-attributes', 'post-formats'];
+            foreach ($all_features as $feature) {
+                if (post_type_supports($slug, $feature)) {
+                    $supports[] = $feature;
+                }
+            }
+
+            // Get associated taxonomies
+            $taxonomies = get_object_taxonomies($slug, 'names');
+
+            $cpt_list[] = [
+                'name'         => $slug,
+                'label'        => $obj->label ?? $slug,
+                'description'  => $obj->description ?? '',
+                'is_builtin'   => $is_builtin,
+                'public'       => (bool) ($obj->public ?? false),
+                'hierarchical' => (bool) ($obj->hierarchical ?? false),
+                'has_archive'  => is_string($obj->has_archive) ? $obj->has_archive : (bool) ($obj->has_archive ?? false),
+                'show_in_rest' => (bool) ($obj->show_in_rest ?? false),
+                'rest_base'    => !empty($obj->rest_base) ? $obj->rest_base : $slug,
+                'supports'     => $supports,
+                'taxonomies'   => array_values($taxonomies),
+                'counts'       => [
+                    'publish' => $publish,
+                    'draft'   => $draft,
+                    'trash'   => $trash,
+                    'private' => $private,
+                    'total'   => $total,
+                ],
+            ];
+        }
+
+        return $this->response([
+            'total_post_types' => count($cpt_list),
+            'post_types'       => $cpt_list,
         ]);
     }
 
