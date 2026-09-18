@@ -290,14 +290,14 @@ Enables/disables modules on a per-site basis:
 | `GET /meta/fields` | GET | Unified catalog of custom meta fields defined in code (`register_post_meta`) and ACF (`acf_get_field_groups`), with optional database discovery (`?source=all\|code\|acf\|db`, `?post_type=`, `?object_type=`, `?search=`, `?include_db=true`) |
 | `GET /meta/acf` | GET | Deep ACF inspection: field groups, recursive subfield hierarchy (`repeater`, `flexible_content`, `group`), location rules, and registered Options Pages |
 | `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
-| `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones |
+| `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order hygiene & stale ghost orders analysis (pending > 30d, failed > 60d, cancelled > 1y, total ghost orders, retention policy status, EMPTY_TRASH_DAYS auto-delete), HPOS state, active payment gateways, and shipping zones |
 | `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
 | `GET /woocommerce/coupons` | GET | List and filter promotional discount coupons with status (`active`, `expired`, `exhausted`, `all`), discount types, usage counts, limits, held counts, and PII-masked email restrictions (`?status=`, `?type=`, `?search=`, `?email=`, `?per_page=20`, `?page=1`, `?orderby=date\|code\|usage_count\|modified`, `?order=DESC\|ASC`) |
 | `GET /woocommerce/coupon/{id}` | GET | Deep inspection of a single coupon by numeric ID or code slug: discount rules, real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and last 10 associated orders |
 | `GET /woocommerce/orders` | GET | Recent orders with strict GDPR/PII anonymization (masked customer details, redacted emails/phones/addresses), item lines, coupon lines, applied coupon codes, totals, and gateways (`?status=processing\|completed\|failed\|all`, `?search=`, `?customer_id=`, `?coupon=`, `?per_page=10`) |
 | `GET /woocommerce/order/{id}` | GET | Deep order diagnostics: item line metadata, shipping lines with decoded metadata (`shipping_lines[].meta_data` including Flexible Shipping `fs_costs` base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata |
-| `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with geo-locations, flat_rate table rate rules, and Flexible Shipping matrix rules |
+| `GET /woocommerce/settings` | GET | Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), shipping zones/methods, and personal data retention policies (trash pending/failed/cancelled, anonymize completed/refunded, delete inactive accounts, EMPTY_TRASH_DAYS) |
 | `GET /woocommerce/shipping` | GET | Dedicated logistics & shipping inspection: zones, geographic locations (postcodes, states, countries), native method parameters, flat_rate table rate rules (`flexible_shipping_table_rate`), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (tiers, classes, conditions), and sanitized `raw_instance_settings` |
 | `GET /woocommerce/analytics/sales` | GET | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period (`?range=last_30_days`, `?start_date=`, `?end_date=`) |
 | `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold, and top coupons with discount totals (`?limit=10`, `?range=last_30_days`) |
@@ -409,6 +409,34 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.35.0 (2026-09-18)
+- **Audit de la Rétention des Données Personnelles WooCommerce & Détection des Commandes Fantômes (`includes/api/class-woocommerce-controller.php`, `class-playbooks.php`, `cli/translations-fr.php`)** :
+  - **Audit des Politiques de Rétention dans `GET /woocommerce/settings`** :
+    - Exposition d'une section dédiée `data_retention` analysant les réglages natifs de WooCommerce (*Comptes et confidentialité*) :
+      - `trash_pending_orders` (`woocommerce_trash_pending_orders`)
+      - `trash_failed_orders` (`woocommerce_trash_failed_orders`)
+      - `trash_cancelled_orders` (`woocommerce_trash_cancelled_orders`)
+      - `anonymize_completed_orders` (`woocommerce_anonymize_completed_orders`)
+      - `anonymize_refunded_orders` (`woocommerce_anonymize_refunded_orders`)
+      - `delete_inactive_accounts` (`woocommerce_delete_inactive_accounts`)
+    - Analyse de la constante WordPress `EMPTY_TRASH_DAYS` et confirmation du vidage automatique programmé de la corbeille (`is_trash_auto_delete_enabled`).
+    - Formatage normalisé via `wc_parse_relative_date_option()` (`configured`, `value`, `unit`, `human`).
+  - **Détection des Commandes Fantômes & Hygiène BDD dans `GET /woocommerce/summary`** :
+    - Requête SQL optimisée en une passe (compatible HPOS `wp_wc_orders` et CPT `wp_posts`) ventilant précisément le bloat des commandes non converties :
+      - `pending_older_than_30d` : Commandes en attente abandonnées depuis plus de 30 jours (paniers morts).
+      - `failed_older_than_60d` : Échecs de paiement de plus de 60 jours sans valeur technique résiduelle.
+      - `cancelled_older_than_1y` : Commandes annulées non payées depuis plus d'un an.
+      - `total_ghost_orders` : Total des commandes fantômes encombrant les index et tables de commandes.
+    - Diagnostic et recommandations intelligentes dans `orders.health_analysis.recommendation` et `woocommerce.performance_features.recommendations` dès que le volume de commandes fantômes dépasse 100 et qu'aucune politique de rétention n'est active.
+  - **Gouvernance des Playbooks (Pilier 3 MECE `database_system_hygiene`)** :
+    - Enrichissement de l'Étape 3 du Pilier 3 (*WooCommerce Order Volume, Stale Ghost Orders & Retention Policy*).
+    - Prescriptions claires : En attente = 1 mois, Échouées = 1-3 mois, Annulées = 6-12 mois, Terminées/Remboursées = Strictement « ND » (ne jamais anonymiser sous peine de détruire le SAV et la garantie légale).
+    - Recommandation d'ajuster `EMPTY_TRASH_DAYS = 7` dans `wp-config.php` et d'effectuer une purge initiale par WP-CLI si le volume dépasse 5 000 commandes.
+    - Nouveaux déclencheurs d'intention : `commandes fantômes`, `commandes fantomes`, `rétention commandes`, `retention commandes`, `purger commandes`.
+  - **Internationalisation & Loco Translate 100%** :
+    - Ajout des traductions françaises dans `cli/translations-fr.php`.
+    - Exécution de `php cli/sync-i18n.php` : 691/691 chaînes traduites (100%), fichiers `.pot`, `.po` et binaire compilé `.mo` synchronisés.
 
 ### v1.34.0 (2026-09-18)
 - **Support des Custom Post Types sur l'Endpoint Content & Nouvel Inventaire CPT (`includes/api/class-content-controller.php`, `class-permissions.php`, `class-playbooks.php`, `cli/sync.js`)** :

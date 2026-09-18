@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-18 13:54+00:00\n"
+"POT-Creation-Date: 2026-09-18 17:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1583,15 +1583,15 @@ msgstr ""
 #: includes/api/class-theme-controller.php:81
 #: includes/api/class-tracking-controller.php:153
 #: includes/api/class-woocommerce-controller.php:415
-#: includes/api/class-woocommerce-controller.php:740
-#: includes/api/class-woocommerce-controller.php:887
-#: includes/api/class-woocommerce-controller.php:1043
-#: includes/api/class-woocommerce-controller.php:1272
-#: includes/api/class-woocommerce-controller.php:1475
-#: includes/api/class-woocommerce-controller.php:1666
-#: includes/api/class-woocommerce-controller.php:1825
-#: includes/api/class-woocommerce-controller.php:1915
-#: includes/api/class-woocommerce-controller.php:3100
+#: includes/api/class-woocommerce-controller.php:813
+#: includes/api/class-woocommerce-controller.php:960
+#: includes/api/class-woocommerce-controller.php:1116
+#: includes/api/class-woocommerce-controller.php:1345
+#: includes/api/class-woocommerce-controller.php:1548
+#: includes/api/class-woocommerce-controller.php:1739
+#: includes/api/class-woocommerce-controller.php:1898
+#: includes/api/class-woocommerce-controller.php:2031
+#: includes/api/class-woocommerce-controller.php:3216
 msgid "WooCommerce is not active on this site."
 msgstr ""
 
@@ -1791,63 +1791,92 @@ msgstr ""
 msgid "Verify that Meta CAPI cookie name is configured to \"%s\"."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:633
+#: includes/api/class-woocommerce-controller.php:547
+msgid "%.1f%% of orders (%s orders) are cancelled. High cancellation ratio detected."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:557
+msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables with no retention policy active. Configure WooCommerce Accounts & Privacy settings (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, leave Completed/Refunded unset) to automate database cleanup."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:566
+msgid "%s stale ghost orders detected. WooCommerce retention policy is configured and processing batches."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:573
+msgid "Order health and cancellation metrics are within standard operational range."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:691
 msgid "Enable High-Performance Order Storage (HPOS)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:634
+#: includes/api/class-woocommerce-controller.php:692
 msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:641
+#: includes/api/class-woocommerce-controller.php:699
 msgid "Enable HPOS Data Caching"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:642
+#: includes/api/class-woocommerce-controller.php:700
 msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:649
+#: includes/api/class-woocommerce-controller.php:707
 msgid "Defer Transactional Emails"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:650
+#: includes/api/class-woocommerce-controller.php:708
 msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:657
+#: includes/api/class-woocommerce-controller.php:715
 msgid "Enable Checkout Rate Limiting"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:658
+#: includes/api/class-woocommerce-controller.php:716
 msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:665
+#: includes/api/class-woocommerce-controller.php:723
 msgid "Consider HPOS Full-Text Search Indexes"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:666
+#: includes/api/class-woocommerce-controller.php:724
 msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:894
+#: includes/api/class-woocommerce-controller.php:731
+msgid "Configure WooCommerce Order Retention Policy"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:734
+msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables. Configure WooCommerce Accounts & Privacy retention periods (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, and leave Completed/Refunded unset) to enable automatic cleanup."
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:967
 msgid "Product not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1287
+#: includes/api/class-woocommerce-controller.php:1360
 msgid "Coupon not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1673
+#: includes/api/class-woocommerce-controller.php:1746
 msgid "Order not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3072
+#: includes/api/class-woocommerce-controller.php:1979
+#: includes/api/class-woocommerce-controller.php:1995
+msgid "Disabled (ND)"
+msgstr ""
+
+#: includes/api/class-woocommerce-controller.php:3188
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3108
+#: includes/api/class-woocommerce-controller.php:3224
 msgid "WooCommerce account functions are not loaded."
 msgstr ""
 
@@ -2470,323 +2499,323 @@ msgstr ""
 msgid "In-depth technical health and database hygiene check-up: PHP/MySQL limits, security constants, total database size, autoload memory bloat with orphaned options detection from inactive plugins, Action Scheduler queue & retention policy, stale abandoned orders older than 1 year, overdue WP-Cron jobs, and Crash Watch PHP fatal errors."
 msgstr ""
 
-#: includes/class-playbooks.php:256
+#: includes/class-playbooks.php:261
 msgid "Server Limits & Environment Diagnostic"
 msgstr ""
 
-#: includes/class-playbooks.php:259
+#: includes/class-playbooks.php:264
 msgid "Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security)."
 msgstr ""
 
-#: includes/class-playbooks.php:264
+#: includes/class-playbooks.php:269
 msgid "Database Size & Autoload Orphaned Options"
 msgstr ""
 
-#: includes/class-playbooks.php:267
+#: includes/class-playbooks.php:272
 msgid "Inspects total DB size, top 15 heaviest tables, autoload volume vs 800 KB threshold, and identifies orphaned candidate options left behind by inactive plugins."
 msgstr ""
 
-#: includes/class-playbooks.php:272
-msgid "WooCommerce Order Volume & HPOS Performance Features"
-msgstr ""
-
-#: includes/class-playbooks.php:275
-msgid "Audits total orders, cancellation ratio, stale unpaid orders older than 1 year, and high-performance order storage (HPOS, HPOS datastore caching, full-text search indexes)."
+#: includes/class-playbooks.php:277
+msgid "WooCommerce Order Volume, Stale Ghost Orders & Retention Policy"
 msgstr ""
 
 #: includes/class-playbooks.php:280
+msgid "Audits total orders, cancellation ratio, stale ghost orders (pending >30d, failed >60d, cancelled >1y), high-performance order storage (HPOS), and recommends optimal retention policies (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, Completed/Refunded: ND) with EMPTY_TRASH_DAYS automatic cleanup."
+msgstr ""
+
+#: includes/class-playbooks.php:285
 msgid "Action Scheduler Queue & Retention Policy"
 msgstr ""
 
-#: includes/class-playbooks.php:283
+#: includes/class-playbooks.php:288
 msgid "Evaluates completed actions accumulation, active retention period in days, cleanup batch size, and bloat alert."
 msgstr ""
 
-#: includes/class-playbooks.php:288
+#: includes/class-playbooks.php:293
 msgid "Overdue Crons & Ghost Hooks"
 msgstr ""
 
-#: includes/class-playbooks.php:291
+#: includes/class-playbooks.php:296
 msgid "Detects overdue WP-Cron jobs and orphan background hooks that may fail repeatedly or delay maintenance cleanup."
 msgstr ""
 
-#: includes/class-playbooks.php:296
+#: includes/class-playbooks.php:301
 msgid "Crash Watch Fatal Errors Scan"
 msgstr ""
 
-#: includes/class-playbooks.php:299
+#: includes/class-playbooks.php:304
 msgid "Verifies whether recurrent PHP fatal errors, memory exhaustions, or exceptions are flooding debug.log and choking disk I/O."
 msgstr ""
 
-#: includes/class-playbooks.php:304
+#: includes/class-playbooks.php:309
 msgid "Targeted String & Settings Deep Search"
 msgstr ""
 
-#: includes/class-playbooks.php:307
+#: includes/class-playbooks.php:312
 msgid "Locates specific configuration strings, obsolete plugin options, or custom snippet references across wp_posts, wp_options (with secret redaction), and WPCode / Code Snippets."
 msgstr ""
 
-#: includes/class-playbooks.php:318
+#: includes/class-playbooks.php:323
 msgid "Orders, Payment Gateways & Delivery Troubleshooting"
 msgstr ""
 
-#: includes/class-playbooks.php:319
+#: includes/class-playbooks.php:324
 msgid "Emergency checkout diagnostics when orders fail or customers complain: inspects failed orders, gateway error notes, payment logs, checkout hooks/snippets, transactional email SMTP deliverability, and failing WooCommerce webhooks."
 msgstr ""
 
-#: includes/class-playbooks.php:358
+#: includes/class-playbooks.php:363
 msgid "Recent Failed Orders Inspection"
 msgstr ""
 
-#: includes/class-playbooks.php:361
+#: includes/class-playbooks.php:366
 msgid "Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, applied coupons, and order totals. Supports direct filtering by coupon code (?coupon=...)."
 msgstr ""
 
-#: includes/class-playbooks.php:366
+#: includes/class-playbooks.php:371
 msgid "Deep Order & Gateway Diagnosis"
 msgstr ""
 
-#: includes/class-playbooks.php:369
+#: includes/class-playbooks.php:374
 msgid "Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and applied coupon lines. For coupon-specific checkout stalls, inspect /woocommerce/coupon/{id} to verify validity, remaining usage quotas, and active held checkout sessions."
 msgstr ""
 
-#: includes/class-playbooks.php:374
+#: includes/class-playbooks.php:379
 msgid "Gateway Error Logs Inspection"
 msgstr ""
 
-#: includes/class-playbooks.php:377
+#: includes/class-playbooks.php:382
 msgid "Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion."
 msgstr ""
 
-#: includes/class-playbooks.php:382
+#: includes/class-playbooks.php:387
 msgid "Active Custom Checkout Hooks"
 msgstr ""
 
-#: includes/class-playbooks.php:385
+#: includes/class-playbooks.php:390
 msgid "Inventories active custom PHP snippets running on the site (WPCode & Code Snippets) to spot buggy hooks attached to woocommerce_checkout_* or order status transitions."
 msgstr ""
 
-#: includes/class-playbooks.php:390
+#: includes/class-playbooks.php:395
 msgid "SMTP, MailPoet MSS & Deliverability Diagnostic"
 msgstr ""
 
-#: includes/class-playbooks.php:393
+#: includes/class-playbooks.php:398
 msgid "Detects active mail provider (FluentSMTP, WP Mail SMTP, Post SMTP, or MailPoet Sending Service / MSS), credentials authentication status, delivery failures, and verifies with /woocommerce/summary whether deferred transactional emails and checkout rate limiting are enabled to prevent checkout timeouts."
 msgstr ""
 
-#: includes/class-playbooks.php:398
+#: includes/class-playbooks.php:403
 msgid "WooCommerce Transactional Emails & Silent Statuses"
 msgstr ""
 
-#: includes/class-playbooks.php:401
+#: includes/class-playbooks.php:406
 msgid "Inspects all registered WooCommerce transactional emails, enabled statuses, customer vs admin recipient routing, Order Status Manager custom trigger conditions (from_status_to_to_status), and flags silent order statuses that lack configured notifications."
 msgstr ""
 
-#: includes/class-playbooks.php:406
+#: includes/class-playbooks.php:411
 msgid "Database Email Delivery Logs & Search"
 msgstr ""
 
-#: includes/class-playbooks.php:409
+#: includes/class-playbooks.php:414
 msgid "Searches database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), or WP Mail SMTP to track exact email dispatch dates, recipients, subjects, and delivery error messages."
 msgstr ""
 
-#: includes/class-playbooks.php:414
+#: includes/class-playbooks.php:419
 msgid "MailPoet Subscriber & Silent Bounce Suppression Check"
 msgstr ""
 
-#: includes/class-playbooks.php:417
+#: includes/class-playbooks.php:422
 msgid "Checks subscriber profile in MailPoet (wp_mailpoet_subscribers) to detect whether the recipient email is marked as bounced, unconfirmed, or unsubscribed, causing MailPoet Sending Service (MSS) to silently drop order receipts and receipts."
 msgstr ""
 
-#: includes/class-playbooks.php:422
+#: includes/class-playbooks.php:427
 msgid "WooCommerce Webhooks Delivery Health"
 msgstr ""
 
-#: includes/class-playbooks.php:425
+#: includes/class-playbooks.php:430
 msgid "Inventories WooCommerce webhooks, topics (e.g. order.created), delivery URLs, and alerts on failure counters (failure_count >= 5)."
 msgstr ""
 
-#: includes/class-playbooks.php:430
+#: includes/class-playbooks.php:435
 msgid "Paid Memberships Pro Member & Level Audit"
 msgstr ""
 
-#: includes/class-playbooks.php:433
+#: includes/class-playbooks.php:438
 msgid "Examines user membership history timeline, active level vs past expiration dates, recurring cycle rules, and associated PMPro order payment statuses to diagnose membership loss."
 msgstr ""
 
-#: includes/class-playbooks.php:438
+#: includes/class-playbooks.php:443
 msgid "MasterStudy LMS User Course Enrollment & Expiration Diagnostic"
 msgstr ""
 
-#: includes/class-playbooks.php:441
+#: includes/class-playbooks.php:446
 msgid "Examines course enrollments, course duration limits, linked PMPro subscription ID integrity, and identifies root causes for premature course access expirations or pointer desync."
 msgstr ""
 
-#: includes/class-playbooks.php:452
+#: includes/class-playbooks.php:457
 msgid "360° E-Commerce Sales, Traffic & Conversion Analytics"
 msgstr ""
 
-#: includes/class-playbooks.php:453
+#: includes/class-playbooks.php:458
 msgid "Executive commercial report combining native WooCommerce sales KPIs, paid orders, net sales growth %, average order value (AOV), traffic audience, page conversion rates, marketing UTM campaign ROI, top products, top coupons, and inventory valuation with dormant stock alerts."
 msgstr ""
 
-#: includes/class-playbooks.php:493
+#: includes/class-playbooks.php:498
 msgid "Native WooCommerce Sales KPIs & Growth"
 msgstr ""
 
-#: includes/class-playbooks.php:496
+#: includes/class-playbooks.php:501
 msgid "Extracts net sales, gross sales, paid orders count, AOV, refunds, daily trend, and % growth comparison against prior period."
 msgstr ""
 
-#: includes/class-playbooks.php:501
+#: includes/class-playbooks.php:506
 msgid "Top Performing Products & Coupons"
 msgstr ""
 
-#: includes/class-playbooks.php:504
+#: includes/class-playbooks.php:509
 msgid "Identifies best-selling products by net revenue and units sold, plus top discount coupons used with totals."
 msgstr ""
 
-#: includes/class-playbooks.php:509
+#: includes/class-playbooks.php:514
 msgid "Inventory Valuation & Dormant Stock Alerts"
 msgstr ""
 
-#: includes/class-playbooks.php:512
+#: includes/class-playbooks.php:517
 msgid "Calculates stock financial valuation (cost vs retail value), low stock alerts, and dormant stock (products with 0 sales in last 90 days)."
 msgstr ""
 
-#: includes/class-playbooks.php:517
+#: includes/class-playbooks.php:522
 msgid "Traffic KPIs & Overall Conversion Rate"
 msgstr ""
 
-#: includes/class-playbooks.php:520
+#: includes/class-playbooks.php:525
 msgid "Consolidates visitors, sessions, pageviews, bounce rate, device breakdown, and store conversion rate in 1 request."
 msgstr ""
 
-#: includes/class-playbooks.php:525
+#: includes/class-playbooks.php:530
 msgid "Marketing Campaigns (UTM) ROI Attribution"
 msgstr ""
 
-#: includes/class-playbooks.php:528
+#: includes/class-playbooks.php:533
 msgid "Tracks marketing campaigns by source and medium (Google Ads, Meta, Newsletters) with direct order and net sales attribution."
 msgstr ""
 
-#: includes/class-playbooks.php:533
+#: includes/class-playbooks.php:538
 msgid "Server-Side Tracking & GDPR Consent Compliance Audit"
 msgstr ""
 
-#: includes/class-playbooks.php:536
+#: includes/class-playbooks.php:541
 msgid "Audits Meta CAPI v21.0 (Pixel ID, Access Token, test event code in production, Action Scheduler queue, recent order syncs), Google Ads Server-Side (OAuth Refresh Token, Merchant ID, Conversion Action ID, database error logs), cookie banner (native woo_gads_consent or CMP like Complianz/Axeptio), and Google Consent Mode v2 signal coherence."
 msgstr ""
 
-#: includes/class-playbooks.php:547
+#: includes/class-playbooks.php:552
 msgid "Shipping Zones, Methods & Flexible Shipping Rules Audit"
 msgstr ""
 
-#: includes/class-playbooks.php:548
+#: includes/class-playbooks.php:553
 msgid "Logistics and shipping calculation audit: verifies shipping zones, geographic locations (postcodes, regions, countries), native method configurations (flat rate, free shipping threshold), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (including Table Rate on flat rate), and order shipping metadata."
 msgstr ""
 
-#: includes/class-playbooks.php:564
+#: includes/class-playbooks.php:569
 msgid "Shipping Zones & Matrix Calculation Rules"
 msgstr ""
 
-#: includes/class-playbooks.php:567
+#: includes/class-playbooks.php:572
 msgid "Extracts configured shipping zones, geographic locations (postcodes, regions, countries), native method parameters, and decoded Flexible Shipping matrix calculation rules (including flat_rate table rate)."
 msgstr ""
 
-#: includes/class-playbooks.php:572
+#: includes/class-playbooks.php:577
 msgid "General Store Shipping Settings"
 msgstr ""
 
-#: includes/class-playbooks.php:575
+#: includes/class-playbooks.php:580
 msgid "Cross-references shipping methods against general store configuration, tax settings, and shipping calculation options."
 msgstr ""
 
-#: includes/class-playbooks.php:580
+#: includes/class-playbooks.php:585
 msgid "Recent Orders Shipping Line Metadata"
 msgstr ""
 
-#: includes/class-playbooks.php:583
+#: includes/class-playbooks.php:588
 msgid "Inspects shipping_lines[].meta_data on live orders, including decoded fs_costs (base + additional costs) to verify calculation accuracy."
 msgstr ""
 
-#: includes/class-playbooks.php:594
+#: includes/class-playbooks.php:599
 msgid "Code Architecture, Theme Settings & Automations Map"
 msgstr ""
 
-#: includes/class-playbooks.php:595
+#: includes/class-playbooks.php:600
 msgid "Technical customization inventory: WooCommerce template overrides drift, child theme functions.php/style.css, Woodmart/Elessi theme options, FlowMattic automation workflows, Elementor forms & webhooks, active WPCode snippets, custom ACF/code meta fields, and local vs production file checksums drift."
 msgstr ""
 
-#: includes/class-playbooks.php:626
+#: includes/class-playbooks.php:631
 msgid "WooCommerce Template Overrides Drift"
 msgstr ""
 
-#: includes/class-playbooks.php:629
+#: includes/class-playbooks.php:634
 msgid "Identifies overridden WooCommerce PHP templates in active theme and checks for outdated templates requiring updates."
 msgstr ""
 
-#: includes/class-playbooks.php:634
+#: includes/class-playbooks.php:639
 msgid "Child Theme Code & Theme Options"
 msgstr ""
 
-#: includes/class-playbooks.php:637
+#: includes/class-playbooks.php:642
 msgid "Inspects active child theme functions.php and style.css, and decodes Woodmart / Elessi theme options via /theme/options."
 msgstr ""
 
-#: includes/class-playbooks.php:642
+#: includes/class-playbooks.php:647
 msgid "Code Drift Verification via Checksums"
 msgstr ""
 
-#: includes/class-playbooks.php:645
+#: includes/class-playbooks.php:650
 msgid "Computes cryptographic file hashes (MD5 / SHA256) of local vs production files to detect drift or unversioned hotfixes."
 msgstr ""
 
-#: includes/class-playbooks.php:650
+#: includes/class-playbooks.php:655
 msgid "FlowMattic Automation Workflows Map"
 msgstr ""
 
-#: includes/class-playbooks.php:653
+#: includes/class-playbooks.php:658
 msgid "Lists active FlowMattic automation recipes, triggers (e.g. order placed), action steps, and task execution counts."
 msgstr ""
 
-#: includes/class-playbooks.php:658
+#: includes/class-playbooks.php:663
 msgid "Elementor Forms & Webhook Endpoints"
 msgstr ""
 
-#: includes/class-playbooks.php:661
+#: includes/class-playbooks.php:666
 msgid "Maps all Elementor forms across the site, their submit actions, and connected webhook integration URLs."
 msgstr ""
 
-#: includes/class-playbooks.php:666
+#: includes/class-playbooks.php:671
 msgid "Active Custom Snippets (WPCode & Code Snippets)"
 msgstr ""
 
-#: includes/class-playbooks.php:669
+#: includes/class-playbooks.php:674
 msgid "Inventories active custom PHP/JS/CSS/HTML snippets running in production (WPCode and Code Snippets) with direct admin edit URLs."
 msgstr ""
 
-#: includes/class-playbooks.php:674
+#: includes/class-playbooks.php:679
 msgid "Custom Fields & ACF Meta Schema"
 msgstr ""
 
-#: includes/class-playbooks.php:677
+#: includes/class-playbooks.php:682
 msgid "Discovers custom meta fields registered in code (register_post_meta) and ACF field groups with recursive subfield hierarchies."
 msgstr ""
 
-#: includes/class-playbooks.php:682
+#: includes/class-playbooks.php:687
 msgid "Customer My Account Tabs & Attached Templates"
 msgstr ""
 
-#: includes/class-playbooks.php:685
+#: includes/class-playbooks.php:690
 msgid "Maps WooCommerce My Account tabs, endpoint hooks, callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content."
 msgstr ""
 
-#: includes/class-playbooks.php:690
+#: includes/class-playbooks.php:695
 msgid "Cross-System String & Hook Discovery Search"
 msgstr ""
 
-#: includes/class-playbooks.php:693
+#: includes/class-playbooks.php:698
 msgid "Traces any feature, hook, or keyword (e.g. \"parrainage\", \"sponsorship\", \"referral\") across posts (HTML blocks, templates), site options, and custom snippets simultaneously."
 msgstr ""
 

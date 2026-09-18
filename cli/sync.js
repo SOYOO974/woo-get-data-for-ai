@@ -976,7 +976,12 @@ async function pullWooCommerce() {
                 md += `### 🩺 Order Volume & Hygiene Analysis\n\n`;
                 md += `- **Cancelled Orders**: ${h.cancelled_count} (**${h.cancelled_ratio_percent}%** of total)${h.alert_high_cancellations ? ' ⚠️ (High volume)' : ''}\n`;
                 md += `- **Failed Orders**: ${h.failed_count} (${h.failed_ratio_percent}% of total)\n`;
-                if (h.cancelled_unpaid_older_than_1y_estimate > 0) {
+                if (h.stale_ghost_orders) {
+                    const g = h.stale_ghost_orders;
+                    md += `- **Stale Ghost Orders**: **${g.total_ghost_orders || 0} orders** (Pending >30d: ${g.pending_older_than_30d || 0}, Failed >60d: ${g.failed_older_than_60d || 0}, Cancelled >1y: ${g.cancelled_older_than_1y || 0})\n`;
+                    md += `- **Retention Policy Active**: ${g.retention_policy_active ? '✅ Yes' : '❌ No (Disabled / ND)'}\n`;
+                    md += `- **Trash Auto-Delete (EMPTY_TRASH_DAYS)**: ${g.empty_trash_days !== false ? g.empty_trash_days + ' days' : 'Disabled'}\n`;
+                } else if (h.cancelled_unpaid_older_than_1y_estimate > 0) {
                     md += `- **Stale Abandoned Orders (> 1 year)**: ⚠️ **${h.cancelled_unpaid_older_than_1y_estimate} orders** (cluttering order/HPOS tables)\n`;
                 }
                 if (h.recommendation) {

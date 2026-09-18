@@ -488,42 +488,91 @@ class Woocommerce_Controller extends Rest_Controller {
             $total_orders += (int) $count;
         }
 
+        $pending_count   = (int) ($order_statuses['pending']['count'] ?? 0);
         $cancelled_count = (int) ($order_statuses['cancelled']['count'] ?? 0);
         $failed_count    = (int) ($order_statuses['failed']['count'] ?? 0);
         $cancelled_ratio = $total_orders > 0 ? round(($cancelled_count / $total_orders) * 100, 1) : 0.0;
         $failed_ratio    = $total_orders > 0 ? round(($failed_count / $total_orders) * 100, 1) : 0.0;
 
-        // Estimate stale unpaid cancelled orders older than 1 year (database clutter in HPOS / posts)
+        // Estimate stale ghost orders (database clutter in HPOS / posts)
+        $stale_pending_count   = 0;
+        $stale_failed_count    = 0;
         $stale_cancelled_count = 0;
-        if ($cancelled_count > 0) {
+
+        if ($total_orders > 0) {
             if ($hpos_enabled) {
-                $stale_cancelled_count = (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders 
-                     WHERE status = 'wc-cancelled' 
-                       AND date_paid_gmt IS NULL 
-                       AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR)"
+                $stale_row = $wpdb->get_row(
+                    "SELECT 
+                        SUM(CASE WHEN status = 'wc-pending' AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS pending_30d,
+                        SUM(CASE WHEN status = 'wc-failed' AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS failed_60d,
+                        SUM(CASE WHEN status = 'wc-cancelled' AND date_paid_gmt IS NULL AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR) THEN 1 ELSE 0 END) AS cancelled_1y
+                     FROM {$wpdb->prefix}wc_orders 
+                     WHERE status IN ('wc-pending', 'wc-failed', 'wc-cancelled')"
                 );
             } else {
-                $stale_cancelled_count = (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$wpdb->posts} 
+                $stale_row = $wpdb->get_row(
+                    "SELECT 
+                        SUM(CASE WHEN post_status = 'wc-pending' AND post_date_gmt < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS pending_30d,
+                        SUM(CASE WHEN post_status = 'wc-failed' AND post_date_gmt < DATE_SUB(NOW(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS failed_60d,
+                        SUM(CASE WHEN post_status = 'wc-cancelled' AND post_date_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR) THEN 1 ELSE 0 END) AS cancelled_1y
+                     FROM {$wpdb->posts} 
                      WHERE post_type = 'shop_order' 
-                       AND post_status = 'wc-cancelled' 
-                       AND post_date_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR)"
+                       AND post_status IN ('wc-pending', 'wc-failed', 'wc-cancelled')"
+                );
+            }
+            if ($stale_row) {
+                $stale_pending_count   = (int) ($stale_row->pending_30d ?? 0);
+                $stale_failed_count    = (int) ($stale_row->failed_60d ?? 0);
+                $stale_cancelled_count = (int) ($stale_row->cancelled_1y ?? 0);
+            }
+        }
+
+        $total_stale_ghost_orders = $stale_pending_count + $stale_failed_count + $stale_cancelled_count;
+
+        // Check WooCommerce retention policy configuration
+        $retention_pending   = get_option('woocommerce_trash_pending_orders');
+        $retention_failed    = get_option('woocommerce_trash_failed_orders');
+        $retention_cancelled = get_option('woocommerce_trash_cancelled_orders');
+        $is_retention_configured = !empty($retention_pending) || !empty($retention_failed) || !empty($retention_cancelled);
+
+        $empty_trash_days = defined('EMPTY_TRASH_DAYS') ? EMPTY_TRASH_DAYS : 30;
+        $is_trash_auto_delete_enabled = ($empty_trash_days !== false && $empty_trash_days > 0);
+
+        $alert_high_cancellations = ($cancelled_ratio > 30.0 && $cancelled_count > 500);
+        $order_recommendations = [];
+
+        if ($alert_high_cancellations) {
+            $order_recommendations[] = sprintf(
+                /* translators: 1: cancelled ratio, 2: cancelled count */
+                esc_html__('%.1f%% of orders (%s orders) are cancelled. High cancellation ratio detected.', 'woo-get-data-for-ai'),
+                $cancelled_ratio,
+                function_exists('number_format_i18n') ? number_format_i18n($cancelled_count) : number_format($cancelled_count)
+            );
+        }
+
+        if ($total_stale_ghost_orders > 100) {
+            if (!$is_retention_configured) {
+                $order_recommendations[] = sprintf(
+                    /* translators: 1: total ghost orders, 2: pending count, 3: failed count, 4: cancelled count */
+                    esc_html__('An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables with no retention policy active. Configure WooCommerce Accounts & Privacy settings (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, leave Completed/Refunded unset) to automate database cleanup.', 'woo-get-data-for-ai'),
+                    function_exists('number_format_i18n') ? number_format_i18n($total_stale_ghost_orders) : number_format($total_stale_ghost_orders),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_pending_count) : number_format($stale_pending_count),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_failed_count) : number_format($stale_failed_count),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_cancelled_count) : number_format($stale_cancelled_count)
+                );
+            } else {
+                $order_recommendations[] = sprintf(
+                    /* translators: 1: total ghost orders */
+                    esc_html__('%s stale ghost orders detected. WooCommerce retention policy is configured and processing batches.', 'woo-get-data-for-ai'),
+                    function_exists('number_format_i18n') ? number_format_i18n($total_stale_ghost_orders) : number_format($total_stale_ghost_orders)
                 );
             }
         }
 
-        $alert_high_cancellations = ($cancelled_ratio > 30.0 && $cancelled_count > 500);
-        $order_recommendation = null;
-        if ($alert_high_cancellations) {
-            $order_recommendation = sprintf(
-                '%.1f%% of orders (%s orders) are cancelled. An estimated %s unpaid cancelled orders older than 1 year are cluttering order tables. Consider a scheduled cleanup or archiving policy.',
-                $cancelled_ratio,
-                function_exists('number_format_i18n') ? number_format_i18n($cancelled_count) : number_format($cancelled_count),
-                function_exists('number_format_i18n') ? number_format_i18n($stale_cancelled_count) : number_format($stale_cancelled_count)
-            );
+        if (empty($order_recommendations)) {
+            $order_recommendation_text = esc_html__('Order health and cancellation metrics are within standard operational range.', 'woo-get-data-for-ai');
         } else {
-            $order_recommendation = 'Order cancellation ratio is within standard operational range.';
+            $order_recommendation_text = implode(' ', $order_recommendations);
         }
 
         $order_health = [
@@ -533,7 +582,16 @@ class Woocommerce_Controller extends Rest_Controller {
             'failed_ratio_percent'                    => $failed_ratio,
             'alert_high_cancellations'                => $alert_high_cancellations,
             'cancelled_unpaid_older_than_1y_estimate' => $stale_cancelled_count,
-            'recommendation'                          => $order_recommendation,
+            'stale_ghost_orders'                      => [
+                'pending_older_than_30d'  => $stale_pending_count,
+                'failed_older_than_60d'   => $stale_failed_count,
+                'cancelled_older_than_1y' => $stale_cancelled_count,
+                'total_ghost_orders'      => $total_stale_ghost_orders,
+                'retention_policy_active' => $is_retention_configured,
+                'empty_trash_days'        => $empty_trash_days,
+                'trash_auto_delete'       => $is_trash_auto_delete_enabled,
+            ],
+            'recommendation'                          => $order_recommendation_text,
         ];
 
         // 4. Payment Gateways summary
@@ -664,6 +722,21 @@ class Woocommerce_Controller extends Rest_Controller {
                 'priority'    => 'low',
                 'title'       => esc_html__('Consider HPOS Full-Text Search Indexes', 'woo-get-data-for-ai'),
                 'description' => esc_html__('With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature).', 'woo-get-data-for-ai'),
+            ];
+        }
+        if ($total_stale_ghost_orders > 100 && !$is_retention_configured) {
+            $feature_recommendations[] = [
+                'feature'     => 'order_data_retention',
+                'priority'    => $total_stale_ghost_orders > 2000 ? 'high' : 'medium',
+                'title'       => esc_html__('Configure WooCommerce Order Retention Policy', 'woo-get-data-for-ai'),
+                'description' => sprintf(
+                    /* translators: 1: total ghost orders, 2: pending count, 3: failed count, 4: cancelled count */
+                    esc_html__('An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables. Configure WooCommerce Accounts & Privacy retention periods (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, and leave Completed/Refunded unset) to enable automatic cleanup.', 'woo-get-data-for-ai'),
+                    function_exists('number_format_i18n') ? number_format_i18n($total_stale_ghost_orders) : number_format($total_stale_ghost_orders),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_pending_count) : number_format($stale_pending_count),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_failed_count) : number_format($stale_failed_count),
+                    function_exists('number_format_i18n') ? number_format_i18n($stale_cancelled_count) : number_format($stale_cancelled_count)
+                ),
             ];
         }
 
@@ -1895,12 +1968,55 @@ class Woocommerce_Controller extends Rest_Controller {
             $shipping_zones[] = $this->format_shipping_zone($default_zone, 9999);
         }
 
+        // 6. Data Retention & Privacy Settings
+        $format_retention_option = function ($option_name) {
+            $raw = get_option($option_name);
+            if (empty($raw)) {
+                return [
+                    'configured' => false,
+                    'value'      => null,
+                    'unit'       => null,
+                    'human'      => esc_html__('Disabled (ND)', 'woo-get-data-for-ai'),
+                ];
+            }
+            $parsed = function_exists('wc_parse_relative_date_option') ? wc_parse_relative_date_option($raw) : null;
+            if (is_array($parsed) && !empty($parsed['number']) && !empty($parsed['unit'])) {
+                return [
+                    'configured' => true,
+                    'value'      => (int) $parsed['number'],
+                    'unit'       => (string) $parsed['unit'],
+                    'human'      => sprintf('%d %s', $parsed['number'], $parsed['unit']),
+                ];
+            }
+            return [
+                'configured' => false,
+                'value'      => null,
+                'unit'       => null,
+                'human'      => esc_html__('Disabled (ND)', 'woo-get-data-for-ai'),
+            ];
+        };
+
+        $empty_trash_days = defined('EMPTY_TRASH_DAYS') ? EMPTY_TRASH_DAYS : 30;
+        $is_trash_auto_delete_enabled = ($empty_trash_days !== false && $empty_trash_days > 0);
+
+        $data_retention = [
+            'trash_pending_orders'         => $format_retention_option('woocommerce_trash_pending_orders'),
+            'trash_failed_orders'          => $format_retention_option('woocommerce_trash_failed_orders'),
+            'trash_cancelled_orders'        => $format_retention_option('woocommerce_trash_cancelled_orders'),
+            'anonymize_completed_orders'   => $format_retention_option('woocommerce_anonymize_completed_orders'),
+            'anonymize_refunded_orders'    => $format_retention_option('woocommerce_anonymize_refunded_orders'),
+            'delete_inactive_accounts'     => $format_retention_option('woocommerce_delete_inactive_accounts'),
+            'empty_trash_days'             => $empty_trash_days,
+            'is_trash_auto_delete_enabled' => $is_trash_auto_delete_enabled,
+        ];
+
         return $this->response([
             'general'          => $general,
             'tax'              => $tax,
             'stock'            => $stock,
             'payment_gateways' => $payment_gateways,
             'shipping_zones'   => $shipping_zones,
+            'data_retention'   => $data_retention,
         ]);
     }
 
