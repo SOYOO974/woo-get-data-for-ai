@@ -632,29 +632,54 @@ class Woocommerce_Controller extends Rest_Controller {
 
         $features_util_exists = class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil');
 
-        // HPOS Data Caching
+        // 1. HPOS Data Caching
         $hpos_data_caching = false;
         try {
             if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
                 $hpos_data_caching = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('hpos_datastore_caching');
             } else {
-                $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes';
+                $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_feature_hpos_datastore_caching_enabled', 'no') === 'yes';
             }
         } catch (\Throwable $e) {
-            $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes';
+            $hpos_data_caching = get_option('woocommerce_hpos_datastore_caching_enabled', 'no') === 'yes'
+                || get_option('woocommerce_feature_hpos_datastore_caching_enabled', 'no') === 'yes';
         }
 
-        // Deferred Transactional Emails
+        // 2. Product Object Caching (Cache Product Objects / product_instance_caching)
+        $product_caching = false;
+        try {
+            if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                $product_caching = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('product_instance_caching')
+                    || \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('product_object_caching');
+            } else {
+                $product_caching = get_option('woocommerce_feature_product_instance_caching_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_product_instance_caching_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_feature_product_object_caching_enabled', 'no') === 'yes';
+            }
+        } catch (\Throwable $e) {
+            $product_caching = get_option('woocommerce_feature_product_instance_caching_enabled', 'no') === 'yes'
+                || get_option('woocommerce_product_instance_caching_enabled', 'no') === 'yes';
+        }
+
+        // 3. Deferred Transactional Emails (via Action Scheduler)
         $deferred_emails = false;
         try {
-            $deferred_emails = (bool) apply_filters('woocommerce_defer_transactional_emails', false)
-                || is_plugin_active('defer-transactional-emails-for-woocommerce/defer-transactional-emails-for-woocommerce.php')
-                || is_plugin_active('checkout-speedup-for-woocommerce/checkout-speedup-for-woocommerce.php');
+            if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                $deferred_emails = \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled('deferred_transactional_emails');
+            }
+            if (!$deferred_emails) {
+                $deferred_emails = (bool) apply_filters('woocommerce_defer_transactional_emails', false)
+                    || get_option('woocommerce_feature_deferred_transactional_emails_enabled', 'no') === 'yes'
+                    || get_option('woocommerce_deferred_transactional_emails_enabled', 'no') === 'yes'
+                    || is_plugin_active('defer-transactional-emails-for-woocommerce/defer-transactional-emails-for-woocommerce.php')
+                    || is_plugin_active('checkout-speedup-for-woocommerce/checkout-speedup-for-woocommerce.php');
+            }
         } catch (\Throwable $e) {
             $deferred_emails = (bool) apply_filters('woocommerce_defer_transactional_emails', false);
         }
 
-        // Checkout Rate Limiting
+        // 4. Checkout Rate Limiting
         $checkout_rate_limiting = false;
         try {
             if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
@@ -667,7 +692,7 @@ class Woocommerce_Controller extends Rest_Controller {
             $checkout_rate_limiting = get_option('woocommerce_rate_limit_checkout_enabled', 'no') === 'yes';
         }
 
-        // HPOS Full-Text Search Indexes (Experimental)
+        // 5. HPOS Full-Text Search Indexes (Experimental)
         $hpos_fts_indexes = false;
         try {
             if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
@@ -739,6 +764,14 @@ class Woocommerce_Controller extends Rest_Controller {
                 ),
             ];
         }
+        if (!$product_caching && $total_products > 50) {
+            $feature_recommendations[] = [
+                'feature'     => 'product_caching',
+                'priority'    => 'medium',
+                'title'       => esc_html__('Consider Enabling Product Object Caching', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Speeds up category loops and product-heavy pages by caching product objects during each request to eliminate duplicate loading overhead.', 'woo-get-data-for-ai'),
+            ];
+        }
 
         $performance_features = [
             'hpos' => [
@@ -752,10 +785,17 @@ class Woocommerce_Controller extends Rest_Controller {
                 'requires_hpos'        => true,
                 'object_cache_present' => (bool) $has_ext_object_cache,
             ],
+            'product_caching' => [
+                'enabled'              => (bool) $product_caching,
+                'feature_id'           => 'product_instance_caching',
+                'is_experimental'      => true,
+                'recommended'          => (bool) ($total_products > 50),
+                'description'          => esc_html__('Caches product objects during each request to prevent redundant loads on product-heavy pages.', 'woo-get-data-for-ai'),
+            ],
             'deferred_transactional_emails' => [
                 'enabled'              => (bool) $deferred_emails,
                 'recommended'          => true,
-                'implementation'       => $deferred_emails ? 'active' : 'filterable (woocommerce_defer_transactional_emails)',
+                'implementation'       => $deferred_emails ? 'active' : 'configurable via Features or filterable (woocommerce_defer_transactional_emails)',
             ],
             'checkout_rate_limiting' => [
                 'enabled'              => (bool) $checkout_rate_limiting,
@@ -2010,13 +2050,62 @@ class Woocommerce_Controller extends Rest_Controller {
             'is_trash_auto_delete_enabled' => $is_trash_auto_delete_enabled,
         ];
 
+        // 7. Advanced Performance Features (WooCommerce > Settings > Advanced > Features)
+        $features_util_exists = class_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil');
+
+        $is_feature_enabled = function ($feature_slug, $fallback_options = []) use ($features_util_exists) {
+            try {
+                if ($features_util_exists && method_exists('\Automattic\WooCommerce\Utilities\FeaturesUtil', 'feature_is_enabled')) {
+                    if (\Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled($feature_slug)) {
+                        return true;
+                    }
+                }
+            } catch (\Throwable $e) {}
+
+            foreach ((array) $fallback_options as $opt) {
+                if (get_option($opt, 'no') === 'yes') {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        $hpos_enabled = class_exists('\Automattic\WooCommerce\Utilities\OrderUtil')
+            && method_exists('\Automattic\WooCommerce\Utilities\OrderUtil', 'custom_orders_table_usage_is_enabled')
+            && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+
+        $advanced_features = [
+            'hpos' => [
+                'enabled' => (bool) $hpos_enabled,
+                'source'  => get_option('woocommerce_custom_orders_table_enabled', 'no') === 'yes' ? 'custom_orders_table' : 'posts_table',
+            ],
+            'hpos_data_caching' => [
+                'enabled' => $is_feature_enabled('hpos_datastore_caching', ['woocommerce_hpos_datastore_caching_enabled', 'woocommerce_feature_hpos_datastore_caching_enabled']),
+            ],
+            'product_caching' => [
+                'enabled'    => $is_feature_enabled('product_instance_caching', ['woocommerce_feature_product_instance_caching_enabled', 'woocommerce_product_instance_caching_enabled', 'woocommerce_feature_product_object_caching_enabled']),
+                'feature_id' => 'product_instance_caching',
+            ],
+            'deferred_transactional_emails' => [
+                'enabled' => $is_feature_enabled('deferred_transactional_emails', ['woocommerce_feature_deferred_transactional_emails_enabled', 'woocommerce_deferred_transactional_emails_enabled'])
+                    || (bool) apply_filters('woocommerce_defer_transactional_emails', false),
+            ],
+            'checkout_rate_limiting' => [
+                'enabled' => $is_feature_enabled('rate_limit_checkout', ['woocommerce_rate_limit_checkout_enabled', 'woocommerce_feature_rate_limit_checkout_enabled']),
+            ],
+            'hpos_full_text_search' => [
+                'enabled' => $is_feature_enabled('hpos_fts_indexes', ['woocommerce_hpos_fts_indexes_enabled', 'woocommerce_feature_hpos_fts_indexes_enabled']),
+            ],
+        ];
+
         return $this->response([
-            'general'          => $general,
-            'tax'              => $tax,
-            'stock'            => $stock,
-            'payment_gateways' => $payment_gateways,
-            'shipping_zones'   => $shipping_zones,
-            'data_retention'   => $data_retention,
+            'general'           => $general,
+            'tax'               => $tax,
+            'stock'             => $stock,
+            'payment_gateways'  => $payment_gateways,
+            'shipping_zones'    => $shipping_zones,
+            'data_retention'    => $data_retention,
+            'advanced_features' => $advanced_features,
         ]);
     }
 

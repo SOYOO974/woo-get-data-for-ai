@@ -404,11 +404,28 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.32.0: `pull:woocommerce` pulls registered transactional emails (`emails.json`) and detects silent statuses; `pull:logs` pulls database email logs (`email-logs.json`) across WP Mail Logging, FluentSMTP, Post SMTP, and WP Mail SMTP.
 - Optimized for v1.33.0: `pull:tracking` pulls server-side tracking audit (`tracking-audit.json`), order conversion attribution signals (`tracking-orders.json`), and CAPI/Google Ads transmission logs (`tracking-logs.json`) with an executive diagnostic report (`tracking-report.md`).
 - Optimized for v1.34.0: `pull:woocommerce` dumps account tabs (`account-tabs.json`) with Woodmart/Elementor templates; `pull:content` dumps registered custom post types (`custom-post-types.json`) with publication status counts.
+- Optimized for v1.36.0: `pull:woocommerce` includes Product Object Caching in the performance features summary.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.36.0 (2026-09-18)
+- **Audit des Fonctionnalités Avancées de Performance WooCommerce & Cache d'Objets Produits (`includes/api/class-woocommerce-controller.php`, `class-playbooks.php`, `cli/translations-fr.php`, `cli/sync.js`)** :
+  - **Détection & Diagnostic du Cache d'Objets Produits (`product_caching` / `product_instance_caching`)** :
+    - Audit de la fonctionnalité de mise en cache des objets produits introduite dans WooCommerce Core (`product_instance_caching`).
+    - Détection multi-sources défensive : `FeaturesUtil::feature_is_enabled('product_instance_caching')`, options `woocommerce_feature_product_instance_caching_enabled` et `woocommerce_product_instance_caching_enabled`.
+    - Exposition structurée dans `GET /woocommerce/summary` (`woocommerce.performance_features.product_caching`) avec statut activé, description et recommandation automatique à priorité moyenne si le catalogue compte plus de 100 produits.
+  - **Fiabilisation des E-mails Transactionnels Différés & Caching HPOS** :
+    - Détection directe de `FeaturesUtil::feature_is_enabled('deferred_transactional_emails')` et de l'option `woocommerce_feature_deferred_transactional_emails_enabled` en priorité, avant le filtre `woocommerce_defer_transactional_emails` et les plugins tiers, éliminant les faux-négatifs.
+    - Renforcement de la détection de `hpos_datastore_caching` via `woocommerce_feature_hpos_datastore_caching_enabled`.
+  - **Exposition Complète des Fonctionnalités Avancées dans `GET /woocommerce/settings`** :
+    - Nouvelle section dédiée `advanced_features` regroupant en un seul endroit : `hpos`, `hpos_data_caching`, `product_caching`, `deferred_transactional_emails`, `checkout_rate_limiting`, et `hpos_full_text_search`.
+  - **Synchronisation du Pilier 3 MECE (`database_system_hygiene`)** :
+    - Mise à jour de l'Étape 3 du Playbook pour intégrer `product_caching` aux côtés de `hpos_data_caching`, du cache objet externe Redis/Memcached et des e-mails transactionnels différés.
+  - **Internationalisation & Support Loco Translate 100%** :
+    - 694 chaînes uniques traduites à 100% en français, synchronisation des catalogues `.pot`, `.po` et recompilation binaire du fichier `.mo`.
 
 ### v1.35.0 (2026-09-18)
 - **Audit de la Rétention des Données Personnelles WooCommerce & Détection des Commandes Fantômes (`includes/api/class-woocommerce-controller.php`, `class-playbooks.php`, `cli/translations-fr.php`)** :

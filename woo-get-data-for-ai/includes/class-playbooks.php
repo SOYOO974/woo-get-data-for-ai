@@ -277,8 +277,8 @@ class Playbooks {
                         'action'      => esc_html__('WooCommerce Order Volume, Stale Ghost Orders & Retention Policy', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/summary',
                         'params'      => [],
-                        'description' => esc_html__('Audits total orders, cancellation ratio, stale ghost orders (pending >30d, failed >60d, cancelled >1y), high-performance order storage (HPOS), and recommends optimal retention policies (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, Completed/Refunded: ND) with EMPTY_TRASH_DAYS automatic cleanup.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['woocommerce.performance_features.hpos.enabled', 'woocommerce.performance_features.hpos_data_caching.enabled', 'orders.health_analysis.stale_ghost_orders', 'orders.health_analysis.alert_high_cancellations', 'orders.health_analysis.recommendation', 'woocommerce.performance_features.recommendations'],
+                        'description' => esc_html__('Audits total orders, cancellation ratio, stale ghost orders (pending >30d, failed >60d, cancelled >1y), high-performance order storage (HPOS, datastore caching, product object caching, deferred async emails), and recommends optimal retention policies (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, Completed/Refunded: ND) with EMPTY_TRASH_DAYS automatic cleanup.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['woocommerce.performance_features.hpos.enabled', 'woocommerce.performance_features.hpos_data_caching.enabled', 'woocommerce.performance_features.product_caching.enabled', 'woocommerce.performance_features.deferred_transactional_emails.enabled', 'orders.health_analysis.stale_ghost_orders', 'orders.health_analysis.alert_high_cancellations', 'orders.health_analysis.recommendation', 'woocommerce.performance_features.recommendations'],
                     ],
                     [
                         'step'        => 4,
@@ -815,9 +815,10 @@ class Playbooks {
         $md .= "   - Re-query `GET {$rest_base}/capabilities?format=skill` regularly to detect new inspection capabilities after plugin updates.\n";
         $md .= "5. **WOOCOMMERCE PERFORMANCE & CHECKOUT OPTIONS AUDIT**:\n";
         $md .= "   - Inspect `woocommerce.performance_features` in `GET /woocommerce/summary` (or `GET /system`):\n";
+        $md .= "     - **Product Object Caching (`product_caching.enabled`)**: Speeds up product-heavy pages by caching products per request and preventing duplicate queries. Recommend enabling in *WooCommerce > Settings > Advanced > Features* for catalogs with > 100 products.\n";
         $md .= "     - **HPOS (`hpos.enabled`)**: Must be active. If false, advise immediate HPOS migration to stop order bloat in `wp_posts`.\n";
         $md .= "     - **HPOS Data Caching (`hpos_data_caching.enabled`)**: Recommend enabling if `object_cache_present` (Redis/Memcached) is detected to eliminate redundant order SQL queries.\n";
-        $md .= "     - **Deferred Transactional Emails (`deferred_transactional_emails.enabled`)**: If false and checkout is slow, advise adding `add_filter('woocommerce_defer_transactional_emails', '__return_true');` via WPCode to offload SMTP sending to Action Scheduler and make checkout confirmation instant.\n";
+        $md .= "     - **Deferred Transactional Emails (`deferred_transactional_emails.enabled`)**: If false and checkout is slow, advise enabling native option in *WooCommerce > Settings > Advanced > Features* or adding `add_filter('woocommerce_defer_transactional_emails', '__return_true');` via WPCode to offload SMTP sending to Action Scheduler and make checkout confirmation instant.\n";
         $md .= "     - **Checkout Rate Limiting (`checkout_rate_limiting.enabled`)**: Must be enabled in production (*WooCommerce > Settings > Advanced > Features*) to prevent card testing bot attacks.\n";
         $md .= "     - **HPOS Full-Text Search (`hpos_full_text_search.enabled`)**: If store has > 5,000 orders and admin order search is sluggish, recommend testing full-text search indexes with experimental notice.\n";
         $md .= "6. **WOOCOMMERCE COUPONS & PROMOTIONAL DIAGNOSTICS**:\n";

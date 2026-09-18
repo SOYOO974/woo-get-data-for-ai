@@ -939,6 +939,7 @@ async function pullWooCommerce() {
         md += `**HPOS**: ${summary.woocommerce && summary.woocommerce.hpos_enabled ? '✅ Enabled' : '❌ Disabled'} (${summary.woocommerce ? summary.woocommerce.authoritative_source : ''})\n`;
         if (summary.woocommerce && summary.woocommerce.performance_features) {
             const pf = summary.woocommerce.performance_features;
+            md += `- **Product Object Caching**: ${pf.product_caching && pf.product_caching.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
             md += `- **HPOS Data Caching**: ${pf.hpos_data_caching && pf.hpos_data_caching.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
             md += `- **Deferred Transactional Emails**: ${pf.deferred_transactional_emails && pf.deferred_transactional_emails.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
             md += `- **Checkout Rate Limiting**: ${pf.checkout_rate_limiting && pf.checkout_rate_limiting.enabled ? '✅ Enabled' : '⚪ Disabled'}\n`;
