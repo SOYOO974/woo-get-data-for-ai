@@ -502,6 +502,10 @@ class Performance_Controller extends Rest_Controller {
         if ($profile_result && is_array($profile_result) && isset($profile_result['status']) && $profile_result['status'] === 'completed') {
             $html_body = !is_wp_error($response) ? wp_remote_retrieve_body($response) : '';
             $profile_result['pagespeed_audits'] = self::analyze_html_pagespeed_signals($html_body, $response);
+            $profile_result['savequeries_globally_active'] = defined('SAVEQUERIES') && SAVEQUERIES;
+            if ($profile_result['savequeries_globally_active']) {
+                $profile_result['savequeries_warning'] = esc_html__('SAVEQUERIES is active globally in wp-config.php. Every database query is being recorded in memory for all visitors, which inflates memory usage and server latency.', 'woo-get-data-for-ai');
+            }
 
             return $this->response([
                 'status'            => 'success',
@@ -1524,6 +1528,18 @@ class Performance_Controller extends Rest_Controller {
             }
         }
 
+        // 5. Runtime Performance Constants from wp-config.php (SAVEQUERIES, revisions, SCRIPT_DEBUG, etc.)
+        $runtime_constants = System_Controller::get_runtime_performance_constants();
+        if (!empty($runtime_constants['alerts'])) {
+            foreach ($runtime_constants['alerts'] as $c_alert) {
+                $recommendations[] = [
+                    'type'     => 'constant_' . strtolower($c_alert['constant']),
+                    'severity' => $c_alert['severity'],
+                    'message'  => $c_alert['issue'] . ' ' . $c_alert['message'] . ' ' . $c_alert['solution'],
+                ];
+            }
+        }
+
         return $this->response([
             'object_cache' => [
                 'enabled'        => $ext_object_cache,
@@ -1535,6 +1551,7 @@ class Performance_Controller extends Rest_Controller {
                 'wp_cache_constant'     => (bool) $wp_cache_constant,
                 'active_engine'         => $active_engine,
             ],
+            'runtime_constants'        => $runtime_constants,
             'wp_rocket'                => $wp_rocket_data,
             'breeze'                   => $breeze_data,
             'detected_caching_plugins' => $detected_plugins,

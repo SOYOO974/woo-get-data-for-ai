@@ -197,7 +197,7 @@ class Permissions {
                         'path'        => '/system',
                         'methods'     => ['GET'],
                         'params'      => ['plugins (active|inactive|all, default: active)'],
-                        'description' => esc_html__('Comprehensive server, WordPress, theme, active plugins list & summary counts (or all installed plugins via ?plugins=all), WooCommerce environment, and Action Scheduler status.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Comprehensive server, WordPress, theme, runtime performance constants (SAVEQUERIES, SCRIPT_DEBUG, revisions cap, memory limit), active plugins list & summary counts (or all installed plugins via ?plugins=all), WooCommerce environment, and Action Scheduler status.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/database',
@@ -218,12 +218,12 @@ class Permissions {
                     [
                         'path'        => '/system/security',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, SAVEQUERIES, SCRIPT_DEBUG, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/caching',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), in-depth WP Rocket settings, and wp-config.php runtime performance constants audit (SAVEQUERIES, SCRIPT_DEBUG, revisions cap, memory limits) with security redaction.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/system/cache/purge',
@@ -715,7 +715,7 @@ class Permissions {
                     [
                         'path'        => '/performance/caching',
                         'methods'     => ['GET'],
-                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), and in-depth WP Rocket settings (RUCSS vs CPCSS, Delay JS, safelists, lazyload, mobile cache) with security redaction.', 'woo-get-data-for-ai'),
+                        'description' => esc_html__('Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), in-depth WP Rocket settings, and wp-config.php runtime performance constants audit (SAVEQUERIES, SCRIPT_DEBUG, revisions cap, memory limits) with security redaction.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/performance/cache/purge',

@@ -395,21 +395,24 @@ class System_Controller extends Rest_Controller {
             }
         }
 
+        $runtime_constants = self::get_runtime_performance_constants();
+
         return $this->response([
-            'system'           => $server_info,
-            'wordpress'        => $wp_info,
-            'theme'            => $theme_info,
-            'plugins_summary'  => [
+            'system'            => $server_info,
+            'wordpress'         => $wp_info,
+            'runtime_constants' => $runtime_constants,
+            'theme'             => $theme_info,
+            'plugins_summary'   => [
                 'total_installed' => count($all_plugins),
                 'active_count'    => $active_count,
                 'inactive_count'  => $inactive_count,
                 'must_use_count'  => count($mu_list),
             ],
-            'plugins_count'    => count($plugins_list),
-            'plugins'          => $plugins_list,
-            'mu_plugins'       => $mu_list,
-            'woocommerce'      => $wc_info,
-            'action_scheduler' => $action_scheduler_info,
+            'plugins_count'     => count($plugins_list),
+            'plugins'           => $plugins_list,
+            'mu_plugins'        => $mu_list,
+            'woocommerce'       => $wc_info,
+            'action_scheduler'  => $action_scheduler_info,
         ]);
     }
 
@@ -943,6 +946,149 @@ class System_Controller extends Rest_Controller {
     }
 
     /**
+     * Get runtime performance constants and configuration flags defined in wp-config.php.
+     *
+     * @return array
+     */
+    public static function get_runtime_performance_constants() {
+        $savequeries         = defined('SAVEQUERIES') && SAVEQUERIES;
+        $script_debug        = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG;
+        $wp_debug            = defined('WP_DEBUG') && WP_DEBUG;
+        $wp_debug_display    = defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY;
+        $wp_debug_log        = defined('WP_DEBUG_LOG') && WP_DEBUG_LOG;
+        $wp_cache            = defined('WP_CACHE') && WP_CACHE;
+        $disable_wp_cron     = defined('DISABLE_WP_CRON') && DISABLE_WP_CRON;
+        $alternate_wp_cron   = defined('ALTERNATE_WP_CRON') && ALTERNATE_WP_CRON;
+        $disallow_file_edit  = defined('DISALLOW_FILE_EDIT') && DISALLOW_FILE_EDIT;
+        $disallow_file_mods  = defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS;
+        $concatenate_scripts = defined('CONCATENATE_SCRIPTS') ? (bool) CONCATENATE_SCRIPTS : null;
+        $compress_scripts    = defined('COMPRESS_SCRIPTS') ? (bool) COMPRESS_SCRIPTS : null;
+        $compress_css        = defined('COMPRESS_CSS') ? (bool) COMPRESS_CSS : null;
+
+        // Post revisions
+        $post_revisions_raw     = defined('WP_POST_REVISIONS') ? WP_POST_REVISIONS : null;
+        $is_revisions_unlimited = ($post_revisions_raw === null || $post_revisions_raw === true || $post_revisions_raw === -1);
+        $revisions_cap          = $is_revisions_unlimited ? 'unlimited' : (int) $post_revisions_raw;
+
+        // Memory limit
+        $wp_memory_limit     = defined('WP_MEMORY_LIMIT') ? WP_MEMORY_LIMIT : '40M';
+        $wp_max_memory_limit = defined('WP_MAX_MEMORY_LIMIT') ? WP_MAX_MEMORY_LIMIT : '256M';
+
+        // Environment
+        $environment_type = function_exists('wp_get_environment_type') ? wp_get_environment_type() : (defined('WP_ENVIRONMENT_TYPE') ? WP_ENVIRONMENT_TYPE : 'production');
+
+        // Build actionable performance alerts
+        $alerts = [];
+
+        if ($savequeries) {
+            $alerts[] = [
+                'constant' => 'SAVEQUERIES',
+                'severity' => 'critical',
+                'issue'    => esc_html__('SAVEQUERIES is active in wp-config.php.', 'woo-get-data-for-ai'),
+                'message'  => esc_html__('WordPress is recording every SQL query in memory with execution backtraces. On production stores, this severely degrades TTFB and can cause PHP memory exhaustion.', 'woo-get-data-for-ai'),
+                'solution' => esc_html__('Set define(\'SAVEQUERIES\', false); or remove it in wp-config.php.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        if ($script_debug) {
+            $alerts[] = [
+                'constant' => 'SCRIPT_DEBUG',
+                'severity' => 'warning',
+                'issue'    => esc_html__('SCRIPT_DEBUG is active in wp-config.php.', 'woo-get-data-for-ai'),
+                'message'  => esc_html__('WordPress loads unminified core CSS and JavaScript files, inflating frontend asset payload and slowing down page rendering.', 'woo-get-data-for-ai'),
+                'solution' => esc_html__('Set define(\'SCRIPT_DEBUG\', false); in production wp-config.php.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        if ($wp_debug_display) {
+            $alerts[] = [
+                'constant' => 'WP_DEBUG_DISPLAY',
+                'severity' => 'high',
+                'issue'    => esc_html__('WP_DEBUG_DISPLAY is enabled in production.', 'woo-get-data-for-ai'),
+                'message'  => esc_html__('PHP errors, database paths, and sensitive stack traces may be displayed to visitors.', 'woo-get-data-for-ai'),
+                'solution' => esc_html__('Set define(\'WP_DEBUG_DISPLAY\', false); in wp-config.php.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        if ($is_revisions_unlimited) {
+            $alerts[] = [
+                'constant' => 'WP_POST_REVISIONS',
+                'severity' => 'info',
+                'issue'    => esc_html__('WP_POST_REVISIONS is not strictly capped.', 'woo-get-data-for-ai'),
+                'message'  => esc_html__('Every post and product revision is stored indefinitely, bloating wp_posts and slowing database queries over time.', 'woo-get-data-for-ai'),
+                'solution' => esc_html__('Add define(\'WP_POST_REVISIONS\', 5); in wp-config.php to limit revisions to 5 per post/product.', 'woo-get-data-for-ai'),
+            ];
+        }
+
+        if (class_exists('WooCommerce')) {
+            $mem_bytes = self::parse_memory_bytes($wp_memory_limit);
+            if ($mem_bytes > 0 && $mem_bytes < 256 * 1024 * 1024) {
+                $alerts[] = [
+                    'constant' => 'WP_MEMORY_LIMIT',
+                    'severity' => 'medium',
+                    'issue'    => sprintf(esc_html__('WP_MEMORY_LIMIT (%s) is below 256M.', 'woo-get-data-for-ai'), $wp_memory_limit),
+                    'message'  => esc_html__('WooCommerce recommends a minimum of 256M for WordPress memory limit to prevent memory exhaustion during checkout, stock imports, or image processing.', 'woo-get-data-for-ai'),
+                    'solution' => esc_html__('Add define(\'WP_MEMORY_LIMIT\', \'256M\'); in wp-config.php.', 'woo-get-data-for-ai'),
+                ];
+            }
+        }
+
+        return [
+            'savequeries'         => $savequeries,
+            'script_debug'        => $script_debug,
+            'wp_debug'            => $wp_debug,
+            'wp_debug_display'    => $wp_debug_display,
+            'wp_debug_log'        => $wp_debug_log,
+            'wp_cache'            => $wp_cache,
+            'wp_post_revisions'   => $revisions_cap,
+            'revisions_capped'    => !$is_revisions_unlimited,
+            'wp_memory_limit'     => $wp_memory_limit,
+            'wp_max_memory_limit' => $wp_max_memory_limit,
+            'disable_wp_cron'     => $disable_wp_cron,
+            'alternate_wp_cron'   => $alternate_wp_cron,
+            'disallow_file_edit'  => $disallow_file_edit,
+            'disallow_file_mods'  => $disallow_file_mods,
+            'environment_type'    => $environment_type,
+            'concatenate_scripts' => $concatenate_scripts,
+            'compress_scripts'    => $compress_scripts,
+            'compress_css'        => $compress_css,
+            'has_critical_alerts' => $savequeries,
+            'alerts_count'        => count($alerts),
+            'alerts'              => $alerts,
+        ];
+    }
+
+    /**
+     * Convert memory string (e.g. '256M', '1G', '64m') to bytes defensively.
+     *
+     * @param string $val
+     * @return int
+     */
+    public static function parse_memory_bytes($val) {
+        if (function_exists('wp_convert_hr_to_bytes')) {
+            return wp_convert_hr_to_bytes($val);
+        }
+        $val = trim((string) $val);
+        if (empty($val)) {
+            return 0;
+        }
+        $last = strtolower(substr($val, -1));
+        $num  = (int) $val;
+        switch ($last) {
+            case 'g':
+                $num *= 1024 * 1024 * 1024;
+                break;
+            case 'm':
+                $num *= 1024 * 1024;
+                break;
+            case 'k':
+                $num *= 1024;
+                break;
+        }
+        return $num;
+    }
+
+    /**
      * GET /system/security
      * Security hardening audit, constants, XML-RPC, exposed versions, and security/caching plugins.
      *
@@ -960,6 +1106,7 @@ class System_Controller extends Rest_Controller {
         $wp_debug_display   = defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY;
         $wp_debug_log       = defined('WP_DEBUG_LOG') && WP_DEBUG_LOG;
         $script_debug       = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG;
+        $savequeries        = defined('SAVEQUERIES') && SAVEQUERIES;
         $is_ssl             = is_ssl();
 
         // 2. Database Prefix Security
@@ -994,6 +1141,20 @@ class System_Controller extends Rest_Controller {
 
         // 6. Security Score & Actionable Recommendations
         $recommendations = [];
+        if ($savequeries) {
+            $recommendations[] = [
+                'severity' => 'critical',
+                'issue'    => 'SAVEQUERIES is active in production.',
+                'solution' => 'Set define(\'SAVEQUERIES\', false); or remove it in wp-config.php. Logging every SQL query in memory degrades TTFB and risks PHP memory exhaustion.',
+            ];
+        }
+        if ($script_debug) {
+            $recommendations[] = [
+                'severity' => 'medium',
+                'issue'    => 'SCRIPT_DEBUG is active in production.',
+                'solution' => 'Set define(\'SCRIPT_DEBUG\', false); in wp-config.php to ensure minified core JavaScript and CSS are served.',
+            ];
+        }
         if (!$disallow_file_edit) {
             $recommendations[] = [
                 'severity' => 'medium',
@@ -1050,6 +1211,7 @@ class System_Controller extends Rest_Controller {
                 'wp_debug_display'   => $wp_debug_display,
                 'wp_debug_log'       => $wp_debug_log,
                 'script_debug'       => $script_debug,
+                'savequeries'        => $savequeries,
                 'is_ssl'             => $is_ssl,
             ],
             'database_hardening' => [

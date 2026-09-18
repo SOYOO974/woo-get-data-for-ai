@@ -171,6 +171,22 @@ async function pullSystem() {
         md += `- **MySQL**: ${data.system.mysql_version}\n`;
         md += `- **Memory Limit**: ${data.system.memory_limit} (WP: ${data.system.wp_memory_limit})\n\n`;
 
+        if (data.runtime_constants) {
+            const rc = data.runtime_constants;
+            md += `## ⚙️ Runtime Performance Constants (wp-config.php)\n`;
+            md += `- **SAVEQUERIES**: ${rc.savequeries ? '🔴 ACTIVE (Severe memory leak in production)' : '🟢 Disabled'}\n`;
+            md += `- **SCRIPT_DEBUG**: ${rc.script_debug ? '🔴 Active (Unminified assets)' : '🟢 Disabled'}\n`;
+            md += `- **WP_POST_REVISIONS**: ${rc.revisions_capped ? `🟢 Capped (${rc.post_revisions})` : '🟡 Not Capped (Risk of post bloat)'}\n`;
+            md += `- **WP_MEMORY_LIMIT**: ${rc.wp_memory_limit} (${rc.memory_limit_ok ? '🟢 OK' : '🔴 Below 256M'})\n`;
+            if (rc.alerts && rc.alerts.length > 0) {
+                md += `\n`;
+                rc.alerts.forEach(al => {
+                    md += `> ⚠️ **[${al.severity.toUpperCase()}] ${al.message}**: ${al.solution}\n\n`;
+                });
+            }
+            md += `\n`;
+        }
+
         if (dbData) {
             md += `## 🗄️ Database Health & Autoload\n`;
             md += `- **Total DB Size**: ${dbData.database ? dbData.database.total_size : 'Unknown'} (${dbData.database ? dbData.database.tables_count : 0} tables)\n`;

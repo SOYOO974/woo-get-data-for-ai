@@ -166,15 +166,20 @@ class Playbooks {
                     'cloudways breeze',
                     'breeze settings',
                     'optimiser breeze',
+                    'savequeries',
+                    'savequeries activé',
+                    'savequeries active',
+                    'constantes wp-config',
+                    'wp-config performance',
                 ],
                 'workflow'        => [
                     [
                         'step'        => 1,
-                        'action'      => esc_html__('Caching Infrastructure, Breeze & WP Rocket Audit', 'woo-get-data-for-ai'),
+                        'action'      => esc_html__('Caching Infrastructure, Runtime Constants & Performance Flags Audit', 'woo-get-data-for-ai'),
                         'endpoint'    => '/performance/caching',
                         'params'      => [],
-                        'description' => esc_html__('Inspects external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), Cloudways Breeze settings (basic cache, Gzip, browser cache, delay JS, varnish), and in-depth WP Rocket configuration (CSS mode RUCSS vs CPCSS, safelist, Delay JS exclusions and safe mode, lazyload, mobile caching).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['object_cache.enabled', 'page_cache.advanced_cache_dropin', 'breeze.is_active', 'breeze.basic.cache_system', 'breeze.file_optimization.delay_js', 'wp_rocket.is_active', 'wp_rocket.css.mode', 'wp_rocket.javascript.delay_js'],
+                        'description' => esc_html__('Inspects runtime performance constants from wp-config.php (SAVEQUERIES memory leak check, SCRIPT_DEBUG, WP_POST_REVISIONS cap, WP_MEMORY_LIMIT, WP_CACHE), external Object Cache (Redis/Memcached), Page Cache drop-in (advanced-cache.php), Cloudways Breeze settings, and in-depth WP Rocket configuration.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['runtime_constants.savequeries', 'runtime_constants.has_critical_alerts', 'object_cache.enabled', 'page_cache.advanced_cache_dropin', 'breeze.is_active', 'breeze.basic.cache_system', 'breeze.file_optimization.delay_js', 'wp_rocket.is_active', 'wp_rocket.css.mode', 'wp_rocket.javascript.delay_js'],
                     ],
                     [
                         'step'        => 2,
@@ -254,6 +259,8 @@ class Playbooks {
                     'rechercher réglage',
                     'recherche globale',
                     'trouver option',
+                    'savequeries bdd',
+                    'constantes performance',
                 ],
                 'workflow'        => [
                     [
@@ -261,8 +268,8 @@ class Playbooks {
                         'action'      => esc_html__('Server Limits & Environment Diagnostic', 'woo-get-data-for-ai'),
                         'endpoint'    => '/system',
                         'params'      => [],
-                        'description' => esc_html__('Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['system.php_version', 'system.php_memory_limit', 'system.opcache_enabled', 'wordpress.debug_mode', 'security.file_edit_disabled'],
+                        'description' => esc_html__('Checks PHP version, memory_limit (minimum 256M recommended for Woo), max_execution_time, MySQL version, OPcache, active plugins with update status, runtime wp-config performance constants (SAVEQUERIES, SCRIPT_DEBUG, WP_POST_REVISIONS), and security constants (DISALLOW_FILE_EDIT, XML-RPC exposure, WP_DEBUG_DISPLAY via /system/security).', 'woo-get-data-for-ai'),
+                        'key_signals' => ['system.php_version', 'system.php_memory_limit', 'system.runtime_constants.savequeries', 'system.runtime_constants.alerts', 'system.opcache_enabled', 'wordpress.debug_mode', 'security.file_edit_disabled'],
                     ],
                     [
                         'step'        => 2,
@@ -828,6 +835,11 @@ class Playbooks {
         $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n";
         $md .= "7. **UNIVERSAL CACHING & OPTIMIZATION AUDIT (WP ROCKET / BREEZE / OBJECT CACHE)**:\n";
         $md .= "   - Run `GET /performance/caching` (or alias `GET /system/caching`) to inspect caching infrastructure:\n";
+        $md .= "     - **Runtime Performance Constants (`runtime_constants`)**:\n";
+        $md .= "       - `SAVEQUERIES`: **CRITICAL ALERT** if enabled in production. When `SAVEQUERIES` is `true`, WordPress stores all SQL queries, caller backtraces, and execution times in memory (`\$wpdb->queries`), triggering severe memory leaks and TTFB degradation. Must be set to `false` in `wp-config.php`.\n";
+        $md .= "       - `SCRIPT_DEBUG`: Alert if active on live sites (forces unminified core CSS/JS assets, multiplying asset weight).\n";
+        $md .= "       - `WP_POST_REVISIONS`: Checks whether post revisions are capped (recommended: 5-10 or false) to prevent exponential database bloat in `wp_posts`.\n";
+        $md .= "       - `WP_MEMORY_LIMIT`: Ensures at least 256M is allocated for WooCommerce operations.\n";
         $md .= "     - **External Object Cache (`object_cache.enabled`)**: Must be active on high-traffic WooCommerce stores to relieve database pressure.\n";
         $md .= "     - **Page Cache (`page_cache.advanced_cache_dropin`)**: Verifies `advanced-cache.php` drop-in and active caching engine.\n";
         $md .= "     - **Breeze Deep Inspection (`breeze.is_active`)**:\n";
