@@ -412,6 +412,16 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.37.1 (2026-09-21)
+- **Correctif Fatal Error `Redaction::redact_array` & Ajout de `Redaction::mask_ip` (`includes/class-redaction.php`, `includes/api/class-system-controller.php`)** :
+  - **Correction du Fatal Error dans `GET /system/search`** :
+    - Remplacement de l'appel erroné `\WPAgentBridge\Redaction::redact_array()` par `Redaction::redact_data()` lors de la recherche dans les options sérialisées / tableaux `$wpdb->options`.
+    - Ajout de la méthode `Redaction::redact_array()` en tant qu'alias défensif sécurisé vers `redact_data()`.
+    - Ajout de la méthode `Redaction::sanitize_output()` comme alias vers `redact_data()`.
+  - **Implémentation de `Redaction::mask_ip()`** :
+    - Implémentation robuste de l'anonymisation RGPD des adresses IP IPv4 (masquage du dernier octet) et IPv6 (masquage des 80 derniers bits), avec bascule native sur `wp_privacy_anonymize_ip()` si disponible dans l'environnement WordPress.
+    - Sécurisation des endpoints de monitoring 404 (`GET /content/404-monitoring`) qui appelaient `Redaction::mask_ip()`.
+
 ### v1.37.0 (2026-09-18)
 - **Audit des Constantes de Performance d'Exécution & Détection SAVEQUERIES (`includes/api/class-system-controller.php`, `class-performance-controller.php`, `class-permissions.php`, `class-playbooks.php`, `cli/translations-fr.php`)** :
   - **Détection des Fuites Mémoire SAVEQUERIES en Production** :

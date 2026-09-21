@@ -221,4 +221,60 @@ class Redaction {
 
         return $data;
     }
+
+    /**
+     * Anonymize/mask IP address for GDPR compliance.
+     *
+     * @param string $ip
+     * @return string
+     */
+    public static function mask_ip($ip) {
+        if (!is_string($ip) || empty(trim($ip))) {
+            return '';
+        }
+
+        $ip = trim($ip);
+
+        if (function_exists('wp_privacy_anonymize_ip')) {
+            return wp_privacy_anonymize_ip($ip);
+        }
+
+        // Native IPv4 fallback (mask last octet)
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $parts = explode('.', $ip);
+            $parts[3] = '0';
+            return implode('.', $parts);
+        }
+
+        // Native IPv6 fallback (mask last 80 bits)
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $packed = inet_pton($ip);
+            if ($packed !== false) {
+                $mask = str_repeat("\xFF", 6) . str_repeat("\x00", 10);
+                return inet_ntop($packed & $mask);
+            }
+        }
+
+        return preg_replace('/\d+$/', '0', $ip);
+    }
+
+    /**
+     * Alias for redact_data when handling arrays.
+     *
+     * @param array $data
+     * @return array
+     */
+    public static function redact_array(array $data) {
+        return (array) self::redact_data($data);
+    }
+
+    /**
+     * Alias for redact_data to sanitize output payloads.
+     *
+     * @param mixed $data
+     * @return mixed
+     */
+    public static function sanitize_output($data) {
+        return self::redact_data($data);
+    }
 }

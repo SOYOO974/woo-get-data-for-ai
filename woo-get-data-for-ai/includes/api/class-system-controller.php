@@ -1368,10 +1368,10 @@ class System_Controller extends Rest_Controller {
 
                         $decoded = maybe_unserialize($raw_val);
                         if (is_array($decoded) || is_object($decoded)) {
-                            $cleaned   = \WPAgentBridge\Redaction::redact_array((array) $decoded);
+                            $cleaned   = Redaction::redact_data((array) $decoded);
                             $as_string = wp_json_encode($cleaned);
                         } else {
-                            $as_string = \WPAgentBridge\Redaction::redact_string($raw_val);
+                            $as_string = Redaction::redact_string($raw_val);
                         }
 
                         $snippet = $extract_snippet($as_string, $query, 80);
