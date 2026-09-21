@@ -1354,7 +1354,7 @@ class System_Controller extends Rest_Controller {
                     }
 
                     $opt_name     = $row->option_name;
-                    $is_sensitive = \WPAgentBridge\Redaction::is_sensitive_key($opt_name);
+                    $is_sensitive = Redaction::is_sensitive_key($opt_name);
 
                     $in_name = (mb_stripos($opt_name, $query) !== false);
                     $in_val  = false;
@@ -1364,17 +1364,17 @@ class System_Controller extends Rest_Controller {
                         $snippet = '[REDACTED_SENSITIVE_OPTION]';
                     } else {
                         $raw_val = $row->option_value;
-                        $in_val  = (mb_stripos($raw_val, $query) !== false);
+                        $in_val  = (mb_stripos((string) $raw_val, $query) !== false);
 
                         $decoded = maybe_unserialize($raw_val);
                         if (is_array($decoded) || is_object($decoded)) {
                             $cleaned   = Redaction::redact_data((array) $decoded);
                             $as_string = wp_json_encode($cleaned);
                         } else {
-                            $as_string = Redaction::redact_string($raw_val);
+                            $as_string = Redaction::redact_string((string) $raw_val);
                         }
 
-                        $snippet = $extract_snippet($as_string, $query, 80);
+                        $snippet = $extract_snippet((string) $as_string, $query, 80);
                     }
 
                     $options_matches[] = [

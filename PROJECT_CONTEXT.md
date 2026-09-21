@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-18  
+> **Last Updated**: 2026-09-21  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -411,6 +411,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.37.2 (2026-09-21)
+- **Blindage Défensif de `Redaction::redact_array` & Nettoyage des Appels `System_Controller` (`includes/class-redaction.php`, `includes/api/class-system-controller.php`)** :
+  - **Typage Défensif Multi-Types pour `Redaction::redact_array($data)`** :
+    - Remplacement du typage strict `array $data` par un parsing permissif et sécurisé (`mixed $data`), convertissant objets et scalaires sans risque de déclencher une `TypeError` PHP si une option désérialisée inattendue est transmise.
+  - **Standardisation des Appels de Classe dans `System_Controller::search_system()`** :
+    - Remplacement de l'appel direct résiduel `\WPAgentBridge\Redaction::is_sensitive_key()` par `Redaction::is_sensitive_key()` (déjà importé via `use`).
+    - Cast systématique en chaîne `(string) $raw_val` pour les options scalaires lors du caviardage et de l'extraction d'extraits.
 
 ### v1.37.1 (2026-09-21)
 - **Correctif Fatal Error `Redaction::redact_array` & Ajout de `Redaction::mask_ip` (`includes/class-redaction.php`, `includes/api/class-system-controller.php`)** :

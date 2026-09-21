@@ -259,12 +259,15 @@ class Redaction {
     }
 
     /**
-     * Alias for redact_data when handling arrays.
+     * Defensive alias for redact_data when handling arrays or serialized data.
      *
-     * @param array $data
+     * @param mixed $data
      * @return array
      */
-    public static function redact_array(array $data) {
+    public static function redact_array($data) {
+        if (!is_array($data)) {
+            $data = is_object($data) ? (array) $data : (empty($data) ? [] : [$data]);
+        }
         return (array) self::redact_data($data);
     }
 
