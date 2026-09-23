@@ -498,6 +498,16 @@ class Playbooks {
                     'diagnostic tracking',
                     'vérifier le tracking',
                     'suivi des conversions',
+                    'pacing publicitaire',
+                    'saisonnalite ventes',
+                    'budget google ads',
+                    'budget meta ads',
+                    'ad scheduling',
+                    'dayparting',
+                    'fenetre de paie',
+                    'effet paie',
+                    'decades ventes',
+                    'repartition budget pub',
                 ],
                 'workflow'        => [
                     [
@@ -547,6 +557,14 @@ class Playbooks {
                         'params'      => [],
                         'description' => esc_html__('Audits Meta CAPI v21.0 (Pixel ID, Access Token, test event code in production, Action Scheduler queue, recent order syncs), Google Ads Server-Side (OAuth Refresh Token, Merchant ID, Conversion Action ID, database error logs), cookie banner (native woo_gads_consent or CMP like Complianz/Axeptio), and Google Consent Mode v2 signal coherence.', 'woo-get-data-for-ai'),
                         'key_signals' => ['summary.status', 'summary.alerts', 'meta_tracking.configuration.pixel_id_valid_format', 'meta_tracking.action_scheduler.failed_last_7d', 'meta_tracking.recent_orders_summary.success_rate_pct', 'google_ads_tracking.configuration.refresh_token_status', 'google_ads_tracking.database_logs.error_count', 'gdpr_cookie_banner.cmp_detected.name', 'gdpr_cookie_banner.coherence_check.is_cookie_coherent', 'recommendations'],
+                    ],
+                    [
+                        'step'        => 7,
+                        'action'      => esc_html__('Advertising Seasonality & Budget Pacing (Decades, Pay Window & Dayparting)', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/woocommerce/analytics/pacing',
+                        'params'      => ['range' => 'last_12_months'],
+                        'description' => esc_html__('Analyzes multi-month sales seasonality, monthly decades split (1-10, 11-20, 21-31), payday window effect (days 25-5 vs 6-24), day-of-month rankings (1-31), day-of-week performance, and 24-hour dayparting for Google Ads & Meta Ads budget allocation.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['decades.early_month.net_sales_pct', 'pay_window.lift_vs_rest.daily_sales_lift_pct', 'recommendations.decades_budget_allocation', 'recommendations.pay_window_pacing.daily_multiplier_pay_window', 'hourly_profile.peak_hours'],
                     ],
                 ],
             ],
@@ -943,6 +961,7 @@ class Playbooks {
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/mail'\n\n";
         $md .= "# Pillar 5: 360° E-Commerce Sales & Analytics\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/sales?range=last_30_days'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/pacing?range=last_12_months'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/analytics/overview?range=last_30_days'\n\n";
         $md .= "# Pillar 6: Shipping Logistics & Flexible Rules\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/shipping'\n\n";

@@ -292,6 +292,42 @@ class Woocommerce_Controller extends Rest_Controller {
             ],
         ]);
 
+        // GET /woocommerce/analytics/pacing (Advertising seasonality, month decades, pay window, day-of-month rankings, day-of-week, 24h dayparting & budget allocation)
+        register_rest_route(self::NAMESPACE, '/woocommerce/analytics/pacing', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_pacing_analytics'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'woocommerce');
+            },
+            'args'                => [
+                'range'          => [
+                    'default'           => 'last_12_months',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Analysis timeframe: last_12_months, last_24_months, all_time, custom',
+                ],
+                'start_date'     => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Start date for custom range (YYYY-MM-DD)',
+                ],
+                'end_date'       => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'End date for custom range (YYYY-MM-DD)',
+                ],
+                'status'         => [
+                    'default'           => 'wc-completed,wc-processing,wc-on-hold',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Comma-separated paid order statuses to include',
+                ],
+                'monthly_budget' => [
+                    'default'           => 0,
+                    'sanitize_callback' => 'floatval',
+                    'description'       => 'Optional monthly advertising budget for euro pacing simulator',
+                ],
+            ],
+        ]);
+
         // GET /woocommerce/webhooks (Active and failing webhooks inventory)
         register_rest_route(self::NAMESPACE, '/woocommerce/webhooks', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -2876,8 +2912,751 @@ class Woocommerce_Controller extends Rest_Controller {
                 'low_stock_threshold'    => $low_threshold,
                 'dormant_items_count'    => count($dormant_items),
             ],
-            'low_stock_alerts' => $low_stock_items,
-            'dormant_stock_90d'=> $dormant_items,
+        ]);
+    }
+
+    /**
+     * GET /woocommerce/analytics/pacing
+     * Advertising seasonality and budget pacing intelligence for Google Ads & Meta Ads.
+     * Analyzes sales distribution by month decades (1-10, 11-20, 21-31), pay window (25th to 5th),
+     * day-of-month rankings (1-31), day-of-week performance, and 24-hour dayparting.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_pacing_analytics(\WP_REST_Request $request) {
+        if (!$this->is_woocommerce_active()) {
+            return $this->error('woocommerce_not_active', 'WooCommerce is not active on this site.', 404);
+        }
+
+        global $wpdb;
+
+        $range          = sanitize_text_field((string) $request->get_param('range'));
+        $start_date     = sanitize_text_field((string) $request->get_param('start_date'));
+        $end_date       = sanitize_text_field((string) $request->get_param('end_date'));
+        $status_param   = $request->get_param('status');
+        $monthly_budget = floatval($request->get_param('monthly_budget'));
+
+        if (empty($range)) {
+            $range = 'last_12_months';
+        }
+
+        // 1. Table Detection (wc_order_stats -> wc_orders [HPOS] -> wp_posts [Legacy])
+        $order_stats_table = $wpdb->prefix . 'wc_order_stats';
+        $has_order_stats   = $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
+
+        $orders_table      = $wpdb->prefix . 'wc_orders';
+        $has_hpos          = !$has_order_stats && ($wpdb->get_var("SHOW TABLES LIKE '{$orders_table}'") === $orders_table);
+
+        // 2. Parse & normalize status filters
+        $raw_statuses = [];
+        if (is_array($status_param)) {
+            $raw_statuses = $status_param;
+        } elseif (is_string($status_param) && trim($status_param) !== '') {
+            $raw_statuses = array_map('trim', explode(',', $status_param));
+        } else {
+            $raw_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold'];
+        }
+
+        $normalized_statuses = [];
+        foreach ($raw_statuses as $st) {
+            $st = sanitize_text_field(trim($st));
+            if ($st === '') {
+                continue;
+            }
+            if (strpos($st, 'wc-') === 0) {
+                $normalized_statuses[] = $st;
+                $normalized_statuses[] = substr($st, 3);
+            } else {
+                $normalized_statuses[] = 'wc-' . $st;
+                $normalized_statuses[] = $st;
+            }
+        }
+        $normalized_statuses = array_values(array_unique($normalized_statuses));
+        if (empty($normalized_statuses)) {
+            $normalized_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+        }
+        $status_placeholders = implode("','", array_map('esc_sql', $normalized_statuses));
+
+        // 3. Resolve Date Boundaries
+        $now = current_time('timestamp');
+        $today_end = date('Y-m-d 23:59:59', $now);
+
+        switch ($range) {
+            case 'last_24_months':
+                $start_ts   = strtotime('-24 months 00:00:00', $now);
+                $start_date = date('Y-m-d 00:00:00', $start_ts);
+                $end_date   = $today_end;
+                $range_label = esc_html__('Last 24 Months', 'woo-get-data-for-ai');
+                break;
+
+            case 'all_time':
+                $earliest_date = null;
+                if ($has_order_stats) {
+                    $earliest_date = $wpdb->get_var("SELECT MIN(date_created) FROM {$order_stats_table} WHERE status IN ('{$status_placeholders}')");
+                } elseif ($has_hpos) {
+                    $earliest_date = $wpdb->get_var("SELECT MIN(date_created_gmt) FROM {$orders_table} WHERE type = 'shop_order' AND status IN ('{$status_placeholders}')");
+                } else {
+                    $earliest_date = $wpdb->get_var("SELECT MIN(post_date) FROM {$wpdb->posts} WHERE post_type = 'shop_order' AND post_status IN ('{$status_placeholders}')");
+                }
+                $start_date = !empty($earliest_date) ? date('Y-m-d 00:00:00', strtotime($earliest_date)) : date('Y-01-01 00:00:00', $now);
+                $end_date   = $today_end;
+                $range_label = esc_html__('All Time', 'woo-get-data-for-ai');
+                break;
+
+            case 'custom':
+                if (!empty($start_date) && !empty($end_date)) {
+                    $s_ts = strtotime($start_date . ' 00:00:00');
+                    $e_ts = strtotime($end_date . ' 23:59:59');
+                    if ($s_ts > $e_ts) {
+                        $temp = $s_ts;
+                        $s_ts = $e_ts;
+                        $e_ts = $temp;
+                    }
+                    $start_date = date('Y-m-d 00:00:00', $s_ts);
+                    $end_date   = date('Y-m-d 23:59:59', $e_ts);
+                    $range_label = esc_html__('Custom Period', 'woo-get-data-for-ai');
+                    break;
+                }
+                // Fallthrough if invalid custom dates
+
+            case 'last_12_months':
+            default:
+                $start_ts   = strtotime('-12 months 00:00:00', $now);
+                $start_date = date('Y-m-d 00:00:00', $start_ts);
+                $end_date   = $today_end;
+                $range_label = esc_html__('Last 12 Months', 'woo-get-data-for-ai');
+                break;
+        }
+
+        $currency        = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'EUR';
+        $currency_symbol = function_exists('get_woocommerce_currency_symbol') ? html_entity_decode(get_woocommerce_currency_symbol($currency), ENT_QUOTES, 'UTF-8') : '€';
+
+        // 4. Execute SQL Queries
+        $daily_rows  = [];
+        $hourly_rows = [];
+        $engine_used = 'legacy';
+
+        if ($has_order_stats) {
+            $engine_used = 'woocommerce_order_stats';
+
+            // Query 1: Daily aggregates (Date, orders count, net sales)
+            $daily_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    DATE(date_created) as order_date,
+                    COUNT(order_id) as orders_count,
+                    COALESCE(SUM(net_total), 0) as net_sales
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                  AND status IN ('{$status_placeholders}')
+                GROUP BY DATE(date_created)
+                ORDER BY order_date ASC
+            ", $start_date, $end_date), ARRAY_A);
+
+            // Query 2: Hourly aggregates for Dayparting (0 to 23 hours)
+            $hourly_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    HOUR(date_created) as hour_of_day,
+                    COUNT(order_id) as orders_count,
+                    COALESCE(SUM(net_total), 0) as net_sales
+                FROM {$order_stats_table}
+                WHERE date_created >= %s AND date_created <= %s
+                  AND status IN ('{$status_placeholders}')
+                GROUP BY HOUR(date_created)
+                ORDER BY hour_of_day ASC
+            ", $start_date, $end_date), ARRAY_A);
+
+        } elseif ($has_hpos) {
+            $engine_used = 'woocommerce_hpos';
+
+            $daily_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    DATE(date_created_gmt) as order_date,
+                    COUNT(id) as orders_count,
+                    COALESCE(SUM(total_amount - tax_amount), 0) as net_sales
+                FROM {$orders_table}
+                WHERE date_created_gmt >= %s AND date_created_gmt <= %s
+                  AND type = 'shop_order'
+                  AND status IN ('{$status_placeholders}')
+                GROUP BY DATE(date_created_gmt)
+                ORDER BY order_date ASC
+            ", $start_date, $end_date), ARRAY_A);
+
+            $hourly_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    HOUR(date_created_gmt) as hour_of_day,
+                    COUNT(id) as orders_count,
+                    COALESCE(SUM(total_amount - tax_amount), 0) as net_sales
+                FROM {$orders_table}
+                WHERE date_created_gmt >= %s AND date_created_gmt <= %s
+                  AND type = 'shop_order'
+                  AND status IN ('{$status_placeholders}')
+                GROUP BY HOUR(date_created_gmt)
+                ORDER BY hour_of_day ASC
+            ", $start_date, $end_date), ARRAY_A);
+
+        } else {
+            // Legacy wp_posts + wp_postmeta fallback
+            $daily_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    DATE(p.post_date) as order_date,
+                    COUNT(p.ID) as orders_count,
+                    COALESCE(SUM(CAST(mt.meta_value AS DECIMAL(10,2)) - COALESCE(CAST(mx.meta_value AS DECIMAL(10,2)), 0)), 0) as net_sales
+                FROM {$wpdb->posts} p
+                LEFT JOIN {$wpdb->postmeta} mt ON (p.ID = mt.post_id AND mt.meta_key = '_order_total')
+                LEFT JOIN {$wpdb->postmeta} mx ON (p.ID = mx.post_id AND mx.meta_key = '_order_tax')
+                WHERE p.post_type = 'shop_order'
+                  AND p.post_status IN ('{$status_placeholders}')
+                  AND p.post_date >= %s AND p.post_date <= %s
+                GROUP BY DATE(p.post_date)
+                ORDER BY order_date ASC
+            ", $start_date, $end_date), ARRAY_A);
+
+            $hourly_rows = $wpdb->get_results($wpdb->prepare("
+                SELECT 
+                    HOUR(p.post_date) as hour_of_day,
+                    COUNT(p.ID) as orders_count,
+                    COALESCE(SUM(CAST(mt.meta_value AS DECIMAL(10,2)) - COALESCE(CAST(mx.meta_value AS DECIMAL(10,2)), 0)), 0) as net_sales
+                FROM {$wpdb->posts} p
+                LEFT JOIN {$wpdb->postmeta} mt ON (p.ID = mt.post_id AND mt.meta_key = '_order_total')
+                LEFT JOIN {$wpdb->postmeta} mx ON (p.ID = mx.post_id AND mx.meta_key = '_order_tax')
+                WHERE p.post_type = 'shop_order'
+                  AND p.post_status IN ('{$status_placeholders}')
+                  AND p.post_date >= %s AND p.post_date <= %s
+                GROUP BY HOUR(p.post_date)
+                ORDER BY hour_of_day ASC
+            ", $start_date, $end_date), ARRAY_A);
+        }
+
+        // 5. Generate Exact Calendar Day Inventory (Denominator normalization)
+        $cal_start_ts = strtotime(substr($start_date, 0, 10));
+        $cal_end_ts   = strtotime(substr($end_date, 0, 10));
+
+        $calendar_days_count = 0;
+        $observed_days_of_month = array_fill(1, 31, 0);
+        $observed_days_of_week  = array_fill(1, 7, 0); // 1 = Monday, 7 = Sunday (ISO-8601)
+        $observed_decades = [
+            'early_month' => 0, // days 1..10
+            'mid_month'   => 0, // days 11..20
+            'late_month'  => 0, // days 21..31
+        ];
+        $observed_pay_window = [
+            'pay_window'    => 0, // days 25..31 & 1..5
+            'rest_of_month' => 0, // days 6..24
+        ];
+        $observed_weekparts = [
+            'weekday' => 0, // Mon..Fri (1..5)
+            'weekend' => 0, // Sat..Sun (6..7)
+        ];
+
+        $cur_ts = $cal_start_ts;
+        while ($cur_ts <= $cal_end_ts) {
+            $dom = (int) date('j', $cur_ts);
+            $dow = (int) date('N', $cur_ts);
+
+            $calendar_days_count++;
+            $observed_days_of_month[$dom]++;
+            $observed_days_of_week[$dow]++;
+
+            if ($dom <= 10) {
+                $observed_decades['early_month']++;
+            } elseif ($dom <= 20) {
+                $observed_decades['mid_month']++;
+            } else {
+                $observed_decades['late_month']++;
+            }
+
+            if ($dom >= 25 || $dom <= 5) {
+                $observed_pay_window['pay_window']++;
+            } else {
+                $observed_pay_window['rest_of_month']++;
+            }
+
+            if ($dow <= 5) {
+                $observed_weekparts['weekday']++;
+            } else {
+                $observed_weekparts['weekend']++;
+            }
+
+            $cur_ts = strtotime('+1 day', $cur_ts);
+        }
+
+        // 6. Aggregate Sales Data into Buckets
+        $total_orders    = 0;
+        $total_net_sales = 0.0;
+
+        $decades_data = [
+            'early_month' => ['orders' => 0, 'net_sales' => 0.0],
+            'mid_month'   => ['orders' => 0, 'net_sales' => 0.0],
+            'late_month'  => ['orders' => 0, 'net_sales' => 0.0],
+        ];
+
+        $pay_window_data = [
+            'pay_window'    => ['orders' => 0, 'net_sales' => 0.0],
+            'rest_of_month' => ['orders' => 0, 'net_sales' => 0.0],
+        ];
+
+        $dom_data = [];
+        for ($d = 1; $d <= 31; $d++) {
+            $dom_data[$d] = ['orders' => 0, 'net_sales' => 0.0];
+        }
+
+        $dow_data = [];
+        for ($w = 1; $w <= 7; $w++) {
+            $dow_data[$w] = ['orders' => 0, 'net_sales' => 0.0];
+        }
+
+        $weekparts_data = [
+            'weekday' => ['orders' => 0, 'net_sales' => 0.0],
+            'weekend' => ['orders' => 0, 'net_sales' => 0.0],
+        ];
+
+        if (!empty($daily_rows)) {
+            foreach ($daily_rows as $row) {
+                $date_str = $row['order_date'];
+                $orders   = (int) $row['orders_count'];
+                $sales    = (float) $row['net_sales'];
+
+                $d_ts = strtotime($date_str);
+                $dom  = (int) date('j', $d_ts);
+                $dow  = (int) date('N', $d_ts);
+
+                $total_orders    += $orders;
+                $total_net_sales += $sales;
+
+                // Decades
+                if ($dom <= 10) {
+                    $decades_data['early_month']['orders']    += $orders;
+                    $decades_data['early_month']['net_sales'] += $sales;
+                } elseif ($dom <= 20) {
+                    $decades_data['mid_month']['orders']    += $orders;
+                    $decades_data['mid_month']['net_sales'] += $sales;
+                } else {
+                    $decades_data['late_month']['orders']    += $orders;
+                    $decades_data['late_month']['net_sales'] += $sales;
+                }
+
+                // Pay window
+                if ($dom >= 25 || $dom <= 5) {
+                    $pay_window_data['pay_window']['orders']    += $orders;
+                    $pay_window_data['pay_window']['net_sales'] += $sales;
+                } else {
+                    $pay_window_data['rest_of_month']['orders']    += $orders;
+                    $pay_window_data['rest_of_month']['net_sales'] += $sales;
+                }
+
+                // Day of month (1..31)
+                $dom_data[$dom]['orders']    += $orders;
+                $dom_data[$dom]['net_sales'] += $sales;
+
+                // Day of week (1..7)
+                $dow_data[$dow]['orders']    += $orders;
+                $dow_data[$dow]['net_sales'] += $sales;
+
+                // Weekparts (weekday vs weekend)
+                if ($dow <= 5) {
+                    $weekparts_data['weekday']['orders']    += $orders;
+                    $weekparts_data['weekday']['net_sales'] += $sales;
+                } else {
+                    $weekparts_data['weekend']['orders']    += $orders;
+                    $weekparts_data['weekend']['net_sales'] += $sales;
+                }
+            }
+        }
+
+        // 7. Structure Decades Result
+        $decades_res = [];
+        $decade_labels = [
+            'early_month' => esc_html__('Days 01-10 (Early Month)', 'woo-get-data-for-ai'),
+            'mid_month'   => esc_html__('Days 11-20 (Mid Month)', 'woo-get-data-for-ai'),
+            'late_month'  => esc_html__('Days 21-31 (Late Month / Payday Kickoff)', 'woo-get-data-for-ai'),
+        ];
+
+        foreach (['early_month', 'mid_month', 'late_month'] as $dec_key) {
+            $d_orders = $decades_data[$dec_key]['orders'];
+            $d_sales  = $decades_data[$dec_key]['net_sales'];
+            $d_days   = max(1, $observed_decades[$dec_key]);
+
+            $decades_res[$dec_key] = [
+                'label'                 => $decade_labels[$dec_key],
+                'orders_count'          => $d_orders,
+                'orders_pct'            => $total_orders > 0 ? round(($d_orders / $total_orders) * 100, 2) : 0.0,
+                'net_sales'             => round($d_sales, 2),
+                'net_sales_pct'         => $total_net_sales > 0 ? round(($d_sales / $total_net_sales) * 100, 2) : 0.0,
+                'observed_days'         => $d_days,
+                'avg_net_sales_per_day' => round($d_sales / $d_days, 2),
+                'avg_orders_per_day'    => round($d_orders / $d_days, 2),
+                'aov'                   => $d_orders > 0 ? round($d_sales / $d_orders, 2) : 0.0,
+            ];
+        }
+
+        // 8. Structure Pay Window Result
+        $pw_orders = $pay_window_data['pay_window']['orders'];
+        $pw_sales  = $pay_window_data['pay_window']['net_sales'];
+        $pw_days   = max(1, $observed_pay_window['pay_window']);
+        $pw_avg_sales  = round($pw_sales / $pw_days, 2);
+        $pw_avg_orders = round($pw_orders / $pw_days, 2);
+        $pw_aov        = $pw_orders > 0 ? round($pw_sales / $pw_orders, 2) : 0.0;
+
+        $rm_orders = $pay_window_data['rest_of_month']['orders'];
+        $rm_sales  = $pay_window_data['rest_of_month']['net_sales'];
+        $rm_days   = max(1, $observed_pay_window['rest_of_month']);
+        $rm_avg_sales  = round($rm_sales / $rm_days, 2);
+        $rm_avg_orders = round($rm_orders / $rm_days, 2);
+        $rm_aov        = $rm_orders > 0 ? round($rm_sales / $rm_orders, 2) : 0.0;
+
+        $daily_sales_lift_pct  = $rm_avg_sales > 0 ? round((($pw_avg_sales - $rm_avg_sales) / $rm_avg_sales) * 100, 2) : 0.0;
+        $daily_orders_lift_pct = $rm_avg_orders > 0 ? round((($pw_avg_orders - $rm_avg_orders) / $rm_avg_orders) * 100, 2) : 0.0;
+        $aov_lift_pct          = $rm_aov > 0 ? round((($pw_aov - $rm_aov) / $rm_aov) * 100, 2) : 0.0;
+
+        $pay_window_res = [
+            'pay_window' => [
+                'label'                 => esc_html__('Payday Window (Days 25 to 05)', 'woo-get-data-for-ai'),
+                'days_range'            => esc_html__('25th of month to 5th of next month', 'woo-get-data-for-ai'),
+                'orders_count'          => $pw_orders,
+                'orders_pct'            => $total_orders > 0 ? round(($pw_orders / $total_orders) * 100, 2) : 0.0,
+                'net_sales'             => round($pw_sales, 2),
+                'net_sales_pct'         => $total_net_sales > 0 ? round(($pw_sales / $total_net_sales) * 100, 2) : 0.0,
+                'observed_days'         => $pw_days,
+                'avg_net_sales_per_day' => $pw_avg_sales,
+                'avg_orders_per_day'    => $pw_avg_orders,
+                'aov'                   => $pw_aov,
+            ],
+            'rest_of_month' => [
+                'label'                 => esc_html__('Mid-Month Core (Days 06 to 24)', 'woo-get-data-for-ai'),
+                'days_range'            => esc_html__('6th to 24th of month', 'woo-get-data-for-ai'),
+                'orders_count'          => $rm_orders,
+                'orders_pct'            => $total_orders > 0 ? round(($rm_orders / $total_orders) * 100, 2) : 0.0,
+                'net_sales'             => round($rm_sales, 2),
+                'net_sales_pct'         => $total_net_sales > 0 ? round(($rm_sales / $total_net_sales) * 100, 2) : 0.0,
+                'observed_days'         => $rm_days,
+                'avg_net_sales_per_day' => $rm_avg_sales,
+                'avg_orders_per_day'    => $rm_avg_orders,
+                'aov'                   => $rm_aov,
+            ],
+            'lift_vs_rest' => [
+                'daily_sales_lift_pct'  => $daily_sales_lift_pct,
+                'daily_orders_lift_pct' => $daily_orders_lift_pct,
+                'aov_lift_pct'          => $aov_lift_pct,
+                'pacing_velocity_ratio' => $rm_avg_sales > 0 ? round($pw_avg_sales / $rm_avg_sales, 2) : 1.0,
+            ],
+        ];
+
+        // 9. Structure Day of Month Result (1 to 31)
+        $days_of_month_list = [];
+        for ($d = 1; $d <= 31; $d++) {
+            $d_orders = $dom_data[$d]['orders'];
+            $d_sales  = $dom_data[$d]['net_sales'];
+            $d_days   = max(1, $observed_days_of_month[$d]);
+            $avg_s    = round($d_sales / $d_days, 2);
+            $avg_o    = round($d_orders / $d_days, 2);
+
+            $days_of_month_list[$d] = [
+                'day'                   => $d,
+                'orders_count'          => $d_orders,
+                'net_sales'             => round($d_sales, 2),
+                'observed_days'         => $d_days,
+                'avg_net_sales_per_day' => $avg_s,
+                'avg_orders_per_day'    => $avg_o,
+                'aov'                   => $d_orders > 0 ? round($d_sales / $d_orders, 2) : 0.0,
+                'revenue_share_pct'     => $total_net_sales > 0 ? round(($d_sales / $total_net_sales) * 100, 2) : 0.0,
+                'is_pay_window'         => ($d >= 25 || $d <= 5),
+                'decade'                => ($d <= 10 ? 'early_month' : ($d <= 20 ? 'mid_month' : 'late_month')),
+            ];
+        }
+
+        // Rank days by avg_net_sales_per_day descending
+        $ranked_days = $days_of_month_list;
+        uasort($ranked_days, function($a, $b) {
+            if ($b['avg_net_sales_per_day'] == $a['avg_net_sales_per_day']) {
+                return 0;
+            }
+            return ($b['avg_net_sales_per_day'] > $a['avg_net_sales_per_day']) ? 1 : -1;
+        });
+        $current_rank = 1;
+        foreach ($ranked_days as $d_key => $val) {
+            $days_of_month_list[$d_key]['rank'] = $current_rank++;
+        }
+        $days_of_month_res = array_values($days_of_month_list);
+
+        // 10. Structure Day of Week Result (Monday to Sunday)
+        $dow_names = [
+            1 => esc_html__('Monday', 'woo-get-data-for-ai'),
+            2 => esc_html__('Tuesday', 'woo-get-data-for-ai'),
+            3 => esc_html__('Wednesday', 'woo-get-data-for-ai'),
+            4 => esc_html__('Thursday', 'woo-get-data-for-ai'),
+            5 => esc_html__('Friday', 'woo-get-data-for-ai'),
+            6 => esc_html__('Saturday', 'woo-get-data-for-ai'),
+            7 => esc_html__('Sunday', 'woo-get-data-for-ai'),
+        ];
+
+        $day_of_week_list = [];
+        $overall_daily_avg_sales = $calendar_days_count > 0 ? ($total_net_sales / $calendar_days_count) : 0.0;
+
+        for ($w = 1; $w <= 7; $w++) {
+            $w_orders = $dow_data[$w]['orders'];
+            $w_sales  = $dow_data[$w]['net_sales'];
+            $w_days   = max(1, $observed_days_of_week[$w]);
+            $avg_s    = round($w_sales / $w_days, 2);
+            $avg_o    = round($w_orders / $w_days, 2);
+
+            $day_of_week_list[$w] = [
+                'day_index'             => $w,
+                'day_name'              => $dow_names[$w],
+                'orders_count'          => $w_orders,
+                'net_sales'             => round($w_sales, 2),
+                'observed_days'         => $w_days,
+                'avg_net_sales_per_day' => $avg_s,
+                'avg_orders_per_day'    => $avg_o,
+                'aov'                   => $w_orders > 0 ? round($w_sales / $w_orders, 2) : 0.0,
+                'revenue_share_pct'     => $total_net_sales > 0 ? round(($w_sales / $total_net_sales) * 100, 2) : 0.0,
+                'orders_share_pct'      => $total_orders > 0 ? round(($w_orders / $total_orders) * 100, 2) : 0.0,
+                'pacing_multiplier'     => $overall_daily_avg_sales > 0 ? round($avg_s / $overall_daily_avg_sales, 2) : 1.0,
+            ];
+        }
+
+        // Rank DOW
+        $ranked_dow = $day_of_week_list;
+        uasort($ranked_dow, function($a, $b) {
+            if ($b['avg_net_sales_per_day'] == $a['avg_net_sales_per_day']) {
+                return 0;
+            }
+            return ($b['avg_net_sales_per_day'] > $a['avg_net_sales_per_day']) ? 1 : -1;
+        });
+        $w_rank = 1;
+        foreach ($ranked_dow as $w_key => $val) {
+            $day_of_week_list[$w_key]['rank'] = $w_rank++;
+        }
+
+        $dow_keys_sorted = array_keys($ranked_dow);
+        $best_day_idx    = $dow_keys_sorted[0];
+        $worst_day_idx   = end($dow_keys_sorted);
+
+        // Weekday vs Weekend
+        $wd_days = max(1, $observed_weekparts['weekday']);
+        $we_days = max(1, $observed_weekparts['weekend']);
+        $wd_sales = $weekparts_data['weekday']['net_sales'];
+        $we_sales = $weekparts_data['weekend']['net_sales'];
+        $wd_avg_sales = round($wd_sales / $wd_days, 2);
+        $we_avg_sales = round($we_sales / $we_days, 2);
+
+        $day_of_week_res = [
+            'days' => array_values($day_of_week_list),
+            'summary' => [
+                'best_day'              => $dow_names[$best_day_idx],
+                'worst_day'             => $dow_names[$worst_day_idx],
+                'best_day_avg_sales'    => $day_of_week_list[$best_day_idx]['avg_net_sales_per_day'],
+                'worst_day_avg_sales'   => $day_of_week_list[$worst_day_idx]['avg_net_sales_per_day'],
+                'weekday_vs_weekend'    => [
+                    'weekday' => [
+                        'label'                 => esc_html__('Weekdays (Monday to Friday)', 'woo-get-data-for-ai'),
+                        'orders_count'          => $weekparts_data['weekday']['orders'],
+                        'net_sales'             => round($wd_sales, 2),
+                        'observed_days'         => $wd_days,
+                        'avg_net_sales_per_day' => $wd_avg_sales,
+                        'avg_orders_per_day'    => round($weekparts_data['weekday']['orders'] / $wd_days, 2),
+                        'revenue_share_pct'     => $total_net_sales > 0 ? round(($wd_sales / $total_net_sales) * 100, 2) : 0.0,
+                    ],
+                    'weekend' => [
+                        'label'                 => esc_html__('Weekend (Saturday & Sunday)', 'woo-get-data-for-ai'),
+                        'orders_count'          => $weekparts_data['weekend']['orders'],
+                        'net_sales'             => round($we_sales, 2),
+                        'observed_days'         => $we_days,
+                        'avg_net_sales_per_day' => $we_avg_sales,
+                        'avg_orders_per_day'    => round($weekparts_data['weekend']['orders'] / $we_days, 2),
+                        'revenue_share_pct'     => $total_net_sales > 0 ? round(($we_sales / $total_net_sales) * 100, 2) : 0.0,
+                    ],
+                    'weekend_sales_lift_pct' => $wd_avg_sales > 0 ? round((($we_avg_sales - $wd_avg_sales) / $wd_avg_sales) * 100, 2) : 0.0,
+                ],
+            ],
+        ];
+
+        // 11. Structure Hourly Profile (Dayparting for Ad Scheduling)
+        $hourly_list = [];
+        for ($h = 0; $h <= 23; $h++) {
+            $hourly_list[$h] = [
+                'hour'              => $h,
+                'hour_formatted'    => sprintf('%02d:00 - %02d:59', $h, $h),
+                'orders_count'      => 0,
+                'net_sales'         => 0.0,
+                'revenue_share_pct' => 0.0,
+                'orders_share_pct'  => 0.0,
+                'aov'               => 0.0,
+            ];
+        }
+
+        if (!empty($hourly_rows)) {
+            foreach ($hourly_rows as $h_row) {
+                $h = (int) $h_row['hour_of_day'];
+                if ($h >= 0 && $h <= 23) {
+                    $h_orders = (int) $h_row['orders_count'];
+                    $h_sales  = (float) $h_row['net_sales'];
+
+                    $hourly_list[$h]['orders_count']      = $h_orders;
+                    $hourly_list[$h]['net_sales']         = round($h_sales, 2);
+                    $hourly_list[$h]['revenue_share_pct'] = $total_net_sales > 0 ? round(($h_sales / $total_net_sales) * 100, 2) : 0.0;
+                    $hourly_list[$h]['orders_share_pct']  = $total_orders > 0 ? round(($h_orders / $total_orders) * 100, 2) : 0.0;
+                    $hourly_list[$h]['aov']               = $h_orders > 0 ? round($h_sales / $h_orders, 2) : 0.0;
+                }
+            }
+        }
+
+        $ranked_hours = $hourly_list;
+        uasort($ranked_hours, function($a, $b) {
+            if ($b['net_sales'] == $a['net_sales']) {
+                return 0;
+            }
+            return ($b['net_sales'] > $a['net_sales']) ? 1 : -1;
+        });
+        $hour_keys_sorted = array_keys($ranked_hours);
+        $peak_hours   = array_slice($hour_keys_sorted, 0, 4);
+        $trough_hours = array_slice(array_reverse($hour_keys_sorted), 0, 4);
+        sort($peak_hours);
+        sort($trough_hours);
+
+        $hourly_res = [
+            'hours'                 => array_values($hourly_list),
+            'peak_hours'            => $peak_hours,
+            'trough_hours'          => $trough_hours,
+            'ad_schedule_guidance'  => [
+                'peak_bid_adjustment'   => sprintf(esc_html__('+15%% to +25%% during peak conversion windows (%s:00-%s:59)', 'woo-get-data-for-ai'), min($peak_hours), max($peak_hours)),
+                'trough_bid_adjustment' => sprintf(esc_html__('-40%% to -60%% during off-peak night hours (%s:00-%s:59)', 'woo-get-data-for-ai'), min($trough_hours), max($trough_hours)),
+            ],
+        ];
+
+        // 12. Structure Recommendations & Budget Allocation Pacing
+        $early_pct = $decades_res['early_month']['net_sales_pct'];
+        $mid_pct   = $decades_res['mid_month']['net_sales_pct'];
+        $late_pct  = $decades_res['late_month']['net_sales_pct'];
+
+        $sum_pct = $early_pct + $mid_pct + $late_pct;
+        if ($sum_pct > 0) {
+            $norm_early = round(($early_pct / $sum_pct) * 100, 1);
+            $norm_mid   = round(($mid_pct / $sum_pct) * 100, 1);
+            $norm_late  = round(100.0 - $norm_early - $norm_mid, 1);
+        } else {
+            $norm_early = 33.3;
+            $norm_mid   = 33.3;
+            $norm_late  = 33.4;
+        }
+
+        $overall_daily_sales = $calendar_days_count > 0 ? ($total_net_sales / $calendar_days_count) : 0.0;
+        $pw_multiplier       = $overall_daily_sales > 0 ? round($pw_avg_sales / $overall_daily_sales, 2) : 1.0;
+        $rm_multiplier       = $overall_daily_sales > 0 ? round($rm_avg_sales / $overall_daily_sales, 2) : 1.0;
+
+        $dow_multipliers = [];
+        $dow_keys_map = [1 => 'monday', 2 => 'tuesday', 3 => 'wednesday', 4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'];
+        foreach ($day_of_week_list as $w_idx => $w_item) {
+            $dow_multipliers[$dow_keys_map[$w_idx]] = $w_item['pacing_multiplier'];
+        }
+
+        // Budget simulation (if monthly_budget > 0 or default 1000 for illustration)
+        $sim_budget   = $monthly_budget > 0 ? $monthly_budget : 1000.0;
+        $early_budget = round(($norm_early / 100) * $sim_budget, 2);
+        $mid_budget   = round(($norm_mid / 100) * $sim_budget, 2);
+        $late_budget  = round($sim_budget - $early_budget - $mid_budget, 2);
+
+        $budget_simulation = [
+            'simulated_monthly_budget' => $sim_budget,
+            'currency'                 => $currency,
+            'is_custom_input'          => ($monthly_budget > 0),
+            'decades_allocation'       => [
+                'early_month' => [
+                    'total_budget' => $early_budget,
+                    'daily_budget' => round($early_budget / 10, 2),
+                ],
+                'mid_month'   => [
+                    'total_budget' => $mid_budget,
+                    'daily_budget' => round($mid_budget / 10, 2),
+                ],
+                'late_month'  => [
+                    'total_budget' => $late_budget,
+                    'daily_budget' => round($late_budget / 10.5, 2),
+                ],
+            ],
+            'pay_window_allocation'    => [
+                'pay_window_daily_budget'    => round(($sim_budget / 30) * $pw_multiplier, 2),
+                'rest_of_month_daily_budget' => round(($sim_budget / 30) * $rm_multiplier, 2),
+            ],
+        ];
+
+        // Actionable Insights / Strategic Takeaways
+        $insights = [];
+        $insights[] = sprintf(
+            /* translators: 1: Early month %, 2: Mid month %, 3: Late month % */
+            esc_html__('Recommended budget pacing by decades: %.1f%% to Early Month (days 1-10), %.1f%% to Mid Month (days 11-20), and %.1f%% to Late Month (days 21-31).', 'woo-get-data-for-ai'),
+            $norm_early, $norm_mid, $norm_late
+        );
+
+        if ($daily_sales_lift_pct > 15) {
+            $insights[] = sprintf(
+                /* translators: 1: Sales lift %, 2: Velocity ratio, 3: Pay window multiplier, 4: Rest multiplier */
+                esc_html__('Significant Payday Window Effect detected: Daily revenue surges by +%.1f%% between the 25th and the 5th (%.2fx baseline velocity). Scale daily ad budgets to %.2fx during this 11-day window, then throttle to %.2fx from days 6 to 24.', 'woo-get-data-for-ai'),
+                $daily_sales_lift_pct, $pay_window_res['lift_vs_rest']['pacing_velocity_ratio'], $pw_multiplier, $rm_multiplier
+            );
+        } else {
+            $insights[] = sprintf(
+                /* translators: 1: Sales lift %, 2: Pay window multiplier, 3: Rest multiplier */
+                esc_html__('Moderate Payday Window Effect (+%.1f%% lift). Keep daily budgets relatively even across the month (%.2fx during days 25-5 vs %.2fx off-peak).', 'woo-get-data-for-ai'),
+                $daily_sales_lift_pct, $pw_multiplier, $rm_multiplier
+            );
+        }
+
+        $insights[] = sprintf(
+            /* translators: 1: Best day name, 2: Best day sales, 3: Currency, 4: Worst day name, 5: Worst day sales, 6: Currency */
+            esc_html__('Top performing day is %1$s (%2$.2f %3$s/day avg), while %4$s is lowest (%5$.2f %6$s/day avg). Adjust Google Ads & Meta day-of-week bid pacing accordingly.', 'woo-get-data-for-ai'),
+            $dow_names[$best_day_idx], $day_of_week_list[$best_day_idx]['avg_net_sales_per_day'], $currency_symbol,
+            $dow_names[$worst_day_idx], $day_of_week_list[$worst_day_idx]['avg_net_sales_per_day'], $currency_symbol
+        );
+
+        if (!empty($peak_hours)) {
+            $insights[] = sprintf(
+                /* translators: 1: Peak start hour, 2: Peak end hour, 3: Trough start hour, 4: Trough end hour */
+                esc_html__('Top conversion hours are %1$02d:00-%2$02d:59. Apply Google Ads Ad Schedule bid adjustments of +15%% to +25%% on peak windows and decrease -40%% to -60%% on off-peak night hours (%3$02d:00-%4$02d:59).', 'woo-get-data-for-ai'),
+                min($peak_hours), max($peak_hours), min($trough_hours), max($trough_hours)
+            );
+        }
+
+        $recommendations_res = [
+            'decades_budget_allocation' => [
+                'early_month_pct' => $norm_early,
+                'mid_month_pct'   => $norm_mid,
+                'late_month_pct'  => $norm_late,
+            ],
+            'pay_window_pacing' => [
+                'daily_multiplier_pay_window'    => $pw_multiplier,
+                'daily_multiplier_rest_of_month' => $rm_multiplier,
+                'payday_velocity_ratio'          => $pay_window_res['lift_vs_rest']['pacing_velocity_ratio'],
+            ],
+            'day_of_week_multipliers' => $dow_multipliers,
+            'budget_simulation'       => $budget_simulation,
+            'actionable_insights'     => $insights,
+        ];
+
+        return $this->response([
+            'engine'          => $engine_used,
+            'currency'        => $currency,
+            'currency_symbol' => $currency_symbol,
+            'period'          => [
+                'range'               => $range,
+                'label'               => $range_label,
+                'start_date'          => $start_date,
+                'end_date'            => $end_date,
+                'total_calendar_days' => $calendar_days_count,
+            ],
+            'totals'          => [
+                'orders_count'          => $total_orders,
+                'net_sales'             => round($total_net_sales, 2),
+                'avg_net_sales_per_day' => round($overall_daily_sales, 2),
+                'avg_orders_per_day'    => $calendar_days_count > 0 ? round($total_orders / $calendar_days_count, 2) : 0.0,
+                'average_order_value'   => $total_orders > 0 ? round($total_net_sales / $total_orders, 2) : 0.0,
+            ],
+            'decades'         => $decades_res,
+            'pay_window'      => $pay_window_res,
+            'days_of_month'   => $days_of_month_res,
+            'day_of_week'     => $day_of_week_res,
+            'hourly_profile'  => $hourly_res,
+            'recommendations' => $recommendations_res,
         ]);
     }
 

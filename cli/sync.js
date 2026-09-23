@@ -906,6 +906,70 @@ async function pullWooCommerce() {
             console.warn('  ⚠️ Could not fetch /woocommerce/analytics/sales:', salesErr.message);
         }
 
+        // 5b. Pull Advertising Seasonality & Budget Pacing
+        console.log('   🎯 Fetching Advertising Seasonality & Budget Pacing Analytics...');
+        let pacingData = null;
+        try {
+            pacingData = await makeRequest('/woocommerce/analytics/pacing?range=last_12_months');
+            writeJson(path.join(wcDir, 'analytics-pacing.json'), pacingData);
+
+            if (pacingData && pacingData.decades) {
+                let pacingMd = `# Advertising Seasonality & Budget Pacing Report (${pacingData.period ? pacingData.period.label : 'Last 12 Months'})\n\n`;
+                pacingMd += `**Currency**: ${pacingData.currency_symbol} (${pacingData.currency})  \n`;
+                pacingMd += `**Engine**: \`${pacingData.engine}\`  \n`;
+                pacingMd += `**Total Calendar Days Analyzed**: ${pacingData.period ? pacingData.period.total_calendar_days : '-'} days  \n`;
+                pacingMd += `**Total Net Revenue**: **${pacingData.totals ? pacingData.totals.net_sales : 0} ${pacingData.currency_symbol}** across ${pacingData.totals ? pacingData.totals.orders_count : 0} orders  \n\n`;
+
+                pacingMd += `## 🗓️ 1. Month Decades Breakdown (Répartition par Décades)\n\n`;
+                pacingMd += `| Decade | Days | Orders | Net Sales | Share of Revenue | Avg Sales/Day | AOV |\n|---|---|---|---|---|---|---|\n`;
+                for (const [key, dec] of Object.entries(pacingData.decades)) {
+                    pacingMd += `| **${dec.label}** | ${dec.observed_days}d | ${dec.orders_count} (${dec.orders_pct}%) | **${dec.net_sales} ${pacingData.currency_symbol}** | **${dec.net_sales_pct}%** | ${dec.avg_net_sales_per_day} ${pacingData.currency_symbol}/d | ${dec.aov} ${pacingData.currency_symbol} |\n`;
+                }
+
+                if (pacingData.pay_window && pacingData.pay_window.lift_vs_rest) {
+                    const pw = pacingData.pay_window;
+                    pacingMd += `\n## 💰 2. Payday Window Impact (Effet Paie : Jours 25 au 5)\n\n`;
+                    pacingMd += `| Window | Observed Days | Net Sales | Share % | Daily Velocity | Orders/Day | AOV |\n|---|---|---|---|---|---|---|\n`;
+                    pacingMd += `| **${pw.pay_window.label}** | ${pw.pay_window.observed_days}d | **${pw.pay_window.net_sales} ${pacingData.currency_symbol}** | **${pw.pay_window.net_sales_pct}%** | **${pw.pay_window.avg_net_sales_per_day} ${pacingData.currency_symbol}/d** | ${pw.pay_window.avg_orders_per_day} | ${pw.pay_window.aov} ${pacingData.currency_symbol} |\n`;
+                    pacingMd += `| **${pw.rest_of_month.label}** | ${pw.rest_of_month.observed_days}d | ${pw.rest_of_month.net_sales} ${pacingData.currency_symbol} | ${pw.rest_of_month.net_sales_pct}% | ${pw.rest_of_month.avg_net_sales_per_day} ${pacingData.currency_symbol}/d | ${pw.rest_of_month.avg_orders_per_day} | ${pw.rest_of_month.aov} ${pacingData.currency_symbol} |\n\n`;
+                    pacingMd += `> 🚀 **Payday Lift vs Rest of Month**: Daily revenue is **+${pw.lift_vs_rest.daily_sales_lift_pct}% higher** during pay window (**${pw.lift_vs_rest.pacing_velocity_ratio}x velocity**).\n\n`;
+                }
+
+                if (pacingData.day_of_week && pacingData.day_of_week.days) {
+                    pacingMd += `## 📅 3. Day of Week Performance (Lundi au Dimanche)\n\n`;
+                    pacingMd += `| Day | Orders | Net Sales | Share % | Avg Sales/Day | Pacing Multiplier | Rank |\n|---|---|---|---|---|---|---|\n`;
+                    for (const d of pacingData.day_of_week.days) {
+                        pacingMd += `| **${d.day_name}** | ${d.orders_count} | ${d.net_sales} ${pacingData.currency_symbol} | ${d.revenue_share_pct}% | ${d.avg_net_sales_per_day} ${pacingData.currency_symbol}/d | **${d.pacing_multiplier}x** | #${d.rank} |\n`;
+                    }
+                    if (pacingData.day_of_week.summary) {
+                        const s = pacingData.day_of_week.summary;
+                        pacingMd += `\n- **Best Day**: **${s.best_day}** (${s.best_day_avg_sales} ${pacingData.currency_symbol}/d)\n`;
+                        pacingMd += `- **Lowest Day**: **${s.worst_day}** (${s.worst_day_avg_sales} ${pacingData.currency_symbol}/d)\n`;
+                        if (s.weekday_vs_weekend) {
+                            pacingMd += `- **Weekend vs Weekdays**: Weekend daily sales are **${s.weekday_vs_weekend.weekend_sales_lift_pct >= 0 ? '+' : ''}${s.weekday_vs_weekend.weekend_sales_lift_pct}%** compared to weekdays.\n`;
+                        }
+                    }
+                }
+
+                if (pacingData.hourly_profile && pacingData.hourly_profile.ad_schedule_guidance) {
+                    pacingMd += `\n## ⏰ 4. Dayparting & Ad Scheduling Guidance (00h à 23h)\n\n`;
+                    pacingMd += `- **Peak Windows**: Hours **${pacingData.hourly_profile.peak_hours.join('h, ')}h** (${pacingData.hourly_profile.ad_schedule_guidance.peak_bid_adjustment})\n`;
+                    pacingMd += `- **Off-Peak Night**: Hours **${pacingData.hourly_profile.trough_hours.join('h, ')}h** (${pacingData.hourly_profile.ad_schedule_guidance.trough_bid_adjustment})\n\n`;
+                }
+
+                if (pacingData.recommendations && pacingData.recommendations.actionable_insights) {
+                    pacingMd += `## 🎯 5. Actionable Media Buying Recommendations\n\n`;
+                    for (const ins of pacingData.recommendations.actionable_insights) {
+                        pacingMd += `- ${ins}\n`;
+                    }
+                }
+
+                writeText(path.join(wcDir, 'pacing-report.md'), pacingMd);
+            }
+        } catch (pacingErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/analytics/pacing:', pacingErr.message);
+        }
+
         // 6. Pull Top Performers
         console.log('   🏆 Fetching Top Selling Products & Coupons...');
         try {

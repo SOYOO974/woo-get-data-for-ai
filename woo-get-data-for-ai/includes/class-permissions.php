@@ -71,8 +71,8 @@ class Permissions {
             ],
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails', '/woocommerce/account-tabs'],
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, advertising pacing & seasonality, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/pacing', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails', '/woocommerce/account-tabs'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
@@ -599,6 +599,12 @@ class Permissions {
                         'methods'     => ['GET'],
                         'params'      => ['range (today|yesterday|last_7_days|last_30_days|this_month|last_month|this_year|custom, default: last_30_days)', 'start_date (YYYY-MM-DD)', 'end_date (YYYY-MM-DD)'],
                         'description' => esc_html__('100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/analytics/pacing',
+                        'methods'     => ['GET'],
+                        'params'      => ['range (last_12_months|last_24_months|all_time|custom, default: last_12_months)', 'start_date (YYYY-MM-DD)', 'end_date (YYYY-MM-DD)', 'status (default: wc-completed,wc-processing,wc-on-hold)', 'monthly_budget (optional float)'],
+                        'description' => esc_html__('Advertising seasonality and budget pacing: month decades breakdown (days 1-10, 11-20, 21-31), payday window lift (days 25-5 vs 6-24), day-of-month rankings (1-31), day-of-week performance, 24-hour dayparting profile, and automatic budget pacing recommendations for Google Ads & Meta Ads.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/analytics/top-performers',
