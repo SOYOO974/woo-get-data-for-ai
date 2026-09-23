@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-23 09:27+00:00\n"
-"PO-Revision-Date: 2026-09-23 09:27+00:00\n"
+"POT-Creation-Date: 2026-09-23 12:26+00:00\n"
+"PO-Revision-Date: 2026-09-23 12:26+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -1482,7 +1482,7 @@ msgstr "Le différé JavaScript (Delay JS) de Breeze est désactivé. L'activer 
 msgid "Breeze Gzip compression or Browser Cache is disabled. Enabling them ensures static assets are compressed and cached by visitor browsers."
 msgstr "La compression Gzip ou la mise en cache navigateur de Breeze est désactivée. Les activer garantit que les ressources statiques sont compressées et mises en cache par le navigateur des visiteurs."
 
-#: includes/api/class-performance-controller.php:1738
+#: includes/api/class-performance-controller.php:1744
 msgid "Cache layers purged successfully according to requested scope."
 msgstr "Les couches de cache ont été purgées avec succès selon le périmètre demandé."
 

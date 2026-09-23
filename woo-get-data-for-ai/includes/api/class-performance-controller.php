@@ -1582,6 +1582,12 @@ class Performance_Controller extends Rest_Controller {
                     'status' => 'cleared',
                     'engine' => 'Rocket.net Cloudflare Enterprise CDN',
                 ];
+            } elseif (class_exists('CDN_Clear_Cache_Hooks') && method_exists('CDN_Clear_Cache_Hooks', 'purge_cache')) {
+                \CDN_Clear_Cache_Hooks::purge_cache();
+                $status['rocket_net_cdn'] = [
+                    'status' => 'cleared',
+                    'engine' => 'Rocket.net Cloudflare Enterprise CDN',
+                ];
             } else {
                 $status['rocket_net_cdn'] = [
                     'status' => 'not_detected',

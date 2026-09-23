@@ -415,6 +415,11 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.39.1 (2026-09-23)
+- **Support Purge Cache Rocket.net CDN via `CDN_Clear_Cache_Hooks` (`Performance_Controller`)** :
+  - Complétion de la détection Couche 1 dans `purge_caches()` : ajout de la détection de la classe officielle Rocket.net `CDN_Clear_Cache_Hooks::purge_cache()` (mu-plugin `cdn-clear-cache-hooks.php` / `cdn-cache-management.php`) en alternative à la fonction globale `purge_cache()`.
+  - Résout le retour silencieux `status: not_detected` observé sur les hébergements Rocket.net (ex. Conforama.re) lors des appels `POST /performance/cache/purge`.
+
 ### v1.39.0 (2026-09-23)
 - **Nouvel Endpoint de Pacing & Saisonnalité Publicitaire (`Woocommerce_Controller`)** :
   - **Route Dédiée `GET /woocommerce/analytics/pacing` (Permission: `woocommerce`)** :
@@ -723,7 +728,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
     - Endpoint opérationnel sécurisé déclenchable par les agents IA, les scripts CLI et les pipelines CI/CD (GitHub Actions) après déploiement de thème ou de snippets.
     - Paramètre `scope` (`all`, `cdn`, `page`, `object` ; défaut : `all`).
     - Exécution défensive ultra-légère multi-couches :
-      - *Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)* : Invalidation globale via `purge_cache()` (mu-plugin officiel Rocket.net).
+      - *Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)* : Invalidation globale via `purge_cache()` ou `CDN_Clear_Cache_Hooks::purge_cache()` (mu-plugins officiels Rocket.net).
       - *Couche 2 : WP Rocket* : Purge du cache domaine (`rocket_clean_domain()`), minification (`rocket_clean_minify()`), busting (`rocket_clean_busting()`) et CSS utilisé RUCSS via filtre SaaS (`rocket_saas_clean_all`).
       - *Couche 3 : Object Cache Pro / Redis / Memcached* : Invalidation du cache objet persistant via `wp_cache_flush()` avec détection de `wp_using_ext_object_cache()` et `\RedisCachePro\Plugin`.
       - *Couche 4 : Nettoyeurs complémentaires défensifs* : LiteSpeed Cache (`litespeed_purge_all`), Autoptimize (`autoptimizeCache::clearall()`), WP Super Cache (`wp_cache_clear_cache()`), W3 Total Cache (`w3tc_flush_all()`).
