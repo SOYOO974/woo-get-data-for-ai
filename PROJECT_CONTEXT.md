@@ -414,6 +414,10 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.38.2 (2026-09-23)
+- **Correctif Purge Cache WP Rocket RUCSS (`Performance_Controller`)** :
+  - Remplacement du hook d'action obsolète `do_action('rocket_rucss_clear_used_css')` par l'instruction officielle WP Rocket SaaS `rocket_saas_clean_all` (`wpm_apply_filters_typed('array', 'rocket_saas_clean_all', array())` avec fallback sur `apply_filters('rocket_saas_clean_all', array())`).
+
 ### v1.38.1 (2026-09-23)
 - **Support Woodmart CSS Mobile Paysage (`Theme_Controller`)** :
   - Ajout du champ `wide_mobile` dans l'objet `woodmart` de `GET /theme/custom-css`, extrayant la clé `css_wide_mobile` de `xts-woodmart-options` correspondant à l'onglet "Custom CSS for mobile landscape" de Woodmart.
@@ -692,7 +696,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
     - Paramètre `scope` (`all`, `cdn`, `page`, `object` ; défaut : `all`).
     - Exécution défensive ultra-légère multi-couches :
       - *Couche 1 : Rocket.net CDN (Cloudflare Enterprise Edge)* : Invalidation globale via `purge_cache()` (mu-plugin officiel Rocket.net).
-      - *Couche 2 : WP Rocket* : Purge du cache domaine (`rocket_clean_domain()`), minification (`rocket_clean_minify()`), busting (`rocket_clean_busting()`) et CSS utilisé RUCSS (`rocket_rucss_clear_used_css`).
+      - *Couche 2 : WP Rocket* : Purge du cache domaine (`rocket_clean_domain()`), minification (`rocket_clean_minify()`), busting (`rocket_clean_busting()`) et CSS utilisé RUCSS via filtre SaaS (`rocket_saas_clean_all`).
       - *Couche 3 : Object Cache Pro / Redis / Memcached* : Invalidation du cache objet persistant via `wp_cache_flush()` avec détection de `wp_using_ext_object_cache()` et `\RedisCachePro\Plugin`.
       - *Couche 4 : Nettoyeurs complémentaires défensifs* : LiteSpeed Cache (`litespeed_purge_all`), Autoptimize (`autoptimizeCache::clearall()`), WP Super Cache (`wp_cache_clear_cache()`), W3 Total Cache (`w3tc_flush_all()`).
   - **Contrat de Sécurité & Architecture Read-Only** :

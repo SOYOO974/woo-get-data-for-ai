@@ -1612,8 +1612,12 @@ class Performance_Controller extends Rest_Controller {
                 if (function_exists('rocket_clean_busting')) {
                     rocket_clean_busting();
                 }
-                // Purge Used CSS if RUCSS is active
-                do_action('rocket_rucss_clear_used_css');
+                // Purge Used CSS if RUCSS is active (WP Rocket SaaS)
+                if (function_exists('wpm_apply_filters_typed')) {
+                    wpm_apply_filters_typed('array', 'rocket_saas_clean_all', array());
+                } else {
+                    apply_filters('rocket_saas_clean_all', array());
+                }
 
                 $status['wp_rocket'] = [
                     'status'  => 'cleared',

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-23 07:51+00:00\n"
+"POT-Creation-Date: 2026-09-23 09:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1482,7 +1482,7 @@ msgstr ""
 msgid "Breeze Gzip compression or Browser Cache is disabled. Enabling them ensures static assets are compressed and cached by visitor browsers."
 msgstr ""
 
-#: includes/api/class-performance-controller.php:1714
+#: includes/api/class-performance-controller.php:1718
 msgid "Cache layers purged successfully according to requested scope."
 msgstr ""
 
