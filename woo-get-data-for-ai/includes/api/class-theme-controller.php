@@ -34,6 +34,15 @@ class Theme_Controller extends Rest_Controller {
                 return $this->check_access($request, 'theme');
             },
         ]);
+
+        // GET /theme/custom-css (Aggregated custom CSS from Customizer, Woodmart, and Child Theme)
+        register_rest_route(self::NAMESPACE, '/theme/custom-css', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_theme_custom_css'],
+            'permission_callback' => function ($request) {
+                return $this->check_access($request, 'theme');
+            },
+        ]);
     }
 
     public function get_theme_options(\WP_REST_Request $request) {
@@ -44,18 +53,41 @@ class Theme_Controller extends Rest_Controller {
             'stylesheet'   => $stylesheet,
         ];
 
-        // 1. Woodmart Options
-        if (empty($target) || $target === 'all' || $target === 'woodmart') {
+        // Retrieve Woodmart options if target allows
+        $woodmart_opts = null;
+        $woodmart_decoded = null;
+        if (empty($target) || in_array($target, ['all', 'woodmart', 'js'], true)) {
             $woodmart_opts = get_option('xts-woodmart-options');
             if (empty($woodmart_opts)) {
                 $woodmart_opts = get_option('woodmart_options');
             }
             if (!empty($woodmart_opts)) {
-                $response_data['woodmart'] = is_string($woodmart_opts) ? json_decode($woodmart_opts, true) : $woodmart_opts;
+                $woodmart_decoded = is_string($woodmart_opts) ? json_decode($woodmart_opts, true) : (is_array($woodmart_opts) ? $woodmart_opts : null);
             }
         }
 
-        // 2. Elessi Options (Redux Framework / Customizer)
+        // 1. Woodmart Options
+        if (empty($target) || $target === 'all' || $target === 'woodmart') {
+            if (!empty($woodmart_decoded)) {
+                $response_data['woodmart'] = $woodmart_decoded;
+            }
+        }
+
+        // 2. Woodmart Custom JS blocks (custom_js and js_ready)
+        if (empty($target) || in_array($target, ['all', 'woodmart', 'js'], true)) {
+            if (!empty($woodmart_decoded) && is_array($woodmart_decoded)) {
+                $custom_js = isset($woodmart_decoded['custom_js']) ? (string) $woodmart_decoded['custom_js'] : '';
+                $js_ready  = isset($woodmart_decoded['js_ready']) ? (string) $woodmart_decoded['js_ready'] : '';
+                if ($custom_js !== '' || $js_ready !== '') {
+                    $response_data['woodmart_custom_js'] = [
+                        'custom_js' => $custom_js,
+                        'js_ready'  => $js_ready,
+                    ];
+                }
+            }
+        }
+
+        // 3. Elessi Options (Redux Framework / Customizer)
         if (empty($target) || $target === 'all' || $target === 'elessi') {
             $elessi_opts = get_option('elessi_options');
             if (!empty($elessi_opts)) {
@@ -63,10 +95,13 @@ class Theme_Controller extends Rest_Controller {
             }
         }
 
-        // 3. General Theme Mods
-        if (empty($target) || $target === 'all' || $target === 'mods') {
+        // 4. General Theme Mods (Customizer)
+        if (empty($target) || $target === 'all' || $target === 'mods' || $target === 'customizer') {
             $theme_mods = get_theme_mods();
-            if (!empty($theme_mods)) {
+            if (!empty($theme_mods) && is_array($theme_mods)) {
+                if (function_exists('wp_get_custom_css')) {
+                    $theme_mods['custom_css'] = (string) wp_get_custom_css();
+                }
                 $response_data['theme_mods'] = $theme_mods;
             }
         }
@@ -168,14 +203,104 @@ class Theme_Controller extends Rest_Controller {
             ];
         }
 
-        if (file_exists($style_file) && is_readable($style_file)) {
-            $data['style_css'] = [
-                'size_bytes'   => filesize($style_file),
-                'modified_at'  => date('c', filemtime($style_file)),
-                'content'      => file_get_contents($style_file),
-            ];
+        if ($is_child) {
+            if (file_exists($style_file) && is_readable($style_file)) {
+                $data['style_css'] = [
+                    'size_bytes'   => filesize($style_file),
+                    'modified_at'  => date('c', filemtime($style_file)),
+                    'content'      => file_get_contents($style_file),
+                ];
+            }
+        } else {
+            $data['style_css'] = null;
+            $data['style_css_notice'] = 'parent_theme_not_streamed';
         }
 
         return $this->response($data);
+    }
+
+    public function get_theme_custom_css(\WP_REST_Request $request) {
+        // 1. Customizer Custom CSS
+        $custom_css_post = function_exists('wp_get_custom_css_post') ? wp_get_custom_css_post() : null;
+        $customizer_content = function_exists('wp_get_custom_css') ? (string) wp_get_custom_css() : '';
+        $customizer_post_id = null;
+        $customizer_modified = null;
+
+        if ($custom_css_post instanceof \WP_Post) {
+            $customizer_post_id = (int) $custom_css_post->ID;
+            if (!empty($custom_css_post->post_modified)) {
+                $customizer_modified = mysql2date('c', $custom_css_post->post_modified, false);
+            }
+            if (empty($customizer_content) && !empty($custom_css_post->post_content)) {
+                $customizer_content = (string) $custom_css_post->post_content;
+            }
+        } else {
+            $theme_mod_id = get_theme_mod('custom_css_post_id');
+            if (!empty($theme_mod_id) && is_numeric($theme_mod_id) && (int) $theme_mod_id > 0) {
+                $customizer_post_id = (int) $theme_mod_id;
+                $post = get_post($customizer_post_id);
+                if ($post instanceof \WP_Post) {
+                    $customizer_modified = mysql2date('c', $post->post_modified, false);
+                    if (empty($customizer_content)) {
+                        $customizer_content = (string) $post->post_content;
+                    }
+                }
+            }
+        }
+
+        $customizer_data = [
+            'post_id'     => $customizer_post_id,
+            'modified_at' => $customizer_modified,
+            'size_bytes'  => strlen($customizer_content),
+            'content'     => $customizer_content,
+        ];
+
+        // 2. Woodmart Custom CSS (if Woodmart is active or options exist)
+        $woodmart_opts = get_option('xts-woodmart-options');
+        if (empty($woodmart_opts)) {
+            $woodmart_opts = get_option('woodmart_options');
+        }
+        if (is_string($woodmart_opts)) {
+            $woodmart_opts = json_decode($woodmart_opts, true);
+        }
+
+        $is_woodmart = (
+            strtolower(wp_get_theme()->get_template()) === 'woodmart' ||
+            strtolower(wp_get_theme()->get_stylesheet()) === 'woodmart' ||
+            defined('WOODMART_THEME_DIR') ||
+            (!empty($woodmart_opts) && is_array($woodmart_opts))
+        );
+
+        $woodmart_data = null;
+        if ($is_woodmart && is_array($woodmart_opts)) {
+            $woodmart_data = [
+                'global'  => isset($woodmart_opts['custom_css']) ? (string) $woodmart_opts['custom_css'] : '',
+                'desktop' => isset($woodmart_opts['css_desktop']) ? (string) $woodmart_opts['css_desktop'] : '',
+                'tablet'  => isset($woodmart_opts['css_tablet']) ? (string) $woodmart_opts['css_tablet'] : '',
+                'mobile'  => isset($woodmart_opts['css_mobile']) ? (string) $woodmart_opts['css_mobile'] : '',
+            ];
+        }
+
+        // 3. Child Theme style.css (only if is_child_theme() is true)
+        $is_child = is_child_theme();
+        $child_style_content = null;
+
+        if ($is_child) {
+            $child_style_file = get_stylesheet_directory() . '/style.css';
+            if (file_exists($child_style_file) && is_readable($child_style_file)) {
+                $child_style_content = file_get_contents($child_style_file);
+            }
+        }
+
+        $child_theme_data = [
+            'active'    => $is_child,
+            'style_css' => $child_style_content,
+        ];
+
+        return $this->response([
+            'customizer'  => $customizer_data,
+            'woodmart'    => $woodmart_data,
+            'child_theme' => $child_theme_data,
+        ]);
     }
 }

@@ -643,11 +643,11 @@ class Playbooks {
                     ],
                     [
                         'step'        => 2,
-                        'action'      => esc_html__('Child Theme Code & Theme Options', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/theme/child',
+                        'action'      => esc_html__('Child Theme Code, Custom CSS & Theme Options', 'woo-get-data-for-ai'),
+                        'endpoint'    => '/theme/custom-css',
                         'params'      => [],
-                        'description' => esc_html__('Inspects active child theme functions.php and style.css, and decodes Woodmart / Elessi theme options via /theme/options.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['functions_php.size', 'theme_options'],
+                        'description' => esc_html__('Inspects aggregated custom CSS (Customizer, Woodmart responsive blocks, child theme style.css), child theme functions.php via /theme/child, and decodes Woodmart / Elessi theme options via /theme/options.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['customizer.content', 'woodmart', 'child_theme', 'functions_php.size', 'theme_options'],
                     ],
                     [
                         'step'        => 3,
@@ -948,6 +948,7 @@ class Playbooks {
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/shipping'\n\n";
         $md .= "# Pillar 7: Code Architecture, Themes & Automations\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/overrides'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/custom-css'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/flowmattic/workflows?status=active'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/snippets?status=active'\n";
         $md .= "```\n";

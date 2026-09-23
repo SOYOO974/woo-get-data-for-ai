@@ -27,7 +27,7 @@ class Permissions {
             'theme' => [
                 'label'       => esc_html__('Theme Settings & Child Theme', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows exporting Woodmart (xts-woodmart-options), Elessi (elessi_options) settings, and child theme functions.php/style.css.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/theme/options', '/theme/child'],
+                'endpoints'   => ['/theme/options', '/theme/child', '/theme/custom-css'],
             ],
             'code' => [
                 'label'       => esc_html__('Code & Plugin File Inspector', 'woo-get-data-for-ai'),
@@ -268,6 +268,11 @@ class Permissions {
                         'path'        => '/theme/child',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Full source code and header info of the active child theme functions.php and style.css.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/theme/custom-css',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Aggregated custom CSS from WordPress Customizer, Woodmart responsive CSS blocks, and active child theme style.css.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

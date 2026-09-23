@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-21  
+> **Last Updated**: 2026-09-23  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -189,7 +189,7 @@ Located under **WordPress Admin > Settings > Agent Bridge**:
 Enables/disables modules on a per-site basis:
 - `[x] System & Server Environment` (`/system`, `/capabilities`, `/ping`, `/system/database`, `/system/mail`, `/system/mail/subscriber`, `/system/security`, `/system/caching`, `/system/search`)
 - `[x] WooCommerce Diagnosis & Overrides` (`/theme/overrides`, HPOS state)
-- `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`)
+- `[x] Theme Settings (Woodmart & Elessi)` (`/theme/options`, `/theme/child`, `/theme/custom-css`)
 - `[x] Code & Plugin Inspector` (`/code/plugins`, `/code/file`, `/code/checksums`, `/code/zip`)
 - `[x] Elementor Architecture` (`/elementor/list`, `/elementor/forms`, `/elementor/kit`)
 - `[x] Code Snippets (WPCode & Code Snippets Pro)` (`/snippets`, `/wpcode/snippets`)
@@ -253,9 +253,10 @@ Enables/disables modules on a per-site basis:
 | `GET /system/mail/subscriber` | GET | MailPoet subscriber status diagnostic: subscription status (subscribed, unconfirmed, unsubscribed, bounced, inactive), segment memberships, and critical bounce alert (`?email=`) |
 | `GET /system/security` | GET | Security hardening audit: `DISALLOW_FILE_EDIT`, `DISALLOW_FILE_MODS`, `SAVEQUERIES`, `SCRIPT_DEBUG`, `WP_DEBUG_DISPLAY`, XML-RPC exposure, SSL enforcement, DB prefix, detected security and caching plugins |
 | `GET /system/search` | GET | Global read-only site search across `wp_posts`, non-sensitive `wp_options` (transients excluded, secrets redacted), and WPCode / Code Snippets with contextual snippets (`?q=keyword`, `?scope=all\|posts\|options\|snippets`, `?limit=20`) |
-| `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), and Customizer theme mods (sensitive keys redacted) |
+| `GET /theme/options` | GET | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options` / Redux), resolved Customizer CSS (`custom_css`), Woodmart custom JS blocks (`woodmart_custom_js`), and Customizer theme mods (sensitive keys redacted, supports `?target=all\|woodmart\|elessi\|customizer\|mods`) |
 | `GET /theme/overrides` | GET | WooCommerce template overrides in the active theme with version comparison to core WC |
-| `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` |
+| `GET /theme/child` | GET | Code and header info of the child theme's `functions.php` and `style.css` (memory-safe: parent theme `style.css` is not streamed when no child theme is active) |
+| `GET /theme/custom-css` | GET | Aggregated custom CSS from WordPress Customizer (`wp_get_custom_css`), Woodmart responsive CSS blocks (`global`, `desktop`, `tablet`, `mobile`), and active child theme `style.css` |
 | `GET /code/plugins` | GET | File trees of active or all plugins and `wp-content/mu-plugins/` (`?status=active|inactive|all`, default: `active`) |
 | `GET /code/file` | GET | Source code of a specific PHP/JS/CSS file (strictly sandboxed via `realpath()`) |
 | `GET /code/checksums` | GET | Cryptographic file checksum map (MD5 / SHA256), modified timestamps, and byte sizes for instant local vs prod drift verification (`?path=plugins/my-plugin`, `?algo=md5\|sha256`) |
@@ -344,7 +345,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
   4. `order_checkout_troubleshoot` (Orders, Payment Gateways, Emails, PMPro, Tracking & Delivery Troubleshooting): Full e-commerce operational troubleshooting combining recent order failures, payment gateway error notes, coupon/fee inspections, gateway debug logs, active checkout snippets/hooks, transactional SMTP & MailPoet Sending Service (MSS) deliverability diagnostics (provider detection, credentials redaction, PHP mail() spam risk, bounce alerts), WooCommerce transactional emails inspection with Order Status Manager trigger rules and silent status detection, database email logs search (WP Mail Logging, FluentSMTP, Post SMTP, WP Mail SMTP), MailPoet subscriber bounce check, WooCommerce webhook delivery status, server-side tracking failed order correlation (`/tracking/orders?tracking_filter=failed`), Paid Memberships Pro member/level diagnostics, and MasterStudy LMS user course enrollment & expiration root cause analysis (`/woocommerce/orders`, `/woocommerce/order/{id}`, `/logs/view`, `/snippets`, `/system/mail`, `/woocommerce/emails`, `/logs/emails`, `/system/mail/subscriber`, `/woocommerce/webhooks`, `/tracking/orders`, `/pmpro/member/{user_id}`, `/masterstudy/user/{user_id}/courses`).
   5. `ecommerce_bi_analytics` (360° E-Commerce Sales, Traffic, Conversion & Tracking Analytics): Complete commercial, CRO & tracking intelligence: native WooCommerce sales (gross/net, paid orders, AOV, refunds, % growth vs prior period), top performing products & coupons, stock valuation & dormant inventory, traffic channels, UTM marketing campaigns, device breakdowns, and Server-Side Tracking & GDPR Consent Compliance Audit (`/woocommerce/analytics/sales`, `/woocommerce/analytics/top-performers`, `/woocommerce/analytics/stock`, `/analytics/overview`, `/analytics/campaigns`, `/tracking/audit`).
   6. `shipping_logistics_audit` (Shipping Zones, Methods & Flexible Shipping Rules Audit): Comprehensive logistics & shipping rate calculations: WooCommerce shipping zones, geo-locations (postcodes, regions, countries), native methods (flat rate, free shipping threshold), Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and deep order shipping line metadata inspection (`/woocommerce/shipping`, `/woocommerce/settings`, `/woocommerce/order/{id}`).
-  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), custom ACF/code meta fields, WooCommerce "My Account" area navigation tabs & attached templates (Woodmart `cms_block`, Elementor), and global system search (`/theme/overrides`, `/theme/child`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`, `/woocommerce/account-tabs`, `/system/search`).
+  7. `code_theme_integrations` (Code Architecture, Theme Settings & Automations Map): Complete technical codebase audit: WooCommerce template version overrides, child theme files, aggregated custom CSS (Customizer, Woodmart responsive blocks) `/theme/custom-css`, directory checksum fingerprints for local vs remote drift detection, FlowMattic automation recipes, Elementor webhook forms, active custom snippets (WPCode & Code Snippets), custom ACF/code meta fields, WooCommerce "My Account" area navigation tabs & attached templates (Woodmart `cms_block`, Elementor), and global system search (`/theme/overrides`, `/theme/child`, `/theme/custom-css`, `/code/checksums`, `/flowmattic/workflows`, `/elementor/forms`, `/snippets`, `/meta/fields`, `/woocommerce/account-tabs`, `/system/search`).
 
 ---
 
@@ -406,11 +407,31 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 - Optimized for v1.34.0: `pull:woocommerce` dumps account tabs (`account-tabs.json`) with Woodmart/Elementor templates; `pull:content` dumps registered custom post types (`custom-post-types.json`) with publication status counts.
 - Optimized for v1.36.0: `pull:woocommerce` includes Product Object Caching in the performance features summary.
 - Optimized for v1.37.0: `pull:system` and `pull:performance` audit runtime performance constants (SAVEQUERIES memory leak check, SCRIPT_DEBUG, WP_POST_REVISIONS cap, WP_MEMORY_LIMIT).
+- Optimized for v1.38.0: `pull:theme` pulls custom CSS (`theme/custom-css.json` and `theme/customizer.css`) via `GET /theme/custom-css`.
 - Generates a cleanly structured local export under `./synced-site-data/`.
 
 ---
 
 ## 7. Version Changelog
+
+### v1.38.0 (2026-09-23)
+- **Inspection Complète du Code CSS & JS Personnalisé du Thème (`Theme_Controller`, `Permissions`, `Playbooks`, `tab-docs.php`, `sync.js`)** :
+  - **Nouvelle Route Dédiée `GET /theme/custom-css` (Permission: `theme`)** :
+    - Exposition consolidée et structurée en JSON de l'ensemble du CSS personnalisé du site.
+    - Clé `customizer` : extraction native via `wp_get_custom_css()` et `wp_get_custom_css_post()`, renvoyant `post_id`, `modified_at` (ISO 8601), `size_bytes` et `content` brut.
+    - Clé `woodmart` : si Woodmart est actif ou options présentes, extraction des blocs responsive (`global` depuis `custom_css`, `desktop` depuis `css_desktop`, `tablet` depuis `css_tablet`, `mobile` depuis `css_mobile`), sinon `null`.
+    - Clé `child_theme` : booléen `active` (`is_child_theme()`) et `style_css` contenant le fichier uniquement si un thème enfant est actif (`null` si thème parent pour éviter le streaming de 700 Ko).
+  - **Enrichissement & Correctif de `GET /theme/options`** :
+    - Prise en charge conjointe des paramètres `?target=customizer` et `?target=mods`.
+    - Injection directe du code CSS résolu dans `$theme_mods['custom_css']` via `wp_get_custom_css()`.
+    - Exposition explicite des blocs JavaScript personnalisés de Woodmart (`woodmart_custom_js` contenant `custom_js` et `js_ready`) lorsque configurés.
+  - **Allègement Mémoire & Bande Passante de `GET /theme/child`** :
+    - Lorsque `is_child_theme() === false`, le contenu volumineux de `style.css` du thème parent (ex. 703 Ko pour Woodmart) n'est plus chargé ni streamé. Renvoyé comme `style_css = null` avec mention `style_css_notice = 'parent_theme_not_streamed'`.
+  - **Synchronisation du Pilier 7 MECE (`code_theme_integrations`) & Documentation** :
+    - Étape 2 du Pilier 7 enrichie avec `/theme/custom-css` pour inspecter le CSS personnalisé conjointement aux options du thème.
+    - Ajout de l'exemple cURL dans le générateur de compétence IA dynamique (`GET /capabilities?format=skill`).
+  - **Internationalisation & Loco Translate 100%** :
+    - Régénération automatique de `woo-get-data-for-ai.pot`, `woo-get-data-for-ai-fr_FR.po` et compilation du binaire `woo-get-data-for-ai-fr_FR.mo` (710 chaînes, 100% traduit).
 
 ### v1.37.2 (2026-09-21)
 - **Blindage Défensif de `Redaction::redact_array` & Nettoyage des Appels `System_Controller` (`includes/class-redaction.php`, `includes/api/class-system-controller.php`)** :

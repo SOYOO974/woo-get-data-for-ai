@@ -305,6 +305,13 @@ async function pullTheme() {
             writeText(path.join(outputDir, 'theme/child-style.css'), child.style_css.content);
         }
 
+        // Custom CSS (Customizer, Woodmart, Child Theme)
+        const customCss = await makeRequest('/theme/custom-css');
+        writeJson(path.join(outputDir, 'theme/custom-css.json'), customCss);
+        if (customCss && customCss.customizer && customCss.customizer.content) {
+            writeText(path.join(outputDir, 'theme/customizer.css'), customCss.customizer.content);
+        }
+
         // WooCommerce Overrides
         const overrides = await makeRequest('/theme/overrides');
         let ovMd = `# WooCommerce Template Overrides (${overrides.total_overrides})\n\n`;

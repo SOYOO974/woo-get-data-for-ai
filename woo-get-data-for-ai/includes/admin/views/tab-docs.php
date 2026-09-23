@@ -170,8 +170,8 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('WooCommerce & Themes', 'woo-get-data-for-ai'); ?></strong></td>
-                    <td><code>/theme/overrides</code>, <code>/theme/options</code>, <code>/theme/child</code></td>
-                    <td><?php esc_html_e('Overridden WooCommerce templates with version check against core, Woodmart & Elessi theme settings, child theme functions.php and style.css.', 'woo-get-data-for-ai'); ?></td>
+                    <td><code>/theme/overrides</code>, <code>/theme/options</code>, <code>/theme/child</code>, <code>/theme/custom-css</code></td>
+                    <td><?php esc_html_e('Overridden WooCommerce templates with version check against core, Woodmart & Elessi theme settings, custom CSS (Customizer, Woodmart blocks), child theme functions.php and style.css.', 'woo-get-data-for-ai'); ?></td>
                 </tr>
                 <tr>
                     <td><strong><?php esc_html_e('Code & Plugins', 'woo-get-data-for-ai'); ?></strong></td>
