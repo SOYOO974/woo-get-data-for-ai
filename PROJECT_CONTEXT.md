@@ -414,6 +414,10 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.38.1 (2026-09-23)
+- **Support Woodmart CSS Mobile Paysage (`Theme_Controller`)** :
+  - Ajout du champ `wide_mobile` dans l'objet `woodmart` de `GET /theme/custom-css`, extrayant la clé `css_wide_mobile` de `xts-woodmart-options` correspondant à l'onglet "Custom CSS for mobile landscape" de Woodmart.
+
 ### v1.38.0 (2026-09-23)
 - **Inspection Complète du Code CSS & JS Personnalisé du Thème (`Theme_Controller`, `Permissions`, `Playbooks`, `tab-docs.php`, `sync.js`)** :
   - **Nouvelle Route Dédiée `GET /theme/custom-css` (Permission: `theme`)** :

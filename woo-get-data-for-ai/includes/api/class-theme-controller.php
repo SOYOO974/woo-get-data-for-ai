@@ -274,10 +274,11 @@ class Theme_Controller extends Rest_Controller {
         $woodmart_data = null;
         if ($is_woodmart && is_array($woodmart_opts)) {
             $woodmart_data = [
-                'global'  => isset($woodmart_opts['custom_css']) ? (string) $woodmart_opts['custom_css'] : '',
-                'desktop' => isset($woodmart_opts['css_desktop']) ? (string) $woodmart_opts['css_desktop'] : '',
-                'tablet'  => isset($woodmart_opts['css_tablet']) ? (string) $woodmart_opts['css_tablet'] : '',
-                'mobile'  => isset($woodmart_opts['css_mobile']) ? (string) $woodmart_opts['css_mobile'] : '',
+                'global'      => isset($woodmart_opts['custom_css']) ? (string) $woodmart_opts['custom_css'] : '',
+                'desktop'     => isset($woodmart_opts['css_desktop']) ? (string) $woodmart_opts['css_desktop'] : '',
+                'tablet'      => isset($woodmart_opts['css_tablet']) ? (string) $woodmart_opts['css_tablet'] : '',
+                'wide_mobile' => isset($woodmart_opts['css_wide_mobile']) ? (string) $woodmart_opts['css_wide_mobile'] : '',
+                'mobile'      => isset($woodmart_opts['css_mobile']) ? (string) $woodmart_opts['css_mobile'] : '',
             ];
         }
 

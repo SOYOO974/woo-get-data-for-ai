@@ -118,7 +118,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /theme/options?target={all|woodmart|elessi|customizer}` | Decoded options for **Woodmart** (`xts-woodmart-options`), **Elessi** (`elessi_options`), resolved Customizer CSS, and Woodmart custom JS blocks (`custom_js`, `js_ready`). |
 | `GET /theme/overrides` | Audit of WooCommerce template overrides with version comparison against core WooCommerce. |
 | `GET /theme/child` | Code and metadata for child theme `functions.php` and `style.css` (memory-protected: parent theme `style.css` is not streamed when no child theme is active). |
-| `GET /theme/custom-css` | Consolidated custom CSS across WordPress Customizer (`wp_get_custom_css`), Woodmart responsive CSS blocks (`global`, `desktop`, `tablet`, `mobile`), and active child theme `style.css`. |
+| `GET /theme/custom-css` | Consolidated custom CSS across WordPress Customizer (`wp_get_custom_css`), Woodmart responsive CSS blocks (`global`, `desktop`, `tablet`, `wide_mobile`, `mobile`), and active child theme `style.css`. |
 | `GET /code/plugins?status={active\|inactive\|all}` | File trees for active or all plugins and `wp-content/mu-plugins/` (default: `active`). |
 | `GET /code/file?path={relative_path}` | Sandboxed code viewer for specific PHP, JS, or CSS files. |
 | `GET /code/checksums?path={path}&algo={md5\|sha256}` | Cryptographic file checksum map (MD5 / SHA256), modified dates, and byte sizes for instant local vs prod drift verification. |

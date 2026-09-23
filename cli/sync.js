@@ -311,6 +311,13 @@ async function pullTheme() {
         if (customCss && customCss.customizer && customCss.customizer.content) {
             writeText(path.join(outputDir, 'theme/customizer.css'), customCss.customizer.content);
         }
+        if (customCss && customCss.woodmart) {
+            if (customCss.woodmart.global) writeText(path.join(outputDir, 'theme/woodmart-custom.css'), customCss.woodmart.global);
+            if (customCss.woodmart.desktop) writeText(path.join(outputDir, 'theme/woodmart-desktop.css'), customCss.woodmart.desktop);
+            if (customCss.woodmart.tablet) writeText(path.join(outputDir, 'theme/woodmart-tablet.css'), customCss.woodmart.tablet);
+            if (customCss.woodmart.wide_mobile) writeText(path.join(outputDir, 'theme/woodmart-wide-mobile.css'), customCss.woodmart.wide_mobile);
+            if (customCss.woodmart.mobile) writeText(path.join(outputDir, 'theme/woodmart-mobile.css'), customCss.woodmart.mobile);
+        }
 
         // WooCommerce Overrides
         const overrides = await makeRequest('/theme/overrides');
