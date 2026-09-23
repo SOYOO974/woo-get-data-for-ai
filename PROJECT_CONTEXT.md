@@ -414,6 +414,11 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.38.3 (2026-09-23)
+- **Double Verrou & Autonomie Purge WP Rocket RUCSS (`Performance_Controller`)** :
+  - **Autorisation Temporaire de Capacité** : Injection via filtre `user_has_cap` (priorité 9999) des droits `rocket_remove_unused_css` et `rocket_manage_options` pour permettre à l'API REST de déclencher `rocket_saas_clean_all` en toute autonomie sans être bloquée par les contrôles d'utilisateur connecté, avec nettoyage strict (`remove_filter`) post-exécution.
+  - **Filet de Sécurité SQL Direct** : Vidage instantané et inconditionnel de la table de cache `{$wpdb->prefix}wpr_rucss_used_css` via `TRUNCATE TABLE` si la table existe, suivi de l'action `rocket_after_clean_used_css` pour réinitialiser les flags de WP Rocket et déclencher la régénération au prochain passage.
+
 ### v1.38.2 (2026-09-23)
 - **Correctif Purge Cache WP Rocket RUCSS (`Performance_Controller`)** :
   - Remplacement du hook d'action obsolète `do_action('rocket_rucss_clear_used_css')` par l'instruction officielle WP Rocket SaaS `rocket_saas_clean_all` (`wpm_apply_filters_typed('array', 'rocket_saas_clean_all', array())` avec fallback sur `apply_filters('rocket_saas_clean_all', array())`).

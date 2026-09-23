@@ -1613,15 +1613,35 @@ class Performance_Controller extends Rest_Controller {
                     rocket_clean_busting();
                 }
                 // Purge Used CSS if RUCSS is active (WP Rocket SaaS)
+                $rucss_cap_filter = function ($allcaps) {
+                    $allcaps['rocket_remove_unused_css'] = true;
+                    $allcaps['rocket_manage_options']    = true;
+                    return $allcaps;
+                };
+                add_filter('user_has_cap', $rucss_cap_filter, 9999);
+
                 if (function_exists('wpm_apply_filters_typed')) {
                     wpm_apply_filters_typed('array', 'rocket_saas_clean_all', array());
                 } else {
                     apply_filters('rocket_saas_clean_all', array());
                 }
 
+                // Filet de sécurité SQL direct : vidage garanti de la table de cache RUCSS
+                global $wpdb;
+                $rucss_table   = $wpdb->prefix . 'wpr_rucss_used_css';
+                $rucss_cleared = false;
+                if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $rucss_table)) === $rucss_table) {
+                    $wpdb->query("TRUNCATE TABLE `{$rucss_table}`");
+                    $rucss_cleared = true;
+                }
+                do_action('rocket_after_clean_used_css');
+
+                remove_filter('user_has_cap', $rucss_cap_filter, 9999);
+
                 $status['wp_rocket'] = [
-                    'status'  => 'cleared',
-                    'version' => defined('WP_ROCKET_VERSION') ? WP_ROCKET_VERSION : null,
+                    'status'        => 'cleared',
+                    'rucss_cleared' => $rucss_cleared,
+                    'version'       => defined('WP_ROCKET_VERSION') ? WP_ROCKET_VERSION : null,
                 ];
             } else {
                 $status['wp_rocket'] = [
