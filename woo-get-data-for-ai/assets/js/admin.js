@@ -237,5 +237,109 @@
                 }, 2000);
             });
         });
+
+        // ==========================================================================
+        // Automatic & Manual Update Checker for Settings Page
+        // ==========================================================================
+        var $btnCheckUpdates = $('#btn-check-updates');
+        if ($btnCheckUpdates.length) {
+            var isCheckingUpdates = false;
+
+            function checkPluginUpdates(force, isManual) {
+                if (isCheckingUpdates) return;
+                isCheckingUpdates = true;
+
+                var $icon = $btnCheckUpdates.find('.dashicons');
+                var $statusMsg = $('.update-check-status-msg');
+
+                if (isManual) {
+                    $btnCheckUpdates.prop('disabled', true).addClass('is-checking');
+                    $icon.addClass('spin-clockwise');
+                    $statusMsg.text(agentBridgeData.checkingUpdates || 'Checking for updates...').removeClass('status-success status-error').show();
+                }
+
+                $.ajax({
+                    url: agentBridgeData.ajaxUrl,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'agent_bridge_check_for_updates',
+                        security: agentBridgeData.nonce,
+                        force: force ? 1 : 0
+                    },
+                    success: function(response) {
+                        if (response && response.success && response.data) {
+                            var data = response.data;
+                            if (data.has_update) {
+                                renderUpdateBanner(data);
+                                $('.badge-update-dot').css('display', 'inline-flex');
+                                if (isManual) {
+                                    var msg = (agentBridgeData.updateAvailableMsg || 'New version v%s available!').replace('%s', data.new_version || '');
+                                    $statusMsg.text(msg).addClass('status-success').show();
+                                }
+                            } else {
+                                $('.badge-update-dot').hide();
+                                $('#agent-bridge-update-banner').slideUp(250);
+                                if (isManual) {
+                                    $statusMsg.text(agentBridgeData.upToDateMsg || 'WP Agent Bridge is up to date.').addClass('status-success').show();
+                                    setTimeout(function() {
+                                        $statusMsg.fadeOut(400);
+                                    }, 4000);
+                                }
+                            }
+                        } else if (isManual) {
+                            $statusMsg.text(agentBridgeData.errorCheckUpdates || 'Could not check for updates.').addClass('status-error').show();
+                        }
+                    },
+                    error: function() {
+                        if (isManual) {
+                            $statusMsg.text(agentBridgeData.networkError || 'Network error occurred.').addClass('status-error').show();
+                        }
+                    },
+                    complete: function() {
+                        isCheckingUpdates = false;
+                        if (isManual) {
+                            $btnCheckUpdates.prop('disabled', false).removeClass('is-checking');
+                            $icon.removeClass('spin-clockwise');
+                        }
+                    }
+                });
+            }
+
+            function renderUpdateBanner(data) {
+                var $banner = $('#agent-bridge-update-banner');
+                if (!$banner.length) return;
+
+                $banner.find('.update-new-version').text(data.new_version || '');
+                var updateBtnText = (agentBridgeData.updateToText || 'Update to v%s Now').replace('%s', data.new_version || '');
+                $banner.find('.btn-update-text').text(updateBtnText);
+
+                if (data.update_url) {
+                    $banner.find('#btn-update-now').attr('href', data.update_url).attr('data-update-url', data.update_url);
+                }
+                if (data.release_url) {
+                    $banner.find('#btn-view-release-notes').attr('href', data.release_url);
+                }
+
+                $banner.slideDown(300);
+            }
+
+            // Automatic silent check when visiting the settings page
+            checkPluginUpdates(false, false);
+
+            // Manual check when clicking the button
+            $btnCheckUpdates.on('click', function(e) {
+                e.preventDefault();
+                checkPluginUpdates(true, true);
+            });
+
+            // Loading state when clicking update button
+            $(document).on('click', '#agent-bridge-update-banner .btn-update-now', function() {
+                var $btn = $(this);
+                $btn.addClass('updating-message disabled');
+                $btn.find('.dashicons').addClass('spin-clockwise');
+                $btn.find('.btn-update-text').text(agentBridgeData.updatingText || 'Updating...');
+            });
+        }
     });
 })(jQuery);

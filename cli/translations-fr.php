@@ -1,6 +1,20 @@
 <?php
 // Master French Translation Dictionary for WP Agent Bridge
 return array (
+  'Update available' => 'Mise à jour disponible',
+  'Check updates' => 'Vérifier les mises à jour',
+  'Check for updates now' => 'Vérifier les mises à jour maintenant',
+  'Checking for updates...' => 'Vérification des mises à jour...',
+  'WP Agent Bridge is up to date (v%s).' => 'WP Agent Bridge est à jour (v%s).',
+  'New version v%s available!' => 'Nouvelle version v%s disponible !',
+  'Update to v%s Now' => 'Mettre à jour vers la v%s maintenant',
+  'Updating...' => 'Mise à jour en cours...',
+  'Could not check for updates.' => 'Impossible de vérifier les mises à jour.',
+  'Update Available: v%s' => 'Mise à jour disponible : v%s',
+  'New Release' => 'Nouvelle version',
+  'A new version of WP Agent Bridge is available (currently installed: v%s). We recommend updating to ensure optimal diagnostic accuracy, security, and performance.' => 'Une nouvelle version de WP Agent Bridge est disponible (actuellement installée : v%s). Nous vous recommandons de mettre à jour le plugin pour bénéficier des dernières améliorations de diagnostic, de sécurité et de performance.',
+  'Update permissions required to install.' => 'Autorisations de mise à jour requises pour installer.',
+  'View Release Notes' => 'Voir les notes de version',
   'Copied!' => 'Copié !',
   'Show' => 'Afficher',
   'Hide' => 'Masquer',

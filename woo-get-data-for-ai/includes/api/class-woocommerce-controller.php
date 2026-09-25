@@ -699,9 +699,11 @@ class Woocommerce_Controller extends Rest_Controller {
 
         // 4. Payment Gateways summary
         $gateways_summary = [
-            'total_installed' => 0,
-            'active_count'    => 0,
-            'active_gateways' => [],
+            'total_installed'        => 0,
+            'active_count'           => 0,
+            'active_gateways'        => [],
+            'payment_errors_status'  => 'clean',
+            'recent_errors_count'    => 0,
         ];
         if (function_exists('WC') && WC()->payment_gateways()) {
             $gateways = WC()->payment_gateways()->payment_gateways();
@@ -713,6 +715,20 @@ class Woocommerce_Controller extends Rest_Controller {
                         'id'    => $gateway->id,
                         'title' => $gateway->get_title(),
                     ];
+                }
+            }
+        }
+
+        // Quick payment logs health check across recent logs (last 2 days)
+        if (class_exists('\WPAgentBridge\Payment_Logs')) {
+            $all_wc_files = \WPAgentBridge\Payment_Logs::scan_wc_log_files();
+            $recent_pay_files = \WPAgentBridge\Payment_Logs::resolve_target_files('all', '', 2, $all_wc_files);
+            foreach ($recent_pay_files as $r_file) {
+                $check = \WPAgentBridge\Payment_Logs::search_log_file($r_file['path'], 5, '', 'error');
+                $gateways_summary['recent_errors_count'] += $check['total_errors'];
+                if ($gateways_summary['recent_errors_count'] > 0) {
+                    $gateways_summary['payment_errors_status'] = 'errors_detected';
+                    break;
                 }
             }
         }

@@ -15,6 +15,31 @@ class Plugin {
     private static $instance = null;
 
     /**
+     * Update checker instance (PUC).
+     *
+     * @var mixed
+     */
+    private static $update_checker = null;
+
+    /**
+     * Set update checker instance.
+     *
+     * @param mixed $checker
+     */
+    public static function set_update_checker($checker) {
+        self::$update_checker = $checker;
+    }
+
+    /**
+     * Get update checker instance.
+     *
+     * @return mixed
+     */
+    public static function get_update_checker() {
+        return self::$update_checker;
+    }
+
+    /**
      * Get instance.
      *
      * @return Plugin

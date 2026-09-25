@@ -3,11 +3,11 @@
  * Plugin Name:       WP Agent Bridge (Data for AI)
  * Plugin URI:        https://github.com/SOYOO974/woo-get-data-for-ai
  * Description:       Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode & Code Snippets, and theme options to AI agents (Antigravity, Claude, Cursor).
- * Version:           1.41.0
+ * Version:           1.42.0
  * Author:            SOYOO
  * Author URI:        https://github.com/SOYOO974
  * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * License URI:        http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       woo-get-data-for-ai
  * Domain Path:       /languages
  * Requires at least: 5.8
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 }
 
 // Define Plugin Constants
-define('WOO_GET_DATA_AI_VERSION', '1.41.0');
+define('WOO_GET_DATA_AI_VERSION', '1.42.0');
 
 define('WOO_GET_DATA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -59,17 +59,18 @@ if (DIRECTORY_SEPARATOR === '/' && !file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'in
 }
 
 // Initialize Plugin Update Checker (PUC v5.6)
+$woo_get_data_ai_update_checker = null;
 if (file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.php')) {
     require_once WOO_GET_DATA_AI_PLUGIN_DIR . 'plugin-update-checker/plugin-update-checker.php';
     if (class_exists('YahnisElsts\PluginUpdateChecker\v5\PucFactory')) {
-        $updateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        $woo_get_data_ai_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
             WOO_GET_DATA_AI_GITHUB_REPO,
             __FILE__,
             'woo-get-data-for-ai'
         );
-        $updateChecker->setBranch('main');
-        if (method_exists($updateChecker->getVcsApi(), 'enableReleaseAssets')) {
-            $updateChecker->getVcsApi()->enableReleaseAssets();
+        $woo_get_data_ai_update_checker->setBranch('main');
+        if (method_exists($woo_get_data_ai_update_checker->getVcsApi(), 'enableReleaseAssets')) {
+            $woo_get_data_ai_update_checker->getVcsApi()->enableReleaseAssets();
         }
     }
 }
@@ -133,6 +134,10 @@ register_deactivation_hook(__FILE__, function () {
 
 // Run the Plugin
 function woo_get_data_ai_init() {
+    global $woo_get_data_ai_update_checker;
+    if ($woo_get_data_ai_update_checker && class_exists('\WPAgentBridge\Plugin')) {
+        \WPAgentBridge\Plugin::set_update_checker($woo_get_data_ai_update_checker);
+    }
     \WPAgentBridge\Plugin::instance()->run();
 }
 add_action('plugins_loaded', 'woo_get_data_ai_init');

@@ -23,6 +23,7 @@ class Admin_Settings {
         add_action('wp_ajax_agent_bridge_unlock_ip', [$this, 'ajax_unlock_ip']);
         add_action('wp_ajax_agent_bridge_reset_failures', [$this, 'ajax_reset_failures']);
         add_action('wp_ajax_agent_bridge_dismiss_onboarding', [$this, 'ajax_dismiss_onboarding']);
+        add_action('wp_ajax_agent_bridge_check_for_updates', [$this, 'ajax_check_for_updates']);
 
         // Action links on plugins list page
         add_filter('plugin_action_links_' . WOO_GET_DATA_AI_PLUGIN_BASENAME, [$this, 'add_plugin_action_links']);
@@ -158,9 +159,16 @@ class Admin_Settings {
             'errorRegen'       => esc_html__('Error regenerating token.', 'woo-get-data-for-ai'),
             'tokenRegenerated' => esc_html__('Token regenerated successfully.', 'woo-get-data-for-ai'),
             'errorClear'       => esc_html__('Error clearing logs.', 'woo-get-data-for-ai'),
-            'errorUnlock'      => esc_html__('Error unlocking IP.', 'woo-get-data-for-ai'),
-            'errorReset'       => esc_html__('Error resetting lockouts.', 'woo-get-data-for-ai'),
-            'lockoutsCleared'  => esc_html__('All lockouts have been cleared.', 'woo-get-data-for-ai'),
+            'errorUnlock'        => esc_html__('Error unlocking IP.', 'woo-get-data-for-ai'),
+            'errorReset'         => esc_html__('Error resetting lockouts.', 'woo-get-data-for-ai'),
+            'lockoutsCleared'    => esc_html__('All lockouts have been cleared.', 'woo-get-data-for-ai'),
+            'checkingUpdates'    => esc_html__('Checking for updates...', 'woo-get-data-for-ai'),
+            'checkUpdatesText'   => esc_html__('Check updates', 'woo-get-data-for-ai'),
+            'upToDateMsg'        => sprintf(esc_html__('WP Agent Bridge is up to date (v%s).', 'woo-get-data-for-ai'), WOO_GET_DATA_AI_VERSION),
+            'updateAvailableMsg' => esc_html__('New version v%s available!', 'woo-get-data-for-ai'),
+            'updateToText'       => esc_html__('Update to v%s Now', 'woo-get-data-for-ai'),
+            'updatingText'       => esc_html__('Updating...', 'woo-get-data-for-ai'),
+            'errorCheckUpdates'  => esc_html__('Could not check for updates.', 'woo-get-data-for-ai'),
         ]);
     }
 
@@ -246,6 +254,8 @@ class Admin_Settings {
             'documentation' => esc_html__('Documentation & Guide', 'woo-get-data-for-ai'),
         ];
 
+        $update_info = self::get_update_info(false);
+        $has_update  = !empty($update_info['has_update']);
         ?>
         <div class="wrap agent-bridge-wrap">
             <h1 class="wp-heading-inline screen-reader-text"><?php esc_html_e('WP Agent Bridge', 'woo-get-data-for-ai'); ?></h1>
@@ -253,11 +263,24 @@ class Admin_Settings {
 
             <div class="agent-bridge-header">
                 <div class="header-title-row">
-                    <h2 class="header-title">
-                        <span class="dashicons dashicons-rest-api"></span> 
-                        <?php esc_html_e('WP Agent Bridge', 'woo-get-data-for-ai'); ?>
-                        <span class="badge-version">v<?php echo esc_html(WOO_GET_DATA_AI_VERSION); ?></span>
-                    </h2>
+                    <div class="title-with-badge">
+                        <h2 class="header-title">
+                            <span class="dashicons dashicons-rest-api"></span> 
+                            <?php esc_html_e('WP Agent Bridge', 'woo-get-data-for-ai'); ?>
+                        </h2>
+                        <div class="version-update-group">
+                            <span class="badge-version">v<?php echo esc_html(WOO_GET_DATA_AI_VERSION); ?></span>
+                            <span class="badge-update-dot" style="<?php echo $has_update ? 'display: inline-flex;' : 'display: none;'; ?>" title="<?php esc_attr_e('Update available', 'woo-get-data-for-ai'); ?>">
+                                <span class="update-pulse"></span>
+                                <span class="update-dot-text"><?php esc_html_e('Update available', 'woo-get-data-for-ai'); ?></span>
+                            </span>
+                            <button type="button" class="button button-small btn-check-updates" id="btn-check-updates" title="<?php esc_attr_e('Check for updates now', 'woo-get-data-for-ai'); ?>">
+                                <span class="dashicons dashicons-update"></span>
+                                <span class="btn-check-label"><?php esc_html_e('Check updates', 'woo-get-data-for-ai'); ?></span>
+                            </button>
+                            <span class="update-check-status-msg" style="display: none;"></span>
+                        </div>
+                    </div>
                     <div class="header-status-badge <?php echo Security::get_active_token() ? 'status-active' : 'status-warning'; ?>">
                         <span class="status-dot"></span>
                         <?php echo Security::get_active_token() ? esc_html__('Active & Protected', 'woo-get-data-for-ai') : esc_html__('Token Missing', 'woo-get-data-for-ai'); ?>
@@ -266,6 +289,68 @@ class Admin_Settings {
                 <p class="header-desc">
                     <?php esc_html_e('Secure, read-only inspection API for WordPress & WooCommerce to connect AI Agents (Antigravity, Claude, Cursor) and developer tools.', 'woo-get-data-for-ai'); ?>
                 </p>
+            </div>
+
+            <!-- Update Banner (visible when update is available) -->
+            <div class="agent-bridge-update-banner" id="agent-bridge-update-banner" style="<?php echo $has_update ? 'display: flex;' : 'display: none;'; ?>">
+                <div class="agent-bridge-update-banner-content">
+                    <div class="agent-bridge-update-banner-icon">
+                        <span class="dashicons dashicons-update"></span>
+                    </div>
+                    <div class="agent-bridge-update-banner-text">
+                        <h3 class="update-banner-title">
+                            <?php
+                            printf(
+                                /* translators: %s: new version number */
+                                esc_html__('Update Available: v%s', 'woo-get-data-for-ai'),
+                                '<span class="update-new-version">' . esc_html(!empty($update_info['new_version']) ? $update_info['new_version'] : '') . '</span>'
+                            );
+                            ?>
+                            <span class="badge-update-pill"><?php esc_html_e('New Release', 'woo-get-data-for-ai'); ?></span>
+                        </h3>
+                        <p class="update-banner-desc">
+                            <?php
+                            printf(
+                                /* translators: %s: current installed version */
+                                esc_html__('A new version of WP Agent Bridge is available (currently installed: v%s). We recommend updating to ensure optimal diagnostic accuracy, security, and performance.', 'woo-get-data-for-ai'),
+                                esc_html(WOO_GET_DATA_AI_VERSION)
+                            );
+                            ?>
+                        </p>
+                    </div>
+                </div>
+                <div class="agent-bridge-update-banner-actions">
+                    <?php if (current_user_can('update_plugins')) : ?>
+                        <a href="<?php echo !empty($update_info['update_url']) ? esc_url($update_info['update_url']) : '#'; ?>" 
+                           class="button button-primary btn-update-now" 
+                           id="btn-update-now"
+                           data-update-url="<?php echo !empty($update_info['update_url']) ? esc_attr($update_info['update_url']) : ''; ?>">
+                            <span class="dashicons dashicons-update"></span>
+                            <span class="btn-update-text">
+                                <?php
+                                printf(
+                                    /* translators: %s: new version number */
+                                    esc_html__('Update to v%s Now', 'woo-get-data-for-ai'),
+                                    esc_html(!empty($update_info['new_version']) ? $update_info['new_version'] : '')
+                                );
+                                ?>
+                            </span>
+                        </a>
+                    <?php else : ?>
+                        <span class="update-permission-notice">
+                            <?php esc_html_e('Update permissions required to install.', 'woo-get-data-for-ai'); ?>
+                        </span>
+                    <?php endif; ?>
+
+                    <a href="<?php echo !empty($update_info['release_url']) ? esc_url($update_info['release_url']) : 'https://github.com/SOYOO974/woo-get-data-for-ai/releases'; ?>" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="button button-secondary btn-view-release-notes"
+                       id="btn-view-release-notes">
+                        <span class="dashicons dashicons-external"></span>
+                        <?php esc_html_e('View Release Notes', 'woo-get-data-for-ai'); ?>
+                    </a>
+                </div>
             </div>
 
             <nav class="nav-tab-wrapper">
@@ -391,5 +476,102 @@ class Admin_Settings {
         wp_send_json_success([
             'message' => esc_html__('Onboarding notice dismissed.', 'woo-get-data-for-ai'),
         ]);
+    }
+
+    /**
+     * Get available update information.
+     *
+     * @param bool $force Whether to force a live check against remote GitHub repository.
+     * @return array
+     */
+    public static function get_update_info($force = false) {
+        $checker = \WPAgentBridge\Plugin::get_update_checker();
+        $update  = null;
+
+        if ($checker) {
+            if ($force && method_exists($checker, 'checkForUpdates')) {
+                $update = $checker->checkForUpdates();
+            } elseif (method_exists($checker, 'getUpdate')) {
+                $update = $checker->getUpdate();
+            }
+        }
+
+        // Check PUC update object first
+        if ($update && !empty($update->version) && version_compare($update->version, WOO_GET_DATA_AI_VERSION, '>')) {
+            $new_version = $update->version;
+            return [
+                'has_update'      => true,
+                'current_version' => WOO_GET_DATA_AI_VERSION,
+                'new_version'     => $new_version,
+                'update_url'      => wp_nonce_url(
+                    self_admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode(WOO_GET_DATA_AI_PLUGIN_BASENAME)),
+                    'upgrade-plugin_' . WOO_GET_DATA_AI_PLUGIN_BASENAME
+                ),
+                'release_url'     => 'https://github.com/SOYOO974/woo-get-data-for-ai/releases/tag/v' . ltrim($new_version, 'v'),
+                'upgrade_notice'  => !empty($update->upgrade_notice) ? sanitize_text_field($update->upgrade_notice) : '',
+            ];
+        }
+
+        // Secondary fallback: WordPress site transient 'update_plugins'
+        $update_plugins = get_site_transient('update_plugins');
+        if (
+            is_object($update_plugins) &&
+            !empty($update_plugins->response) &&
+            isset($update_plugins->response[WOO_GET_DATA_AI_PLUGIN_BASENAME])
+        ) {
+            $wp_item = $update_plugins->response[WOO_GET_DATA_AI_PLUGIN_BASENAME];
+            if (
+                !empty($wp_item->new_version) &&
+                version_compare($wp_item->new_version, WOO_GET_DATA_AI_VERSION, '>')
+            ) {
+                $new_version = $wp_item->new_version;
+                return [
+                    'has_update'      => true,
+                    'current_version' => WOO_GET_DATA_AI_VERSION,
+                    'new_version'     => $new_version,
+                    'update_url'      => wp_nonce_url(
+                        self_admin_url('update.php?action=upgrade-plugin&plugin=' . urlencode(WOO_GET_DATA_AI_PLUGIN_BASENAME)),
+                        'upgrade-plugin_' . WOO_GET_DATA_AI_PLUGIN_BASENAME
+                    ),
+                    'release_url'     => 'https://github.com/SOYOO974/woo-get-data-for-ai/releases/tag/v' . ltrim($new_version, 'v'),
+                    'upgrade_notice'  => !empty($wp_item->upgrade_notice) ? sanitize_text_field($wp_item->upgrade_notice) : '',
+                ];
+            }
+        }
+
+        return [
+            'has_update'      => false,
+            'current_version' => WOO_GET_DATA_AI_VERSION,
+            'new_version'     => WOO_GET_DATA_AI_VERSION,
+            'update_url'      => '',
+            'release_url'     => '',
+            'upgrade_notice'  => '',
+        ];
+    }
+
+    /**
+     * AJAX handler to check for updates.
+     */
+    public function ajax_check_for_updates() {
+        check_ajax_referer('agent_bridge_admin_nonce', 'security');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => esc_html__('Unauthorized.', 'woo-get-data-for-ai')]);
+        }
+
+        $force = !empty($_POST['force']);
+        $cooldown_key = 'wp_agent_bridge_update_check_cooldown';
+        $in_cooldown = (bool) get_transient($cooldown_key);
+
+        if ($force || !$in_cooldown) {
+            $info = self::get_update_info(true);
+            set_transient($cooldown_key, 1, 60); // 60 seconds cooldown to protect against rate limits
+        } else {
+            $info = self::get_update_info(false);
+        }
+
+        $info['can_update'] = current_user_can('update_plugins');
+
+        wp_send_json_success($info);
     }
 }

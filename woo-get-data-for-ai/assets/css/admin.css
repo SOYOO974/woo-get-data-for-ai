@@ -1048,4 +1048,260 @@
     flex-grow: 1;
 }
 
+/* ==========================================================================
+   Header Version & Update Check Controls
+   ========================================================================== */
+.title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.version-update-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge-update-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    background: #eef5fb;
+    color: #135e96;
+    border: 1px solid #c5d9ed;
+    padding: 3px 9px;
+    border-radius: 12px;
+}
+
+.update-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #2271b1;
+    box-shadow: 0 0 0 0 rgba(34, 113, 177, 0.7);
+    animation: updatePulse 2s infinite;
+}
+
+@keyframes updatePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 113, 177, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(34, 113, 177, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 113, 177, 0);
+    }
+}
+
+.btn-check-updates {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+    height: 26px !important;
+    line-height: 24px !important;
+    color: #50575e !important;
+    border-color: #dcdcde !important;
+    background: #f6f7f7 !important;
+    border-radius: 4px !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-check-updates:hover,
+.btn-check-updates:focus {
+    color: #1d2327 !important;
+    border-color: #2271b1 !important;
+    background: #ffffff !important;
+}
+
+.btn-check-updates .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+}
+
+.update-check-status-msg {
+    font-size: 12px;
+    font-weight: 500;
+    color: #646970;
+    transition: opacity 0.3s ease;
+}
+
+.update-check-status-msg.status-success {
+    color: #1e7e34;
+}
+
+.update-check-status-msg.status-error {
+    color: #d63638;
+}
+
+.spin-clockwise {
+    animation: spinClockwise 1s infinite linear;
+}
+
+@keyframes spinClockwise {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Update Available Banner (options-general.php?page=wp-agent-bridge)
+   ========================================================================== */
+.agent-bridge-update-banner {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f1fc 100%);
+    border: 1px solid #72aee6;
+    border-left: 5px solid #2271b1;
+    border-radius: 8px;
+    padding: 16px 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 6px rgba(34, 113, 177, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.agent-bridge-update-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1 1 500px;
+}
+
+.agent-bridge-update-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #2271b1;
+    color: #ffffff;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(34, 113, 177, 0.25);
+}
+
+.agent-bridge-update-banner-icon .dashicons {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+}
+
+.agent-bridge-update-banner-text h3.update-banner-title {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0c3d69;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.badge-update-pill {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: #2271b1;
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.agent-bridge-update-banner-text p.update-banner-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #3c434a;
+    line-height: 1.45;
+}
+
+.agent-bridge-update-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.agent-bridge-update-banner .btn-update-now {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px !important;
+    height: auto !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    background: #2271b1 !important;
+    border-color: #2271b1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.agent-bridge-update-banner .btn-update-now:hover,
+.agent-bridge-update-banner .btn-update-now:focus {
+    background: #135e96 !important;
+    border-color: #135e96 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.agent-bridge-update-banner .btn-update-now.disabled {
+    pointer-events: none;
+    opacity: 0.75;
+}
+
+.agent-bridge-update-banner .btn-view-release-notes {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px !important;
+    padding: 6px 14px !important;
+    height: auto !important;
+    color: #2271b1 !important;
+    border-color: #bfe0fb !important;
+    background: #ffffff !important;
+}
+
+.agent-bridge-update-banner .btn-view-release-notes:hover {
+    color: #135e96 !important;
+    border-color: #72aee6 !important;
+    background: #f0f7ff !important;
+}
+
+.update-permission-notice {
+    font-size: 12.5px;
+    color: #8c6b12;
+    background: #fff8e5;
+    padding: 6px 12px;
+    border: 1px solid #f0b849;
+    border-radius: 4px;
+}
+
+@media (max-width: 782px) {
+    .agent-bridge-update-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 14px 16px;
+    }
+
+    .agent-bridge-update-banner-actions {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
 

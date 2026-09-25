@@ -273,7 +273,7 @@ Enables/disables modules on a per-site basis:
 | `GET /logs/sources` | GET | Available log files (`debug.log`, `uploads/wc-logs/*.log`, custom logs) with sizes & dates |
 | `GET /logs/view` | GET | Memory-safe tail extraction of the last $N$ lines with optional error filtering |
 | `GET /logs/custom` | GET | Memory-safe tail inspection of specific log files in `wp-content/` with strict path sandboxing (`?file=nom-du-log`) |
-| `GET /logs/errors-summary` | GET | Crash Watch: aggregated and deduplicated recent fatal PHP errors and exceptions from `debug.log` and `wc-logs` with component attribution (`?limit=15`) |
+| `GET /logs/errors-summary` | GET | Crash Watch: aggregated and deduplicated recent fatal PHP errors, exceptions, and payment gateway errors (Stripe, Alma, PayPal) with component attribution (`?limit=15`, `?include_payments=true`, `?days=2`) |
 | `GET /logs/emails` | GET | Search database email delivery logs across WP Mail Logging (`wp_wpml_mails`), FluentSMTP (`fluentmail_log`), Post SMTP (`postman_logs`), and WP Mail SMTP with PII email redaction (`?search=`, `?status=all\|sent\|failed`, `?limit=50`, `?offset=`) |
 | `GET /logs/payment-logs` | GET | Alias to `/woocommerce/payment-logs` accessible via either `logs` or `woocommerce` module permissions |
 | `GET /crons` | GET | WP-Cron registered jobs, next execution timestamps (GMT & local), recurrence intervals, overdue tasks, and hook arguments |
@@ -416,6 +416,22 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.42.0 (2026-09-25)
+- **Vérification Automatique des Mises à Jour & Bandeau d'Action Admin (`/wp-admin/options-general.php?page=wp-agent-bridge`)** :
+  - **Détection Automatique & Transparente en Arrière-Plan** : Dès l'ouverture de la page des réglages du plugin, une requête AJAX légère vérifie si une nouvelle version est disponible sur GitHub via `plugin-update-checker` (PUC v5.6).
+  - **Protection Anti-Flood (Cooldown 60s)** : Mise en place d'un transient de temporisation de 60 secondes pour éviter de surcharger les quotas d'API GitHub lors de la navigation rapide entre les onglets de configuration.
+  - **Bandeau de Mise à Jour Prominent & Élégant** : Dès qu'une mise à jour est détectée, un bandeau informatif moderne (icône, version installée, nouvelle version, badge « Nouvelle version ») s'affiche au sommet de la page des réglages, au-dessus des onglets.
+  - **Mise à Jour Sécurisée en 1 Clic** : Bouton d'action principal « Mettre à jour vers la vX.Y.Z maintenant » connecté à l'upgrader natif WordPress avec nonce sécurisé (`update.php?action=upgrade-plugin`), accompagné d'un lien direct vers les notes de version GitHub (`View Release Notes`).
+  - **Badge d'État & Bouton de Vérification Manuelle dans le Header** : Ajout d'un badge interactif « Mise à jour disponible » avec pulsation visuelle et d'un bouton « Vérifier les mises à jour » permettant un rafraîchissement immédiat forcé à la demande (`force: 1`).
+  - **Internationalisation Complète (100% i18n)** : Intégration de toutes les chaînes dans le domaine `woo-get-data-for-ai` et synchronisation de la couverture de traduction française à 100% dans `.pot`, `.po` et `.mo` compilé.
+- **Agrégation Automatique des Erreurs de Paiement dans Crash Watch (`GET /logs/errors-summary`)** :
+  - **Zéro Angle Mort pour les Agents IA** : Lorsqu'un agent ou développeur interroge `/logs/errors-summary` (Crash Watch) pour identifier les erreurs du site, l'API scanne désormais automatiquement les logs des passerelles de paiement (Stripe, Alma, PayPal, etc.) des 2 derniers jours (`days=2` par défaut).
+  - **Harmonisation dans `recent_crashes`** : Les erreurs de paiement sont dédupliquées, attribuées (`component_type: "payment_gateway"`, `component_name: "Stripe (Payment Gateway)"`) et intégrées directement dans la liste principale des crashs et erreurs du site.
+  - **Bloc de Synthèse `payment_errors`** : La réponse JSON s'enrichit d'une section dédiée `payment_errors` détaillant le statut global (`clean` ou `issues_detected`), le total d'erreurs et la répartition par passerelle (`by_gateway`).
+  - **Paramètre d'Exclusion (`include_payments=false`)** : Permet de restreindre l'audit aux seules erreurs PHP natives en cas de besoin.
+- **Indicateur de Santé des Passerelles dans `/woocommerce/summary`** :
+  - La section `gateways_summary` intègre un indicateur rapide `payment_errors_status` (`clean` vs `errors_detected`) et `recent_errors_count` pour une détection proactive immédiate dès l'audit de santé de la boutique.
 
 ### v1.41.0 (2026-09-25)
 - **Support des Plages Temporelles Absolues (`since` / `date_from`, `until` / `date_to`)** :

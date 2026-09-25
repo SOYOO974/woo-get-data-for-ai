@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-25 10:46+00:00\n"
+"POT-Creation-Date: 2026-09-25 11:10+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,182 +13,242 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Domain: woo-get-data-for-ai\n"
 
-#: includes/admin/class-admin-settings.php:41
+#: includes/admin/class-admin-settings.php:42
 msgid "Settings"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:50
+#: includes/admin/class-admin-settings.php:51
 msgid "WP Agent Bridge Settings"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:51
+#: includes/admin/class-admin-settings.php:52
 msgid "Agent Bridge"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:149
+#: includes/admin/class-admin-settings.php:150
 msgid "Are you sure you want to regenerate the access token? Existing AI agents and CLI clients will immediately lose access until updated."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:150
+#: includes/admin/class-admin-settings.php:151
 msgid "Are you sure you want to clear all connection logs?"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:151
+#: includes/admin/class-admin-settings.php:152
 msgid "Are you sure you want to unlock this IP address immediately?"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:152
+#: includes/admin/class-admin-settings.php:153
 msgid "Are you sure you want to reset all lockout counters and unblock all IP addresses?"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:153
+#: includes/admin/class-admin-settings.php:154
 msgid "Copied to clipboard!"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:154
+#: includes/admin/class-admin-settings.php:155
 msgid "Copied!"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:155
+#: includes/admin/class-admin-settings.php:156
 #: includes/admin/views/tab-general.php:152
 msgid "Show"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:156
+#: includes/admin/class-admin-settings.php:157
 msgid "Hide"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:157
+#: includes/admin/class-admin-settings.php:158
 msgid "Network error occurred while communicating with WordPress."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:158
+#: includes/admin/class-admin-settings.php:159
 msgid "Error regenerating token."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:159
+#: includes/admin/class-admin-settings.php:160
 msgid "Token regenerated successfully."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:160
+#: includes/admin/class-admin-settings.php:161
 msgid "Error clearing logs."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:161
+#: includes/admin/class-admin-settings.php:162
 msgid "Error unlocking IP."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:162
+#: includes/admin/class-admin-settings.php:163
 msgid "Error resetting lockouts."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:163
+#: includes/admin/class-admin-settings.php:164
 msgid "All lockouts have been cleared."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:183
+#: includes/admin/class-admin-settings.php:165
+msgid "Checking for updates..."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:166
+#: includes/admin/class-admin-settings.php:279
+msgid "Check updates"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:167
+msgid "WP Agent Bridge is up to date (v%s)."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:168
+msgid "New version v%s available!"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:169
+#: includes/admin/class-admin-settings.php:333
+msgid "Update to v%s Now"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:170
+msgid "Updating..."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:171
+msgid "Could not check for updates."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:191
 #: includes/admin/views/tab-general.php:18
 msgid "Audit my site's frontend performance, identify slow plugins, and check database bloat to find quick optimization wins."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:196
+#: includes/admin/class-admin-settings.php:204
 msgid "Connect your AI to %s in 2 clicks"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:203
+#: includes/admin/class-admin-settings.php:211
 msgid "100% Read-Only & Safe"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:207
+#: includes/admin/class-admin-settings.php:215
 msgid "WP Agent Bridge is active and ready. Safely connect your AI assistant (Antigravity, Claude, Cursor, ChatGPT) to inspect and diagnose your site with zero risk to your data or orders."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:212
+#: includes/admin/class-admin-settings.php:220
 msgid "High-value prompt to try with your AI:"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:217
+#: includes/admin/class-admin-settings.php:225
 msgid "Copy Prompt"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:223
+#: includes/admin/class-admin-settings.php:231
 msgid "Connect My AI in 2 Clicks"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:226
+#: includes/admin/class-admin-settings.php:234
 msgid "View Documentation"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:242
+#: includes/admin/class-admin-settings.php:250
 msgid "General & Status"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:243
+#: includes/admin/class-admin-settings.php:251
 msgid "Permissions Matrix"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:244
+#: includes/admin/class-admin-settings.php:252
 msgid "AI Mega-Prompt & Skill"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:245
+#: includes/admin/class-admin-settings.php:253
 msgid "Connection Logs & Analytics"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:246
+#: includes/admin/class-admin-settings.php:254
 msgid "Documentation & Guide"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:251
-#: includes/admin/class-admin-settings.php:258
+#: includes/admin/class-admin-settings.php:261
+#: includes/admin/class-admin-settings.php:269
 msgid "WP Agent Bridge"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:263
+#: includes/admin/class-admin-settings.php:273
+#: includes/admin/class-admin-settings.php:275
+msgid "Update available"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:277
+msgid "Check for updates now"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:286
 msgid "Active & Protected"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:263
+#: includes/admin/class-admin-settings.php:286
 msgid "Token Missing"
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:267
+#: includes/admin/class-admin-settings.php:290
 msgid "Secure, read-only inspection API for WordPress & WooCommerce to connect AI Agents (Antigravity, Claude, Cursor) and developer tools."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:310
-#: includes/admin/class-admin-settings.php:335
-#: includes/admin/class-admin-settings.php:349
-#: includes/admin/class-admin-settings.php:363
-#: includes/admin/class-admin-settings.php:386
-msgid "Unauthorized."
+#: includes/admin/class-admin-settings.php:305
+msgid "Update Available: v%s"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:309
+msgid "New Release"
 msgstr ""
 
 #: includes/admin/class-admin-settings.php:315
-msgid "Token is set in wp-config.php via WP_AGENT_BRIDGE_TOKEN constant and cannot be regenerated from admin."
-msgstr ""
-
-#: includes/admin/class-admin-settings.php:327
-msgid "Access token regenerated successfully."
+msgid "A new version of WP Agent Bridge is available (currently installed: v%s). We recommend updating to ensure optimal diagnostic accuracy, security, and performance."
 msgstr ""
 
 #: includes/admin/class-admin-settings.php:341
+msgid "Update permissions required to install."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:351
+msgid "View Release Notes"
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:395
+#: includes/admin/class-admin-settings.php:420
+#: includes/admin/class-admin-settings.php:434
+#: includes/admin/class-admin-settings.php:448
+#: includes/admin/class-admin-settings.php:471
+#: includes/admin/class-admin-settings.php:559
+msgid "Unauthorized."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:400
+msgid "Token is set in wp-config.php via WP_AGENT_BRIDGE_TOKEN constant and cannot be regenerated from admin."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:412
+msgid "Access token regenerated successfully."
+msgstr ""
+
+#: includes/admin/class-admin-settings.php:426
 msgid "All failed attempts and IP lockouts have been reset successfully."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:355
+#: includes/admin/class-admin-settings.php:440
 msgid "All access logs have been cleared."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:368
+#: includes/admin/class-admin-settings.php:453
 msgid "Missing IP parameter."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:376
+#: includes/admin/class-admin-settings.php:461
 msgid "IP address %s has been unlocked."
 msgstr ""
 
-#: includes/admin/class-admin-settings.php:392
+#: includes/admin/class-admin-settings.php:477
 msgid "Onboarding notice dismissed."
 msgstr ""
 
@@ -1358,28 +1418,28 @@ msgstr ""
 msgid "Workflow '%s' was not found."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:258
+#: includes/api/class-logs-controller.php:266
 msgid "Parameter \"source\" is required."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:264
+#: includes/api/class-logs-controller.php:272
 msgid "Log file not found or unreadable."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:308
+#: includes/api/class-logs-controller.php:316
 msgid "Parameter \"file\" is required."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:317
+#: includes/api/class-logs-controller.php:325
 msgid "Log file not found, unreadable, or outside allowed directories."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:659
+#: includes/api/class-logs-controller.php:743
 msgid "No supported database email logging plugin tables found (WP Mail Logging, FluentSMTP, Post SMTP, or WP Mail SMTP)."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:880
-#: includes/api/class-woocommerce-controller.php:4385
+#: includes/api/class-logs-controller.php:964
+#: includes/api/class-woocommerce-controller.php:4401
 msgid "Both 'woocommerce' and 'logs' modules are disabled by the site administrator."
 msgstr ""
 
@@ -1652,15 +1712,15 @@ msgstr ""
 #: includes/api/class-theme-controller.php:116
 #: includes/api/class-tracking-controller.php:153
 #: includes/api/class-woocommerce-controller.php:518
-#: includes/api/class-woocommerce-controller.php:956
-#: includes/api/class-woocommerce-controller.php:1103
-#: includes/api/class-woocommerce-controller.php:1259
-#: includes/api/class-woocommerce-controller.php:1488
-#: includes/api/class-woocommerce-controller.php:1691
-#: includes/api/class-woocommerce-controller.php:1882
-#: includes/api/class-woocommerce-controller.php:2041
-#: includes/api/class-woocommerce-controller.php:2223
-#: includes/api/class-woocommerce-controller.php:4151
+#: includes/api/class-woocommerce-controller.php:972
+#: includes/api/class-woocommerce-controller.php:1119
+#: includes/api/class-woocommerce-controller.php:1275
+#: includes/api/class-woocommerce-controller.php:1504
+#: includes/api/class-woocommerce-controller.php:1707
+#: includes/api/class-woocommerce-controller.php:1898
+#: includes/api/class-woocommerce-controller.php:2057
+#: includes/api/class-woocommerce-controller.php:2239
+#: includes/api/class-woocommerce-controller.php:4167
 msgid "WooCommerce is not active on this site."
 msgstr ""
 
@@ -1876,196 +1936,196 @@ msgstr ""
 msgid "Order health and cancellation metrics are within standard operational range."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:819
+#: includes/api/class-woocommerce-controller.php:835
 msgid "Enable High-Performance Order Storage (HPOS)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:820
+#: includes/api/class-woocommerce-controller.php:836
 msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:827
+#: includes/api/class-woocommerce-controller.php:843
 msgid "Enable HPOS Data Caching"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:828
+#: includes/api/class-woocommerce-controller.php:844
 msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:835
+#: includes/api/class-woocommerce-controller.php:851
 msgid "Defer Transactional Emails"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:836
+#: includes/api/class-woocommerce-controller.php:852
 msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:843
+#: includes/api/class-woocommerce-controller.php:859
 msgid "Enable Checkout Rate Limiting"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:844
+#: includes/api/class-woocommerce-controller.php:860
 msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:851
+#: includes/api/class-woocommerce-controller.php:867
 msgid "Consider HPOS Full-Text Search Indexes"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:852
+#: includes/api/class-woocommerce-controller.php:868
 msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:859
+#: includes/api/class-woocommerce-controller.php:875
 msgid "Configure WooCommerce Order Retention Policy"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:862
+#: includes/api/class-woocommerce-controller.php:878
 msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables. Configure WooCommerce Accounts & Privacy retention periods (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, and leave Completed/Refunded unset) to enable automatic cleanup."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:874
+#: includes/api/class-woocommerce-controller.php:890
 msgid "Consider Enabling Product Object Caching"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:875
+#: includes/api/class-woocommerce-controller.php:891
 msgid "Speeds up category loops and product-heavy pages by caching product objects during each request to eliminate duplicate loading overhead."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:896
+#: includes/api/class-woocommerce-controller.php:912
 msgid "Caches product objects during each request to prevent redundant loads on product-heavy pages."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1110
+#: includes/api/class-woocommerce-controller.php:1126
 msgid "Product not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1503
+#: includes/api/class-woocommerce-controller.php:1519
 msgid "Coupon not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1889
+#: includes/api/class-woocommerce-controller.php:1905
 msgid "Order not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:2122
 #: includes/api/class-woocommerce-controller.php:2138
+#: includes/api/class-woocommerce-controller.php:2154
 msgid "Disabled (ND)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3057
+#: includes/api/class-woocommerce-controller.php:3073
 msgid "Last 24 Months"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3071
+#: includes/api/class-woocommerce-controller.php:3087
 msgid "All Time"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3085
+#: includes/api/class-woocommerce-controller.php:3101
 msgid "Custom Period"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3095
+#: includes/api/class-woocommerce-controller.php:3111
 msgid "Last 12 Months"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3337
+#: includes/api/class-woocommerce-controller.php:3353
 msgid "Days 01-10 (Early Month)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3338
+#: includes/api/class-woocommerce-controller.php:3354
 msgid "Days 11-20 (Mid Month)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3339
+#: includes/api/class-woocommerce-controller.php:3355
 msgid "Days 21-31 (Late Month / Payday Kickoff)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3381
+#: includes/api/class-woocommerce-controller.php:3397
 msgid "Payday Window (Days 25 to 05)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3382
+#: includes/api/class-woocommerce-controller.php:3398
 msgid "25th of month to 5th of next month"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3393
+#: includes/api/class-woocommerce-controller.php:3409
 msgid "Mid-Month Core (Days 06 to 24)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3394
+#: includes/api/class-woocommerce-controller.php:3410
 msgid "6th to 24th of month"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3451
+#: includes/api/class-woocommerce-controller.php:3467
 msgid "Monday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3452
+#: includes/api/class-woocommerce-controller.php:3468
 msgid "Tuesday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3453
+#: includes/api/class-woocommerce-controller.php:3469
 msgid "Wednesday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3454
+#: includes/api/class-woocommerce-controller.php:3470
 msgid "Thursday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3455
+#: includes/api/class-woocommerce-controller.php:3471
 msgid "Friday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3456
+#: includes/api/class-woocommerce-controller.php:3472
 msgid "Saturday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3457
+#: includes/api/class-woocommerce-controller.php:3473
 msgid "Sunday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3519
+#: includes/api/class-woocommerce-controller.php:3535
 msgid "Weekdays (Monday to Friday)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3528
+#: includes/api/class-woocommerce-controller.php:3544
 msgid "Weekend (Saturday & Sunday)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3589
+#: includes/api/class-woocommerce-controller.php:3605
 msgid "+15%% to +25%% during peak conversion windows (%s:00-%s:59)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3590
+#: includes/api/class-woocommerce-controller.php:3606
 msgid "-40%% to -60%% during off-peak night hours (%s:00-%s:59)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3654
+#: includes/api/class-woocommerce-controller.php:3670
 msgid "Recommended budget pacing by decades: %.1f%% to Early Month (days 1-10), %.1f%% to Mid Month (days 11-20), and %.1f%% to Late Month (days 21-31)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3661
+#: includes/api/class-woocommerce-controller.php:3677
 msgid "Significant Payday Window Effect detected: Daily revenue surges by +%.1f%% between the 25th and the 5th (%.2fx baseline velocity). Scale daily ad budgets to %.2fx during this 11-day window, then throttle to %.2fx from days 6 to 24."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3667
+#: includes/api/class-woocommerce-controller.php:3683
 msgid "Moderate Payday Window Effect (+%.1f%% lift). Keep daily budgets relatively even across the month (%.2fx during days 25-5 vs %.2fx off-peak)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3674
+#: includes/api/class-woocommerce-controller.php:3690
 msgid "Top performing day is %1$s (%2$.2f %3$s/day avg), while %4$s is lowest (%5$.2f %6$s/day avg). Adjust Google Ads & Meta day-of-week bid pacing accordingly."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3682
+#: includes/api/class-woocommerce-controller.php:3698
 msgid "Top conversion hours are %1$02d:00-%2$02d:59. Apply Google Ads Ad Schedule bid adjustments of +15%% to +25%% on peak windows and decrease -40%% to -60%% on off-peak night hours (%3$02d:00-%4$02d:59)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:4123
+#: includes/api/class-woocommerce-controller.php:4139
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:4159
+#: includes/api/class-woocommerce-controller.php:4175
 msgid "WooCommerce account functions are not loaded."
 msgstr ""
 

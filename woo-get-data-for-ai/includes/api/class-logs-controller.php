@@ -59,8 +59,16 @@ class Logs_Controller extends Rest_Controller {
                 return $this->check_access($request, 'logs');
             },
             'args'                => [
-                'limit' => [
+                'limit'            => [
                     'default'           => 15,
+                    'sanitize_callback' => 'absint',
+                ],
+                'include_payments' => [
+                    'default'           => true,
+                    'sanitize_callback' => 'rest_sanitize_boolean',
+                ],
+                'days'             => [
+                    'default'           => 2,
                     'sanitize_callback' => 'absint',
                 ],
             ],
@@ -490,6 +498,9 @@ class Logs_Controller extends Rest_Controller {
      */
     public function get_errors_summary(\WP_REST_Request $request) {
         $limit = min(50, max(1, (int) ($request->get_param('limit') ?: 15)));
+        $include_payments_param = $request->get_param('include_payments');
+        $include_payments = ($include_payments_param === null || in_array(strtolower((string) $include_payments_param), ['1', 'true', 'yes'], true));
+        $days = min(14, max(1, (int) ($request->get_param('days') ?: 2)));
 
         // 1. Discover target error log files
         $files_to_scan = [];
@@ -520,6 +531,7 @@ class Logs_Controller extends Rest_Controller {
         $aggregated_errors = [];
         $total_error_lines_matched = 0;
 
+        // 2. Scan PHP error logs (debug.log, fatal-errors-*.log)
         foreach ($files_to_scan as $label => $filepath) {
             $raw_lines = $this->tail_file($filepath, 400);
 
@@ -594,6 +606,77 @@ class Logs_Controller extends Rest_Controller {
             }
         }
 
+        // 3. Scan Payment Gateway Logs (Stripe, Alma, PayPal, etc.) automatically
+        $payment_errors_summary = [
+            'status'         => 'clean',
+            'scanned_files'  => 0,
+            'total_errors'   => 0,
+            'total_warnings' => 0,
+            'by_gateway'     => [],
+        ];
+
+        if ($include_payments && class_exists('\WPAgentBridge\Payment_Logs')) {
+            $all_wc_files = Payment_Logs::scan_wc_log_files();
+            $target_payment_files = Payment_Logs::resolve_target_files('all', '', $days, $all_wc_files);
+            $payment_errors_summary['scanned_files'] = count($target_payment_files);
+
+            foreach ($target_payment_files as $f_info) {
+                $gw_slug = Payment_Logs::detect_gateway_from_handle($f_info['handle']);
+                $gw_name = Payment_Logs::get_gateway_name($gw_slug);
+                $label   = 'wc-logs/' . $f_info['file'];
+                $files_to_scan[$label] = $f_info['path'];
+
+                if (!isset($payment_errors_summary['by_gateway'][$gw_slug])) {
+                    $payment_errors_summary['by_gateway'][$gw_slug] = [
+                        'gateway'  => $gw_slug,
+                        'name'     => $gw_name,
+                        'errors'   => 0,
+                        'warnings' => 0,
+                    ];
+                }
+
+                // Memory-safe reverse scan (max 30 error entries per gateway file)
+                $pay_res = Payment_Logs::search_log_file($f_info['path'], 30, '', 'error');
+                $payment_errors_summary['total_errors']   += $pay_res['total_errors'];
+                $payment_errors_summary['total_warnings'] += $pay_res['total_warnings'];
+                $payment_errors_summary['by_gateway'][$gw_slug]['errors']   += $pay_res['total_errors'];
+                $payment_errors_summary['by_gateway'][$gw_slug]['warnings'] += $pay_res['total_warnings'];
+
+                $total_error_lines_matched += count($pay_res['entries']);
+
+                foreach ($pay_res['entries'] as $entry) {
+                    $timestamp = !empty($entry['timestamp']) ? $entry['timestamp'] : null;
+                    $clean_message = $entry['message'];
+                    $error_hash = md5('payment:' . $gw_slug . ':' . substr($clean_message, 0, 100));
+
+                    if (!isset($aggregated_errors[$error_hash])) {
+                        $aggregated_errors[$error_hash] = [
+                            'component_type' => 'payment_gateway',
+                            'component_name' => $gw_name . ' (Payment Gateway)',
+                            'file'           => 'wp-content/uploads/wc-logs/' . $f_info['file'],
+                            'line'           => null,
+                            'source_log'     => $label,
+                            'occurrences'    => 1,
+                            'last_seen'      => $timestamp ?: 'recent',
+                            'first_seen'     => $timestamp ?: 'recent',
+                            'raw_excerpt'    => $clean_message,
+                            'error_type'     => 'payment_gateway_error',
+                            'gateway'        => $gw_slug,
+                        ];
+                    } else {
+                        $aggregated_errors[$error_hash]['occurrences']++;
+                        if ($timestamp) {
+                            $aggregated_errors[$error_hash]['last_seen'] = $timestamp;
+                        }
+                    }
+                }
+            }
+
+            if ($payment_errors_summary['total_errors'] > 0) {
+                $payment_errors_summary['status'] = 'issues_detected';
+            }
+        }
+
         $unique_errors = array_values($aggregated_errors);
 
         // Sort by occurrences descending, then last seen
@@ -604,12 +687,13 @@ class Logs_Controller extends Rest_Controller {
         $top_errors = array_slice($unique_errors, 0, $limit);
 
         return $this->response([
-            'status'             => empty($top_errors) ? 'clean' : 'issues_detected',
-            'scanned_sources'    => array_keys($files_to_scan),
-            'matched_lines'      => $total_error_lines_matched,
-            'unique_issues_count'=> count($unique_errors),
-            'reported_count'     => count($top_errors),
-            'recent_crashes'     => $top_errors,
+            'status'              => empty($top_errors) ? 'clean' : 'issues_detected',
+            'scanned_sources'     => array_keys($files_to_scan),
+            'matched_lines'       => $total_error_lines_matched,
+            'unique_issues_count' => count($unique_errors),
+            'reported_count'      => count($top_errors),
+            'recent_crashes'      => $top_errors,
+            'payment_errors'      => $payment_errors_summary,
         ]);
     }
 

@@ -78,6 +78,28 @@ class Payment_Logs {
     ];
 
     /**
+     * Get list of known payment gateways.
+     *
+     * @return array
+     */
+    public static function get_known_gateways() {
+        return self::$known_gateways;
+    }
+
+    /**
+     * Get human-friendly name for gateway slug.
+     *
+     * @param string $slug
+     * @return string
+     */
+    public static function get_gateway_name($slug) {
+        if (isset(self::$known_gateways[$slug])) {
+            return self::$known_gateways[$slug]['name'];
+        }
+        return ucfirst(str_replace(['_', '-'], ' ', $slug));
+    }
+
+    /**
      * Detect known gateway slug from log handle.
      *
      * @param string $handle
