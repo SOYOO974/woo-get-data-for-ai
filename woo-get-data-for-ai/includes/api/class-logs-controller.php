@@ -133,6 +133,30 @@ class Logs_Controller extends Rest_Controller {
                     'default'           => '',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
+                'since'    => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'date_from'=> [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'until'    => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'date_to'  => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'count_only' => [
+                    'default'           => false,
+                    'sanitize_callback' => 'rest_sanitize_boolean',
+                ],
+                'summary'  => [
+                    'default'           => false,
+                    'sanitize_callback' => 'rest_sanitize_boolean',
+                ],
             ],
         ]);
 

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-25 10:02+00:00\n"
+"POT-Creation-Date: 2026-09-25 10:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1358,28 +1358,28 @@ msgstr ""
 msgid "Workflow '%s' was not found."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:234
+#: includes/api/class-logs-controller.php:258
 msgid "Parameter \"source\" is required."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:240
+#: includes/api/class-logs-controller.php:264
 msgid "Log file not found or unreadable."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:284
+#: includes/api/class-logs-controller.php:308
 msgid "Parameter \"file\" is required."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:293
+#: includes/api/class-logs-controller.php:317
 msgid "Log file not found, unreadable, or outside allowed directories."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:635
+#: includes/api/class-logs-controller.php:659
 msgid "No supported database email logging plugin tables found (WP Mail Logging, FluentSMTP, Post SMTP, or WP Mail SMTP)."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:856
-#: includes/api/class-woocommerce-controller.php:4361
+#: includes/api/class-logs-controller.php:880
+#: includes/api/class-woocommerce-controller.php:4385
 msgid "Both 'woocommerce' and 'logs' modules are disabled by the site administrator."
 msgstr ""
 
@@ -1651,16 +1651,16 @@ msgstr ""
 
 #: includes/api/class-theme-controller.php:116
 #: includes/api/class-tracking-controller.php:153
-#: includes/api/class-woocommerce-controller.php:494
-#: includes/api/class-woocommerce-controller.php:932
-#: includes/api/class-woocommerce-controller.php:1079
-#: includes/api/class-woocommerce-controller.php:1235
-#: includes/api/class-woocommerce-controller.php:1464
-#: includes/api/class-woocommerce-controller.php:1667
-#: includes/api/class-woocommerce-controller.php:1858
-#: includes/api/class-woocommerce-controller.php:2017
-#: includes/api/class-woocommerce-controller.php:2199
-#: includes/api/class-woocommerce-controller.php:4127
+#: includes/api/class-woocommerce-controller.php:518
+#: includes/api/class-woocommerce-controller.php:956
+#: includes/api/class-woocommerce-controller.php:1103
+#: includes/api/class-woocommerce-controller.php:1259
+#: includes/api/class-woocommerce-controller.php:1488
+#: includes/api/class-woocommerce-controller.php:1691
+#: includes/api/class-woocommerce-controller.php:1882
+#: includes/api/class-woocommerce-controller.php:2041
+#: includes/api/class-woocommerce-controller.php:2223
+#: includes/api/class-woocommerce-controller.php:4151
 msgid "WooCommerce is not active on this site."
 msgstr ""
 
@@ -1860,212 +1860,212 @@ msgstr ""
 msgid "Verify that Meta CAPI cookie name is configured to \"%s\"."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:626
+#: includes/api/class-woocommerce-controller.php:650
 msgid "%.1f%% of orders (%s orders) are cancelled. High cancellation ratio detected."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:636
+#: includes/api/class-woocommerce-controller.php:660
 msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables with no retention policy active. Configure WooCommerce Accounts & Privacy settings (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, leave Completed/Refunded unset) to automate database cleanup."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:645
+#: includes/api/class-woocommerce-controller.php:669
 msgid "%s stale ghost orders detected. WooCommerce retention policy is configured and processing batches."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:652
+#: includes/api/class-woocommerce-controller.php:676
 msgid "Order health and cancellation metrics are within standard operational range."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:795
+#: includes/api/class-woocommerce-controller.php:819
 msgid "Enable High-Performance Order Storage (HPOS)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:796
+#: includes/api/class-woocommerce-controller.php:820
 msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:803
+#: includes/api/class-woocommerce-controller.php:827
 msgid "Enable HPOS Data Caching"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:804
+#: includes/api/class-woocommerce-controller.php:828
 msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:811
+#: includes/api/class-woocommerce-controller.php:835
 msgid "Defer Transactional Emails"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:812
+#: includes/api/class-woocommerce-controller.php:836
 msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:819
+#: includes/api/class-woocommerce-controller.php:843
 msgid "Enable Checkout Rate Limiting"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:820
+#: includes/api/class-woocommerce-controller.php:844
 msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:827
+#: includes/api/class-woocommerce-controller.php:851
 msgid "Consider HPOS Full-Text Search Indexes"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:828
+#: includes/api/class-woocommerce-controller.php:852
 msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:835
+#: includes/api/class-woocommerce-controller.php:859
 msgid "Configure WooCommerce Order Retention Policy"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:838
+#: includes/api/class-woocommerce-controller.php:862
 msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables. Configure WooCommerce Accounts & Privacy retention periods (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, and leave Completed/Refunded unset) to enable automatic cleanup."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:850
+#: includes/api/class-woocommerce-controller.php:874
 msgid "Consider Enabling Product Object Caching"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:851
+#: includes/api/class-woocommerce-controller.php:875
 msgid "Speeds up category loops and product-heavy pages by caching product objects during each request to eliminate duplicate loading overhead."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:872
+#: includes/api/class-woocommerce-controller.php:896
 msgid "Caches product objects during each request to prevent redundant loads on product-heavy pages."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1086
+#: includes/api/class-woocommerce-controller.php:1110
 msgid "Product not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1479
+#: includes/api/class-woocommerce-controller.php:1503
 msgid "Coupon not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:1865
+#: includes/api/class-woocommerce-controller.php:1889
 msgid "Order not found."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:2098
-#: includes/api/class-woocommerce-controller.php:2114
+#: includes/api/class-woocommerce-controller.php:2122
+#: includes/api/class-woocommerce-controller.php:2138
 msgid "Disabled (ND)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3033
+#: includes/api/class-woocommerce-controller.php:3057
 msgid "Last 24 Months"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3047
+#: includes/api/class-woocommerce-controller.php:3071
 msgid "All Time"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3061
+#: includes/api/class-woocommerce-controller.php:3085
 msgid "Custom Period"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3071
+#: includes/api/class-woocommerce-controller.php:3095
 msgid "Last 12 Months"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3313
+#: includes/api/class-woocommerce-controller.php:3337
 msgid "Days 01-10 (Early Month)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3314
+#: includes/api/class-woocommerce-controller.php:3338
 msgid "Days 11-20 (Mid Month)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3315
+#: includes/api/class-woocommerce-controller.php:3339
 msgid "Days 21-31 (Late Month / Payday Kickoff)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3357
+#: includes/api/class-woocommerce-controller.php:3381
 msgid "Payday Window (Days 25 to 05)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3358
+#: includes/api/class-woocommerce-controller.php:3382
 msgid "25th of month to 5th of next month"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3369
+#: includes/api/class-woocommerce-controller.php:3393
 msgid "Mid-Month Core (Days 06 to 24)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3370
+#: includes/api/class-woocommerce-controller.php:3394
 msgid "6th to 24th of month"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3427
+#: includes/api/class-woocommerce-controller.php:3451
 msgid "Monday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3428
+#: includes/api/class-woocommerce-controller.php:3452
 msgid "Tuesday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3429
+#: includes/api/class-woocommerce-controller.php:3453
 msgid "Wednesday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3430
+#: includes/api/class-woocommerce-controller.php:3454
 msgid "Thursday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3431
+#: includes/api/class-woocommerce-controller.php:3455
 msgid "Friday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3432
+#: includes/api/class-woocommerce-controller.php:3456
 msgid "Saturday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3433
+#: includes/api/class-woocommerce-controller.php:3457
 msgid "Sunday"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3495
+#: includes/api/class-woocommerce-controller.php:3519
 msgid "Weekdays (Monday to Friday)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3504
+#: includes/api/class-woocommerce-controller.php:3528
 msgid "Weekend (Saturday & Sunday)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3565
+#: includes/api/class-woocommerce-controller.php:3589
 msgid "+15%% to +25%% during peak conversion windows (%s:00-%s:59)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3566
+#: includes/api/class-woocommerce-controller.php:3590
 msgid "-40%% to -60%% during off-peak night hours (%s:00-%s:59)"
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3630
+#: includes/api/class-woocommerce-controller.php:3654
 msgid "Recommended budget pacing by decades: %.1f%% to Early Month (days 1-10), %.1f%% to Mid Month (days 11-20), and %.1f%% to Late Month (days 21-31)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3637
+#: includes/api/class-woocommerce-controller.php:3661
 msgid "Significant Payday Window Effect detected: Daily revenue surges by +%.1f%% between the 25th and the 5th (%.2fx baseline velocity). Scale daily ad budgets to %.2fx during this 11-day window, then throttle to %.2fx from days 6 to 24."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3643
+#: includes/api/class-woocommerce-controller.php:3667
 msgid "Moderate Payday Window Effect (+%.1f%% lift). Keep daily budgets relatively even across the month (%.2fx during days 25-5 vs %.2fx off-peak)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3650
+#: includes/api/class-woocommerce-controller.php:3674
 msgid "Top performing day is %1$s (%2$.2f %3$s/day avg), while %4$s is lowest (%5$.2f %6$s/day avg). Adjust Google Ads & Meta day-of-week bid pacing accordingly."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:3658
+#: includes/api/class-woocommerce-controller.php:3682
 msgid "Top conversion hours are %1$02d:00-%2$02d:59. Apply Google Ads Ad Schedule bid adjustments of +15%% to +25%% on peak windows and decrease -40%% to -60%% on off-peak night hours (%3$02d:00-%4$02d:59)."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:4099
+#: includes/api/class-woocommerce-controller.php:4123
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr ""
 
-#: includes/api/class-woocommerce-controller.php:4135
+#: includes/api/class-woocommerce-controller.php:4159
 msgid "WooCommerce account functions are not loaded."
 msgstr ""
 

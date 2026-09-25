@@ -293,7 +293,7 @@ Enables/disables modules on a per-site basis:
 | `GET /meta/acf` | GET | Deep ACF inspection: field groups, recursive subfield hierarchy (`repeater`, `flexible_content`, `group`), location rules, and registered Options Pages |
 | `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
 | `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order hygiene & stale ghost orders analysis (pending > 30d, failed > 60d, cancelled > 1y, total ghost orders, retention policy status, EMPTY_TRASH_DAYS auto-delete), HPOS state, active payment gateways, and shipping zones |
-| `GET /woocommerce/payment-logs` | GET | Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction (`?gateway=all\|stripe\|alma\|paypal`, `?order_id=`, `?level=error\|warning\|info\|all`, `?lines=100`, `?days=`, `?date=`, `?search=`) |
+| `GET /woocommerce/payment-logs` | GET | Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, absolute date range filtering (`since`/`until`), lightweight counting mode (`count_only=true`), order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction (`?gateway=all\|stripe\|alma\|paypal`, `?since=`, `?until=`, `?count_only=true`, `?order_id=`, `?level=error\|warning\|info\|all`, `?lines=100`, `?days=`, `?date=`, `?search=`) |
 | `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
 | `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
 | `GET /woocommerce/coupons` | GET | List and filter promotional discount coupons with status (`active`, `expired`, `exhausted`, `all`), discount types, usage counts, limits, held counts, and PII-masked email restrictions (`?status=`, `?type=`, `?search=`, `?email=`, `?per_page=20`, `?page=1`, `?orderby=date\|code\|usage_count\|modified`, `?order=DESC\|ASC`) |
@@ -416,6 +416,17 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.41.0 (2026-09-25)
+- **Support des Plages Temporelles Absolues (`since` / `date_from`, `until` / `date_to`)** :
+  - Permet de cibler précisément une date ou un horodatage de début (ex: `since=2026-09-20` ou `since=2026-09-25T12:00:00+00:00`) sans calculer un nombre de jours relatif.
+  - **Optimisation Révolutionnaire de Sortie Anticipée (Early Break)** : Comme les fichiers sont analysés en streaming inversé (du plus récent au plus ancien), dès qu'une ligne est plus ancienne que `since` avec une marge de sécurité de 5 minutes, la lecture du fichier s'arrête immédiatement, réduisant l'inspection de gros fichiers de 50 Mo+ à quelques millisecondes.
+- **Mode Comptage & Synthèse Ultra-Léger (`count_only=true` / `summary=true`)** :
+  - Conçu sur-mesure pour les workers de monitoring, crons et agents de surveillance (ex: `wordpress-site-guardian`).
+  - Retourne les compteurs exacts (`total_errors`, `total_warnings`, `total_matches`, `latest_error_timestamp`) et la ventilation détaillée par passerelle (`by_gateway[stripe]`, `by_gateway[alma]`, etc.) avec zéro allocation de mémoire pour les lignes de logs et un payload JSON minimal (< 1 Ko).
+- **Indicateur de Pagination & Volume Réel (`has_more`, `summary`)** :
+  - En mode standard, un booléen `has_more: true` informe l'agent si des erreurs supplémentaires existent au-delà du plafond `lines` demandé.
+  - L'objet `summary` est désormais inclus dans la réponse standard, fournissant à la fois les compteurs globaux et les entrées détaillées en une seule requête.
 
 ### v1.40.0 (2026-09-25)
 - **Nouvel Endpoint Dédié d'Audit des Logs Passerelles de Paiement (`GET /woocommerce/payment-logs` & alias `/logs/payment-logs`)** :

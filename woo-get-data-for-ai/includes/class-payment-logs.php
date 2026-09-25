@@ -78,6 +78,24 @@ class Payment_Logs {
     ];
 
     /**
+     * Detect known gateway slug from log handle.
+     *
+     * @param string $handle
+     * @return string
+     */
+    public static function detect_gateway_from_handle($handle) {
+        $handle = strtolower($handle);
+        foreach (self::$known_gateways as $slug => $info) {
+            foreach ($info['handles'] as $h) {
+                if ($handle === $h || strpos($handle, $h) === 0 || strpos($handle, $slug) !== false) {
+                    return $slug;
+                }
+            }
+        }
+        return 'other';
+    }
+
+    /**
      * Get WooCommerce logs directory path.
      *
      * @return string
@@ -290,9 +308,11 @@ class Payment_Logs {
      * @param string $date_filter
      * @param int $days
      * @param array $all_files
+     * @param string $since_date
+     * @param string $until_date
      * @return array
      */
-    public static function resolve_target_files($gateway_slug, $date_filter, $days, array $all_files) {
+    public static function resolve_target_files($gateway_slug, $date_filter, $days, array $all_files, $since_date = '', $until_date = '') {
         $slug = strtolower(trim($gateway_slug ?: 'all'));
         $target_handles = [];
 
@@ -353,6 +373,33 @@ class Payment_Logs {
             }
         }
 
+        // If specific since/until date range requested
+        if (!empty($since_date) || !empty($until_date)) {
+            $matched_files = array_values(array_filter($matched_files, function ($f) use ($since_date, $until_date) {
+                $f_date = $f['date'];
+                if (empty($f_date)) {
+                    return true;
+                }
+                if (!empty($since_date) && $f_date < $since_date) {
+                    return false;
+                }
+                if (!empty($until_date) && $f_date > $until_date) {
+                    return false;
+                }
+                return true;
+            }));
+
+            // Sort matched files descending by date then mtime
+            usort($matched_files, function ($a, $b) {
+                if ($a['date'] !== $b['date']) {
+                    return strcmp($b['date'], $a['date']);
+                }
+                return $b['mtime'] <=> $a['mtime'];
+            });
+
+            return $matched_files;
+        }
+
         // If specific date requested
         if (!empty($date_filter)) {
             $target_date = $date_filter;
@@ -365,6 +412,10 @@ class Payment_Logs {
             $matched_files = array_values(array_filter($matched_files, function ($f) use ($target_date) {
                 return $f['date'] === $target_date;
             }));
+
+            usort($matched_files, function ($a, $b) {
+                return $b['mtime'] <=> $a['mtime'];
+            });
 
             return $matched_files;
         }
@@ -386,6 +437,14 @@ class Payment_Logs {
             }));
         }
 
+        // Sort descending by date then mtime
+        usort($matched_files, function ($a, $b) {
+            if ($a['date'] !== $b['date']) {
+                return strcmp($b['date'], $a['date']);
+            }
+            return $b['mtime'] <=> $a['mtime'];
+        });
+
         return $matched_files;
     }
 
@@ -397,12 +456,31 @@ class Payment_Logs {
      * @param string $order_id
      * @param string $level
      * @param string $search_text
-     * @return array
+     * @param int $since_ts
+     * @param int $until_ts
+     * @param bool $count_only
+     * @return array{entries: array, total_matches: int, total_errors: int, total_warnings: int, latest_error: ?string, has_more: bool}
      */
-    public static function search_log_file($filepath, $max_lines = 100, $order_id = '', $level = 'all', $search_text = '') {
+    public static function search_log_file(
+        $filepath,
+        $max_lines = 100,
+        $order_id = '',
+        $level = 'all',
+        $search_text = '',
+        $since_ts = 0,
+        $until_ts = 0,
+        $count_only = false
+    ) {
         $handle = @fopen($filepath, 'rb');
         if (!$handle) {
-            return [];
+            return [
+                'entries'        => [],
+                'total_matches'  => 0,
+                'total_errors'   => 0,
+                'total_warnings' => 0,
+                'latest_error'   => null,
+                'has_more'       => false,
+            ];
         }
 
         $buffer_size = 32768; // 32 KB chunk
@@ -410,9 +488,14 @@ class Payment_Logs {
         $pos = ftell($handle);
 
         $matched_entries = [];
-        $carry_over = '';
+        $total_matches   = 0;
+        $total_errors    = 0;
+        $total_warnings  = 0;
+        $latest_error    = null;
+        $has_more        = false;
+        $carry_over      = '';
         $max_bytes_to_scan = 10 * 1024 * 1024; // 10MB safety cap per file
-        $bytes_scanned = 0;
+        $bytes_scanned   = 0;
 
         // Precompile filter regexes
         $order_regex = !empty($order_id) ? '/(?:\b|\D)' . preg_quote((string) $order_id, '/') . '(?:\b|\D)/' : null;
@@ -434,7 +517,14 @@ class Payment_Logs {
             }
         }
 
-        while ($pos > 0 && count($matched_entries) < $max_lines && $bytes_scanned < $max_bytes_to_scan) {
+        $stop_early = false;
+
+        while ($pos > 0 && $bytes_scanned < $max_bytes_to_scan && !$stop_early) {
+            if (!$count_only && count($matched_entries) >= $max_lines) {
+                $has_more = true;
+                break;
+            }
+
             $read_size = min($pos, $buffer_size);
             $pos -= $read_size;
             $bytes_scanned += $read_size;
@@ -462,57 +552,127 @@ class Payment_Logs {
                     continue;
                 }
 
-                // Level filter
+                // 1. Extract timestamp if present
+                $line_ts = 0;
+                if (preg_match('/^(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\+\d{2}:\d{2}|Z)?)/', $line, $ts_match)) {
+                    $line_ts = strtotime($ts_match[1]);
+                }
+
+                // 2. Temporal filtering
+                if ($until_ts > 0 && $line_ts > 0 && $line_ts > $until_ts) {
+                    continue; // Skip lines after until_ts
+                }
+
+                if ($since_ts > 0 && $line_ts > 0 && $line_ts < $since_ts) {
+                    // If line timestamp is older than since_ts by > 300s, stop reading file backwards
+                    if ($line_ts < ($since_ts - 300)) {
+                        $stop_early = true;
+                        break;
+                    }
+                    continue;
+                }
+
+                // 3. Track error and warning counts unconditionally in this time window
+                $is_error = preg_match('/\s+(ERROR|CRITICAL|EMERGENCY|ALERT)\s+/i', $line);
+                $is_warning = preg_match('/\s+(WARNING)\s+/i', $line);
+
+                if ($is_error) {
+                    $total_errors++;
+                    if ($latest_error === null) {
+                        $latest_error = $line_ts > 0 ? date('c', $line_ts) : 'detected';
+                    }
+                } elseif ($is_warning) {
+                    $total_warnings++;
+                }
+
+                // 4. Check active filters
                 if ($level_regex && !preg_match($level_regex, $line)) {
                     continue;
                 }
-
-                // Order ID filter
                 if ($order_regex && !preg_match($order_regex, $line)) {
                     continue;
                 }
-
-                // Search text filter
                 if ($search_regex && !preg_match($search_regex, $line)) {
                     continue;
                 }
 
-                // Redact line
-                $redacted_line = Redaction::redact_string($line, true);
+                $total_matches++;
 
-                // Parse structured entry
-                $entry = self::parse_log_line($redacted_line, basename($filepath));
-
-                $matched_entries[] = $entry;
-
-                if (count($matched_entries) >= $max_lines) {
-                    break 2;
+                if (!$count_only) {
+                    if (count($matched_entries) < $max_lines) {
+                        $redacted_line = Redaction::redact_string($line, true);
+                        $matched_entries[] = self::parse_log_line($redacted_line, basename($filepath));
+                    } else {
+                        $has_more = true;
+                    }
                 }
             }
         }
 
         // Process leftover line at beginning of file if pos == 0
-        if ($pos === 0 && !empty(trim($carry_over)) && count($matched_entries) < $max_lines) {
+        if ($pos === 0 && !empty(trim($carry_over)) && !$stop_early) {
             $line = trim($carry_over);
-            $pass = true;
-            if ($level_regex && !preg_match($level_regex, $line)) {
-                $pass = false;
-            }
-            if ($pass && $order_regex && !preg_match($order_regex, $line)) {
-                $pass = false;
-            }
-            if ($pass && $search_regex && !preg_match($search_regex, $line)) {
-                $pass = false;
+            $line_ts = 0;
+            if (preg_match('/^(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\+\d{2}:\d{2}|Z)?)/', $line, $ts_match)) {
+                $line_ts = strtotime($ts_match[1]);
             }
 
-            if ($pass) {
-                $redacted_line = Redaction::redact_string($line, true);
-                $matched_entries[] = self::parse_log_line($redacted_line, basename($filepath));
+            $pass_time = true;
+            if ($until_ts > 0 && $line_ts > 0 && $line_ts > $until_ts) {
+                $pass_time = false;
+            }
+            if ($since_ts > 0 && $line_ts > 0 && $line_ts < $since_ts) {
+                $pass_time = false;
+            }
+
+            if ($pass_time) {
+                $is_error = preg_match('/\s+(ERROR|CRITICAL|EMERGENCY|ALERT)\s+/i', $line);
+                $is_warning = preg_match('/\s+(WARNING)\s+/i', $line);
+
+                if ($is_error) {
+                    $total_errors++;
+                    if ($latest_error === null) {
+                        $latest_error = $line_ts > 0 ? date('c', $line_ts) : 'detected';
+                    }
+                } elseif ($is_warning) {
+                    $total_warnings++;
+                }
+
+                $pass = true;
+                if ($level_regex && !preg_match($level_regex, $line)) {
+                    $pass = false;
+                }
+                if ($pass && $order_regex && !preg_match($order_regex, $line)) {
+                    $pass = false;
+                }
+                if ($pass && $search_regex && !preg_match($search_regex, $line)) {
+                    $pass = false;
+                }
+
+                if ($pass) {
+                    $total_matches++;
+                    if (!$count_only) {
+                        if (count($matched_entries) < $max_lines) {
+                            $redacted_line = Redaction::redact_string($line, true);
+                            $matched_entries[] = self::parse_log_line($redacted_line, basename($filepath));
+                        } else {
+                            $has_more = true;
+                        }
+                    }
+                }
             }
         }
 
         fclose($handle);
-        return $matched_entries;
+
+        return [
+            'entries'        => $matched_entries,
+            'total_matches'  => $total_matches,
+            'total_errors'   => $total_errors,
+            'total_warnings' => $total_warnings,
+            'latest_error'   => $latest_error,
+            'has_more'       => $has_more,
+        ];
     }
 
     /**
@@ -572,10 +732,54 @@ class Payment_Logs {
         $lines_param   = (int) ($request->get_param('lines') ?: 100);
         $max_lines     = min(1000, max(1, $lines_param));
 
-        // Default days: 5 if order_id is provided to cover recent checkout history, 1 for real-time monitoring
+        // count_only or summary flag
+        $count_only_param = $request->get_param('count_only') ?? $request->get_param('summary');
+        $count_only = $count_only_param !== null && in_array(strtolower((string) $count_only_param), ['1', 'true', 'yes'], true);
+
+        // Date range parsing: since / date_from
+        $since_input = $request->get_param('since') ?: $request->get_param('date_from');
+        $since_ts = 0;
+        $since_date = '';
+        if (!empty($since_input)) {
+            if (is_numeric($since_input)) {
+                $since_ts = (int) $since_input;
+            } else {
+                $parsed = strtotime($since_input);
+                if ($parsed !== false) {
+                    $since_ts = $parsed;
+                }
+            }
+            if ($since_ts > 0) {
+                $since_date = date('Y-m-d', $since_ts);
+            }
+        }
+
+        // Date range parsing: until / date_to
+        $until_input = $request->get_param('until') ?: $request->get_param('date_to');
+        $until_ts = 0;
+        $until_date = '';
+        if (!empty($until_input)) {
+            if (is_numeric($until_input)) {
+                $until_ts = (int) $until_input;
+            } else {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($until_input))) {
+                    $parsed = strtotime(trim($until_input) . ' 23:59:59');
+                } else {
+                    $parsed = strtotime($until_input);
+                }
+                if ($parsed !== false) {
+                    $until_ts = $parsed;
+                }
+            }
+            if ($until_ts > 0) {
+                $until_date = date('Y-m-d', $until_ts);
+            }
+        }
+
+        // Default days: 5 if order_id is provided, 1 otherwise
         $default_days  = !empty($order_id) ? 5 : 1;
         $days_param    = $request->get_param('days');
-        $days          = $days_param !== null ? min(14, max(1, (int) $days_param)) : $default_days;
+        $days          = $days_param !== null ? min(30, max(1, (int) $days_param)) : $default_days;
 
         $date_filter   = $request->get_param('date') ? sanitize_text_field($request->get_param('date')) : '';
         $search_filter = $request->get_param('search') ? sanitize_text_field($request->get_param('search')) : '';
@@ -590,30 +794,103 @@ class Payment_Logs {
         $available_gateways = self::build_available_gateways($all_files);
 
         // 3. Resolve target log files
-        $target_files = self::resolve_target_files($gateway, $date_filter, $days, $all_files);
+        $target_files = self::resolve_target_files($gateway, $date_filter, $days, $all_files, $since_date, $until_date);
 
         // 4. Stream search across target files
-        $all_entries = [];
+        $all_entries           = [];
         $matched_files_summary = [];
+        $total_errors_accum    = 0;
+        $total_warnings_accum  = 0;
+        $total_matches_accum   = 0;
+        $latest_error_global   = null;
+        $has_more_global       = false;
+        $by_gateway_stats      = [];
 
         foreach ($target_files as $f_info) {
+            $gw_slug = self::detect_gateway_from_handle($f_info['handle']);
+            if (!isset($by_gateway_stats[$gw_slug])) {
+                $by_gateway_stats[$gw_slug] = [
+                    'gateway'      => $gw_slug,
+                    'errors'       => 0,
+                    'warnings'     => 0,
+                    'matches'      => 0,
+                    'latest_error' => null,
+                ];
+            }
+
             $matched_files_summary[] = [
                 'file'        => $f_info['file'],
                 'handle'      => $f_info['handle'],
+                'gateway'     => $gw_slug,
                 'date'        => $f_info['date'],
                 'size_human'  => $f_info['size_human'],
                 'size_bytes'  => $f_info['size_bytes'],
                 'modified_at' => $f_info['modified_at'],
             ];
 
-            $entries = self::search_log_file($f_info['path'], $max_lines, $order_id, $level, $search_filter);
-            foreach ($entries as $entry) {
-                $all_entries[] = $entry;
+            $remaining_slots = max(0, $max_lines - count($all_entries));
+            $file_res = self::search_log_file(
+                $f_info['path'],
+                $remaining_slots,
+                $order_id,
+                $level,
+                $search_filter,
+                $since_ts,
+                $until_ts,
+                $count_only
+            );
+
+            $total_errors_accum   += $file_res['total_errors'];
+            $total_warnings_accum += $file_res['total_warnings'];
+            $total_matches_accum  += $file_res['total_matches'];
+
+            $by_gateway_stats[$gw_slug]['errors']   += $file_res['total_errors'];
+            $by_gateway_stats[$gw_slug]['warnings'] += $file_res['total_warnings'];
+            $by_gateway_stats[$gw_slug]['matches']  += $file_res['total_matches'];
+
+            if (!empty($file_res['latest_error'])) {
+                if ($latest_error_global === null || strtotime($file_res['latest_error']) > strtotime($latest_error_global)) {
+                    $latest_error_global = $file_res['latest_error'];
+                }
+                if ($by_gateway_stats[$gw_slug]['latest_error'] === null || strtotime($file_res['latest_error']) > strtotime($by_gateway_stats[$gw_slug]['latest_error'])) {
+                    $by_gateway_stats[$gw_slug]['latest_error'] = $file_res['latest_error'];
+                }
             }
 
-            if (count($all_entries) >= $max_lines) {
-                break;
+            if ($file_res['has_more']) {
+                $has_more_global = true;
             }
+
+            if (!$count_only) {
+                foreach ($file_res['entries'] as $entry) {
+                    $all_entries[] = $entry;
+                }
+                if (count($all_entries) >= $max_lines) {
+                    $has_more_global = true;
+                    // In regular mode, stop reading additional files once capacity is reached
+                    break;
+                }
+            }
+        }
+
+        // Return lightweight summary if count_only
+        if ($count_only) {
+            return [
+                'success'                => true,
+                'count_only'             => true,
+                'gateway'                => $gateway,
+                'level'                  => $level,
+                'since'                  => $since_ts > 0 ? date('c', $since_ts) : null,
+                'until'                  => $until_ts > 0 ? date('c', $until_ts) : null,
+                'days_scanned'           => $days,
+                'total_errors'           => $total_errors_accum,
+                'total_warnings'         => $total_warnings_accum,
+                'total_matches'          => $total_matches_accum,
+                'latest_error_timestamp' => $latest_error_global,
+                'by_gateway'             => $by_gateway_stats,
+                'scanned_files_count'    => count($target_files),
+                'available_gateways'     => $available_gateways,
+            ];
         }
 
         // 5. Sort aggregated entries by timestamp descending (newest first)
@@ -626,6 +903,7 @@ class Payment_Logs {
         // Limit to max lines
         if (count($all_entries) > $max_lines) {
             $all_entries = array_slice($all_entries, 0, $max_lines);
+            $has_more_global = true;
         }
 
         $raw_lines = array_map(function ($e) {
@@ -633,18 +911,29 @@ class Payment_Logs {
         }, $all_entries);
 
         return [
-            'success'               => true,
-            'gateway'               => $gateway,
-            'order_id'              => !empty($order_id) ? $order_id : null,
-            'level'                 => $level,
-            'days_scanned'          => $days,
-            'date_filter'           => !empty($date_filter) ? $date_filter : null,
-            'total_lines'           => count($all_entries),
-            'scanned_files_count'   => count($target_files),
-            'matched_files'         => $matched_files_summary,
-            'entries'               => $all_entries,
-            'lines'                 => $raw_lines,
-            'available_gateways'    => $available_gateways,
+            'success'                => true,
+            'count_only'             => false,
+            'gateway'                => $gateway,
+            'order_id'               => !empty($order_id) ? $order_id : null,
+            'level'                  => $level,
+            'since'                  => $since_ts > 0 ? date('c', $since_ts) : null,
+            'until'                  => $until_ts > 0 ? date('c', $until_ts) : null,
+            'days_scanned'           => $days,
+            'date_filter'            => !empty($date_filter) ? $date_filter : null,
+            'total_lines'            => count($all_entries),
+            'has_more'               => $has_more_global,
+            'summary'                => [
+                'total_errors'   => $total_errors_accum,
+                'total_warnings' => $total_warnings_accum,
+                'total_matches'  => $total_matches_accum,
+                'latest_error'   => $latest_error_global,
+                'by_gateway'     => $by_gateway_stats,
+            ],
+            'scanned_files_count'    => count($target_files),
+            'matched_files'          => $matched_files_summary,
+            'entries'                => $all_entries,
+            'lines'                  => $raw_lines,
+            'available_gateways'     => $available_gateways,
         ];
     }
 }
