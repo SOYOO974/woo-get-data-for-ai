@@ -46,8 +46,8 @@ class Permissions {
             ],
             'logs' => [
                 'label'       => esc_html__('Error & WooCommerce Logs', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, database email logs, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom', '/logs/errors-summary', '/logs/emails'],
+                'description' => esc_html__('Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, payment gateway logs, database email logs, and custom wp-content/ logs with memory protection.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/logs/sources', '/logs/view', '/logs/custom', '/logs/errors-summary', '/logs/emails', '/logs/payment-logs'],
             ],
             'scheduler' => [
                 'label'       => esc_html__('WP-Cron & Action Scheduler', 'woo-get-data-for-ai'),
@@ -71,8 +71,8 @@ class Permissions {
             ],
             'woocommerce' => [
                 'label'       => esc_html__('WooCommerce Store Data (Products, Orders, Settings, Shipping)', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, advertising pacing & seasonality, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
-                'endpoints'   => ['/woocommerce/summary', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/pacing', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails', '/woocommerce/account-tabs'],
+                'description' => esc_html__('Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), payment gateway error logs (Stripe, Alma, PayPal), store summary, transactional emails, sales analytics, advertising pacing & seasonality, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/woocommerce/summary', '/woocommerce/payment-logs', '/woocommerce/products', '/woocommerce/product/{id}', '/woocommerce/coupons', '/woocommerce/coupon/{id}', '/woocommerce/orders', '/woocommerce/order/{id}', '/woocommerce/settings', '/woocommerce/shipping', '/woocommerce/analytics/sales', '/woocommerce/analytics/pacing', '/woocommerce/analytics/top-performers', '/woocommerce/analytics/stock', '/woocommerce/webhooks', '/woocommerce/emails', '/woocommerce/account-tabs'],
             ],
             'content' => [
                 'label'       => esc_html__('Pages, Content, SEO & Redirections', 'woo-get-data-for-ai'),
@@ -410,6 +410,12 @@ class Permissions {
                         'params'      => ['search (optional)', 'status (all|sent|failed, default: all)', 'limit (default: 20, max: 100)', 'offset (default: 0)'],
                         'description' => esc_html__('Search database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), and WP Mail SMTP with PII email redaction.', 'woo-get-data-for-ai'),
                     ],
+                    [
+                        'path'        => '/logs/payment-logs',
+                        'methods'     => ['GET'],
+                        'params'      => ['gateway (stripe|alma|paypal|all, default: all)', 'order_id (filter by order number)', 'level (error|warning|info|all, default: all)', 'lines (default: 100, max: 1000)', 'days (default: 1 or 5 if order_id set)', 'date (YYYY-MM-DD|today|yesterday)', 'search (text query)'],
+                        'description' => esc_html__('Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction.', 'woo-get-data-for-ai'),
+                    ],
                 ],
             ],
             [
@@ -549,6 +555,12 @@ class Permissions {
                         'path'        => '/woocommerce/summary',
                         'methods'     => ['GET'],
                         'description' => esc_html__('High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/woocommerce/payment-logs',
+                        'methods'     => ['GET'],
+                        'params'      => ['gateway (stripe|alma|paypal|all, default: all)', 'order_id (filter by order number)', 'level (error|warning|info|all, default: all)', 'lines (default: 100, max: 1000)', 'days (default: 1 or 5 if order_id set)', 'date (YYYY-MM-DD|today|yesterday)', 'search (text query)'],
+                        'description' => esc_html__('Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction.', 'woo-get-data-for-ai'),
                     ],
                     [
                         'path'        => '/woocommerce/products',

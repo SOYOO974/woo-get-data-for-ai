@@ -384,10 +384,10 @@ class Playbooks {
                     [
                         'step'        => 3,
                         'action'      => esc_html__('Gateway Error Logs Inspection', 'woo-get-data-for-ai'),
-                        'endpoint'    => '/logs/view',
-                        'params'      => ['source' => 'latest_wc_log', 'lines' => 200, 'filter' => 'error'],
-                        'description' => esc_html__('Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['lines', 'file', 'total_lines_scanned'],
+                        'endpoint'    => '/woocommerce/payment-logs',
+                        'params'      => ['gateway' => '<stripe|alma|paypal|all>', 'order_id' => '<order_id>', 'level' => 'error', 'lines' => 100],
+                        'description' => esc_html__('Inspects recent WooCommerce payment gateway logs (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['gateway', 'order_id', 'total_lines', 'entries[].level', 'entries[].message', 'entries[].context.error_message', 'available_gateways'],
                     ],
                     [
                         'step'        => 4,

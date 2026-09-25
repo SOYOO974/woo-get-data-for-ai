@@ -13,6 +13,49 @@ class Woocommerce_Controller extends Rest_Controller {
      * Register routes for Woocommerce_Controller.
      */
     public function register_routes() {
+        // GET /woocommerce/payment-logs (Payment gateway logs inspection and failed orders diagnosis)
+        register_rest_route(self::NAMESPACE, '/woocommerce/payment-logs', [
+            'methods'             => \WP_REST_Server::READABLE,
+            'callback'            => [$this, 'get_payment_logs'],
+            'permission_callback' => function ($request) {
+                return $this->check_payment_logs_access($request);
+            },
+            'args'                => [
+                'gateway'  => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'order_id' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'level'    => [
+                    'default'           => 'all',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'lines'    => [
+                    'default'           => 100,
+                    'sanitize_callback' => 'absint',
+                ],
+                'days'     => [
+                    'default'           => null,
+                    'sanitize_callback' => 'absint',
+                ],
+                'date'     => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'filter'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'search'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
         // GET /woocommerce/summary (Overall store health, products and orders counts, HPOS status)
         register_rest_route(self::NAMESPACE, '/woocommerce/summary', [
             'methods'             => \WP_REST_Server::READABLE,
@@ -4292,4 +4335,48 @@ class Woocommerce_Controller extends Rest_Controller {
             'tabs'                  => $tabs_result,
         ]);
     }
+
+    /**
+     * Check access for payment logs endpoint (allowed if either woocommerce or logs permission is active).
+     *
+     * @param \WP_REST_Request $request
+     * @return true|\WP_Error
+     */
+    public function check_payment_logs_access(\WP_REST_Request $request) {
+        $endpoint = $request->get_route();
+
+        // 1. Verify Security (Bearer token, method, rate limit, IP)
+        $security_check = \WPAgentBridge\Security::verify_request($request);
+        if (is_wp_error($security_check)) {
+            $status = $security_check->get_error_data()['status'] ?? 401;
+            \WPAgentBridge\Access_Logger::log_request($endpoint, $status);
+            return $security_check;
+        }
+
+        // 2. Allow if either woocommerce or logs permission is active
+        if (!\WPAgentBridge\Permissions::is_module_enabled('woocommerce') && !\WPAgentBridge\Permissions::is_module_enabled('logs')) {
+            \WPAgentBridge\Access_Logger::log_request($endpoint, 403);
+            return new \WP_Error(
+                'agent_bridge_module_disabled',
+                esc_html__("Both 'woocommerce' and 'logs' modules are disabled by the site administrator.", 'woo-get-data-for-ai'),
+                ['status' => 403]
+            );
+        }
+
+        \WPAgentBridge\Access_Logger::log_request($endpoint, 200);
+        return true;
+    }
+
+    /**
+     * GET /woocommerce/payment-logs
+     * Inspect payment gateway logs (Stripe, Alma, PayPal) with automatic hash resolution and order filtering.
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_payment_logs(\WP_REST_Request $request) {
+        $data = \WPAgentBridge\Payment_Logs::get_logs($request);
+        return $this->response($data);
+    }
 }
+

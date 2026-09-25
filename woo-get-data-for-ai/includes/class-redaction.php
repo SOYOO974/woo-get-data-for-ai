@@ -13,9 +13,20 @@ class Redaction {
      * @var array
      */
     protected static $patterns = [
-        // Stripe live keys
-        '/(sk_live_[0-9a-zA-Z]{24,})/i'                       => '[REDACTED_STRIPE_SECRET]',
-        '/(rk_live_[0-9a-zA-Z]{24,})/i'                       => '[REDACTED_STRIPE_RESTRICTED]',
+        // Stripe & Alma live keys
+        '/(sk_live_[0-9a-zA-Z]{20,})/i'                       => '[REDACTED_STRIPE_SECRET]',
+        '/(rk_live_[0-9a-zA-Z]{20,})/i'                       => '[REDACTED_STRIPE_RESTRICTED]',
+        // Stripe & Alma test keys
+        '/(sk_test_[0-9a-zA-Z]{20,})/i'                       => '[REDACTED_TEST_SECRET]',
+        '/(rk_test_[0-9a-zA-Z]{20,})/i'                       => '[REDACTED_TEST_RESTRICTED]',
+        // Stripe payment intent & setup intent client secrets
+        '/(pi_[0-9a-zA-Z]+_secret_[0-9a-zA-Z]+)/i'            => '[REDACTED_INTENT_SECRET]',
+        '/(seti_[0-9a-zA-Z]+_secret_[0-9a-zA-Z]+)/i'          => '[REDACTED_INTENT_SECRET]',
+        // Credit card numbers (15-16 digits with optional spaces or dashes)
+        '/\b(?:\d{4}[-\s]?){3}\d{4}\b/'                       => '[REDACTED_CARD_NUMBER]',
+        '/\b3[47]\d{2}[-\s]?\d{6}[-\s]?\d{5}\b/'              => '[REDACTED_CARD_NUMBER]',
+        // CVV / CVC
+        '/(["\']?(?:cvv|cvc|security_code|card_code)["\']?\s*[:=]\s*["\']?)\d{3,4}(["\']?)/i' => '$1[REDACTED_CVC]$2',
         // Bearer tokens
         '/(Bearer\s+)[A-Za-z0-9_\-\.~+\/=]{20,}/i'            => '$1[REDACTED_BEARER_TOKEN]',
         // Basic auth strings
@@ -51,6 +62,10 @@ class Redaction {
         'license_key',
         'smtp_pass',
         'db_password',
+        'client_secret',
+        'payment_intent_secret',
+        'cvv',
+        'cvc',
     ];
 
     /**

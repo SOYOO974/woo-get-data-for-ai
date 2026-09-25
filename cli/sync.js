@@ -848,6 +848,16 @@ async function pullWooCommerce() {
             console.warn('  ⚠️ Could not fetch /woocommerce/emails:', emailErr.message);
         }
 
+        // 2d. Pull Payment Logs & Gateway Errors
+        console.log('   💳 Fetching Payment Gateway Logs & Error Traces...');
+        let paymentLogsData = null;
+        try {
+            paymentLogsData = await makeRequest('/woocommerce/payment-logs?gateway=all&level=error&lines=50');
+            writeJson(path.join(wcDir, 'payment-logs.json'), paymentLogsData);
+        } catch (payErr) {
+            console.warn('  ⚠️ Could not fetch /woocommerce/payment-logs:', payErr.message);
+        }
+
         // 3. Pull Products
         console.log(`   🛍️  Fetching Products (status: ${statusFilter === 'all' ? 'publish' : statusFilter})...`);
         const prodStatus = statusFilter === 'all' ? 'publish' : statusFilter;

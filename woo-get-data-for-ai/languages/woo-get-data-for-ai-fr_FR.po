@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-09-23 12:26+00:00\n"
-"PO-Revision-Date: 2026-09-23 12:26+00:00\n"
+"POT-Creation-Date: 2026-09-25 10:02+00:00\n"
+"PO-Revision-Date: 2026-09-25 10:02+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -421,12 +421,12 @@ msgid "Logs & Diagnostics"
 msgstr "Journaux & Diagnostics"
 
 #: includes/admin/views/tab-docs.php:194
-msgid "List of available log files (debug.log, uploads/wc-logs/*.log, custom wp-content/ logs), memory-safe tail extraction, and Crash Watch: aggregated recent PHP fatal errors & exceptions."
-msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log, logs personnalisés de wp-content/), extraction mémoire sécurisée des dernières lignes, et Crash Watch : erreurs fatales PHP et exceptions récentes agrégées."
+msgid "List of available log files (debug.log, uploads/wc-logs/*.log, custom wp-content/ logs), memory-safe tail extraction, Crash Watch: aggregated recent PHP fatal errors & exceptions, and targeted payment gateway logs inspection."
+msgstr "Liste des fichiers de logs disponibles (debug.log, uploads/wc-logs/*.log, logs personnalisés wp-content/), extraction reverse tail sécurisée, Crash Watch : erreurs fatales PHP récentes agrégées et inspection ciblée des logs de passerelles de paiement."
 
 #: includes/admin/views/tab-docs.php:197
 #: includes/class-permissions.php:53
-#: includes/class-permissions.php:417
+#: includes/class-permissions.php:423
 msgid "WP-Cron & Action Scheduler"
 msgstr "WP-Cron & Action Scheduler"
 
@@ -436,7 +436,7 @@ msgstr "Inspection des tâches planifiées WP-Cron, intervalles, tâches en reta
 
 #: includes/admin/views/tab-docs.php:202
 #: includes/class-permissions.php:58
-#: includes/class-permissions.php:437
+#: includes/class-permissions.php:443
 msgid "FlowMattic Workflows"
 msgstr "Workflows FlowMattic"
 
@@ -454,7 +454,7 @@ msgstr "Suivi de l'audience et des conversions : visites, vues, taux de rebond, 
 
 #: includes/admin/views/tab-docs.php:212
 #: includes/class-permissions.php:68
-#: includes/class-permissions.php:519
+#: includes/class-permissions.php:525
 msgid "Custom Fields & Meta (ACF & Code)"
 msgstr "Champs Personnalisés & Métadonnées (ACF & Code)"
 
@@ -467,8 +467,8 @@ msgid "WooCommerce Store Data"
 msgstr "Données Boutique WooCommerce"
 
 #: includes/admin/views/tab-docs.php:219
-msgid "Store health summary, paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health."
-msgstr "Résumé de santé de la boutique, catalogue produits paginé avec variations et SEO unifié, commandes récentes avec anonymisation stricte RGPD/PII, rapports de vente natifs (ventes nettes/brutes, panier moyen, % de croissance), top produits et codes promo, valorisation financière des stocks & alertes stocks dormants, et santé de délivrance des webhooks."
+msgid "Store health summary, payment gateway logs inspection (Stripe, Alma, PayPal), paginated product catalog with variations and unified SEO, recent orders with strict GDPR/PII anonymization, native sales performance reports (net/gross sales, AOV, % growth), top performing products and coupons, stock financial valuation & dormant stock alerts, and webhook delivery health."
+msgstr "Bilan de santé de la boutique, inspection des logs de passerelles de paiement (Stripe, Alma, PayPal), catalogue produits paginé avec variations et SEO unifié, commandes récentes avec anonymisation stricte RGPD/PII, rapports natifs des ventes (ventes nettes/brutes, panier moyen, % croissance), top produits et codes promo, valorisation financière des stocks avec alertes de stock dormant, et santé des webhooks."
 
 #: includes/admin/views/tab-docs.php:222
 #: includes/class-permissions.php:78
@@ -1358,25 +1358,30 @@ msgstr "FlowMattic n'est pas actif ou la table des workflows est introuvable."
 msgid "Workflow '%s' was not found."
 msgstr "Le workflow '%s' est introuvable."
 
-#: includes/api/class-logs-controller.php:182
+#: includes/api/class-logs-controller.php:234
 msgid "Parameter \"source\" is required."
 msgstr "Le paramètre « source » est obligatoire."
 
-#: includes/api/class-logs-controller.php:188
+#: includes/api/class-logs-controller.php:240
 msgid "Log file not found or unreadable."
 msgstr "Fichier de log introuvable ou illisible."
 
-#: includes/api/class-logs-controller.php:232
+#: includes/api/class-logs-controller.php:284
 msgid "Parameter \"file\" is required."
 msgstr "Le paramètre « file » est obligatoire."
 
-#: includes/api/class-logs-controller.php:241
+#: includes/api/class-logs-controller.php:293
 msgid "Log file not found, unreadable, or outside allowed directories."
 msgstr "Fichier de log introuvable, illisible ou situé en dehors des répertoires autorisés."
 
-#: includes/api/class-logs-controller.php:583
+#: includes/api/class-logs-controller.php:635
 msgid "No supported database email logging plugin tables found (WP Mail Logging, FluentSMTP, Post SMTP, or WP Mail SMTP)."
 msgstr "Aucune table d'extension de journalisation d'e-mails compatible trouvée en base de données (WP Mail Logging, FluentSMTP, Post SMTP ou WP Mail SMTP)."
+
+#: includes/api/class-logs-controller.php:856
+#: includes/api/class-woocommerce-controller.php:4361
+msgid "Both 'woocommerce' and 'logs' modules are disabled by the site administrator."
+msgstr "Les modules « woocommerce » et « logs » sont tous deux désactivés par l'administrateur du site."
 
 #: includes/api/class-masterstudy-controller.php:155
 msgid "MasterStudy LMS is not detected on this site (stm-courses post type or stm_lms_user_courses table missing)."
@@ -1646,16 +1651,16 @@ msgstr "Le terme de recherche doit comporter au moins 2 caractères."
 
 #: includes/api/class-theme-controller.php:116
 #: includes/api/class-tracking-controller.php:153
-#: includes/api/class-woocommerce-controller.php:451
-#: includes/api/class-woocommerce-controller.php:889
-#: includes/api/class-woocommerce-controller.php:1036
-#: includes/api/class-woocommerce-controller.php:1192
-#: includes/api/class-woocommerce-controller.php:1421
-#: includes/api/class-woocommerce-controller.php:1624
-#: includes/api/class-woocommerce-controller.php:1815
-#: includes/api/class-woocommerce-controller.php:1974
-#: includes/api/class-woocommerce-controller.php:2156
-#: includes/api/class-woocommerce-controller.php:4084
+#: includes/api/class-woocommerce-controller.php:494
+#: includes/api/class-woocommerce-controller.php:932
+#: includes/api/class-woocommerce-controller.php:1079
+#: includes/api/class-woocommerce-controller.php:1235
+#: includes/api/class-woocommerce-controller.php:1464
+#: includes/api/class-woocommerce-controller.php:1667
+#: includes/api/class-woocommerce-controller.php:1858
+#: includes/api/class-woocommerce-controller.php:2017
+#: includes/api/class-woocommerce-controller.php:2199
+#: includes/api/class-woocommerce-controller.php:4127
 msgid "WooCommerce is not active on this site."
 msgstr "WooCommerce n'est pas actif sur ce site."
 
@@ -1855,212 +1860,212 @@ msgstr "Désynchronisation potentielle de cookie : la CMP utilise « %s », mais
 msgid "Verify that Meta CAPI cookie name is configured to \"%s\"."
 msgstr "Vérifiez que le nom de cookie Meta CAPI est bien configuré sur « %s »."
 
-#: includes/api/class-woocommerce-controller.php:583
+#: includes/api/class-woocommerce-controller.php:626
 msgid "%.1f%% of orders (%s orders) are cancelled. High cancellation ratio detected."
 msgstr "%.1f%% des commandes (%s commandes) sont annulées. Taux d'annulation élevé détecté."
 
-#: includes/api/class-woocommerce-controller.php:593
+#: includes/api/class-woocommerce-controller.php:636
 msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables with no retention policy active. Configure WooCommerce Accounts & Privacy settings (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, leave Completed/Refunded unset) to automate database cleanup."
 msgstr "Environ %1$s commandes fantômes (%2$s en attente >30j, %3$s échouées >60j, %4$s annulées >1 an) encombrent les tables de commandes sans aucune politique de rétention active. Configurez les réglages WooCommerce Comptes & Confidentialité (En attente : 1 mois, Échouées : 1-3 mois, Annulées : 6-12 mois, laisser Terminées/Remboursées non défini) pour automatiser le nettoyage de la base de données."
 
-#: includes/api/class-woocommerce-controller.php:602
+#: includes/api/class-woocommerce-controller.php:645
 msgid "%s stale ghost orders detected. WooCommerce retention policy is configured and processing batches."
 msgstr "%s commandes fantômes détectées. La politique de rétention WooCommerce est configurée et traite les lots en tâche de fond."
 
-#: includes/api/class-woocommerce-controller.php:609
+#: includes/api/class-woocommerce-controller.php:652
 msgid "Order health and cancellation metrics are within standard operational range."
 msgstr "La santé des commandes et les métriques d'annulation sont dans les normes opérationnelles."
 
-#: includes/api/class-woocommerce-controller.php:752
+#: includes/api/class-woocommerce-controller.php:795
 msgid "Enable High-Performance Order Storage (HPOS)"
 msgstr "Activer le stockage des commandes haute performance (HPOS)"
 
-#: includes/api/class-woocommerce-controller.php:753
+#: includes/api/class-woocommerce-controller.php:796
 msgid "Moving order storage from wp_posts/wp_postmeta to dedicated custom tables boosts checkout speed and database scalability."
 msgstr "Déplacer le stockage des commandes de wp_posts/wp_postmeta vers des tables dédiées accélère le processus de commande et améliore l'évolutivité de la base de données."
 
-#: includes/api/class-woocommerce-controller.php:760
+#: includes/api/class-woocommerce-controller.php:803
 msgid "Enable HPOS Data Caching"
 msgstr "Activer la mise en cache des données HPOS"
 
-#: includes/api/class-woocommerce-controller.php:761
+#: includes/api/class-woocommerce-controller.php:804
 msgid "An external object cache (Redis/Memcached) is detected. Enabling HPOS data caching will significantly reduce redundant order queries."
 msgstr "Un cache objet externe (Redis/Memcached) est détecté. Activer la mise en cache des données HPOS réduira significativement les requêtes redondantes sur les commandes."
 
-#: includes/api/class-woocommerce-controller.php:768
+#: includes/api/class-woocommerce-controller.php:811
 msgid "Defer Transactional Emails"
 msgstr "Différer les e-mails transactionnels"
 
-#: includes/api/class-woocommerce-controller.php:769
+#: includes/api/class-woocommerce-controller.php:812
 msgid "Sending transactional emails synchronously during checkout can cause several seconds of delay or thank-you page timeouts. Deferring via Action Scheduler yields near-instant checkout responses."
 msgstr "L'envoi synchrone des e-mails transactionnels lors du paiement peut ralentir le checkout de plusieurs secondes voire provoquer des timeouts sur la page de remerciement. Le différé via l'Action Scheduler rend la confirmation de commande quasi instantanée."
 
-#: includes/api/class-woocommerce-controller.php:776
+#: includes/api/class-woocommerce-controller.php:819
 msgid "Enable Checkout Rate Limiting"
 msgstr "Activer la limitation du débit Checkout"
 
-#: includes/api/class-woocommerce-controller.php:777
+#: includes/api/class-woocommerce-controller.php:820
 msgid "Protects your store and payment gateways against card testing bot attacks and server exhaustion during checkout."
 msgstr "Protège votre boutique et vos passerelles de paiement contre les attaques de robots testeurs de cartes bancaires et la surcharge du serveur lors du checkout."
 
-#: includes/api/class-woocommerce-controller.php:784
+#: includes/api/class-woocommerce-controller.php:827
 msgid "Consider HPOS Full-Text Search Indexes"
 msgstr "Envisager les index de recherche plein texte HPOS"
 
-#: includes/api/class-woocommerce-controller.php:785
+#: includes/api/class-woocommerce-controller.php:828
 msgid "With over 5,000 orders, enabling full-text search indexes can drastically speed up order lookups in the admin area (experimental feature)."
 msgstr "Avec plus de 5 000 commandes, l'activation des index de recherche plein texte peut considérablement accélérer les recherches de commandes dans l'administration (fonctionnalité expérimentale)."
 
-#: includes/api/class-woocommerce-controller.php:792
+#: includes/api/class-woocommerce-controller.php:835
 msgid "Configure WooCommerce Order Retention Policy"
 msgstr "Configurer la politique de rétention des commandes WooCommerce"
 
-#: includes/api/class-woocommerce-controller.php:795
+#: includes/api/class-woocommerce-controller.php:838
 msgid "An estimated %1$s stale ghost orders (%2$s pending >30d, %3$s failed >60d, %4$s cancelled >1y) are cluttering order tables. Configure WooCommerce Accounts & Privacy retention periods (Pending: 1 month, Failed: 1-3 months, Cancelled: 6-12 months, and leave Completed/Refunded unset) to enable automatic cleanup."
 msgstr "Environ %1$s commandes fantômes (%2$s en attente >30j, %3$s échouées >60j, %4$s annulées >1 an) encombrent les tables de commandes. Configurez les périodes de rétention WooCommerce Comptes & Confidentialité (En attente : 1 mois, Échouées : 1-3 mois, Annulées : 6-12 mois, et laisser Terminées/Remboursées non défini) pour activer le nettoyage automatique."
 
-#: includes/api/class-woocommerce-controller.php:807
+#: includes/api/class-woocommerce-controller.php:850
 msgid "Consider Enabling Product Object Caching"
 msgstr "Envisager l'activation de la mise en cache des objets produits"
 
-#: includes/api/class-woocommerce-controller.php:808
+#: includes/api/class-woocommerce-controller.php:851
 msgid "Speeds up category loops and product-heavy pages by caching product objects during each request to eliminate duplicate loading overhead."
 msgstr "Accélère les boucles de catégories et les pages chargées en produits en conservant les objets produits en mémoire pendant la requête afin d'éliminer les chargements en double."
 
-#: includes/api/class-woocommerce-controller.php:829
+#: includes/api/class-woocommerce-controller.php:872
 msgid "Caches product objects during each request to prevent redundant loads on product-heavy pages."
 msgstr "Met en cache les objets produits lors de chaque requête pour éviter les chargements redondants sur les pages riches en produits."
 
-#: includes/api/class-woocommerce-controller.php:1043
+#: includes/api/class-woocommerce-controller.php:1086
 msgid "Product not found."
 msgstr "Produit introuvable."
 
-#: includes/api/class-woocommerce-controller.php:1436
+#: includes/api/class-woocommerce-controller.php:1479
 msgid "Coupon not found."
 msgstr "Code promo introuvable."
 
-#: includes/api/class-woocommerce-controller.php:1822
+#: includes/api/class-woocommerce-controller.php:1865
 msgid "Order not found."
 msgstr "Commande introuvable."
 
-#: includes/api/class-woocommerce-controller.php:2055
-#: includes/api/class-woocommerce-controller.php:2071
+#: includes/api/class-woocommerce-controller.php:2098
+#: includes/api/class-woocommerce-controller.php:2114
 msgid "Disabled (ND)"
 msgstr "Désactivé (ND)"
 
-#: includes/api/class-woocommerce-controller.php:2990
+#: includes/api/class-woocommerce-controller.php:3033
 msgid "Last 24 Months"
 msgstr "24 derniers mois"
 
-#: includes/api/class-woocommerce-controller.php:3004
+#: includes/api/class-woocommerce-controller.php:3047
 msgid "All Time"
 msgstr "Depuis l'origine (Tout l'historique)"
 
-#: includes/api/class-woocommerce-controller.php:3018
+#: includes/api/class-woocommerce-controller.php:3061
 msgid "Custom Period"
 msgstr "Période personnalisée"
 
-#: includes/api/class-woocommerce-controller.php:3028
+#: includes/api/class-woocommerce-controller.php:3071
 msgid "Last 12 Months"
 msgstr "12 derniers mois"
 
-#: includes/api/class-woocommerce-controller.php:3270
+#: includes/api/class-woocommerce-controller.php:3313
 msgid "Days 01-10 (Early Month)"
 msgstr "Jours 01 à 10 (Début de mois)"
 
-#: includes/api/class-woocommerce-controller.php:3271
+#: includes/api/class-woocommerce-controller.php:3314
 msgid "Days 11-20 (Mid Month)"
 msgstr "Jours 11 à 20 (Milieu de mois)"
 
-#: includes/api/class-woocommerce-controller.php:3272
+#: includes/api/class-woocommerce-controller.php:3315
 msgid "Days 21-31 (Late Month / Payday Kickoff)"
 msgstr "Jours 21 à 31 (Fin de mois / Amorce de paie)"
 
-#: includes/api/class-woocommerce-controller.php:3314
+#: includes/api/class-woocommerce-controller.php:3357
 msgid "Payday Window (Days 25 to 05)"
 msgstr "Fenêtre de paie (Jours 25 au 05)"
 
-#: includes/api/class-woocommerce-controller.php:3315
+#: includes/api/class-woocommerce-controller.php:3358
 msgid "25th of month to 5th of next month"
 msgstr "Du 25 du mois au 5 du mois suivant"
 
-#: includes/api/class-woocommerce-controller.php:3326
+#: includes/api/class-woocommerce-controller.php:3369
 msgid "Mid-Month Core (Days 06 to 24)"
 msgstr "Cœur du mois hors paie (Jours 06 au 24)"
 
-#: includes/api/class-woocommerce-controller.php:3327
+#: includes/api/class-woocommerce-controller.php:3370
 msgid "6th to 24th of month"
 msgstr "Du 6 au 24 du mois"
 
-#: includes/api/class-woocommerce-controller.php:3384
+#: includes/api/class-woocommerce-controller.php:3427
 msgid "Monday"
 msgstr "Lundi"
 
-#: includes/api/class-woocommerce-controller.php:3385
+#: includes/api/class-woocommerce-controller.php:3428
 msgid "Tuesday"
 msgstr "Mardi"
 
-#: includes/api/class-woocommerce-controller.php:3386
+#: includes/api/class-woocommerce-controller.php:3429
 msgid "Wednesday"
 msgstr "Mercredi"
 
-#: includes/api/class-woocommerce-controller.php:3387
+#: includes/api/class-woocommerce-controller.php:3430
 msgid "Thursday"
 msgstr "Jeudi"
 
-#: includes/api/class-woocommerce-controller.php:3388
+#: includes/api/class-woocommerce-controller.php:3431
 msgid "Friday"
 msgstr "Vendredi"
 
-#: includes/api/class-woocommerce-controller.php:3389
+#: includes/api/class-woocommerce-controller.php:3432
 msgid "Saturday"
 msgstr "Samedi"
 
-#: includes/api/class-woocommerce-controller.php:3390
+#: includes/api/class-woocommerce-controller.php:3433
 msgid "Sunday"
 msgstr "Dimanche"
 
-#: includes/api/class-woocommerce-controller.php:3452
+#: includes/api/class-woocommerce-controller.php:3495
 msgid "Weekdays (Monday to Friday)"
 msgstr "Jours de semaine (Lundi au vendredi)"
 
-#: includes/api/class-woocommerce-controller.php:3461
+#: includes/api/class-woocommerce-controller.php:3504
 msgid "Weekend (Saturday & Sunday)"
 msgstr "Week-end (Samedi & dimanche)"
 
-#: includes/api/class-woocommerce-controller.php:3522
+#: includes/api/class-woocommerce-controller.php:3565
 msgid "+15%% to +25%% during peak conversion windows (%s:00-%s:59)"
 msgstr "+15%% à +25%% lors des créneaux de pointe (%s:00-%s:59)"
 
-#: includes/api/class-woocommerce-controller.php:3523
+#: includes/api/class-woocommerce-controller.php:3566
 msgid "-40%% to -60%% during off-peak night hours (%s:00-%s:59)"
 msgstr "-40%% à -60%% pendant les heures creuses de nuit (%s:00-%s:59)"
 
-#: includes/api/class-woocommerce-controller.php:3587
+#: includes/api/class-woocommerce-controller.php:3630
 msgid "Recommended budget pacing by decades: %.1f%% to Early Month (days 1-10), %.1f%% to Mid Month (days 11-20), and %.1f%% to Late Month (days 21-31)."
 msgstr "Pondération budgétaire recommandée par décades : %.1f%% en début de mois (jours 1-10), %.1f%% en milieu de mois (jours 11-20) et %.1f%% en fin de mois (jours 21-31)."
 
-#: includes/api/class-woocommerce-controller.php:3594
+#: includes/api/class-woocommerce-controller.php:3637
 msgid "Significant Payday Window Effect detected: Daily revenue surges by +%.1f%% between the 25th and the 5th (%.2fx baseline velocity). Scale daily ad budgets to %.2fx during this 11-day window, then throttle to %.2fx from days 6 to 24."
 msgstr "Effet Paie majeur détecté : Le CA journalier bondit de +%.1f%% entre le 25 et le 5 (vélocité x%.2f). Augmentez vos budgets quotidiens à x%.2f sur cette fenêtre de 11 jours, puis réduisez à x%.2f du 6 au 24."
 
-#: includes/api/class-woocommerce-controller.php:3600
+#: includes/api/class-woocommerce-controller.php:3643
 msgid "Moderate Payday Window Effect (+%.1f%% lift). Keep daily budgets relatively even across the month (%.2fx during days 25-5 vs %.2fx off-peak)."
 msgstr "Effet Paie modéré (hausse de +%.1f%%). Maintenez des budgets quotidiens relativement homogènes sur le mois (x%.2f du 25 au 5 contre x%.2f hors paie)."
 
-#: includes/api/class-woocommerce-controller.php:3607
+#: includes/api/class-woocommerce-controller.php:3650
 msgid "Top performing day is %1$s (%2$.2f %3$s/day avg), while %4$s is lowest (%5$.2f %6$s/day avg). Adjust Google Ads & Meta day-of-week bid pacing accordingly."
 msgstr "Le meilleur jour est le %1$s (%2$.2f %3$s/j en moyenne), tandis que le plus faible est le %4$s (%5$.2f %6$s/j). Ajustez le pacing d'enchères Google Ads et Meta par jour en conséquence."
 
-#: includes/api/class-woocommerce-controller.php:3615
+#: includes/api/class-woocommerce-controller.php:3658
 msgid "Top conversion hours are %1$02d:00-%2$02d:59. Apply Google Ads Ad Schedule bid adjustments of +15%% to +25%% on peak windows and decrease -40%% to -60%% on off-peak night hours (%3$02d:00-%4$02d:59)."
 msgstr "Les meilleures heures de conversion se situent entre %1$02d:00 et %2$02d:59. Appliquez des ajustements Google Ads de +15%% à +25%% sur les pics et réduisez de -40%% à -60%% sur les heures creuses nocturnes (%3$02d:00-%4$02d:59)."
 
-#: includes/api/class-woocommerce-controller.php:4056
+#: includes/api/class-woocommerce-controller.php:4099
 msgid "No active customer or admin email configured to dispatch on transition to this order status."
 msgstr "Aucun e-mail client ou administrateur actif n'est configuré pour être envoyé lors du passage à cet état de commande."
 
-#: includes/api/class-woocommerce-controller.php:4092
+#: includes/api/class-woocommerce-controller.php:4135
 msgid "WooCommerce account functions are not loaded."
 msgstr "Les fonctions de compte WooCommerce ne sont pas chargées."
 
@@ -2126,31 +2131,31 @@ msgid "Error & WooCommerce Logs"
 msgstr "Journaux d'Erreurs & Logs WooCommerce"
 
 #: includes/class-permissions.php:49
-msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, database email logs, and custom wp-content/ logs with memory protection."
-msgstr "Permet de lister et de lire la fin de debug.log, uploads/wc-logs/*.log, des journaux d'e-mails en base de données et des logs personnalisés de wp-content/ avec protection mémoire."
+msgid "Allows listing and tail-reading debug.log, uploads/wc-logs/*.log, payment gateway logs, database email logs, and custom wp-content/ logs with memory protection."
+msgstr "Permet de lister et lire en reverse-tail debug.log, uploads/wc-logs/*.log, les logs des passerelles de paiement, les logs d'e-mails en base de données et les logs personnalisés de wp-content/ avec protection mémoire."
 
 #: includes/class-permissions.php:54
-#: includes/class-permissions.php:418
+#: includes/class-permissions.php:424
 msgid "Allows inspecting registered WP-Cron schedules, intervals, overdue jobs, and Action Scheduler queues (in-progress, failed, pending tasks)."
 msgstr "Permet d'inspecter les tâches planifiées WP-Cron, intervalles, tâches en retard et les files d'attente d'Action Scheduler (tâches en cours, échouées, en attente)."
 
 #: includes/class-permissions.php:59
-#: includes/class-permissions.php:438
+#: includes/class-permissions.php:444
 msgid "Allows listing and exporting FlowMattic workflows, steps, triggers, and configurations in native JSON format."
 msgstr "Permet de lister et d'exporter les workflows FlowMattic, étapes, déclencheurs et réglages au format JSON natif."
 
 #: includes/class-permissions.php:63
-#: includes/class-permissions.php:463
+#: includes/class-permissions.php:469
 msgid "Independent Analytics (Visits & Conversion Rates)"
 msgstr "Independent Analytics (Visites & Taux de Conversion)"
 
 #: includes/class-permissions.php:64
-#: includes/class-permissions.php:464
+#: includes/class-permissions.php:470
 msgid "Allows inspecting site visit statistics, traffic channels, UTM campaigns, device breakdowns, and WooCommerce conversion rates tracked by Independent Analytics."
 msgstr "Permet d'inspecter les statistiques de visites, canaux de trafic, campagnes UTM, répartition par appareil et taux de conversion WooCommerce suivis par Independent Analytics."
 
 #: includes/class-permissions.php:69
-#: includes/class-permissions.php:520
+#: includes/class-permissions.php:526
 msgid "Allows inspecting custom meta fields registered in code (register_post_meta), ACF field groups and fields, and database postmeta."
 msgstr "Permet d'inspecter les champs personnalisés déclarés dans le code (register_post_meta), les groupes de champs ACF et leurs champs, ainsi que la table postmeta."
 
@@ -2159,15 +2164,15 @@ msgid "WooCommerce Store Data (Products, Orders, Settings, Shipping)"
 msgstr "Données Boutique WooCommerce (Produits, Commandes, Réglages, Expédition)"
 
 #: includes/class-permissions.php:74
-msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, transactional emails, sales analytics, advertising pacing & seasonality, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings."
-msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/PII caviardées), résumé de la boutique, e-mails transactionnels, analytics des ventes, pacing et saisonnalité publicitaire, top ventes, valorisation des stocks, webhooks, zones et méthodes de livraison avec règles matricielles, et réglages e-commerce."
+msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), payment gateway error logs (Stripe, Alma, PayPal), store summary, transactional emails, sales analytics, advertising pacing & seasonality, top performers, stock valuation, webhooks, shipping zones/methods and matrix rules, and e-commerce settings."
+msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/PII caviardées), logs d'erreurs des passerelles de paiement (Stripe, Alma, PayPal), résumé de la boutique, e-mails transactionnels, analytics des ventes, pacing et saisonnalité publicitaire, top ventes, valorisation des stocks, webhooks, zones et méthodes de livraison avec règles matricielles, et réglages e-commerce."
 
 #: includes/class-permissions.php:79
 msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, unified SEO metadata (Rank Math, Yoast, The SEO Framework), and URL redirections with 404 monitoring logs."
 msgstr "Permet d'inspecter la hiérarchie des pages et articles WordPress, le contenu brut et rendu des blocs Gutenberg, les modèles, les métadonnées SEO unifiées (Rank Math, Yoast, The SEO Framework) et les redirections d'URL avec logs de surveillance 404."
 
 #: includes/class-permissions.php:83
-#: includes/class-permissions.php:699
+#: includes/class-permissions.php:711
 msgid "Site Performance & Plugin Profiler"
 msgstr "Performance du Site & Profileur d'Extensions"
 
@@ -2176,22 +2181,22 @@ msgid "Allows profiling URL response times, attributing SQL queries and duration
 msgstr "Permet de profiler le temps de réponse des URLs, d'attribuer les requêtes SQL et leur durée par plugin, de détecter les requêtes lentes/doublons, de mesurer l'empreinte des scripts/styles frontend, de découvrir 5 URLs représentatives de templates, d'exécuter des audits Core Web Vitals 100% natifs, d'auditer l'autoload et d'inspecter le cache et WP Rocket."
 
 #: includes/class-permissions.php:88
-#: includes/class-permissions.php:741
+#: includes/class-permissions.php:753
 msgid "Paid Memberships Pro (PMPro)"
 msgstr "Paid Memberships Pro (PMPro)"
 
 #: includes/class-permissions.php:89
-#: includes/class-permissions.php:742
+#: includes/class-permissions.php:754
 msgid "Allows inspecting Paid Memberships Pro levels, durations, recurring billing cycles, user membership records, status timeline, and associated PMPro orders."
 msgstr "Permet d'inspecter les niveaux Paid Memberships Pro, les durées, les cycles de facturation récurrente, les adhésions utilisateurs, la chronologie des statuts et les commandes PMPro associées."
 
 #: includes/class-permissions.php:93
-#: includes/class-permissions.php:765
+#: includes/class-permissions.php:777
 msgid "MasterStudy LMS"
 msgstr "MasterStudy LMS"
 
 #: includes/class-permissions.php:94
-#: includes/class-permissions.php:766
+#: includes/class-permissions.php:778
 msgid "Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course durations, user course enrollments, and PMPro subscription link synchronization."
 msgstr "Permet d'inspecter les cours MasterStudy LMS, la tarification, le nombre de leçons, la durée des cours, les inscriptions des utilisateurs et la synchronisation des liens d'abonnements PMPro."
 
@@ -2236,7 +2241,7 @@ msgid "Hardening and security audit: DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, SAV
 msgstr "Audit de sécurité et durcissement : DISALLOW_FILE_EDIT, DISALLOW_FILE_MODS, SAVEQUERIES, SCRIPT_DEBUG, exposition XML-RPC, forçage SSL, préfixe de base de données, extensions de sécurité et de cache détectées."
 
 #: includes/class-permissions.php:226
-#: includes/class-permissions.php:729
+#: includes/class-permissions.php:741
 msgid "Universal caching & optimization diagnostic: Object Cache (Redis/Memcached), Page Cache drop-in, Breeze (Cloudways), in-depth WP Rocket settings, and wp-config.php runtime performance constants audit (SAVEQUERIES, SCRIPT_DEBUG, revisions cap, memory limits) with security redaction."
 msgstr "Diagnostic universel du cache et des optimisations : Object Cache (Redis/Memcached), drop-in Page Cache, Breeze (Cloudways), réglages approfondis WP Rocket et audit des constantes de performance d'exécution de wp-config.php (SAVEQUERIES, SCRIPT_DEBUG, plafond de révisions, limites de mémoire) avec caviardage de sécurité."
 
@@ -2344,227 +2349,232 @@ msgstr "Crash Watch : erreurs fatales PHP et exceptions récentes agrégées et 
 msgid "Search database email logs across WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs), and WP Mail SMTP with PII email redaction."
 msgstr "Recherche dans les journaux d'e-mails en base de données sur WP Mail Logging (wp_wpml_mails), FluentSMTP (fluentmail_log), Post SMTP (postman_logs) et WP Mail SMTP avec caviardage de confidentialité des e-mails."
 
-#: includes/class-permissions.php:425
+#: includes/class-permissions.php:417
+#: includes/class-permissions.php:563
+msgid "Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction."
+msgstr "Inspection ciblée des logs de passerelles de paiement (Stripe, Alma, PayPal) avec résolution automatique sans hash, traçage par ID de commande, streaming inverse par blocs sécurisé en mémoire et caviardage des clés secrètes / données personnelles RGPD."
+
+#: includes/class-permissions.php:431
 msgid "List registered WP-Cron jobs, execution timestamps, overdue detection, recurrence intervals, and hook arguments."
 msgstr "Liste des tâches WP-Cron enregistrées, horodatages d'exécution, détection des retards, intervalles et arguments de hooks."
 
-#: includes/class-permissions.php:431
+#: includes/class-permissions.php:437
 msgid "Inspect Action Scheduler queue with status summary, retention policy in days, scheduled dates, attempts, arguments, and failure log messages."
 msgstr "Inspection de la file Action Scheduler avec résumé des statuts, politique de rétention en jours, dates planifiées, tentatives, arguments et messages d'erreur."
 
-#: includes/class-permissions.php:445
+#: includes/class-permissions.php:451
 msgid "Bulk export of all FlowMattic workflows in native importable JSON format in 1 request."
 msgstr "Export groupé de tous les workflows FlowMattic au format JSON importable natif en 1 seule requête."
 
-#: includes/class-permissions.php:451
+#: includes/class-permissions.php:457
 msgid "List all FlowMattic workflows (ID, name, status, trigger, actions, tasks count)."
 msgstr "Liste de tous les workflows FlowMattic (ID, nom, statut, déclencheur, actions, nombre de tâches)."
 
-#: includes/class-permissions.php:457
+#: includes/class-permissions.php:463
 msgid "Single FlowMattic workflow detail or native importable JSON backup."
 msgstr "Détail d'un workflow FlowMattic spécifique ou sauvegarde JSON importable native."
 
-#: includes/class-permissions.php:471
+#: includes/class-permissions.php:477
 msgid "Consolidated 360° traffic & conversion audit in 1 call (summary, top pages, referrers, campaigns, devices)."
 msgstr "Audit consolidé de trafic et conversion 360° en 1 seul appel (synthèse, top pages, référents, campagnes, appareils)."
 
-#: includes/class-permissions.php:477
+#: includes/class-permissions.php:483
 msgid "Traffic KPIs (visitors, views, bounce rate, duration) and WooCommerce conversion rate, net sales, AOV, % growth."
 msgstr "KPIs de trafic (visiteurs, vues, taux de rebond, durée) et taux de conversion WooCommerce, ventes nettes, panier moyen, % de croissance."
 
-#: includes/class-permissions.php:483
+#: includes/class-permissions.php:489
 msgid "Performance & conversion rate per page / WooCommerce product."
 msgstr "Performance et taux de conversion par page / produit WooCommerce."
 
-#: includes/class-permissions.php:489
+#: includes/class-permissions.php:495
 msgid "Traffic acquisition sources & referring domains with associated orders, sales, and conversion rates."
 msgstr "Sources d'acquisition de trafic et domaines référents avec commandes, chiffre d'affaires et taux de conversion associés."
 
-#: includes/class-permissions.php:495
+#: includes/class-permissions.php:501
 msgid "Marketing UTM campaigns ROI tracking (utm_source, utm_medium, utm_campaign, orders, net_sales)."
 msgstr "Suivi du ROI des campagnes marketing UTM (utm_source, utm_medium, utm_campaign, commandes, ventes nettes)."
 
-#: includes/class-permissions.php:501
+#: includes/class-permissions.php:507
 msgid "Breakdown and conversion comparison across device types (Desktop vs Mobile vs Tablet), browsers, and OS."
 msgstr "Répartition et comparaison des conversions par type d'appareil (ordinateur, mobile, tablette), navigateurs et systèmes d'exploitation."
 
-#: includes/class-permissions.php:507
+#: includes/class-permissions.php:513
 msgid "Geographic distribution of visitors and orders by country and city."
 msgstr "Répartition géographique des visiteurs et des commandes par pays et ville."
 
-#: includes/class-permissions.php:513
+#: includes/class-permissions.php:519
 msgid "Recent order and conversion stream with attribution (landing page, country, device, browser, amount)."
 msgstr "Flux des commandes récentes et conversions avec attribution (page d'atterrissage, pays, appareil, navigateur, montant)."
 
-#: includes/class-permissions.php:527
+#: includes/class-permissions.php:533
 msgid "Unified catalog of all declared custom meta fields (WordPress code register_post_meta and ACF plugin field groups/fields)."
 msgstr "Catalogue unifié de tous les champs personnalisés déclarés (code WordPress register_post_meta et groupes/champs ACF)."
 
-#: includes/class-permissions.php:533
+#: includes/class-permissions.php:539
 msgid "Deep ACF inspection: field groups, hierarchy, recursive subfields, location rules, and registered options pages."
 msgstr "Inspection approfondie ACF : groupes de champs, hiérarchie, sous-champs récursifs, règles d'emplacement et pages d'options."
 
-#: includes/class-permissions.php:538
+#: includes/class-permissions.php:544
 msgid "Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta)."
 msgstr "Inspection des métadonnées d'une publication, d'un produit ou d'une commande (champs ACF résolus, meta du code et postmeta brutes catégorisées)."
 
-#: includes/class-permissions.php:544
+#: includes/class-permissions.php:550
 msgid "WooCommerce Store Data (Products, Orders, Settings)"
 msgstr "Données Boutique WooCommerce (Produits, Commandes, Réglages)"
 
-#: includes/class-permissions.php:545
+#: includes/class-permissions.php:551
 msgid "Allows inspecting WooCommerce products, variations, recent orders (anonymized/PII-redacted), store summary, and e-commerce settings."
 msgstr "Permet d'inspecter les produits WooCommerce, variations, commandes récentes (anonymisées/sans PII), résumé de la boutique et réglages e-commerce."
 
-#: includes/class-permissions.php:551
+#: includes/class-permissions.php:557
 msgid "High-level store health, product counts by status/stock/type, order counts and hygiene analysis (cancellation ratio, stale unpaid orders > 1y), HPOS state, active payment gateways, and shipping zones."
 msgstr "Santé globale de la boutique, compteurs de produits par statut/stock/type, volume de commandes et analyse d'hygiène (taux d'annulation, commandes impayées > 1 an), état HPOS, passerelles de paiement actives et zones de livraison."
 
-#: includes/class-permissions.php:557
+#: includes/class-permissions.php:569
 msgid "Paginated WooCommerce products catalog with SKU, prices, stock, categories, tags, and attributes."
 msgstr "Catalogue paginé des produits WooCommerce avec référence SKU, prix, stock, catégories, étiquettes et attributs."
 
-#: includes/class-permissions.php:562
+#: includes/class-permissions.php:574
 msgid "Detailed product inspection including variations breakdown, dimensions, images, and sanitized postmeta custom fields."
 msgstr "Fiche produit détaillée comprenant la décomposition des déclinaisons, dimensions, visuels et champs personnalisés postmeta assainis."
 
-#: includes/class-permissions.php:568
+#: includes/class-permissions.php:580
 msgid "List and filter WooCommerce promotional coupons with status, expiration, usage counts, limits, held count, and PII-masked email restrictions."
 msgstr "Liste et filtre les codes promos WooCommerce avec statut, expiration, compteurs d'utilisation, limites, réservations en cours et restrictions e-mail masquées RGPD."
 
-#: includes/class-permissions.php:574
+#: includes/class-permissions.php:586
 msgid "Deep inspection of a single coupon: discount rules, real-time availability (is_valid_now, usage_left), active held checkout sessions (_coupon_held_keys), and last 10 associated orders."
 msgstr "Inspection approfondie d'un code promo unitaire : règles de remise, disponibilité en temps réel (is_valid_now, usage_left), sessions de commande en attente retenant le coupon (_coupon_held_keys) et 10 dernières commandes associées."
 
-#: includes/class-permissions.php:580
+#: includes/class-permissions.php:592
 msgid "Recent orders with strict GDPR/PII anonymization (masked customer names, redacted emails/phones/addresses), item lines, coupon lines and applied coupon codes, totals, and gateways."
 msgstr "Commandes récentes avec anonymisation stricte RGPD (noms masqués, e-mails/téléphones/adresses caviardés), lignes d'articles, codes promos appliqués avec montants de remise, totaux et passerelles."
 
-#: includes/class-permissions.php:585
+#: includes/class-permissions.php:597
 msgid "Deep order diagnostics: item line metadata, shipping lines with decoded metadata (e.g. Flexible Shipping fs_costs base & additional costs), fees, coupon lines, refunds, order notes (payment gateway responses), and sanitized metadata."
 msgstr "Diagnostic approfondi de commande : métadonnées des articles, lignes de livraison avec métadonnées décodées (ex. Flexible Shipping fs_costs coût de base & coûts additionnels), frais, codes promo, remboursements, notes de commande et métadonnées assainies."
 
-#: includes/class-permissions.php:590
+#: includes/class-permissions.php:602
 msgid "Store configuration: currency, tax settings, stock management, active payment gateways (secrets redacted), and shipping zones/methods with locations and Flexible Shipping matrix rules."
 msgstr "Configuration de la boutique : devise, taxes, gestion des stocks, passerelles de paiement actives (clés secrètes masquées) et zones/méthodes d'expédition avec règles matricielles Flexible Shipping."
 
-#: includes/class-permissions.php:595
+#: includes/class-permissions.php:607
 msgid "Dedicated shipping & logistics inspection: zones, geographic locations (postcodes, regions, countries), native method parameters, flat_rate table rate rules, Flexible Shipping & Flexible Shipping PRO matrix calculation rules (weight/price tiers, shipping classes), and sanitized raw instance settings."
 msgstr "Inspection dédiée expédition & logistique : zones, localisations géographiques (codes postaux, régions, pays), paramètres des méthodes natives, règles forfait table rate, règles matricielles Flexible Shipping & Flexible Shipping PRO (paliers poids/prix, classes de livraison) et réglages bruts assainis."
 
-#: includes/class-permissions.php:601
+#: includes/class-permissions.php:613
 msgid "100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period."
 msgstr "Rapport de ventes 100% natif WooCommerce : ventes nettes, ventes brutes, nombre de commandes, panier moyen, remboursements, tendance journalière et pourcentage de croissance par rapport à la période précédente."
 
-#: includes/class-permissions.php:607
+#: includes/class-permissions.php:619
 msgid "Advertising seasonality and budget pacing: month decades breakdown (days 1-10, 11-20, 21-31), payday window lift (days 25-5 vs 6-24), day-of-month rankings (1-31), day-of-week performance, 24-hour dayparting profile, and automatic budget pacing recommendations for Google Ads & Meta Ads."
 msgstr "Saisonnalité publicitaire et pacing budgétaire : répartition par décades (jours 1-10, 11-20, 21-31), effet fenêtre de paie (jours 25-5 vs 6-24), classement des jours du mois (1-31), performance par jour de semaine, profil horaire 24h et recommandations de pondération pour Google Ads & Meta Ads."
 
-#: includes/class-permissions.php:613
+#: includes/class-permissions.php:625
 msgid "Top selling products by net revenue and units sold, and top discount coupons with usage counts."
 msgstr "Meilleures ventes de produits par chiffre d'affaires net et unités vendues, et top des codes promo avec compteurs d'utilisation."
 
-#: includes/class-permissions.php:619
+#: includes/class-permissions.php:631
 msgid "Stock health and financial valuation: total managed units, total retail valuation, low stock alerts, and dormant stock (0 sales in last 90 days)."
 msgstr "Santé et valorisation financière du stock : total des unités gérées, valeur marchande totale, alertes stock faible et stocks dormants (0 vente sur les 90 derniers jours)."
 
-#: includes/class-permissions.php:624
+#: includes/class-permissions.php:636
 msgid "WooCommerce Webhooks inventory: delivery URL, topic, status (active/paused/disabled), failure counts, and alerts for repeated delivery failures."
 msgstr "Inventaire des webhooks WooCommerce : URL de livraison, sujet, statut (actif/suspendu/désactivé), compteurs d'échecs et alertes en cas de pannes répétées."
 
-#: includes/class-permissions.php:629
+#: includes/class-permissions.php:641
 msgid "Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses."
 msgstr "Inspecte les e-mails transactionnels WooCommerce enregistrés, l'état activé, les destinataires, les modèles d'objet/en-tête, les déclencheurs personnalisés d'Order Status Manager et détecte les états silencieux."
 
-#: includes/class-permissions.php:634
+#: includes/class-permissions.php:646
 msgid "Inspects WooCommerce My Account tabs, URLs, associated action hooks and callbacks via Reflection, and attached Woodmart HTML blocks (cms_block) or Elementor templates with raw content."
 msgstr "Inspecte les onglets Mon Compte WooCommerce, les URLs, les hooks d'action et callbacks associés via Reflection, ainsi que les Blocs HTML Woodmart (cms_block) ou templates Elementor rattachés avec leur contenu brut."
 
-#: includes/class-permissions.php:640
+#: includes/class-permissions.php:652
 msgid "Pages, Content & SEO"
 msgstr "Pages, Contenus & SEO"
 
-#: includes/class-permissions.php:641
+#: includes/class-permissions.php:653
 msgid "Allows inspecting WordPress pages and posts hierarchy, rendered and raw Gutenberg block content, templates, and unified SEO metadata (Yoast, Rank Math, SEOPress, AIOSEO)."
 msgstr "Permet d'inspecter la hiérarchie des pages et articles WordPress, le contenu des blocs Gutenberg bruts et rendus, les modèles et les métadonnées SEO unifiées (Yoast, Rank Math, SEOPress, AIOSEO)."
 
-#: includes/class-permissions.php:648
+#: includes/class-permissions.php:660
 msgid "Lists WordPress pages with hierarchy (parent/child), slug, status, template PHP, editor type (Gutenberg/Classic/Elementor), special page flags, and quick SEO preview."
 msgstr "Liste des pages WordPress avec hiérarchie (parent/enfant), identifiant, statut, modèle PHP, type d'éditeur (Gutenberg/Classique/Elementor), marqueurs de pages spéciales et aperçu SEO rapide."
 
-#: includes/class-permissions.php:653
+#: includes/class-permissions.php:665
 msgid "Deep page inspection: raw/rendered content, Gutenberg blocks summary, detected shortcodes, word count, parent/child hierarchy, and unified SEO metadata."
 msgstr "Inspection approfondie d'une page : contenu brut/rendu, résumé des blocs Gutenberg, shortcodes détectés, nombre de mots, hiérarchie parent/enfant et métadonnées SEO unifiées."
 
-#: includes/class-permissions.php:659
+#: includes/class-permissions.php:671
 msgid "Lists WordPress blog posts or custom post types (e.g. cms_block, elementor_library, woodmart_layout) with categories, tags, author, editor type, and quick SEO preview."
 msgstr "Liste les articles WordPress ou types de publication personnalisés (ex: cms_block, elementor_library, woodmart_layout) avec catégories, étiquettes, auteur, type d'éditeur et aperçu SEO rapide."
 
-#: includes/class-permissions.php:664
+#: includes/class-permissions.php:676
 msgid "Deep post or custom post type inspection: raw/rendered content, blocks, taxonomies, sanitized postmeta, and full unified SEO object."
 msgstr "Inspection approfondie d'un article ou type de publication sur mesure : contenu brut/rendu, blocs, taxonomies, postmeta assainies et objet SEO unifié complet."
 
-#: includes/class-permissions.php:670
+#: includes/class-permissions.php:682
 msgid "Lists all registered custom post types with live post counts per status (publish, draft, trash, private), supported features (title, editor, thumbnail, etc.), and associated taxonomies."
 msgstr "Liste tous les types de publication personnalisés enregistrés avec décompte en direct par statut (publié, brouillon, corbeille, privé), fonctionnalités supportées (titre, éditeur, image mise en avant, etc.) et taxonomies associées."
 
-#: includes/class-permissions.php:676
+#: includes/class-permissions.php:688
 msgid "Site-wide SEO audit report across pages, posts, WooCommerce products, and categories: missing meta descriptions, title issues, noindex warnings on published products/checkout, thin content, and category descriptions."
 msgstr "Rapport d'audit SEO à l'échelle du site sur les pages, articles, produits WooCommerce et catégories : méta-descriptions manquantes, problèmes de titres, alertes noindex sur produits publiés/panier, contenu faible et descriptions de catégories."
 
-#: includes/class-permissions.php:681
+#: includes/class-permissions.php:693
 msgid "Audits global settings and configuration best practices of the active SEO plugin (Rank Math, Yoast SEO, The SEO Framework) and Redirection plugin with health checks and actionable recommendations."
 msgstr "Audite les réglages globaux et les bonnes pratiques de configuration de l'extension SEO active (Rank Math, Yoast SEO, The SEO Framework) et de l'extension Redirection avec vérifications de santé et recommandations concrètes."
 
-#: includes/class-permissions.php:687
+#: includes/class-permissions.php:699
 msgid "Lists, filters, and paginates configured URL redirection rules across supported redirection plugins."
 msgstr "Liste, filtre et pagine les règles de redirection d'URL configurées sur les extensions de redirection compatibles."
 
-#: includes/class-permissions.php:693
+#: includes/class-permissions.php:705
 msgid "Inspects recent 404 error logs recorded by Redirection or Rank Math plugins with hit counts, broken referrers, and GDPR-masked client IPs."
 msgstr "Inspecte les journaux d'erreurs 404 récents enregistrés par les extensions Redirection ou Rank Math avec nombre de visites, référents cassés et adresses IP masquées RGPD."
 
-#: includes/class-permissions.php:700
+#: includes/class-permissions.php:712
 msgid "Allows on-demand URL benchmarking (TTFB, memory, SQL queries per plugin, slow/duplicate queries, frontend JS/CSS assets per plugin), template archetype discovery, 100% native server-side Core Web Vitals checks (DOM size, CLS image dimensions, legacy image formats, render-blocking resources, Google Fonts, WP core bloat scripts, cart fragments), autoload bloat audit, and plugin resource footprint."
 msgstr "Permet le benchmark d'URLs à la demande (TTFB, mémoire, requêtes SQL par extension, requêtes lentes/doublons, assets JS/CSS par extension), découverte des archétypes de templates, signaux Core Web Vitals 100% natifs côté serveur (taille DOM, dimensions images pour CLS, formats d'images obsolètes, ressources bloquantes, Google Fonts, scripts superflus du cœur WP, fragments panier), audit autoload et empreinte des extensions."
 
-#: includes/class-permissions.php:706
+#: includes/class-permissions.php:718
 msgid "Automatic discovery and resolution of 5 key representative template URLs: Homepage, Shop / Catalog, Product Category, Single Product, and Cart / Checkout."
 msgstr "Découverte et résolution automatiques des 5 URLs modèles représentatives clés : Accueil, Boutique / Catalogue, Catégorie Produit, Fiche Produit et Panier / Commande."
 
-#: includes/class-permissions.php:712
+#: includes/class-permissions.php:724
 msgid "Targeted URL profiler: measures TTFB, peak memory, attributes SQL queries & duration to specific plugins via backtrace, flags duplicate and slow queries, measures frontend JS/CSS assets per plugin, and runs native Web Vitals checks (DOM size, CLS image dimensions, legacy format PNG/JPEG, render-blocking in <head>, external Google Fonts, core bloat scripts, and WooCommerce cart-fragments detection)."
 msgstr "Profileur ciblé d'URL : mesure le TTFB, le pic mémoire, attribue les requêtes SQL et leur durée à des extensions spécifiques via backtrace, signale les requêtes lentes et doublons, mesure les assets JS/CSS par extension et exécute les vérifications natives Web Vitals (taille DOM, dimensions images CLS, formats obsolètes PNG/JPEG, ressources bloquantes dans <head>, Google Fonts externes, scripts superflus du cœur et détection cart-fragments de WooCommerce)."
 
-#: includes/class-permissions.php:718
+#: includes/class-permissions.php:730
 msgid "Audits wp_options autoload bloat: total size vs 800KB threshold, top heaviest options, and size distribution grouped by plugin prefix."
 msgstr "Audite la surcharge de wp_options en autoload : taille totale par rapport au seuil de 800 Ko, top des options les plus lourdes et répartition du volume groupée par préfixe d'extension."
 
-#: includes/class-permissions.php:724
+#: includes/class-permissions.php:736
 msgid "Consolidated resource footprint per plugin: active status, associated database tables count, database disk size, and table row counts."
 msgstr "Empreinte consolidée des ressources par extension : statut d'activation, nombre de tables de base de données associées, taille disque et nombre de lignes des tables."
 
-#: includes/class-permissions.php:735
+#: includes/class-permissions.php:747
 msgid "Multi-layer cache invalidation supporting Rocket.net CDN (Cloudflare Enterprise Edge), WP Rocket (domain, minify, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed, and Autoptimize."
 msgstr "Invalidation de cache multi-couches prenant en charge le CDN Rocket.net (Cloudflare Enterprise Edge), WP Rocket (domaine, minification, busting, RUCSS), Breeze (Page Cache, Minification, Varnish), Object Cache Pro / Redis, LiteSpeed et Autoptimize."
 
-#: includes/class-permissions.php:748
+#: includes/class-permissions.php:760
 msgid "Lists all PMPro membership levels with duration rules (expiration_number/period, cycle_number/period), pricing, and active member counts with duration anomaly detection."
 msgstr "Liste tous les niveaux d'adhésion PMPro avec règles de durée (expiration_number/period, cycle_number/period), tarifs et nombre de membres actifs avec détection d'anomalies de durée."
 
-#: includes/class-permissions.php:754
+#: includes/class-permissions.php:766
 msgid "Lists membership records from pmpro_memberships_users with startdate, enddate, status, masked PII, and computed expiration indicators."
 msgstr "Liste les enregistrements d'adhésion de pmpro_memberships_users avec startdate, enddate, statut, données PII masquées et indicateurs d'expiration calculés."
 
-#: includes/class-permissions.php:759
+#: includes/class-permissions.php:771
 msgid "Deep member diagnostic: active level, membership history timeline, associated PMPro orders, and access anomaly flags (e.g. active status with past expiration date)."
 msgstr "Diagnostic approfondi de membre : niveau actif, chronologie d'adhésion, commandes PMPro associées et alertes d'anomalies d'accès (ex. statut actif avec date d'expiration dépassée)."
 
-#: includes/class-permissions.php:773
+#: includes/class-permissions.php:785
 msgid "Lists MasterStudy LMS courses with pricing configuration, linked WooCommerce product ID, course duration/expiration rules, total students, lessons count, and allowed PMPro membership levels."
 msgstr "Liste les cours MasterStudy LMS avec configuration tarifaire, ID produit WooCommerce lié, règles de durée/expiration de cours, total d'étudiants, nombre de leçons et niveaux PMPro autorisés."
 
-#: includes/class-permissions.php:778
+#: includes/class-permissions.php:790
 msgid "Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription record, and root cause diagnosis for premature access expirations or pointer desync."
 msgstr "Audit détaillé des inscriptions utilisateur : progression, dates de début/fin, enregistrement d'abonnement PMPro lié et diagnostic de cause racine pour les expirations prématurées ou désynchronisations de pointeur."
 
@@ -2773,8 +2783,8 @@ msgid "Gateway Error Logs Inspection"
 msgstr "Inspection des Logs d'Erreurs de Passerelles"
 
 #: includes/class-playbooks.php:389
-msgid "Inspects recent WooCommerce gateway logs (Stripe, Alma, PayPal) and fatal PHP crash logs without memory exhaustion."
-msgstr "Inspecte les logs récents de passerelles WooCommerce (Stripe, Alma, PayPal) et les crashs PHP récents sans risque de saturation mémoire."
+msgid "Inspects recent WooCommerce payment gateway logs (Stripe, Alma, PayPal) with automatic hash-free filename resolution, order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction."
+msgstr "Inspecte les logs récents des passerelles de paiement WooCommerce (Stripe, Alma, PayPal) avec résolution automatique sans hash, traçage par ID de commande, streaming inverse par blocs sécurisé en mémoire et caviardage des clés secrètes / données personnelles RGPD."
 
 #: includes/class-playbooks.php:394
 msgid "Active Custom Checkout Hooks"
