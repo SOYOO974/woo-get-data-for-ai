@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 use WPAgentBridge\Redaction;
+use WPAgentBridge\Payment_Logs;
 
 class Woocommerce_Controller extends Rest_Controller {
 

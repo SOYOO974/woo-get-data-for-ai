@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-25  
+> **Last Updated**: 2026-09-28  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -416,6 +416,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.42.1 (2026-09-28)
+- **Correctif Critique Namespace & Résolution de Classe (`GET /logs/errors-summary`)** :
+  - **Correction du Crash Fatal E_ERROR** : Résolution du bogue `Uncaught Error: Class "WPAgentBridge\Api\Payment_Logs" not found` survenu lors de l'appel à l'endpoint de synthèse des erreurs `/wp-json/agent-bridge/v1/logs/errors-summary`.
+  - **Import Manquant** : Ajout de la directive `use WPAgentBridge\Payment_Logs;` dans `includes/api/class-logs-controller.php` et `includes/api/class-woocommerce-controller.php` afin d'éviter la résolution implicite erronée dans le sous-namespace `\Api`.
+  - **Sécurisation de la Vérification `class_exists()`** : Utilisation de `Payment_Logs::class` pour une résolution déterministe et une exécution irréprochable du scan des logs de paiement dans Crash Watch.
 
 ### v1.42.0 (2026-09-25)
 - **Vérification Automatique des Mises à Jour & Bandeau d'Action Admin (`/wp-admin/options-general.php?page=wp-agent-bridge`)** :

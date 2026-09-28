@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 use WPAgentBridge\Redaction;
+use WPAgentBridge\Payment_Logs;
 
 class Logs_Controller extends Rest_Controller {
 
@@ -615,7 +616,7 @@ class Logs_Controller extends Rest_Controller {
             'by_gateway'     => [],
         ];
 
-        if ($include_payments && class_exists('\WPAgentBridge\Payment_Logs')) {
+        if ($include_payments && class_exists(Payment_Logs::class)) {
             $all_wc_files = Payment_Logs::scan_wc_log_files();
             $target_payment_files = Payment_Logs::resolve_target_files('all', '', $days, $all_wc_files);
             $payment_errors_summary['scanned_files'] = count($target_payment_files);
