@@ -118,6 +118,26 @@ class Woocommerce_Controller extends Rest_Controller {
                     'default'           => '',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
+                'exclude_meta_key' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Exclude products containing this postmeta key',
+                ],
+                'meta_key'     => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Filter by postmeta key',
+                ],
+                'meta_value'   => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Filter by postmeta value',
+                ],
+                'meta_compare' => [
+                    'default'           => '=',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Comparison operator for meta_query (=, !=, >, <, LIKE, etc.)',
+                ],
                 'per_page'     => [
                     'default'           => 20,
                     'sanitize_callback' => 'absint',
@@ -340,6 +360,11 @@ class Woocommerce_Controller extends Rest_Controller {
                     'default'           => 10,
                     'sanitize_callback' => 'absint',
                     'description'       => 'Max items to return (1-50)',
+                ],
+                'exclude_meta_key' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Exclude products containing this postmeta key',
                 ],
             ],
         ]);
@@ -978,6 +1003,14 @@ class Woocommerce_Controller extends Rest_Controller {
         $stock_filter  = sanitize_text_field($request->get_param('stock_status') ?: 'all');
         $category      = sanitize_text_field($request->get_param('category') ?: '');
         $search        = sanitize_text_field($request->get_param('search') ?: '');
+        $exclude_meta  = sanitize_text_field($request->get_param('exclude_meta_key') ?: '');
+        $meta_key      = sanitize_text_field($request->get_param('meta_key') ?: '');
+        $meta_value    = sanitize_text_field($request->get_param('meta_value') ?: '');
+        $meta_compare  = strtoupper(sanitize_text_field($request->get_param('meta_compare') ?: '='));
+        $allowed_compares = ['=', '!=', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'EXISTS', 'NOT EXISTS'];
+        if (!in_array($meta_compare, $allowed_compares, true)) {
+            $meta_compare = '=';
+        }
         $per_page      = min(100, max(1, (int) ($request->get_param('per_page') ?: 20)));
         $page          = max(1, (int) ($request->get_param('page') ?: 1));
         $orderby       = sanitize_text_field($request->get_param('orderby') ?: 'date');
@@ -1009,6 +1042,23 @@ class Woocommerce_Controller extends Rest_Controller {
 
         if (!empty($search)) {
             $query_args['s'] = $search;
+        }
+
+        if (!empty($exclude_meta)) {
+            $query_args['meta_query'] = [
+                [
+                    'key'     => $exclude_meta,
+                    'compare' => 'NOT EXISTS',
+                ],
+            ];
+        } elseif (!empty($meta_key)) {
+            $query_args['meta_query'] = [
+                [
+                    'key'     => $meta_key,
+                    'value'   => $meta_value,
+                    'compare' => $meta_compare,
+                ],
+            ];
         }
 
         $results = wc_get_products($query_args);
@@ -1054,31 +1104,38 @@ class Woocommerce_Controller extends Rest_Controller {
                     }
                 }
 
+                $image_id = $product->get_image_id() ? (int) $product->get_image_id() : null;
+                $raw_image_url = $image_id ? wp_get_attachment_image_url($image_id, 'full') : null;
+                $image_url = $raw_image_url ? (string) $raw_image_url : null;
+
                 $item = [
-                    'id'               => $product->get_id(),
-                    'name'             => $product->get_name(),
-                    'slug'             => $product->get_slug(),
-                    'permalink'        => $product->get_permalink(),
-                    'type'             => $product->get_type(),
-                    'status'           => $product->get_status(),
-                    'is_published'     => $product->get_status() === 'publish',
-                    'sku'              => $product->get_sku(),
-                    'price'            => $product->get_price(),
-                    'regular_price'    => $product->get_regular_price(),
-                    'sale_price'       => $product->get_sale_price(),
-                    'on_sale'          => $product->is_on_sale(),
-                    'stock_status'     => $product->get_stock_status(),
-                    'stock_quantity'   => $product->get_stock_quantity(),
-                    'manage_stock'     => $product->get_manage_stock(),
-                    'categories'       => $categories,
-                    'tags'             => $tags,
-                    'attributes'       => $attributes,
-                    'tax_status'       => $product->get_tax_status(),
-                    'tax_class'        => $product->get_tax_class(),
-                    'shipping_class'   => $product->get_shipping_class(),
-                    'total_sales'      => (int) $product->get_total_sales(),
-                    'date_created'     => $product->get_date_created() ? $product->get_date_created()->date('Y-m-d H:i:s') : null,
-                    'date_modified'    => $product->get_date_modified() ? $product->get_date_modified()->date('Y-m-d H:i:s') : null,
+                    'id'                => $product->get_id(),
+                    'name'              => $product->get_name(),
+                    'slug'              => $product->get_slug(),
+                    'permalink'         => $product->get_permalink(),
+                    'image_id'          => $image_id,
+                    'image_url'         => $image_url,
+                    'gallery_image_ids' => array_map('intval', (array) $product->get_gallery_image_ids()),
+                    'type'              => $product->get_type(),
+                    'status'            => $product->get_status(),
+                    'is_published'      => $product->get_status() === 'publish',
+                    'sku'               => $product->get_sku(),
+                    'price'             => $product->get_price(),
+                    'regular_price'     => $product->get_regular_price(),
+                    'sale_price'        => $product->get_sale_price(),
+                    'on_sale'           => $product->is_on_sale(),
+                    'stock_status'      => $product->get_stock_status(),
+                    'stock_quantity'    => $product->get_stock_quantity(),
+                    'manage_stock'      => $product->get_manage_stock(),
+                    'categories'        => $categories,
+                    'tags'              => $tags,
+                    'attributes'        => $attributes,
+                    'tax_status'        => $product->get_tax_status(),
+                    'tax_class'         => $product->get_tax_class(),
+                    'shipping_class'    => $product->get_shipping_class(),
+                    'total_sales'       => (int) $product->get_total_sales(),
+                    'date_created'      => $product->get_date_created() ? $product->get_date_created()->date('Y-m-d H:i:s') : null,
+                    'date_modified'     => $product->get_date_modified() ? $product->get_date_modified()->date('Y-m-d H:i:s') : null,
                 ];
 
                 if ($product->is_type('variable')) {
@@ -1098,11 +1155,15 @@ class Woocommerce_Controller extends Rest_Controller {
             'page'        => $page,
             'per_page'    => $per_page,
             'filters'     => [
-                'status'       => $status_filter,
-                'type'         => $type_filter,
-                'stock_status' => $stock_filter,
-                'category'     => $category,
-                'search'       => $search,
+                'status'           => $status_filter,
+                'type'             => $type_filter,
+                'stock_status'     => $stock_filter,
+                'category'         => $category,
+                'search'           => $search,
+                'exclude_meta_key' => $exclude_meta,
+                'meta_key'         => $meta_key,
+                'meta_value'       => $meta_value,
+                'meta_compare'     => $meta_compare,
             ],
             'count'       => count($products),
             'products'    => $products,
@@ -2750,10 +2811,11 @@ class Woocommerce_Controller extends Rest_Controller {
 
         global $wpdb;
 
-        $range      = sanitize_text_field((string) $request->get_param('range'));
-        $start_date = sanitize_text_field((string) $request->get_param('start_date'));
-        $end_date   = sanitize_text_field((string) $request->get_param('end_date'));
-        $limit      = min(50, max(1, absint($request->get_param('limit')) ?: 10));
+        $range        = sanitize_text_field((string) $request->get_param('range'));
+        $start_date   = sanitize_text_field((string) $request->get_param('start_date'));
+        $end_date     = sanitize_text_field((string) $request->get_param('end_date'));
+        $limit        = min(50, max(1, absint($request->get_param('limit')) ?: 10));
+        $exclude_meta = sanitize_text_field((string) ($request->get_param('exclude_meta_key') ?: ''));
 
         $dates = $this->resolve_date_range($range, $start_date, $end_date);
 
@@ -2773,6 +2835,7 @@ class Woocommerce_Controller extends Rest_Controller {
 
         $top_products = [];
         if ($has_product_lookup && $has_order_stats) {
+            $query_limit = !empty($exclude_meta) ? min(500, max(50, $limit * 5)) : $limit;
             $product_rows = $wpdb->get_results($wpdb->prepare("
                 SELECT 
                     l.product_id,
@@ -2785,21 +2848,57 @@ class Woocommerce_Controller extends Rest_Controller {
                 GROUP BY l.product_id
                 ORDER BY total_net_revenue DESC
                 LIMIT %d
-            ", $dates['start'], $dates['end'], $limit), ARRAY_A);
+            ", $dates['start'], $dates['end'], $query_limit), ARRAY_A);
 
             foreach ($product_rows as $row) {
+                if (count($top_products) >= $limit) {
+                    break;
+                }
                 $pid     = (int) $row['product_id'];
                 $product = function_exists('wc_get_product') ? wc_get_product($pid) : null;
+
+                if (!empty($exclude_meta)) {
+                    $has_meta = metadata_exists('post', $pid, $exclude_meta);
+                    if (!$has_meta && $product) {
+                        if (method_exists($product, 'meta_exists') && $product->meta_exists($exclude_meta)) {
+                            $has_meta = true;
+                        } elseif (method_exists($product, 'is_type') && $product->is_type('variation')) {
+                            $parent_id = $product->get_parent_id();
+                            if ($parent_id && metadata_exists('post', $parent_id, $exclude_meta)) {
+                                $has_meta = true;
+                            }
+                        }
+                    }
+                    if ($has_meta) {
+                        continue;
+                    }
+                }
+
+                $image_id = ($product && method_exists($product, 'get_image_id') && $product->get_image_id()) ? (int) $product->get_image_id() : null;
+                if (!$image_id && $product && method_exists($product, 'is_type') && $product->is_type('variation')) {
+                    $parent_id = $product->get_parent_id();
+                    if ($parent_id) {
+                        $parent = function_exists('wc_get_product') ? wc_get_product($parent_id) : null;
+                        if ($parent && method_exists($parent, 'get_image_id') && $parent->get_image_id()) {
+                            $image_id = (int) $parent->get_image_id();
+                        }
+                    }
+                }
+                $raw_image = $image_id ? wp_get_attachment_image_url($image_id, 'full') : null;
+                $image_url = $raw_image ? (string) $raw_image : null;
+
                 $top_products[] = [
-                    'id'            => $pid,
-                    'name'          => $product ? $product->get_name() : get_the_title($pid),
-                    'sku'           => $product ? $product->get_sku() : '',
-                    'price'         => $product ? (float) $product->get_price() : 0.0,
-                    'stock_status'  => $product ? $product->get_stock_status() : 'unknown',
-                    'stock_quantity'=> ($product && $product->managing_stock()) ? $product->get_stock_quantity() : null,
-                    'units_sold'    => (int) $row['total_units_sold'],
-                    'net_revenue'   => round((float) $row['total_net_revenue'], 2),
-                    'edit_url'      => admin_url("post.php?post={$pid}&action=edit"),
+                    'id'             => $pid,
+                    'name'           => $product ? $product->get_name() : get_the_title($pid),
+                    'sku'            => $product ? $product->get_sku() : '',
+                    'price'          => $product ? (float) $product->get_price() : 0.0,
+                    'image_id'       => $image_id,
+                    'image_url'      => $image_url,
+                    'stock_status'   => $product ? $product->get_stock_status() : 'unknown',
+                    'stock_quantity' => ($product && $product->managing_stock()) ? $product->get_stock_quantity() : null,
+                    'units_sold'     => (int) $row['total_units_sold'],
+                    'net_revenue'    => round((float) $row['total_net_revenue'], 2),
+                    'edit_url'       => admin_url("post.php?post={$pid}&action=edit"),
                 ];
             }
         }
@@ -2834,17 +2933,18 @@ class Woocommerce_Controller extends Rest_Controller {
         }
 
         return $this->response([
-            'period'          => [
-                'range'       => $range,
-                'label'       => $dates['label'],
-                'start'       => $dates['start'],
-                'end'         => $dates['end'],
+            'period'           => [
+                'range'        => $range,
+                'label'        => $dates['label'],
+                'start'        => $dates['start'],
+                'end'          => $dates['end'],
             ],
-            'currency'        => $currency,
-            'currency_symbol' => $currency_symbol,
-            'limit'           => $limit,
-            'top_products'    => $top_products,
-            'top_coupons'     => $top_coupons,
+            'currency'         => $currency,
+            'currency_symbol'  => $currency_symbol,
+            'limit'            => $limit,
+            'exclude_meta_key' => $exclude_meta,
+            'top_products'     => $top_products,
+            'top_coupons'      => $top_coupons,
         ]);
     }
 

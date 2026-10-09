@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-09-28  
+> **Last Updated**: 2026-10-09  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -294,7 +294,7 @@ Enables/disables modules on a per-site basis:
 | `GET /meta/post/{id}` | GET | Inspect all metadata for a specific post/product/order (resolved ACF fields, code-registered meta, and full categorized raw postmeta) |
 | `GET /woocommerce/summary` | GET | High-level store health, product counts by status/stock/type, order hygiene & stale ghost orders analysis (pending > 30d, failed > 60d, cancelled > 1y, total ghost orders, retention policy status, EMPTY_TRASH_DAYS auto-delete), HPOS state, active payment gateways, and shipping zones |
 | `GET /woocommerce/payment-logs` | GET | Targeted payment gateway logs inspection (Stripe, Alma, PayPal) with automatic hash-free filename resolution, absolute date range filtering (`since`/`until`), lightweight counting mode (`count_only=true`), order ID tracing, memory-safe reverse chunk streaming, and secret key / PII redaction (`?gateway=all\|stripe\|alma\|paypal`, `?since=`, `?until=`, `?count_only=true`, `?order_id=`, `?level=error\|warning\|info\|all`, `?lines=100`, `?days=`, `?date=`, `?search=`) |
-| `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with SKU, prices, stock, categories, tags, attributes, and variations (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?per_page=20`, `?page=1`) |
+| `GET /woocommerce/products` | GET | Paginated WooCommerce product catalog with image ID & full URL, gallery image IDs, SKU, prices, stock, categories, tags, attributes, variations, and postmeta filtering (`?status=publish\|draft\|all`, `?type=`, `?stock_status=`, `?category=`, `?search=`, `?exclude_meta_key=`, `?meta_key=`, `?meta_value=`, `?meta_compare=`, `?per_page=20`, `?page=1`) |
 | `GET /woocommerce/product/{id}` | GET | Detailed product inspection including variations breakdown, dimensions, images, unified SEO object, and sanitized postmeta custom fields |
 | `GET /woocommerce/coupons` | GET | List and filter promotional discount coupons with status (`active`, `expired`, `exhausted`, `all`), discount types, usage counts, limits, held counts, and PII-masked email restrictions (`?status=`, `?type=`, `?search=`, `?email=`, `?per_page=20`, `?page=1`, `?orderby=date\|code\|usage_count\|modified`, `?order=DESC\|ASC`) |
 | `GET /woocommerce/coupon/{id}` | GET | Deep inspection of a single coupon by numeric ID or code slug: discount rules, real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and last 10 associated orders |
@@ -304,7 +304,7 @@ Enables/disables modules on a per-site basis:
 | `GET /woocommerce/shipping` | GET | Dedicated logistics & shipping inspection: zones, geographic locations (postcodes, states, countries), native method parameters, flat_rate table rate rules (`flexible_shipping_table_rate`), Flexible Shipping & Flexible Shipping PRO matrix calculation rules (tiers, classes, conditions), and sanitized `raw_instance_settings` |
 | `GET /woocommerce/analytics/sales` | GET | 100% native WooCommerce sales report: net sales, gross sales, orders count, AOV, refunds, daily trend, and growth percentage compared to previous period (`?range=last_30_days`, `?start_date=`, `?end_date=`) |
 | `GET /woocommerce/analytics/pacing` | GET | Advertising seasonality & budget pacing: month decades breakdown (days 1-10, 11-20, 21-31), payday window lift (days 25-5 vs 6-24), day-of-month rankings (1-31), day-of-week performance, 24-hour dayparting profile, and automatic budget pacing recommendations for Google Ads & Meta Ads (`?range=last_12_months\|last_24_months\|all_time\|custom`, `?start_date=`, `?end_date=`, `?status=`, `?monthly_budget=`) |
-| `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold, and top coupons with discount totals (`?limit=10`, `?range=last_30_days`) |
+| `GET /woocommerce/analytics/top-performers` | GET | Top products by net revenue & volume sold with image ID and full URL, optional postmeta exclusion (`?exclude_meta_key=`), and top coupons with discount totals (`?limit=10`, `?range=last_30_days`, `?exclude_meta_key=`) |
 | `GET /woocommerce/analytics/stock` | GET | Stock financial valuation, low stock alerts, and dormant stock (0 sales in last 90 days) (`?low_stock_threshold=`) |
 | `GET /woocommerce/webhooks` | GET | WooCommerce webhooks inventory, delivery URLs, topics, and failure counters (`failure_count >= 5`) |
 | `GET /woocommerce/emails` | GET | Inspect registered WooCommerce transactional emails, enabled state, recipients, subject/heading templates, custom triggers from Order Status Manager, and detect silent statuses |
@@ -416,6 +416,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.43.0 (2026-10-09)
+- **Enrichissement de la Charge Utile Produits & Filtrage Postmeta (`GET /woocommerce/products` & `GET /woocommerce/analytics/top-performers`)** :
+  - **Exposition Directe des Visuels Produits** : Ajout de `image_id` (ID d'attachement média), `image_url` (URL complète du visuel principal 'full') et `gallery_image_ids` dans la charge utile de chaque produit retourné par `GET /woocommerce/products`, évitant la multiplication d'appels HTTP vers `/wp/v2/product/{id}` ou `/wp/v2/media/{id}`.
+  - **Filtrage Postmeta dans `GET /woocommerce/products`** : Support natif des paramètres `exclude_meta_key` (exclusion via clause `NOT EXISTS`), `meta_key`, `meta_value` et `meta_compare` (`=`, `!=`, `>`, `<`, `LIKE`, etc.), permettant d'extraire en 1 seule requête les produits en stock non encore traités par un pipeline (ex. harmonisation de photos HD).
+  - **Filtrage Postmeta & Enrichissement Visuel dans `GET /woocommerce/analytics/top-performers`** : Support du paramètre `exclude_meta_key` pour ignorer à la volée les best-sellers déjà marqués par une métadonnée spécifique, avec ajustement dynamique de la limite de requête SQL (`query_limit`) pour garantir le quota de résultats demandé, et enrichissement de chaque produit du top avec `image_id` et `image_url` (avec repli automatique sur le produit parent pour les variations).
+  - **Synchronisation du Pilier 5 des Playbooks** : Mise à jour du pilier `ecommerce_bi_analytics` (étape 2) pour intégrer `top_products[].image_url` et le filtrage optionnel `exclude_meta_key`.
+  - **Internationalisation 100%** : Régénération du template `.pot`, synchronisation du dictionnaire français `.po` et recompilation du binaire `.mo`.
 
 ### v1.42.1 (2026-09-28)
 - **Correctif Critique Namespace & Résolution de Classe (`GET /logs/errors-summary`)** :

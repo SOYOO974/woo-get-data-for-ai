@@ -523,8 +523,8 @@ class Playbooks {
                         'action'      => esc_html__('Top Performing Products & Coupons', 'woo-get-data-for-ai'),
                         'endpoint'    => '/woocommerce/analytics/top-performers',
                         'params'      => ['limit' => 10, 'range' => 'last_30_days'],
-                        'description' => esc_html__('Identifies best-selling products by net revenue and units sold, plus top discount coupons used with totals.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['top_products[].name', 'top_products[].net_revenue', 'top_coupons[].discount_total'],
+                        'description' => esc_html__('Identifies best-selling products by net revenue, units sold, and main image URLs (with optional exclude_meta_key filtering), plus top discount coupons used with totals.', 'woo-get-data-for-ai'),
+                        'key_signals' => ['top_products[].name', 'top_products[].net_revenue', 'top_products[].image_url', 'top_coupons[].discount_total'],
                     ],
                     [
                         'step'        => 3,
