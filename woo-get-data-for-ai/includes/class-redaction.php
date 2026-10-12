@@ -204,29 +204,58 @@ class Redaction {
     }
 
     /**
-     * Recursively redact an array (e.g. theme options, settings).
+     * Recursively redact an array or object (e.g. theme options, settings, order payloads).
+     * Hardened against circular references, object graph cycles, and call stack exhaustion.
      *
      * @param mixed $data
+     * @param int   $depth
+     * @param array $visited_objects
      * @return mixed
      */
-    public static function redact_data($data) {
+    public static function redact_data($data, $depth = 0, $visited_objects = []) {
+        // Enforce a hard ceiling on recursion depth to prevent stack overflow (PHP 8.1+ zend.max_allowed_stack_size)
+        if ($depth >= 20) {
+            if (is_array($data) || is_object($data)) {
+                return '[MAX_DEPTH_REACHED]';
+            }
+            return is_string($data) ? self::redact_string($data, false) : $data;
+        }
+
         if (is_array($data)) {
             $cleaned = [];
             foreach ($data as $k => $v) {
                 if (self::is_sensitive_key($k)) {
                     $cleaned[$k] = is_string($v) && strlen($v) > 0 ? '[REDACTED_SECRET]' : $v;
                 } else {
-                    $cleaned[$k] = self::redact_data($v);
+                    $cleaned[$k] = self::redact_data($v, $depth + 1, $visited_objects);
                 }
             }
             return $cleaned;
         } elseif (is_object($data)) {
-            $cleaned = clone $data;
+            // Bypass DateTime and DateTimeImmutable objects (date representations contain no secrets)
+            if ($data instanceof \DateTimeInterface) {
+                return $data;
+            }
+
+            // Track object identity to detect and break circular references / graph cycles
+            $oid = spl_object_id($data);
+            if (isset($visited_objects[$oid])) {
+                return '[CIRCULAR_REFERENCE]';
+            }
+            $visited_objects[$oid] = true;
+
+            // Attempt safe clone; fall back to stdClass if class has private __clone or is uncloneable
+            try {
+                $cleaned = clone $data;
+            } catch (\Throwable $e) {
+                $cleaned = new \stdClass();
+            }
+
             foreach (get_object_vars($data) as $k => $v) {
                 if (self::is_sensitive_key($k)) {
                     $cleaned->$k = '[REDACTED_SECRET]';
                 } else {
-                    $cleaned->$k = self::redact_data($v);
+                    $cleaned->$k = self::redact_data($v, $depth + 1, $visited_objects);
                 }
             }
             return $cleaned;

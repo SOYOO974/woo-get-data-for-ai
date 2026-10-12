@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-10-09  
+> **Last Updated**: 2026-10-12  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -416,6 +416,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.43.1 (2026-10-12)
+- **Blindage Anti-Récursion Infinie & Détection de Cycles dans `Redaction::redact_data()`** :
+  - **Résolution du Crash Fatal E_ERROR** : Correction définitive de l'erreur `Uncaught Error: Maximum call stack size of 8306688 bytes reached. Infinite recursion? in class-redaction.php:113` survenue lors de l'inspection de boutiques WooCommerce comportant des métadonnées d'objets ou options avec références circulaires (ex. `$obj->parent->children[0]->parent`).
+  - **Détection Déterministe des Cycles d'Objets (`spl_object_id`)** : Suivi de l'identité des objets via `spl_object_id($data)` le long de la branche d'ancêtres. Dès qu'un objet fait référence à un parent déjà visité dans son arbre, la boucle est neutralisée immédiatement et remplacée par `[CIRCULAR_REFERENCE]` sans récursion.
+  - **Plafond Dur de Récursion (`$depth >= 20`)** : Instauration d'une limite maximale de profondeur de traversée (20 niveaux) pour neutraliser tout débordement de pile d'appels (`zend.max_allowed_stack_size` sous PHP 8.1+) ou boucle par référence dans les tableaux (`$arr['self'] = &$arr`), retournant `[MAX_DEPTH_REACHED]`.
+  - **Clonage Défensif & Repli `\stdClass`** : Encapsulation du `clone $data` dans un bloc `try/catch (\Throwable $e)` avec repli automatique sur un `\stdClass` standard si l'objet possède une méthode `__clone()` privée ou n'est pas clonable, éliminant tout crash fatal secondaire.
+  - **Bypass des Objets Date/Heure (`\DateTimeInterface`)** : Traitement direct sans introspection pour `\DateTime` et `\DateTimeImmutable` (structures temporelles exemptes de données sensibles).
 
 ### v1.43.0 (2026-10-09)
 - **Enrichissement de la Charge Utile Produits & Filtrage Postmeta (`GET /woocommerce/products` & `GET /woocommerce/analytics/top-performers`)** :
