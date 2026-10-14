@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-10-12  
+> **Last Updated**: 2026-10-14  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -416,6 +416,13 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.43.2 (2026-10-14)
+- **Correction du Crash Fatal E_ERROR sur les Propriétés Manglées (`\0`) dans `Redaction::redact_data()` & `GET /system/search`** :
+  - **Résolution du Crash Fatal** : Correction définitive de `Uncaught Error: Cannot access property starting with "\0" in includes/class-redaction.php:258` déclenchée lors de la désérialisation d'options contenant des objets de classes incomplètes (`__PHP_Incomplete_Class`) ou des objets/tableaux issus d'un cast avec propriétés `protected` (`\0*\0prop`) ou `private` (`\0ClassName\0prop`).
+  - **Normalisation Défensive des Clés (`Redaction::normalize_property_key()`)** : Suppression systématique du préfixe interne d'encapsulation PHP (`^\x00[^\x00]*\x00`) et de tout octet nul résiduel (`\0`) sur les clés de tableaux et d'objets avant l'évaluation `is_sensitive_key()` et l'assignation des propriétés.
+  - **Projection Systématique vers `\stdClass` & Support `UnitEnum`** : Remplacement du `clone $data` par une projection propre vers `\stdClass` (et inspection via `(array) $data` pour `__PHP_Incomplete_Class`), éliminant tout risque d'erreur fatale sur les propriétés `readonly` (PHP 8.1+), de `TypeError` sur les propriétés fortement typées lors de l'injection de `[REDACTED_SECRET]`, ou d'effets de bord liés à `__set()`/`__clone()`. Bypass natif des énumérations PHP 8.1+ (`\UnitEnum`).
+  - **Sécurisation de `maybe_unserialize()` dans `GET /system/search`** : Encapsulation dans un bloc `try/catch (\Throwable $e)` et passage direct de `$decoded` à `Redaction::redact_data($decoded)`.
 
 ### v1.43.1 (2026-10-12)
 - **Blindage Anti-Récursion Infinie & Détection de Cycles dans `Redaction::redact_data()`** :

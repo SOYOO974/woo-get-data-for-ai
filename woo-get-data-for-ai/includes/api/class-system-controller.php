@@ -1366,9 +1366,13 @@ class System_Controller extends Rest_Controller {
                         $raw_val = $row->option_value;
                         $in_val  = (mb_stripos((string) $raw_val, $query) !== false);
 
-                        $decoded = maybe_unserialize($raw_val);
+                        try {
+                            $decoded = @maybe_unserialize($raw_val);
+                        } catch (\Throwable $e) {
+                            $decoded = (string) $raw_val;
+                        }
                         if (is_array($decoded) || is_object($decoded)) {
-                            $cleaned   = Redaction::redact_data((array) $decoded);
+                            $cleaned   = Redaction::redact_data($decoded);
                             $as_string = wp_json_encode($cleaned);
                         } else {
                             $as_string = Redaction::redact_string((string) $raw_val);

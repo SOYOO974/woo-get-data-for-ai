@@ -204,8 +204,30 @@ class Redaction {
     }
 
     /**
+     * Normalize an array or object property key by stripping PHP's internal
+     * NUL-byte mangling for protected ("\0*\0prop") and private ("\0Class\0prop")
+     * properties (e.g. from __PHP_Incomplete_Class or array-cast objects).
+     *
+     * @param string|int $key
+     * @return string|int
+     */
+    protected static function normalize_property_key($key) {
+        if (!is_string($key) || strpos($key, "\0") === false) {
+            return $key;
+        }
+
+        // Strip standard PHP mangled prefix: "\0*\0" (protected) or "\0ClassName\0" (private)
+        $clean = preg_replace('/^\x00[^\x00]*\x00/', '', $key);
+        // Strip any remaining null bytes defensively
+        $clean = str_replace("\0", '', (string) $clean);
+
+        return $clean !== '' ? $clean : '_redacted_null_key';
+    }
+
+    /**
      * Recursively redact an array or object (e.g. theme options, settings, order payloads).
-     * Hardened against circular references, object graph cycles, and call stack exhaustion.
+     * Hardened against circular references, object graph cycles, NUL-byte mangled properties
+     * (__PHP_Incomplete_Class / array-cast objects), readonly/typed properties, and call stack exhaustion.
      *
      * @param mixed $data
      * @param int   $depth
@@ -224,16 +246,22 @@ class Redaction {
         if (is_array($data)) {
             $cleaned = [];
             foreach ($data as $k => $v) {
-                if (self::is_sensitive_key($k)) {
-                    $cleaned[$k] = is_string($v) && strlen($v) > 0 ? '[REDACTED_SECRET]' : $v;
+                $clean_key = self::normalize_property_key($k);
+                if (self::is_sensitive_key($clean_key)) {
+                    $cleaned[$clean_key] = is_string($v) && strlen($v) > 0 ? '[REDACTED_SECRET]' : $v;
                 } else {
-                    $cleaned[$k] = self::redact_data($v, $depth + 1, $visited_objects);
+                    $cleaned[$clean_key] = self::redact_data($v, $depth + 1, $visited_objects);
                 }
             }
             return $cleaned;
         } elseif (is_object($data)) {
             // Bypass DateTime and DateTimeImmutable objects (date representations contain no secrets)
             if ($data instanceof \DateTimeInterface) {
+                return $data;
+            }
+
+            // Bypass PHP 8.1+ UnitEnum / BackedEnum instances (uncloneable & immutable constants)
+            if (interface_exists('\UnitEnum') && $data instanceof \UnitEnum) {
                 return $data;
             }
 
@@ -244,18 +272,25 @@ class Redaction {
             }
             $visited_objects[$oid] = true;
 
-            // Attempt safe clone; fall back to stdClass if class has private __clone or is uncloneable
-            try {
-                $cleaned = clone $data;
-            } catch (\Throwable $e) {
-                $cleaned = new \stdClass();
-            }
+            // Project into a clean stdClass to prevent:
+            // - Fatal Error: Cannot access property starting with "\0" (__PHP_Incomplete_Class / mangled props)
+            // - Fatal Error: Cannot modify readonly property (PHP 8.1+)
+            // - Fatal TypeError: Cannot assign string ('[REDACTED_SECRET]') to strictly typed properties
+            // - PHP Warning: The script tried to modify a property on an incomplete object
+            // - Side effects from magic __set() or __clone() on 3rd-party classes
+            $cleaned = new \stdClass();
+            $props   = ($data instanceof \__PHP_Incomplete_Class) ? (array) $data : get_object_vars($data);
 
-            foreach (get_object_vars($data) as $k => $v) {
-                if (self::is_sensitive_key($k)) {
-                    $cleaned->$k = '[REDACTED_SECRET]';
+            foreach ($props as $k => $v) {
+                $clean_key = (string) self::normalize_property_key($k);
+                if ($clean_key === '__PHP_Incomplete_Class_Name') {
+                    $cleaned->$clean_key = is_string($v) ? $v : '';
+                    continue;
+                }
+                if (self::is_sensitive_key($clean_key)) {
+                    $cleaned->$clean_key = is_string($v) && strlen($v) > 0 ? '[REDACTED_SECRET]' : (is_null($v) || $v === '' ? $v : '[REDACTED_SECRET]');
                 } else {
-                    $cleaned->$k = self::redact_data($v, $depth + 1, $visited_objects);
+                    $cleaned->$clean_key = self::redact_data($v, $depth + 1, $visited_objects);
                 }
             }
             return $cleaned;
