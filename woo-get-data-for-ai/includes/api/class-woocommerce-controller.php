@@ -415,7 +415,9 @@ class Woocommerce_Controller extends Rest_Controller {
                 ],
                 'monthly_budget' => [
                     'default'           => 0,
-                    'sanitize_callback' => 'floatval',
+                    'sanitize_callback' => function ($param) {
+                        return floatval($param);
+                    },
                     'description'       => 'Optional monthly advertising budget for euro pacing simulator',
                 ],
             ],

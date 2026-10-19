@@ -417,6 +417,11 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.43.3 (2026-10-19)
+- **Correction du Crash Fatal PHP 8+ `ArgumentCountError: floatval()` sur `GET /woocommerce/analytics/pacing`** :
+  - **Résolution du Crash Fatal E_ERROR** : Correction de `Uncaught ArgumentCountError: floatval() expects exactly 1 argument, 3 given in wp-includes/rest-api/class-wp-rest-request.php:868` déclenchée lors de l'appel à `GET /wp-json/agent-bridge/v1/woocommerce/analytics/pacing`.
+  - **Encapsulation du `sanitize_callback`** : En PHP 8.0+, les fonctions internes natives (`floatval`, `intval`, etc.) lèvent une `ArgumentCountError` fatale lorsque `WP_REST_Request::sanitize_params()` leur transmet 3 arguments (`$value, $request, $param`). Remplacement de `'sanitize_callback' => 'floatval'` sur l'argument `monthly_budget` par une closure dédiée `function ($param) { return floatval($param); }`.
+
 ### v1.43.2 (2026-10-14)
 - **Correction du Crash Fatal E_ERROR sur les Propriétés Manglées (`\0`) dans `Redaction::redact_data()` & `GET /system/search`** :
   - **Résolution du Crash Fatal** : Correction définitive de `Uncaught Error: Cannot access property starting with "\0" in includes/class-redaction.php:258` déclenchée lors de la désérialisation d'options contenant des objets de classes incomplètes (`__PHP_Incomplete_Class`) ou des objets/tableaux issus d'un cast avec propriétés `protected` (`\0*\0prop`) ou `private` (`\0ClassName\0prop`).
