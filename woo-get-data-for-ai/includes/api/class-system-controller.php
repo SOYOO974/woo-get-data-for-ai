@@ -35,6 +35,12 @@ class System_Controller extends Rest_Controller {
                     'default'     => 'json',
                     'description' => 'Response format: "json" for structured data or "skill"/"markdown" for ready-to-use Agent SKILL.md.',
                 ],
+                'description' => [
+                    'type'              => 'string',
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'description'       => 'Optional custom skill description to preserve in the generated SKILL.md YAML frontmatter.',
+                ],
             ],
         ]);
 
@@ -158,12 +164,23 @@ class System_Controller extends Rest_Controller {
 
         // Direct ready-to-use Agent SKILL.md generator
         if ($format === 'skill' || $format === 'markdown') {
+            $custom_desc = $request->get_param('description');
+            if (is_string($custom_desc) && trim($custom_desc) !== '') {
+                $site_info['custom_description'] = $custom_desc;
+            }
             $markdown = Playbooks::generate_skill_markdown($site_info, $catalog, $playbooks);
             $response = new \WP_REST_Response($markdown, 200);
             $response->set_headers([
                 'Content-Type'        => 'text/markdown; charset=UTF-8',
                 'Content-Disposition' => 'inline; filename="SKILL.md"',
             ]);
+            add_filter('rest_pre_serve_request', function ($served, $result, $req) use ($request, $markdown) {
+                if ($req === $request) {
+                    echo $markdown;
+                    return true;
+                }
+                return $served;
+            }, 10, 3);
             return $response;
         }
 

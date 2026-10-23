@@ -417,6 +417,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.43.5 (2026-10-23)
+- **Blindage du Frontmatter YAML `SKILL.md` (`description: >-`), Préservation des Descriptions Personnalisées & Encodage UTF-8 LF (`Playbooks` & `cli/sync.js`)** :
+  - **Bloc Scalaire YAML `description: >-`** : Remplacement de la ligne `description:` non quotée par un bloc scalaire YAML plié (`description: >-` suivi du texte sur une seule ligne indentée de deux espaces), éliminant définitivement les erreurs de parsing YAML (`mapping values are not allowed in this context`) lorsque `$site_name` contient des deux-points (`:`), des dièses (`#`), des apostrophes typographiques (`’`) ou des retours à la ligne.
+  - **Préservation Automatique des Descriptions Personnalisées** : Avant toute régénération ou écriture (`Playbooks::generate_skill_markdown()` et `cli/sync.js pull:skill`), si le fichier `SKILL.md` cible existe déjà et contient une description différente du texte générique, celle-ci est automatiquement conservée telle quelle et seul le corps du fichier est régénéré. Support également du paramètre optionnel `?description=` sur `GET /capabilities?format=skill`.
+  - **Encodage Strict UTF-8 sans BOM & Fins de Ligne LF** : Suppression systématique de tout BOM UTF-8 (`\xEF\xBB\xBF`), normalisation des fins de ligne en LF (`\n`), et restitution directe en `text/markdown; charset=UTF-8` via `rest_pre_serve_request` lors des appels `GET /capabilities?format=skill`.
+
 ### v1.43.4 (2026-10-23)
 - **Éradication des Faux Positifs `WP_Automatic_Updater` & Resserrage du Scanner Crash Watch (`GET /logs/errors-summary`)** :
   - **Exclusion Explicite des Traces Informatives d'Auto-Update WordPress** : Filtrage en amont dans `Logs_Controller::get_errors_summary()` des lignes de santé post-mise à jour écrites par `WP_Automatic_Updater` dans `debug.log` (`has no fatal errors`, `will not be checked for fatal errors`, `Checking for fatal errors`, `No fatal errors`), qui remontaient à tort comme des crashs PHP `WordPress Core`.

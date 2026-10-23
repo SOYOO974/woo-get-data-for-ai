@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-10-23 10:23+00:00\n"
-"PO-Revision-Date: 2026-10-23 10:23+00:00\n"
+"POT-Creation-Date: 2026-10-23 16:50+00:00\n"
+"PO-Revision-Date: 2026-10-23 16:50+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -1605,107 +1605,107 @@ msgstr "il y a %s (EN RETARD)"
 msgid "Action Scheduler tables not found in database."
 msgstr "Tables Action Scheduler introuvables dans la base de données."
 
-#: includes/api/class-system-controller.php:805
+#: includes/api/class-system-controller.php:822
 msgid "CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo."
 msgstr "CRITIQUE : Aucun fournisseur SMTP authentifié n'est actif. WordPress utilise la fonction PHP mail() non authentifiée. Les e-mails (confirmations de commande, reçus clients, réinitialisations de mot de passe) présentent un score de spam élevé et seront rejetés ou mis en quarantaine par Gmail, Outlook, Yahoo."
 
-#: includes/api/class-system-controller.php:809
+#: includes/api/class-system-controller.php:826
 msgid "CRITICAL: MailPoet Sending Service is configured for transactional emails, but the API key state is invalid or unapproved (%s). Delivery of emails may be paused."
 msgstr "CRITIQUE : Le service d'envoi MailPoet (MSS) est configuré pour les e-mails transactionnels, mais l'état de la clé API est invalide ou non approuvé (%s). La délivrabilité des e-mails peut être suspendue."
 
-#: includes/api/class-system-controller.php:817
+#: includes/api/class-system-controller.php:834
 msgid "%d recent email delivery failure(s) recorded in mail log."
 msgstr "%d échec(s) récent(s) de livraison d'e-mail enregistré(s) dans le journal des e-mails."
 
-#: includes/api/class-system-controller.php:848
+#: includes/api/class-system-controller.php:865
 msgid "A valid email parameter is required for subscriber diagnostic."
 msgstr "Un paramètre d'e-mail valide est requis pour le diagnostic d'abonné."
 
-#: includes/api/class-system-controller.php:859
+#: includes/api/class-system-controller.php:876
 msgid "MailPoet subscribers table does not exist or MailPoet is not installed."
 msgstr "La table des abonnés MailPoet n'existe pas ou MailPoet n'est pas installé."
 
-#: includes/api/class-system-controller.php:877
+#: includes/api/class-system-controller.php:894
 msgid "No MailPoet subscriber record found for this email address."
 msgstr "Aucun enregistrement d'abonné MailPoet trouvé pour cette adresse e-mail."
 
-#: includes/api/class-system-controller.php:917
+#: includes/api/class-system-controller.php:934
 msgid "CRITICAL BOUNCE ALERT: Address is marked as \"bounced\" in MailPoet. The MailPoet Sending Service (MSS) silently drops/blocks all transactional emails (order confirmations, status updates, password resets) sent to bounced addresses to protect sender reputation. The bounce status must be cleared or reset in MailPoet > Subscribers."
 msgstr "ALERTE REBOND CRITIQUE : L'adresse est marquée comme « rejetée » (bounced) dans MailPoet. Le service d'envoi MailPoet (MSS) abandonne et bloque silencieusement tous les e-mails transactionnels (confirmations de commande, mises à jour de statut, réinitialisations de mot de passe) envoyés aux adresses rejetées pour protéger la réputation d'expéditeur. Le statut de rebond doit être réinitialisé dans MailPoet > Abonnés."
 
-#: includes/api/class-system-controller.php:919
+#: includes/api/class-system-controller.php:936
 msgid "NOTICE: Address is marked as \"unsubscribed\". Marketing campaigns will not be sent. Transactional emails will still dispatch only if send_transactional_emails is enabled in MailPoet."
 msgstr "NOTE : L'adresse est marquée comme « désabonnée » (unsubscribed). Les campagnes marketing ne seront pas envoyées. Les e-mails transactionnels continueront d'être distribués uniquement si send_transactional_emails est activé dans MailPoet."
 
-#: includes/api/class-system-controller.php:921
+#: includes/api/class-system-controller.php:938
 msgid "NOTICE: Address is unconfirmed (pending double opt-in confirmation)."
 msgstr "NOTE : L'adresse est non confirmée (en attente de confirmation par double opt-in)."
 
-#: includes/api/class-system-controller.php:923
+#: includes/api/class-system-controller.php:940
 msgid "NOTICE: Subscriber marked inactive due to prolonged engagement dormancy."
 msgstr "NOTE : Abonné marqué comme inactif en raison d'une période prolongée d'inactivité d'engagement."
 
-#: includes/api/class-system-controller.php:987
+#: includes/api/class-system-controller.php:1004
 msgid "SAVEQUERIES is active in wp-config.php."
 msgstr "SAVEQUERIES est actif dans wp-config.php."
 
-#: includes/api/class-system-controller.php:988
+#: includes/api/class-system-controller.php:1005
 msgid "WordPress is recording every SQL query in memory with execution backtraces. On production stores, this severely degrades TTFB and can cause PHP memory exhaustion."
 msgstr "WordPress enregistre chaque requête SQL en mémoire avec les traces d'exécution. Sur une boutique en production, cela dégrade fortement le TTFB et peut provoquer une saturation de la mémoire PHP."
 
-#: includes/api/class-system-controller.php:989
+#: includes/api/class-system-controller.php:1006
 msgid "Set define('SAVEQUERIES', false); or remove it in wp-config.php."
 msgstr "Définissez define('SAVEQUERIES', false); ou supprimez-le dans wp-config.php."
 
-#: includes/api/class-system-controller.php:997
+#: includes/api/class-system-controller.php:1014
 msgid "SCRIPT_DEBUG is active in wp-config.php."
 msgstr "SCRIPT_DEBUG est actif dans wp-config.php."
 
-#: includes/api/class-system-controller.php:998
+#: includes/api/class-system-controller.php:1015
 msgid "WordPress loads unminified core CSS and JavaScript files, inflating frontend asset payload and slowing down page rendering."
 msgstr "WordPress charge les fichiers CSS et JavaScript natifs non minifiés, alourdissant le poids des ressources front-end et ralentissant le rendu de la page."
 
-#: includes/api/class-system-controller.php:999
+#: includes/api/class-system-controller.php:1016
 msgid "Set define('SCRIPT_DEBUG', false); in production wp-config.php."
 msgstr "Définissez define('SCRIPT_DEBUG', false); dans le fichier wp-config.php de production."
 
-#: includes/api/class-system-controller.php:1007
+#: includes/api/class-system-controller.php:1024
 msgid "WP_DEBUG_DISPLAY is enabled in production."
 msgstr "WP_DEBUG_DISPLAY est activé en production."
 
-#: includes/api/class-system-controller.php:1008
+#: includes/api/class-system-controller.php:1025
 msgid "PHP errors, database paths, and sensitive stack traces may be displayed to visitors."
 msgstr "Les erreurs PHP, chemins de base de données et traces sensibles risquent d'être affichés aux visiteurs."
 
-#: includes/api/class-system-controller.php:1009
+#: includes/api/class-system-controller.php:1026
 msgid "Set define('WP_DEBUG_DISPLAY', false); in wp-config.php."
 msgstr "Définissez define('WP_DEBUG_DISPLAY', false); dans wp-config.php."
 
-#: includes/api/class-system-controller.php:1017
+#: includes/api/class-system-controller.php:1034
 msgid "WP_POST_REVISIONS is not strictly capped."
 msgstr "WP_POST_REVISIONS n'est pas strictement plafonné."
 
-#: includes/api/class-system-controller.php:1018
+#: includes/api/class-system-controller.php:1035
 msgid "Every post and product revision is stored indefinitely, bloating wp_posts and slowing database queries over time."
 msgstr "Chaque révision d'article et de produit est conservée indéfiniment, ce qui alourdit wp_posts et ralentit les requêtes SQL au fil du temps."
 
-#: includes/api/class-system-controller.php:1019
+#: includes/api/class-system-controller.php:1036
 msgid "Add define('WP_POST_REVISIONS', 5); in wp-config.php to limit revisions to 5 per post/product."
 msgstr "Ajoutez define('WP_POST_REVISIONS', 5); dans wp-config.php pour limiter les révisions à 5 par article ou produit."
 
-#: includes/api/class-system-controller.php:1029
+#: includes/api/class-system-controller.php:1046
 msgid "WP_MEMORY_LIMIT (%s) is below 256M."
 msgstr "WP_MEMORY_LIMIT (%s) est inférieur à 256M."
 
-#: includes/api/class-system-controller.php:1030
+#: includes/api/class-system-controller.php:1047
 msgid "WooCommerce recommends a minimum of 256M for WordPress memory limit to prevent memory exhaustion during checkout, stock imports, or image processing."
 msgstr "WooCommerce recommande un minimum de 256M pour la limite de mémoire WordPress afin d'éviter la saturation lors du passage de commande, des imports de stocks ou du traitement d'images."
 
-#: includes/api/class-system-controller.php:1031
+#: includes/api/class-system-controller.php:1048
 msgid "Add define('WP_MEMORY_LIMIT', '256M'); in wp-config.php."
 msgstr "Ajoutez define('WP_MEMORY_LIMIT', '256M'); dans wp-config.php."
 
-#: includes/api/class-system-controller.php:1245
+#: includes/api/class-system-controller.php:1262
 msgid "Search query must be at least 2 characters long."
 msgstr "Le terme de recherche doit comporter au moins 2 caractères."
 

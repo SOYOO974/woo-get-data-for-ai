@@ -122,7 +122,71 @@ function writeJson(filePath, data) {
 
 function writeText(filePath, text) {
     ensureDir(path.dirname(filePath));
-    fs.writeFileSync(filePath, text, 'utf8');
+    const normalized = String(text || '').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    fs.writeFileSync(filePath, normalized, { encoding: 'utf8' });
+}
+
+function extractSkillDescription(markdown) {
+    const normalized = String(markdown || '').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    const fmMatch = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+    if (!fmMatch) return '';
+    const fm = fmMatch[1];
+
+    const blockMatch = fm.match(/^description:[ \t]*[>|][-+]?[0-9]*[ \t]*\n((?:[ \t]+[^\n]*\n?)+)/m);
+    if (blockMatch) {
+        return blockMatch[1]
+            .split('\n')
+            .map(l => l.trim())
+            .filter(Boolean)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    const inlineMatch = fm.match(/^description:[ \t]*([^\n]+(?:\n[ \t]+[^\n]+)*)/m);
+    if (inlineMatch) {
+        let val = inlineMatch[1].replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+        if (val.length >= 2 && ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'")))) {
+            const q = val[0];
+            val = val.slice(1, -1);
+            val = q === "'" ? val.replace(/''/g, "'") : val.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        }
+        return val.replace(/\s+/g, ' ').trim();
+    }
+    return '';
+}
+
+function isGenericSkillDescription(desc) {
+    const clean = String(desc || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) return true;
+    return /^Expert WordPress & WooCommerce diagnostic skill for .+?\.\s*Automatically synchronizes with live site capabilities and procedural playbooks\.$/i.test(clean);
+}
+
+function writeSkillFile(filePath, incomingMarkdown) {
+    let md = String(incomingMarkdown || '').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    let descToUse = extractSkillDescription(md);
+
+    if (fs.existsSync(filePath)) {
+        try {
+            const existingContent = fs.readFileSync(filePath, 'utf8');
+            const existingDesc = extractSkillDescription(existingContent);
+            if (existingDesc && !isGenericSkillDescription(existingDesc)) {
+                descToUse = existingDesc;
+            }
+        } catch (e) {
+            // Ignore read error
+        }
+    }
+
+    if (descToUse) {
+        const cleanDesc = descToUse.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+        const newFrontmatter = `---\nname: wp-agent-bridge\ndescription: >-\n  ${cleanDesc}\n---`;
+        if (/^---\n[\s\S]*?\n---(?:\n|$)/.test(md)) {
+            md = md.replace(/^---\n[\s\S]*?\n---/, newFrontmatter);
+        }
+    }
+
+    writeText(filePath, md);
 }
 
 // Subcommands
@@ -1575,8 +1639,8 @@ async function pullSkill() {
         const skillMd = await makeRequest('/capabilities?format=skill');
         const skillDir = path.join(process.cwd(), '.agents', 'skills', 'wp-agent-bridge');
         ensureDir(skillDir);
-        writeText(path.join(skillDir, 'SKILL.md'), skillMd);
-        writeText(path.join(outputDir, 'SKILL.md'), skillMd);
+        writeSkillFile(path.join(skillDir, 'SKILL.md'), skillMd);
+        writeSkillFile(path.join(outputDir, 'SKILL.md'), skillMd);
         console.log('✅ Live Skill & Playbooks saved to .agents/skills/wp-agent-bridge/SKILL.md & ./SKILL.md');
     } catch (err) {
         console.error('❌ Failed to pull skill:', err.message);

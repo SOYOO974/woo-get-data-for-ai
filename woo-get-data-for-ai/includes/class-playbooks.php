@@ -794,24 +794,174 @@ class Playbooks {
     }
 
     /**
-     * Generate ready-to-use SKILL.md markdown content for AI assistants.
+     * Normalize a text string onto a single line without BOM or line breaks.
      *
-     * @param array  $site_info
-     * @param array  $modules_catalog
-     * @param array  $playbooks
-     * @param string $token
+     * @param string $text
      * @return string
      */
-    public static function generate_skill_markdown($site_info, $modules_catalog, $playbooks, $token = '') {
-        $site_name     = $site_info['name'] ?? get_bloginfo('name');
-        $site_url      = $site_info['site_url'] ?? site_url();
-        $rest_base     = $site_info['rest_base'] ?? rest_url('agent-bridge/v1');
-        $plugin_ver    = $site_info['plugin_version'] ?? WOO_GET_DATA_AI_VERSION;
-        $auth_token    = !empty($token) ? $token : Security::get_active_token();
+    public static function sanitize_single_line_text($text) {
+        $text = (string) $text;
+        if (strncmp($text, "\xEF\xBB\xBF", 3) === 0) {
+            $text = substr($text, 3);
+        }
+        $text = str_replace(["\r\n", "\r", "\n", "\t"], ' ', $text);
+        $collapsed = preg_replace('/\s+/u', ' ', $text);
+        if ($collapsed === null) {
+            $collapsed = preg_replace('/\s+/', ' ', $text);
+        }
+        return trim((string) $collapsed);
+    }
+
+    /**
+     * Normalize markdown content to UTF-8 without BOM and LF (\n) line endings.
+     *
+     * @param string $content
+     * @return string
+     */
+    public static function normalize_skill_output($content) {
+        $content = (string) $content;
+        if (strncmp($content, "\xEF\xBB\xBF", 3) === 0) {
+            $content = substr($content, 3);
+        }
+        return str_replace(["\r\n", "\r"], "\n", $content);
+    }
+
+    /**
+     * Check whether a skill description matches the auto-generated generic template.
+     *
+     * @param string $description
+     * @return bool
+     */
+    public static function is_generic_skill_description($description) {
+        $normalized = self::sanitize_single_line_text($description);
+        if ($normalized === '') {
+            return true;
+        }
+        return (bool) preg_match(
+            '/^Expert WordPress & WooCommerce diagnostic skill for .+?\. Automatically synchronizes with live site capabilities and procedural playbooks\.$/i',
+            $normalized
+        );
+    }
+
+    /**
+     * Extract the YAML frontmatter description from an existing SKILL.md content string.
+     *
+     * @param string $markdown
+     * @return string
+     */
+    public static function extract_skill_description($markdown) {
+        $normalized = self::normalize_skill_output($markdown);
+        if (!preg_match('/\A---\n(.*?)\n---(?:\n|\z)/s', $normalized, $fm_match)) {
+            return '';
+        }
+
+        $frontmatter = $fm_match[1];
+
+        // 1. Block scalar syntax: description: >- (or >, |-, |) followed by indented lines
+        if (preg_match('/^description:[ \t]*[>|][-+]?[0-9]*[ \t]*\n((?:[ \t]+[^\n]*\n?)+)/m', $frontmatter, $block_match)) {
+            $lines = explode("\n", $block_match[1]);
+            $parts = [];
+            foreach ($lines as $line) {
+                $trimmed = trim($line);
+                if ($trimmed !== '') {
+                    $parts[] = $trimmed;
+                }
+            }
+            return self::sanitize_single_line_text(implode(' ', $parts));
+        }
+
+        // 2. Inline or multiline scalar syntax: description: ...
+        if (preg_match('/^description:[ \t]*([^\n]+(?:\n[ \t]+[^\n]+)*)/m', $frontmatter, $inline_match)) {
+            $raw_val = self::sanitize_single_line_text($inline_match[1]);
+            if (strlen($raw_val) >= 2) {
+                $first = $raw_val[0];
+                $last  = substr($raw_val, -1);
+                if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
+                    $raw_val = substr($raw_val, 1, -1);
+                    if ($first === "'") {
+                        $raw_val = str_replace("''", "'", $raw_val);
+                    } else {
+                        $raw_val = str_replace(['\\"', '\\\\'], ['"', '\\'], $raw_val);
+                    }
+                }
+            }
+            return self::sanitize_single_line_text($raw_val);
+        }
+
+        return '';
+    }
+
+    /**
+     * Generate ready-to-use SKILL.md markdown content for AI assistants.
+     *
+     * @param array       $site_info
+     * @param array       $modules_catalog
+     * @param array       $playbooks
+     * @param string      $token
+     * @param string|null $target_file Optional target SKILL.md file path (or existing SKILL.md content) to preserve custom description and write UTF-8 LF output.
+     * @return string
+     */
+    public static function generate_skill_markdown($site_info, $modules_catalog, $playbooks, $token = '', $target_file = null) {
+        $raw_site_name = $site_info['name'] ?? (function_exists('get_bloginfo') ? get_bloginfo('name') : 'WordPress & WooCommerce Store');
+        if (function_exists('html_entity_decode')) {
+            $raw_site_name = html_entity_decode((string) $raw_site_name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+        $site_name = self::sanitize_single_line_text((string) $raw_site_name);
+        if ($site_name === '') {
+            $site_name = 'WordPress & WooCommerce Store';
+        }
+
+        $site_url   = $site_info['site_url'] ?? (function_exists('site_url') ? site_url() : 'https://example.com');
+        $rest_base  = $site_info['rest_base'] ?? (function_exists('rest_url') ? rest_url('agent-bridge/v1') : rtrim((string) $site_url, '/') . '/wp-json/agent-bridge/v1');
+        $plugin_ver = $site_info['plugin_version'] ?? (defined('WOO_GET_DATA_AI_VERSION') ? WOO_GET_DATA_AI_VERSION : '1.43.5');
+        $auth_token = !empty($token) ? $token : (class_exists(__NAMESPACE__ . '\\Security') ? Security::get_active_token() : 'YOUR_ACCESS_TOKEN');
+
+        $generic_description = "Expert WordPress & WooCommerce diagnostic skill for {$site_name}. Automatically synchronizes with live site capabilities and procedural playbooks.";
+        $description         = $generic_description;
+
+        // Before writing/generating, check if target SKILL.md already exists and has a custom description
+        $existing_md      = '';
+        $target_file_path = null;
+
+        if (is_string($target_file) && $target_file !== '') {
+            if (strpos(ltrim($target_file, "\xEF\xBB\xBF \t\r\n"), '---') === 0) {
+                $existing_md = $target_file;
+            } else {
+                $target_file_path = $target_file;
+                if (is_file($target_file_path) && is_readable($target_file_path)) {
+                    $existing_md = (string) file_get_contents($target_file_path);
+                }
+            }
+        } elseif (!empty($site_info['target_file']) && is_string($site_info['target_file'])) {
+            $target_file_path = $site_info['target_file'];
+            if (is_file($target_file_path) && is_readable($target_file_path)) {
+                $existing_md = (string) file_get_contents($target_file_path);
+            }
+        } elseif (!empty($site_info['existing_skill']) && is_string($site_info['existing_skill'])) {
+            $existing_md = $site_info['existing_skill'];
+        } elseif ($target_file === null) {
+            $default_local_skill = getcwd() . '/.agents/skills/wp-agent-bridge/SKILL.md';
+            if (is_file($default_local_skill) && is_readable($default_local_skill)) {
+                $existing_md = (string) file_get_contents($default_local_skill);
+            }
+        }
+
+        if (!empty($site_info['custom_description']) && is_string($site_info['custom_description'])) {
+            $candidate_desc = self::sanitize_single_line_text($site_info['custom_description']);
+            if ($candidate_desc !== '' && !self::is_generic_skill_description($candidate_desc)) {
+                $description = $candidate_desc;
+            }
+        } elseif ($existing_md !== '') {
+            $existing_desc = self::extract_skill_description($existing_md);
+            if ($existing_desc !== '' && !self::is_generic_skill_description($existing_desc)) {
+                $description = $existing_desc;
+            }
+        }
 
         $md = "---\n";
         $md .= "name: wp-agent-bridge\n";
-        $md .= "description: Expert WordPress & WooCommerce diagnostic skill for {$site_name}. Automatically synchronizes with live site capabilities and procedural playbooks.\n";
+        $md .= "description: >-\n";
+        $md .= "  {$description}\n";
         $md .= "---\n\n";
 
         $md .= "# WP Agent Bridge — Expert Diagnostic Skill for \"{$site_name}\"\n\n";
@@ -914,18 +1064,22 @@ class Playbooks {
         $md .= "## 📡 ACTIVE INSPECTION ENDPOINTS CATALOG\n\n";
         $md .= "The following endpoints are currently active and authorized by site permissions:\n\n";
 
+        $esc_html = function ($text) {
+            return function_exists('esc_html') ? esc_html($text) : htmlspecialchars((string) $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        };
+
         foreach ($modules_catalog as $module) {
             if (empty($module['enabled'])) {
                 continue;
             }
 
-            $md .= "### " . esc_html($module['label']) . " (`" . esc_html($module['id']) . "`)\n";
-            $md .= esc_html($module['description']) . "\n\n";
+            $md .= "### " . $esc_html($module['label']) . " (`" . $esc_html($module['id']) . "`)\n";
+            $md .= $esc_html($module['description']) . "\n\n";
 
             foreach ($module['endpoints'] as $ep) {
                 $params_note = !empty($ep['params']) ? ' (Params: `' . implode('`, `', $ep['params']) . '`)' : '';
                 $method_str  = !empty($ep['methods']) ? implode('/', $ep['methods']) : 'GET';
-                $md .= "- `{$method_str} {$rest_base}" . $ep['path'] . "`" . $params_note . ": " . esc_html($ep['description']) . "\n";
+                $md .= "- `{$method_str} {$rest_base}" . $ep['path'] . "`" . $params_note . ": " . $esc_html($ep['description']) . "\n";
             }
             $md .= "\n";
         }
@@ -971,6 +1125,16 @@ class Playbooks {
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/flowmattic/workflows?status=active'\n";
         $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/snippets?status=active'\n";
         $md .= "```\n";
+
+        $md = self::normalize_skill_output($md);
+
+        if ($target_file_path !== null && $target_file_path !== '') {
+            $dir = dirname($target_file_path);
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            @file_put_contents($target_file_path, $md);
+        }
 
         return $md;
     }

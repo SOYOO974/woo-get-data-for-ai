@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-10-23 10:23+00:00\n"
+"POT-Creation-Date: 2026-10-23 16:50+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1605,107 +1605,107 @@ msgstr ""
 msgid "Action Scheduler tables not found in database."
 msgstr ""
 
-#: includes/api/class-system-controller.php:805
+#: includes/api/class-system-controller.php:822
 msgid "CRITICAL: No authenticated SMTP provider is active. WordPress is using unauthenticated PHP mail(). Emails (order confirmations, customer receipts, password resets) have high spam score and will be rejected or quarantined by Gmail, Outlook, Yahoo."
 msgstr ""
 
-#: includes/api/class-system-controller.php:809
+#: includes/api/class-system-controller.php:826
 msgid "CRITICAL: MailPoet Sending Service is configured for transactional emails, but the API key state is invalid or unapproved (%s). Delivery of emails may be paused."
 msgstr ""
 
-#: includes/api/class-system-controller.php:817
+#: includes/api/class-system-controller.php:834
 msgid "%d recent email delivery failure(s) recorded in mail log."
 msgstr ""
 
-#: includes/api/class-system-controller.php:848
+#: includes/api/class-system-controller.php:865
 msgid "A valid email parameter is required for subscriber diagnostic."
 msgstr ""
 
-#: includes/api/class-system-controller.php:859
+#: includes/api/class-system-controller.php:876
 msgid "MailPoet subscribers table does not exist or MailPoet is not installed."
 msgstr ""
 
-#: includes/api/class-system-controller.php:877
+#: includes/api/class-system-controller.php:894
 msgid "No MailPoet subscriber record found for this email address."
 msgstr ""
 
-#: includes/api/class-system-controller.php:917
+#: includes/api/class-system-controller.php:934
 msgid "CRITICAL BOUNCE ALERT: Address is marked as \"bounced\" in MailPoet. The MailPoet Sending Service (MSS) silently drops/blocks all transactional emails (order confirmations, status updates, password resets) sent to bounced addresses to protect sender reputation. The bounce status must be cleared or reset in MailPoet > Subscribers."
 msgstr ""
 
-#: includes/api/class-system-controller.php:919
+#: includes/api/class-system-controller.php:936
 msgid "NOTICE: Address is marked as \"unsubscribed\". Marketing campaigns will not be sent. Transactional emails will still dispatch only if send_transactional_emails is enabled in MailPoet."
 msgstr ""
 
-#: includes/api/class-system-controller.php:921
+#: includes/api/class-system-controller.php:938
 msgid "NOTICE: Address is unconfirmed (pending double opt-in confirmation)."
 msgstr ""
 
-#: includes/api/class-system-controller.php:923
+#: includes/api/class-system-controller.php:940
 msgid "NOTICE: Subscriber marked inactive due to prolonged engagement dormancy."
 msgstr ""
 
-#: includes/api/class-system-controller.php:987
+#: includes/api/class-system-controller.php:1004
 msgid "SAVEQUERIES is active in wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:988
+#: includes/api/class-system-controller.php:1005
 msgid "WordPress is recording every SQL query in memory with execution backtraces. On production stores, this severely degrades TTFB and can cause PHP memory exhaustion."
 msgstr ""
 
-#: includes/api/class-system-controller.php:989
+#: includes/api/class-system-controller.php:1006
 msgid "Set define('SAVEQUERIES', false); or remove it in wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:997
+#: includes/api/class-system-controller.php:1014
 msgid "SCRIPT_DEBUG is active in wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:998
+#: includes/api/class-system-controller.php:1015
 msgid "WordPress loads unminified core CSS and JavaScript files, inflating frontend asset payload and slowing down page rendering."
 msgstr ""
 
-#: includes/api/class-system-controller.php:999
+#: includes/api/class-system-controller.php:1016
 msgid "Set define('SCRIPT_DEBUG', false); in production wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1007
+#: includes/api/class-system-controller.php:1024
 msgid "WP_DEBUG_DISPLAY is enabled in production."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1008
+#: includes/api/class-system-controller.php:1025
 msgid "PHP errors, database paths, and sensitive stack traces may be displayed to visitors."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1009
+#: includes/api/class-system-controller.php:1026
 msgid "Set define('WP_DEBUG_DISPLAY', false); in wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1017
+#: includes/api/class-system-controller.php:1034
 msgid "WP_POST_REVISIONS is not strictly capped."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1018
+#: includes/api/class-system-controller.php:1035
 msgid "Every post and product revision is stored indefinitely, bloating wp_posts and slowing database queries over time."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1019
+#: includes/api/class-system-controller.php:1036
 msgid "Add define('WP_POST_REVISIONS', 5); in wp-config.php to limit revisions to 5 per post/product."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1029
+#: includes/api/class-system-controller.php:1046
 msgid "WP_MEMORY_LIMIT (%s) is below 256M."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1030
+#: includes/api/class-system-controller.php:1047
 msgid "WooCommerce recommends a minimum of 256M for WordPress memory limit to prevent memory exhaustion during checkout, stock imports, or image processing."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1031
+#: includes/api/class-system-controller.php:1048
 msgid "Add define('WP_MEMORY_LIMIT', '256M'); in wp-config.php."
 msgstr ""
 
-#: includes/api/class-system-controller.php:1245
+#: includes/api/class-system-controller.php:1262
 msgid "Search query must be at least 2 characters long."
 msgstr ""
 
