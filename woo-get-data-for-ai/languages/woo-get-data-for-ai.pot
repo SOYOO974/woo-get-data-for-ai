@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-10-19 05:24+00:00\n"
+"POT-Creation-Date: 2026-10-23 10:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1434,11 +1434,11 @@ msgstr ""
 msgid "Log file not found, unreadable, or outside allowed directories."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:744
+#: includes/api/class-logs-controller.php:751
 msgid "No supported database email logging plugin tables found (WP Mail Logging, FluentSMTP, Post SMTP, or WP Mail SMTP)."
 msgstr ""
 
-#: includes/api/class-logs-controller.php:965
+#: includes/api/class-logs-controller.php:972
 #: includes/api/class-woocommerce-controller.php:4504
 msgid "Both 'woocommerce' and 'logs' modules are disabled by the site administrator."
 msgstr ""

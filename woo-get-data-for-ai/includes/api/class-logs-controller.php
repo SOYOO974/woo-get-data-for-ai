@@ -537,23 +537,30 @@ class Logs_Controller extends Rest_Controller {
             $raw_lines = $this->tail_file($filepath, 400);
 
             foreach ($raw_lines as $line) {
-                // Filter for fatal/critical error patterns
-                if (!preg_match('/(Fatal error|Parse error|Uncaught\s+[a-zA-Z0-9_\\\\]+|Allowed memory size|Maximum execution time)/i', $line)) {
+                // Exclude benign informational lines from WP_Automatic_Updater rollback checks
+                if (preg_match('/(has no fatal errors|will not be checked for fatal errors|checking for fatal errors|no fatal errors)/i', $line)) {
+                    continue;
+                }
+
+                // Filter strictly for standard PHP fatal/critical error prefixes and uncaught exceptions
+                if (!preg_match('/(?:PHP\s+(?:Fatal|Parse|Core|Compile)\s+error|Uncaught\s+(?:Error|Exception|TypeError|ArgumentCountError|ValueError|[A-Za-z0-9_\\\\]*(?:Error|Exception))\b|Allowed memory size of|Maximum execution time of)/i', $line)) {
                     continue;
                 }
 
                 $total_error_lines_matched++;
 
-                // Extract timestamp
+                // Extract timestamp (standard PHP [dd-Mon-YYYY HH:MM:SS UTC] or WooCommerce ISO-8601)
                 $timestamp = null;
-                if (preg_match('/^\[([0-9A-Za-z\-:\s\+]+)\]/', $line, $time_match)) {
+                if (preg_match('/^\[([0-9A-Za-z\-:\s\+\/]+)\]/', $line, $time_match)) {
                     $timestamp = trim($time_match[1]);
+                } elseif (preg_match('/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[\+\-]\d{2}:\d{2})/', $line, $iso_match)) {
+                    $timestamp = $iso_match[1];
                 }
 
-                // Extract error file & line
+                // Extract error file & line (supports both "in /path/file.php on line 123" and "in /path/file.php:123")
                 $source_file = '';
                 $source_line = null;
-                if (preg_match('/(?:in\s+)([\S]+)(?:\s+on line\s+)(\d+)/i', $line, $file_match)) {
+                if (preg_match('/(?:in\s+)([\S]+?)(?:\s+on line\s+|:)(\d+)(?:\s|$|\))/i', $line, $file_match)) {
                     $source_file = $file_match[1];
                     $source_line = (int) $file_match[2];
                 }

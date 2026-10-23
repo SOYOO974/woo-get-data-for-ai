@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-10-14  
+> **Last Updated**: 2026-10-23  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -416,6 +416,12 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.43.4 (2026-10-23)
+- **Éradication des Faux Positifs `WP_Automatic_Updater` & Resserrage du Scanner Crash Watch (`GET /logs/errors-summary`)** :
+  - **Exclusion Explicite des Traces Informatives d'Auto-Update WordPress** : Filtrage en amont dans `Logs_Controller::get_errors_summary()` des lignes de santé post-mise à jour écrites par `WP_Automatic_Updater` dans `debug.log` (`has no fatal errors`, `will not be checked for fatal errors`, `Checking for fatal errors`, `No fatal errors`), qui remontaient à tort comme des crashs PHP `WordPress Core`.
+  - **Resserrage du Pattern Positif d'Erreurs Critiques** : Restriction de la détection aux préfixes standards d'erreurs fatales PHP et exceptions non interceptées (`PHP (Fatal|Parse|Core|Compile) error`, `Uncaught (Error|Exception|TypeError|ArgumentCountError|ValueError|...)`, `Allowed memory size of`, `Maximum execution time of`), empêchant toute simple mention textuelle de `"fatal error"` dans un message informatif de déclencher une alerte.
+  - **Extraction Enrichie Fichier/Ligne (`:line` & `on line`) et Horodatage ISO-8601** : Prise en charge simultanée de la syntaxe PHP 7/8 `in /path/file.php:123` (en plus de `in /path/file.php on line 123`) et extraction des horodatages ISO-8601 des fichiers `wc-logs/fatal-errors-*.log`.
 
 ### v1.43.3 (2026-10-19)
 - **Correction du Crash Fatal PHP 8+ `ArgumentCountError: floatval()` sur `GET /woocommerce/analytics/pacing`** :
