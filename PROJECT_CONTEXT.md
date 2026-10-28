@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-10-23  
+> **Last Updated**: 2026-10-28  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -202,6 +202,7 @@ Enables/disables modules on a per-site basis:
 - `[x] Site Performance & Plugin Profiler` (`/performance/profile`, `/performance/autoload`, `/performance/plugins-summary`, `/performance/templates-urls`)
 - `[x] Paid Memberships Pro (PMPro)` (`/pmpro/levels`, `/pmpro/members`, `/pmpro/member/{user_id}`)
 - `[x] MasterStudy LMS` (`/masterstudy/courses`, `/masterstudy/user/{user_id}/courses`)
+- `[x] Guardian Health Snapshot` (`/guardian/snapshot`)
 *(When a module is toggled off, any API request to its endpoints returns HTTP 403 Forbidden).*
 
 ### Tab 3: AI Onboarding & Dynamic Bootstrap Prompt
@@ -332,6 +333,7 @@ Enables/disables modules on a per-site basis:
 | `GET /tracking/audit` | GET | Master 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0), Google Ads Server-Side conversions, cookie banner / CMP detection (native woo-gads, Complianz, Axeptio, Cookiebot), Google Consent Mode v2 signals, inter-plugin cookie name coherence check, and Action Scheduler health |
 | `GET /tracking/orders` | GET | Recent orders with server-side tracking metadata, CAPI sync status, Google Ads conversion status, consent states, and click identifiers (`gclid`, `wbraid`, `gbraid`, `fbp`, `fbc`) (`?limit=20`, `?status=`, `?tracking_filter=all\|failed\|missing_consent\|has_identifiers\|meta_failed\|gads_failed`) |
 | `GET /tracking/logs` | GET | Unified tracking logs from Google Ads database table (`wp_woo_gads_logs`) and Meta CAPI WooCommerce log files (`wfbt-server-side-*.log`) (`?provider=all\|meta\|google_ads`, `?limit=30`) |
+| `GET /guardian/snapshot` | GET | One-call nightly health snapshot, raw dated figures only, thresholds stay on the caller side (`?since=<ISO 8601 UTC>` default now-24h clamped to 31 days, `?top=10` max 50). Sections: `meta`, `php`, `payments`, `orders`, `alma` (null without active alma* gateway), `stock`, `scheduler`, `mail`, `feeds`, `changes`. 60 s transient cache, `meta.timings` per section, failing section returns `{"error"}` with HTTP 200 |
 
 ---
 
@@ -416,6 +418,17 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.44.0 (2026-10-28)
+- **Nouveau Snapshot Guardian en Un Appel (`GET /guardian/snapshot`, module `guardian`)** :
+  - **Chiffres bruts datés, zéro verdict** : le plugin ne décide jamais de la gravité ; tous les seuils restent côté appelant (sentinelle nocturne). Dates en ISO 8601 UTC (`Z`) + `site_timezone`.
+  - **Sections** : `meta` (versions, HPOS, `timings` par section), `php` (fatals depuis `since`, top 5 par empreinte `sha1(fichier:ligne:message normalisé)`, taille du debug.log, `WP_DEBUG_DISPLAY`, `display_errors`), `payments` (passerelles, commandes échouées par passerelle, erreurs de logs `declined` vs `technical` via `Payment_Logs`), `orders` (payées depuis `since` sur `date_paid`, dernière commande payée, pending > 24h sur 30 j, on-hold > 48h et processing > 72h sur 90 j + 5 plus anciennes), `alma` (version du plugin, md5/version du mu-plugin bouclier, statuts, paniers >= 150 en pending/failed/cancelled non récupérés par une commande payée sur n'importe quelle passerelle avec le même e-mail de facturation dans les 48h, `customer_hash` HMAC-SHA256 salé tronqué, `recovered_count` en clients distincts), `stock` (meilleures ventes 30 j en rupture ou en réapprovisionnement, produits publiés à prix nul), `scheduler` (Action Scheduler en retard > 30 min, échecs et top 5 hooks, retard WP-Cron max, `DISABLE_WP_CRON`), `mail` (`wp_mail_failed`), `feeds` (statut du flux Meta lu depuis `woo_meta_catalog_feed_status` sans parser le XML, compteurs CAPI via Action Scheduler `wfbt_send_capi_event`), `changes`.
+  - **Performance & robustesse** : cache transient 60 s par `since`/`top` (préfixe `agent_bridge_` purgé à la désactivation), requêtes HPOS via `wc_get_orders()` en mode `paginate`/`ids`, lecture inverse des logs plafonnée à 8 Mo par fichier avec arrêt au premier horodatage antérieur à `since`. Chaque section est isolée dans un `try/catch` : une section en erreur renvoie `{"error"}` sans faire tomber la réponse HTTP 200.
+  - **Zéro PII** : e-mails et téléphones remplacés par `[email]` / `[phone]` dans les messages libres, sortie passée dans `Redaction::redact_data()`.
+- **Journal Passif des Changements (`includes/class-change-journal.php`)** : option non autoloadée `wp_agent_bridge_change_journal` (FIFO 300) alimentée par `upgrader_process_complete` (+ capture de l'ancienne version via `upgrader_pre_install`), `activated_plugin`, `deactivated_plugin`, `switch_theme`, `updated_option` sur `woocommerce_<passerelle>_settings` (clés modifiées uniquement, jamais les valeurs) et un événement WP-Cron quotidien comparant le md5 de `wp-content/mu-plugins/*.php`. Acteur : `user_id`, `auto`, `cron` ou `wp-cli`. Les échecs `wp_mail_failed` sont stockés dans `wp_agent_bridge_mail_failures` (100 entrées, sans destinataire). Aucune notification ni e-mail.
+- **Playbook** : intégration en étape 8 du Pilier 3 `database_system_hygiene` (aucun 8ème playbook), déclencheurs `sentinelle`, `snapshot santé`, `monitoring nocturne`.
+- **i18n** : `cli/sync-i18n.php` génère désormais aussi `woo-get-data-for-ai-fr_FR.l10n.php` (prioritaire sur le `.mo` depuis WordPress 6.5) ; couverture française 100 %.
+- **CLI** : nouvelle commande `pull:guardian` (intégrée à `pull:all`).
 
 ### v1.43.5 (2026-10-23)
 - **Blindage du Frontmatter YAML `SKILL.md` (`description: >-`), Préservation des Descriptions Personnalisées & Encodage UTF-8 LF (`Playbooks` & `cli/sync.js`)** :

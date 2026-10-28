@@ -310,4 +310,18 @@ $moData = compile_mo_data($moEntries);
 file_put_contents($moFile, $moData);
 echo "   Compiled " . strlen($moData) . " bytes (" . count($moEntries) . " entries) into woo-get-data-for-ai-fr_FR.mo\n\n";
 
+// 5. PHP translation file (WP 6.5+ loads .l10n.php before .mo: it must never go stale)
+$l10nMessages = $moEntries;
+unset($l10nMessages['']);
+ksort($l10nMessages, SORT_STRING);
+$l10nData = [
+    'domain'       => 'woo-get-data-for-ai',
+    'plural-forms' => 'nplurals=2; plural=(n > 1);',
+    'language'     => 'fr_FR',
+    'messages'     => $l10nMessages,
+];
+$l10nFile = $languagesDir . '/woo-get-data-for-ai-fr_FR.l10n.php';
+file_put_contents($l10nFile, "<?php\nreturn " . var_export($l10nData, true) . ";\n");
+echo "   Written " . count($l10nMessages) . " entries into woo-get-data-for-ai-fr_FR.l10n.php\n\n";
+
 echo "✅ i18n Synchronization Complete! WordPress & Loco Translate are 100% up to date.\n";

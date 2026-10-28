@@ -51,7 +51,7 @@ const command = args[0] && !args[0].startsWith('--') ? args[0] : 'pull:all';
 if (!siteUrl || !token) {
     console.error('\x1b[31m%s\x1b[0m', 'Error: Missing SITE_URL or AGENT_BRIDGE_TOKEN.');
     console.log('Usage: node sync.js [command] --site=https://example.com --token=YOUR_TOKEN --out=./synced-site-data [--status=active|inactive|all] [--path=plugins/my-plugin]');
-    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:tracking, pull:logs, purge:cache');
+    console.log('Commands: pull:all, pull:capabilities, pull:skill, pull:system, pull:scheduler, pull:theme, pull:code, pull:checksums, pull:elementor, pull:snippets, pull:flowmattic, pull:analytics, pull:meta, pull:woocommerce, pull:content, pull:performance, pull:pmpro, pull:masterstudy, pull:tracking, pull:guardian, pull:logs, purge:cache');
     process.exit(1);
 }
 
@@ -1425,6 +1425,20 @@ async function pullContent() {
     }
 }
 
+async function pullGuardian() {
+    console.log('⏳ Pulling Guardian Health Snapshot...');
+    try {
+        const guardianDir = path.join(outputDir, 'guardian');
+        ensureDir(guardianDir);
+        const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+        const data = await makeRequest(`/guardian/snapshot?since=${encodeURIComponent(since)}&top=10`);
+        writeJson(path.join(guardianDir, 'snapshot.json'), data);
+        console.log(`  ✅ Guardian snapshot saved (${(data.meta && data.meta.duration_ms) || '?'} ms server-side).`);
+    } catch (err) {
+        console.warn('  ⚠️ Failed to pull /guardian/snapshot:', err.message);
+    }
+}
+
 async function pullLogs() {
     console.log('⏳ Pulling Error Logs & Crash Watch...');
     try {
@@ -2009,6 +2023,9 @@ async function run() {
         case 'pull:tracking':
             await pullTracking();
             break;
+        case 'pull:guardian':
+            await pullGuardian();
+            break;
         case 'pull:logs':
             await pullLogs();
             break;
@@ -2031,6 +2048,7 @@ async function run() {
             await pullPmpro();
             await pullMasterstudy();
             await pullTracking();
+            await pullGuardian();
             await pullLogs();
             break;
     }

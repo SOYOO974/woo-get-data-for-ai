@@ -99,6 +99,11 @@ class Permissions {
                 'description' => esc_html__('Allows inspecting Meta CAPI & Pixel status, Google Ads Server-Side tracking, Action Scheduler queues, database conversion logs, cookie banner configuration (native/CMP), and Google Consent Mode v2 compliance.', 'woo-get-data-for-ai'),
                 'endpoints'   => ['/tracking/audit', '/tracking/orders', '/tracking/logs'],
             ],
+            'guardian' => [
+                'label'       => esc_html__('Guardian Health Snapshot', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents.', 'woo-get-data-for-ai'),
+                'endpoints'   => ['/guardian/snapshot'],
+            ],
         ];
     }
 
@@ -126,6 +131,7 @@ class Permissions {
             'pmpro'        => 1,
             'masterstudy'  => 1,
             'tracking'     => 1,
+            'guardian'     => 1,
         ];
 
         $saved = get_option('wp_agent_bridge_permissions', []);
@@ -788,6 +794,20 @@ class Permissions {
                         'path'        => '/masterstudy/user/{user_id}/courses',
                         'methods'     => ['GET'],
                         'description' => esc_html__('Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription record, and root cause diagnosis for premature access expirations or pointer desync.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
+                'id'          => 'guardian',
+                'label'       => esc_html__('Guardian Health Snapshot', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['guardian']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/guardian/snapshot',
+                        'methods'     => ['GET'],
+                        'params'      => ['since (ISO 8601 UTC, default: now - 24h, max: 31 days)', 'top (1-50, default: 10)'],
+                        'description' => esc_html__('One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Per-section timings in meta.timings, 60 s cache, a failing section returns {"error"} without breaking the response.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

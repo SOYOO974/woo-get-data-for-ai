@@ -12,6 +12,9 @@ class Deactivator {
      * Note: We keep the token, permissions, and logs intact to avoid data loss on accidental deactivation.
      */
     public static function deactivate() {
+        // Unschedule the daily mu-plugins checksum event
+        Change_Journal::unschedule();
+
         // Delete temporary rate limit transients
         global $wpdb;
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_agent_bridge_%' OR option_name LIKE '_transient_timeout_agent_bridge_%'");

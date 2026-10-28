@@ -72,6 +72,9 @@ class Plugin {
             $admin->init();
         }
 
+        // Passive change journal (updates, activations, gateway settings, mu-plugins drift, mail failures)
+        Change_Journal::init();
+
         // Register REST API routes
         add_action('rest_api_init', [$this, 'register_rest_routes']);
     }
@@ -108,6 +111,7 @@ class Plugin {
             Api\Pmpro_Controller::class,
             Api\Masterstudy_Controller::class,
             Api\Tracking_Controller::class,
+            Api\Guardian_Controller::class,
         ];
 
         foreach ($controller_classes as $class) {
