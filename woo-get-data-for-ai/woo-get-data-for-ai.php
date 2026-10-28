@@ -3,7 +3,7 @@
  * Plugin Name:       WP Agent Bridge (Data for AI)
  * Plugin URI:        https://github.com/SOYOO974/woo-get-data-for-ai
  * Description:       Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely exposes system state, logs, Elementor trees, WPCode & Code Snippets, and theme options to AI agents (Antigravity, Claude, Cursor).
- * Version:           1.44.0
+ * Version:           1.45.0
  * Author:            SOYOO
  * Author URI:        https://github.com/SOYOO974
  * License:           GPL-2.0+
@@ -20,12 +20,30 @@ if (!defined('WPINC')) {
 }
 
 // Define Plugin Constants
-define('WOO_GET_DATA_AI_VERSION', '1.44.0');
+define('WOO_GET_DATA_AI_VERSION', '1.45.0');
 
 define('WOO_GET_DATA_AI_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WOO_GET_DATA_AI_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WOO_GET_DATA_AI_GITHUB_REPO', 'https://github.com/SOYOO974/woo-get-data-for-ai/');
+
+/**
+ * Whether the current request comes from the SOYOO Guardian visitor probe (Playwright).
+ * Shared helper for SOYOO tracking/feed plugins: call it at runtime (inside hooks), never at
+ * file include time, since plugin load order is alphabetical.
+ *
+ * @return bool
+ */
+if (!function_exists('soyoo_is_guardian_probe')) {
+    function soyoo_is_guardian_probe() {
+        static $is_probe = null;
+        if ($is_probe === null) {
+            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? (string) $_SERVER['HTTP_USER_AGENT'] : '';
+            $is_probe = stripos($ua, 'SOYOO-Guardian-Probe') !== false;
+        }
+        return $is_probe;
+    }
+}
 
 // Self-healing: On Linux/UNIX environments, repair any files inadvertently extracted with literal Windows backslashes
 if (DIRECTORY_SEPARATOR === '/' && !file_exists(WOO_GET_DATA_AI_PLUGIN_DIR . 'includes/api/class-system-controller.php')) {

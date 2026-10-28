@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.44.0
+Stable tag: 1.45.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,10 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.45.0 - 2026-10-28 =
+* Feature: `GET /guardian/snapshot` now returns `meta.urls` (`cart`, `checkout`, `shop`) resolved with `wc_get_cart_url()`, `wc_get_checkout_url()` and `wc_get_page_permalink('shop')`, so visitor probes never guess localized paths.
+* Feature: New global helper `soyoo_is_guardian_probe()` returning true when the User-Agent contains `SOYOO-Guardian-Probe`, for SOYOO tracking and feed plugins to ignore synthetic visitor probes.
 
 = 1.44.0 - 2026-10-28 =
 * Feature: New `GET /guardian/snapshot?since=<ISO 8601 UTC>&top=10` endpoint (module `guardian`) returning one dated raw-figures snapshot for nightly monitoring agents: PHP fatals with stable fingerprints, gateways and failed orders per gateway, payment log errors split into declined vs technical, paid orders and stuck order counters, Alma plugin/shield integrity and unrecovered high-ticket orders (>= 150) with recovery detection, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta catalog feed metadata and Meta CAPI counters. No severity verdict is computed by the plugin.

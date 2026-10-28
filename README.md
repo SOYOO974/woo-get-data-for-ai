@@ -196,7 +196,7 @@ Authorization: Bearer <YOUR_ACCESS_TOKEN>
 | `GET /tracking/audit` | Comprehensive server-side tracking audit: Meta Conversions API (CAPI v21.0), Google Ads server conversions, cookie banner & CMP detection, Google Consent Mode v2 signals, consent cookie coherence verification, and health diagnostic alerts. |
 | `GET /tracking/orders?status={status}&limit={20}` | Order-level conversion tracking attribution signals: Meta CAPI status (`_wfbt_capi_sent`), Google Ads status (`_woo_gads_sent`), event IDs (`fb_event_id`), and click identifiers (`fbclid`, `gclid`) with strict PII anonymization. |
 | `GET /tracking/logs?provider={all\|meta\|google}&status={all\|error\|success}&limit={50}` | Unified server-side tracking event logs: Meta CAPI WC Logger (`wfbt-*`) and Google Ads database logs (`wp_woo_gads_logs`) with secret redaction and error inspection. |
-| `GET /guardian/snapshot?since={ISO 8601 UTC}&top={10}` | One-call nightly health snapshot with raw dated figures only (no severity verdict): `meta` (versions, HPOS, timezone, per-section `timings`), `php` (fatals since with sha1 fingerprints), `payments` (gateways, failed orders per gateway, declined vs technical log errors), `orders` (paid since, last paid order, pending > 24h, on-hold > 48h, processing > 72h), `alma` (plugin & shield md5/version, statuses, unrecovered high tickets >= 150 with 48h cross-gateway recovery check), `stock` (best sellers out of stock, zero-price published products), `scheduler`, `mail` (`wp_mail_failed`), `feeds` (Meta catalog feed & CAPI counters) and `changes` (change journal). 60 s cache; a failing section returns `{"error"}` with HTTP 200. |
+| `GET /guardian/snapshot?since={ISO 8601 UTC}&top={10}` | One-call nightly health snapshot with raw dated figures only (no severity verdict): `meta` (versions, HPOS, timezone, per-section `timings`), `php` (fatals since with sha1 fingerprints), `payments` (gateways, failed orders per gateway, declined vs technical log errors), `orders` (paid since, last paid order, pending > 24h, on-hold > 48h, processing > 72h), `alma` (plugin & shield md5/version, statuses, unrecovered high tickets >= 150 with 48h cross-gateway recovery check), `stock` (best sellers out of stock, zero-price published products), `scheduler`, `mail` (`wp_mail_failed`), `feeds` (Meta catalog feed & CAPI counters) and `changes` (change journal). `meta.urls` exposes the localized `cart`, `checkout` and `shop` URLs for visitor probes. 60 s cache; a failing section returns `{"error"}` with HTTP 200. |
 
 ---
 
@@ -257,6 +257,27 @@ node sync.js purge:cache       # Purges all cache layers (Edge CDN, Page Cache, 
 ```
 
 ---
+
+## 🤖 Guardian Visitor Probe Helper (`soyoo_is_guardian_probe()`)
+
+The SOYOO Guardian sentinel runs a Playwright visitor probe (home > product > cart > checkout) whose User-Agent contains `SOYOO-Guardian-Probe` (e.g. `Mozilla/5.0 SOYOO-Guardian-Probe/2.1`). WP Agent Bridge exposes a global helper so that tracking and feed plugins can ignore these synthetic visits (no Meta CAPI event, no Google Ads server conversion, no cart counted in 7-day trends):
+
+```php
+// Always call at runtime (inside a hook), never at file include time: plugins load alphabetically.
+$is_probe = function_exists('soyoo_is_guardian_probe')
+    ? soyoo_is_guardian_probe()
+    : (isset($_SERVER['HTTP_USER_AGENT']) && stripos((string) $_SERVER['HTTP_USER_AGENT'], 'SOYOO-Guardian-Probe') !== false);
+
+if ($is_probe) {
+    return; // Skip tracking / cart trend logging for the probe.
+}
+```
+
+Integration rules:
+- Keep the inline User-Agent fallback so the consumer plugin still works when WP Agent Bridge is inactive.
+- Check at **enqueue time** (in the visitor request), not inside Action Scheduler jobs: background jobs run without the visitor User-Agent.
+- Server-side checks only run on uncached requests (`wc-ajax`, cart, checkout). For browser-side pixels (Meta Pixel `fbq`, gtag), test `navigator.userAgent` in JavaScript instead of removing the script in PHP, otherwise a page cache could store the probe variant and drop tracking for real visitors.
+- The User-Agent can be spoofed: this helper must only ever *suppress* tracking, never grant access or bypass security.
 
 ## 🔒 Security & Privacy
 

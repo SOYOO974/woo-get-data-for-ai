@@ -328,7 +328,7 @@ class Playbooks {
                         'endpoint'    => '/guardian/snapshot',
                         'params'      => ['since' => '<ISO 8601 UTC>', 'top' => 10],
                         'description' => esc_html__('Nightly monitoring shortcut: one request returning raw dated figures for PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures and feeds, plus the change journal (updates, activations, gateway settings keys, mu-plugins drift) to explain any anomaly. Thresholds stay on the caller side.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['php.fatals_since', 'payments.failed_orders_since', 'orders.paid_since', 'orders.processing_over_72h.count', 'alma.unrecovered_high_ticket', 'scheduler.as_past_due_pending', 'mail.wp_mail_failed_since', 'changes[]', 'meta.timings'],
+                        'key_signals' => ['php.fatals_since', 'payments.failed_orders_since', 'orders.paid_since', 'orders.processing_over_72h.count', 'alma.unrecovered_high_ticket', 'scheduler.as_past_due_pending', 'mail.wp_mail_failed_since', 'changes[]', 'meta.timings', 'meta.urls'],
                     ],
                 ],
             ],

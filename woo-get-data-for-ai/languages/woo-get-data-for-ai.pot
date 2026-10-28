@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-10-28 12:33+00:00\n"
+"POT-Creation-Date: 2026-10-28 12:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2649,7 +2649,7 @@ msgid "Detailed user enrollment audit: course progress, start/end dates, linked 
 msgstr ""
 
 #: includes/class-permissions.php:810
-msgid "One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Per-section timings in meta.timings, 60 s cache, a failing section returns {\"error\"} without breaking the response."
+msgid "One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {\"error\"} without breaking the response."
 msgstr ""
 
 #: includes/class-playbooks.php:29

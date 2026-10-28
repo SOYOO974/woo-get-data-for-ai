@@ -333,7 +333,7 @@ Enables/disables modules on a per-site basis:
 | `GET /tracking/audit` | GET | Master 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0), Google Ads Server-Side conversions, cookie banner / CMP detection (native woo-gads, Complianz, Axeptio, Cookiebot), Google Consent Mode v2 signals, inter-plugin cookie name coherence check, and Action Scheduler health |
 | `GET /tracking/orders` | GET | Recent orders with server-side tracking metadata, CAPI sync status, Google Ads conversion status, consent states, and click identifiers (`gclid`, `wbraid`, `gbraid`, `fbp`, `fbc`) (`?limit=20`, `?status=`, `?tracking_filter=all\|failed\|missing_consent\|has_identifiers\|meta_failed\|gads_failed`) |
 | `GET /tracking/logs` | GET | Unified tracking logs from Google Ads database table (`wp_woo_gads_logs`) and Meta CAPI WooCommerce log files (`wfbt-server-side-*.log`) (`?provider=all\|meta\|google_ads`, `?limit=30`) |
-| `GET /guardian/snapshot` | GET | One-call nightly health snapshot, raw dated figures only, thresholds stay on the caller side (`?since=<ISO 8601 UTC>` default now-24h clamped to 31 days, `?top=10` max 50). Sections: `meta`, `php`, `payments`, `orders`, `alma` (null without active alma* gateway), `stock`, `scheduler`, `mail`, `feeds`, `changes`. 60 s transient cache, `meta.timings` per section, failing section returns `{"error"}` with HTTP 200 |
+| `GET /guardian/snapshot` | GET | One-call nightly health snapshot, raw dated figures only, thresholds stay on the caller side (`?since=<ISO 8601 UTC>` default now-24h clamped to 31 days, `?top=10` max 50). Sections: `meta`, `php`, `payments`, `orders`, `alma` (null without active alma* gateway), `stock`, `scheduler`, `mail`, `feeds`, `changes`. 60 s transient cache, `meta.timings` per section, failing section returns `{"error"}` with HTTP 200. `meta.urls` gives localized `cart`, `checkout`, `shop` URLs |
 
 ---
 
@@ -418,6 +418,10 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.45.0 (2026-10-28)
+- **`meta.urls` dans `GET /guardian/snapshot`** : URL localisées `cart` (`wc_get_cart_url()`), `checkout` (`wc_get_checkout_url()`) et `shop` (`wc_get_page_permalink('shop')`) pour que la sonde visiteur Playwright ne devine jamais les chemins (`/commande/`, `/panier/`…).
+- **Helper global `soyoo_is_guardian_probe()`** (fichier principal, protégé par `function_exists`, résultat mis en cache statique) : renvoie `true` si l'User-Agent contient `SOYOO-Guardian-Probe`. Destiné aux extensions SOYOO de tracking et de flux pour ignorer la sonde (aucun événement CAPI, aucune conversion Google Ads serveur, aucun panier compté dans les tendances 7 j). Règles d'intégration documentées dans le README : repli inline sur l'User-Agent, vérification au moment de l'enfilement (jamais dans un job Action Scheduler), vérification JavaScript `navigator.userAgent` pour les pixels navigateur afin d'éviter l'empoisonnement du cache de page, usage strictement suppressif (User-Agent falsifiable).
 
 ### v1.44.0 (2026-10-28)
 - **Nouveau Snapshot Guardian en Un Appel (`GET /guardian/snapshot`, module `guardian`)** :

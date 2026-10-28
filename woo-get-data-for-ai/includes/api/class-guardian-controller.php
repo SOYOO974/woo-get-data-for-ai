@@ -119,6 +119,7 @@ class Guardian_Controller extends Rest_Controller {
                 'since'          => $this->iso($this->since),
                 'top'            => $this->top,
                 'generated_at'   => $this->iso($now),
+                'urls'           => $this->store_urls(),
                 'duration_ms'    => (int) round((microtime(true) - $started) * 1000),
                 'timings'        => $timings,
                 'cached'         => false,
@@ -157,6 +158,19 @@ class Guardian_Controller extends Rest_Controller {
             return (bool) \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
         }
         return false;
+    }
+
+    /**
+     * Localized storefront URLs so visitor probes never guess paths (e.g. /commande/).
+     *
+     * @return array{cart: ?string, checkout: ?string, shop: ?string}
+     */
+    private function store_urls() {
+        return [
+            'cart'     => function_exists('wc_get_cart_url') ? (string) wc_get_cart_url() : null,
+            'checkout' => function_exists('wc_get_checkout_url') ? (string) wc_get_checkout_url() : null,
+            'shop'     => function_exists('wc_get_page_permalink') ? (string) wc_get_page_permalink('shop') : null,
+        ];
     }
 
     /**
