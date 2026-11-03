@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-10-28  
+> **Last Updated**: 2026-11-03  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -418,6 +418,17 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.45.1 (2026-11-03)
+- **Correctif Audit Google Ads Server-Side (`Tracking_Controller`) — Compatibilité `woo-gads-tracking-server-side` < v1.5.5 & >= v1.5.5** :
+  - **Santé des Logs SQL (`get_google_ads_db_logs_health()` & `fetch_google_ads_db_logs()`)** :
+    - Support natif des colonnes `status` (`success` / `ignored` / `error`) et `message` introduites dans `woo-gads-tracking-server-side` v1.5.5, avec rétrocompatibilité transparente pour les tables antérieures à v1.5.5.
+    - Neutralisation des faux positifs d'erreurs sur les réponses HTTP `200`/`201` antérieures à v1.5.5 où le message informatif de consentement (`"Envoi avec données clients (GRANTED)"`, `"Envoi anonymisé (DENIED...)"`) était stocké dans la colonne `error` : une entrée `200`/`201` est désormais comptabilisée en succès dès lors que `error` est vide ou ne contient aucun mot-clé d'erreur (`NOT LIKE '%Échec%' AND NOT LIKE '%Erreur%' AND NOT LIKE '%Error%' AND NOT LIKE '%Failed%' AND NOT LIKE '%Ignoré%'`).
+    - Séparation explicite du compteur `ignored_count` pour les clics expirés ou introuvables (`status = 'ignored'` ou `LIKE '%Ignoré%'`) afin de ne pas déclencher l'alerte `gads_recent_api_errors`.
+  - **Synthèse & Inspection des Commandes (`get_google_ads_orders_summary()` & `GET /tracking/orders`)** :
+    - Lecture multi-alias des identifiants de clic avec repli HPOS et postmeta : `_woo_gads_gclid ?: (_gads_gclid ?: _gclid)` (idem pour `wbraid` et `gbraid`).
+    - Décodage en repli de `_woo_gads_consent` et `_concord_consent` (JSON `marketing: true` / `advertising: true` ou scalaires) lorsque la métadonnée normalisée `_gads_consent` est absente sur les commandes antérieures à v1.5.5.
+    - Correction de la classification des statuts (`_gads_api_status` / `_gads_api_sent`) pour ne plus compter les commandes organiques ignorées (`Ignoré (Aucun identifiant de clic)`) comme des erreurs ni les chaînes `'Failed...'` comme des succès.
 
 ### v1.45.0 (2026-10-28)
 - **`meta.urls` dans `GET /guardian/snapshot`** : URL localisées `cart` (`wc_get_cart_url()`), `checkout` (`wc_get_checkout_url()`) et `shop` (`wc_get_page_permalink('shop')`) pour que la sonde visiteur Playwright ne devine jamais les chemins (`/commande/`, `/panier/`…).

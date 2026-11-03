@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.45.0
+Stable tag: 1.45.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,10 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.45.1 - 2026-11-03 =
+* Fix: In `Tracking_Controller::get_google_ads_db_logs_health()` and `fetch_google_ads_db_logs()`, support the `status` (`success` / `ignored` / `error`) and `message` columns introduced in `woo-gads-tracking-server-side` v1.5.5 while treating legacy HTTP 200/201 rows with consent messages in `error` (no error keywords `Échec`, `Erreur`, `Error`, `Failed`, `Ignoré`) as successes.
+* Fix: In `Tracking_Controller::get_google_ads_orders_summary()` and `GET /tracking/orders`, read `_woo_gads_gclid`, `_gads_gclid`, and `_gclid` (plus `wbraid`/`gbraid` variants across HPOS and postmeta), decode `_woo_gads_consent` JSON (`marketing: true`) as fallback for `_gads_consent`, and prevent `Ignoré` orders from being counted as conversion errors.
 
 = 1.45.0 - 2026-10-28 =
 * Feature: `GET /guardian/snapshot` now returns `meta.urls` (`cart`, `checkout`, `shop`) resolved with `wc_get_cart_url()`, `wc_get_checkout_url()` and `wc_get_page_permalink('shop')`, so visitor probes never guess localized paths.

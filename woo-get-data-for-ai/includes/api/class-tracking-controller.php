@@ -187,13 +187,46 @@ class Tracking_Controller extends Rest_Controller {
             $has_fbc      = !empty($order->get_meta('_wfbt_fbc'));
 
             // Google Ads tracking metadata
-            $gads_status  = $order->get_meta('_gads_api_status') ?: '';
-            $gads_sent    = $order->get_meta('_gads_api_sent') ? true : false;
-            $gads_error   = $order->get_meta('_gads_api_error') ?: '';
-            $gads_consent = $order->get_meta('_gads_consent') ?: '';
-            $has_gclid    = !empty($order->get_meta('_gads_gclid'));
-            $has_wbraid   = !empty($order->get_meta('_gads_wbraid'));
-            $has_gbraid   = !empty($order->get_meta('_gads_gbraid'));
+            $gads_status   = (string) ($order->get_meta('_gads_api_status') ?: get_post_meta($order_id, '_gads_api_status', true));
+            $gads_sent_raw = (string) ($order->get_meta('_gads_api_sent') ?: get_post_meta($order_id, '_gads_api_sent', true));
+            $gads_is_ign   = (strpos($gads_status, 'Ignoré') === 0);
+            $gads_sent     = (strpos($gads_status, 'Succès') === 0) || ($gads_sent_raw === '1' && !$gads_is_ign);
+            $gads_failed   = (!$gads_sent && !$gads_is_ign && (($gads_status !== '' && strpos($gads_status, 'En attente') !== 0) || strpos($gads_sent_raw, 'Failed') === 0));
+            $gads_error    = (string) ($order->get_meta('_gads_api_error') ?: ($gads_failed ? ($gads_status ?: $gads_sent_raw) : ''));
+
+            $gads_consent = (string) ($order->get_meta('_gads_consent') ?: get_post_meta($order_id, '_gads_consent', true));
+            if ($gads_consent !== 'granted' && $gads_consent !== 'denied') {
+                $raw_consent = $order->get_meta('_woo_gads_consent') ?: ($order->get_meta('_concord_consent') ?: get_post_meta($order_id, '_woo_gads_consent', true));
+                if (!empty($raw_consent) && is_string($raw_consent)) {
+                    $clean_consent = trim(stripslashes(urldecode($raw_consent)));
+                    if (in_array($clean_consent, ['granted', 'true', '1', 'allow'], true)) {
+                        $gads_consent = 'granted';
+                    } elseif (in_array($clean_consent, ['denied', 'false', '0'], true)) {
+                        $gads_consent = 'denied';
+                    } elseif ($clean_consent !== 'no_cookie_found') {
+                        $decoded_consent = json_decode($clean_consent, true);
+                        if (!is_array($decoded_consent)) {
+                            $decoded_consent = json_decode(stripslashes(html_entity_decode($clean_consent, ENT_QUOTES)), true);
+                        }
+                        if (is_array($decoded_consent)) {
+                            $mkt = $decoded_consent['marketing'] ?? ($decoded_consent['advertising'] ?? null);
+                            if ($mkt === true || $mkt === 'true' || $mkt === 1 || $mkt === '1' || $mkt === 'granted') {
+                                $gads_consent = 'granted';
+                            } elseif ($mkt !== null) {
+                                $gads_consent = 'denied';
+                            }
+                        }
+                    }
+                }
+            }
+
+            $gclid_val  = $order->get_meta('_woo_gads_gclid') ?: ($order->get_meta('_gads_gclid') ?: ($order->get_meta('_gclid') ?: (get_post_meta($order_id, '_woo_gads_gclid', true) ?: (get_post_meta($order_id, '_gads_gclid', true) ?: get_post_meta($order_id, '_gclid', true)))));
+            $wbraid_val = $order->get_meta('_woo_gads_wbraid') ?: ($order->get_meta('_gads_wbraid') ?: ($order->get_meta('_wbraid') ?: (get_post_meta($order_id, '_woo_gads_wbraid', true) ?: (get_post_meta($order_id, '_gads_wbraid', true) ?: get_post_meta($order_id, '_wbraid', true)))));
+            $gbraid_val = $order->get_meta('_woo_gads_gbraid') ?: ($order->get_meta('_gads_gbraid') ?: ($order->get_meta('_gbraid') ?: (get_post_meta($order_id, '_woo_gads_gbraid', true) ?: (get_post_meta($order_id, '_gads_gbraid', true) ?: get_post_meta($order_id, '_gbraid', true)))));
+
+            $has_gclid  = !empty($gclid_val);
+            $has_wbraid = !empty($wbraid_val);
+            $has_gbraid = !empty($gbraid_val);
 
             // Check if there is an Action Scheduler job pending for Meta CAPI
             $as_pending = false;
@@ -203,13 +236,13 @@ class Tracking_Controller extends Rest_Controller {
 
             // Apply tracking filter
             if ($tracking_filter === 'failed') {
-                $is_failed = ($meta_status === 'Failed' || ($gads_status !== '' && $gads_status !== 'Succès'));
+                $is_failed = ($meta_status === 'Failed' || $gads_failed);
                 if (!$is_failed) {
                     continue;
                 }
             } elseif ($tracking_filter === 'meta_failed' && $meta_status !== 'Failed') {
                 continue;
-            } elseif ($tracking_filter === 'gads_failed' && ($gads_status === '' || $gads_status === 'Succès')) {
+            } elseif ($tracking_filter === 'gads_failed' && !$gads_failed) {
                 continue;
             } elseif ($tracking_filter === 'missing_consent' && $meta_consent !== 'denied' && $gads_consent !== 'denied') {
                 continue;
@@ -609,9 +642,12 @@ class Tracking_Controller extends Rest_Controller {
         $alerts = [];
 
         $plugin_file = 'woo-gads-tracking-server-side/woo-gads-server-side.php';
-        $is_active   = is_plugin_active($plugin_file) || defined('WOO_GADS_VERSION') || class_exists('Woo_Gads');
+        if (!file_exists(WP_PLUGIN_DIR . '/' . $plugin_file) && file_exists(WP_PLUGIN_DIR . '/woo-google-ads-tracking-server-side/woo-gads-server-side.php')) {
+            $plugin_file = 'woo-google-ads-tracking-server-side/woo-gads-server-side.php';
+        }
+        $is_active    = is_plugin_active($plugin_file) || defined('WOO_GADS_VERSION') || class_exists('Woo_Gads');
         $is_installed = file_exists(WP_PLUGIN_DIR . '/' . $plugin_file);
-        $version     = defined('WOO_GADS_VERSION') ? WOO_GADS_VERSION : null;
+        $version      = defined('WOO_GADS_VERSION') ? WOO_GADS_VERSION : null;
 
         if (!$version && $is_installed && function_exists('get_file_data')) {
             $plugin_data = get_file_data(WP_PLUGIN_DIR . '/' . $plugin_file, ['Version' => 'Version']);
@@ -778,6 +814,7 @@ class Tracking_Controller extends Rest_Controller {
             'table_exists'       => false,
             'total_logs'         => 0,
             'success_count'      => 0,
+            'ignored_count'      => 0,
             'error_count'        => 0,
             'latest_entry_time'  => null,
             'recent_errors'      => [],
@@ -793,19 +830,48 @@ class Tracking_Controller extends Rest_Controller {
         $health['total_logs'] = $total;
 
         if ($total > 0) {
-            $success = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE http_status IN (200, 201) AND (error = '' OR error IS NULL)");
-            $errors  = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE http_status NOT IN (200, 201) OR (error != '' AND error IS NOT NULL)");
+            $columns = $wpdb->get_col("SHOW COLUMNS FROM {$table}", 0);
+            $columns = is_array($columns) ? $columns : [];
+            $has_status_col  = in_array('status', $columns, true);
+            $has_message_col = in_array('message', $columns, true);
+
+            $error_keyword_sql    = "(error LIKE '%Échec%' OR error LIKE '%Erreur%' OR error LIKE '%Error%' OR error LIKE '%Failed%')";
+            $no_error_keyword_sql = "(error = '' OR error IS NULL OR (error NOT LIKE '%Échec%' AND error NOT LIKE '%Erreur%' AND error NOT LIKE '%Error%' AND error NOT LIKE '%Failed%' AND error NOT LIKE '%Ignoré%'))";
+
+            if ($has_status_col) {
+                $success_where = "status = 'success' AND http_status IN (200, 201) AND {$no_error_keyword_sql}";
+                $ignored_where = "status = 'ignored' OR (http_status IN (200, 201) AND error LIKE '%Ignoré%')";
+                $error_where   = "status = 'error' OR http_status NOT IN (200, 201) OR (error != '' AND error IS NOT NULL AND {$error_keyword_sql})";
+            } else {
+                $success_where = "http_status IN (200, 201) AND {$no_error_keyword_sql}";
+                $ignored_where = "http_status IN (200, 201) AND error LIKE '%Ignoré%'";
+                $error_where   = "http_status NOT IN (200, 201) OR (error != '' AND error IS NOT NULL AND {$error_keyword_sql})";
+            }
+
+            $success = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE {$success_where}");
+            $ignored = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE {$ignored_where}");
+            $errors  = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE {$error_where}");
             $latest  = $wpdb->get_var("SELECT time FROM {$table} ORDER BY id DESC LIMIT 1");
 
             $health['success_count']     = $success;
+            $health['ignored_count']     = $ignored;
             $health['error_count']       = $errors;
             $health['latest_entry_time'] = $latest;
 
             if ($errors > 0) {
+                $select_cols = 'id, time, order_id, http_status';
+                if ($has_status_col) {
+                    $select_cols .= ', status';
+                }
+                if ($has_message_col) {
+                    $select_cols .= ', message';
+                }
+                $select_cols .= ', error';
+
                 $err_rows = $wpdb->get_results(
-                    "SELECT id, time, order_id, http_status, error 
-                     FROM {$table} 
-                     WHERE http_status NOT IN (200, 201) OR (error != '' AND error IS NOT NULL)
+                    "SELECT {$select_cols}
+                     FROM {$table}
+                     WHERE {$error_where}
                      ORDER BY id DESC LIMIT 5",
                     ARRAY_A
                 );
@@ -826,6 +892,7 @@ class Tracking_Controller extends Rest_Controller {
             'total_inspected'   => 0,
             'success_count'     => 0,
             'error_count'       => 0,
+            'ignored_count'     => 0,
             'untracked_count'   => 0,
             'identifiers_stats' => [
                 'orders_with_gclid'  => 0,
@@ -857,31 +924,81 @@ class Tracking_Controller extends Rest_Controller {
                 continue;
             }
 
-            $gads_status  = $order->get_meta('_gads_api_status');
-            $gads_sent    = $order->get_meta('_gads_api_sent');
-            $gads_consent = $order->get_meta('_gads_consent');
+            $order_id     = $order->get_id();
+            $gads_status  = $order->get_meta('_gads_api_status') ?: get_post_meta($order_id, '_gads_api_status', true);
+            $gads_sent    = $order->get_meta('_gads_api_sent') ?: get_post_meta($order_id, '_gads_api_sent', true);
+            $gads_consent = $order->get_meta('_gads_consent') ?: get_post_meta($order_id, '_gads_consent', true);
 
             // Status count
-            if ($gads_status === 'Succès' || $gads_sent) {
+            $status_str = (string) $gads_status;
+            $sent_str   = (string) $gads_sent;
+            $is_ignored = (strpos($status_str, 'Ignoré') === 0);
+            $is_success = (strpos($status_str, 'Succès') === 0) || ($sent_str === '1' && !$is_ignored);
+
+            if ($is_success) {
                 $summary['success_count']++;
-            } elseif (!empty($gads_status) && $gads_status !== 'Succès') {
+            } elseif ($is_ignored) {
+                $summary['ignored_count']++;
+                $summary['untracked_count']++;
+            } elseif (!empty($status_str) && strpos($status_str, 'En attente') !== 0) {
+                $summary['error_count']++;
+            } elseif (strpos($sent_str, 'Failed') === 0) {
                 $summary['error_count']++;
             } else {
                 $summary['untracked_count']++;
             }
 
-            // Click Identifiers
-            if (!empty($order->get_meta('_gads_gclid'))) {
+            // Click Identifiers (v1.5.5+ _woo_gads_* with fallback to _gads_* and _*)
+            $gclid = $order->get_meta('_woo_gads_gclid') ?: ($order->get_meta('_gads_gclid') ?: $order->get_meta('_gclid'));
+            if (empty($gclid) && $order_id > 0) {
+                $gclid = get_post_meta($order_id, '_woo_gads_gclid', true) ?: (get_post_meta($order_id, '_gads_gclid', true) ?: get_post_meta($order_id, '_gclid', true));
+            }
+            if (!empty($gclid)) {
                 $summary['identifiers_stats']['orders_with_gclid']++;
             }
-            if (!empty($order->get_meta('_gads_wbraid'))) {
+
+            $wbraid = $order->get_meta('_woo_gads_wbraid') ?: ($order->get_meta('_gads_wbraid') ?: $order->get_meta('_wbraid'));
+            if (empty($wbraid) && $order_id > 0) {
+                $wbraid = get_post_meta($order_id, '_woo_gads_wbraid', true) ?: (get_post_meta($order_id, '_gads_wbraid', true) ?: get_post_meta($order_id, '_wbraid', true));
+            }
+            if (!empty($wbraid)) {
                 $summary['identifiers_stats']['orders_with_wbraid']++;
             }
-            if (!empty($order->get_meta('_gads_gbraid'))) {
+
+            $gbraid = $order->get_meta('_woo_gads_gbraid') ?: ($order->get_meta('_gads_gbraid') ?: $order->get_meta('_gbraid'));
+            if (empty($gbraid) && $order_id > 0) {
+                $gbraid = get_post_meta($order_id, '_woo_gads_gbraid', true) ?: (get_post_meta($order_id, '_gads_gbraid', true) ?: get_post_meta($order_id, '_gbraid', true));
+            }
+            if (!empty($gbraid)) {
                 $summary['identifiers_stats']['orders_with_gbraid']++;
             }
 
-            // Consent stats
+            // Consent stats (fallback to _woo_gads_consent / _concord_consent JSON or string on orders < v1.5.5)
+            if ($gads_consent !== 'granted' && $gads_consent !== 'denied') {
+                $raw_consent = $order->get_meta('_woo_gads_consent') ?: ($order->get_meta('_concord_consent') ?: get_post_meta($order_id, '_woo_gads_consent', true));
+                if (!empty($raw_consent) && is_string($raw_consent)) {
+                    $clean_consent = trim(stripslashes(urldecode($raw_consent)));
+                    if (in_array($clean_consent, ['granted', 'true', '1', 'allow'], true)) {
+                        $gads_consent = 'granted';
+                    } elseif (in_array($clean_consent, ['denied', 'false', '0'], true)) {
+                        $gads_consent = 'denied';
+                    } elseif ($clean_consent !== 'no_cookie_found') {
+                        $decoded_consent = json_decode($clean_consent, true);
+                        if (!is_array($decoded_consent)) {
+                            $decoded_consent = json_decode(stripslashes(html_entity_decode($clean_consent, ENT_QUOTES)), true);
+                        }
+                        if (is_array($decoded_consent)) {
+                            $mkt = $decoded_consent['marketing'] ?? ($decoded_consent['advertising'] ?? null);
+                            if ($mkt === true || $mkt === 'true' || $mkt === 1 || $mkt === '1' || $mkt === 'granted') {
+                                $gads_consent = 'granted';
+                            } elseif ($mkt !== null) {
+                                $gads_consent = 'denied';
+                            }
+                        }
+                    }
+                }
+            }
+
             if ($gads_consent === 'granted') {
                 $summary['consent_stats']['granted']++;
             } elseif ($gads_consent === 'denied') {
@@ -1143,9 +1260,9 @@ class Tracking_Controller extends Rest_Controller {
         }
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, time, order_id, http_status, payload, response, error 
-             FROM {$table} 
-             ORDER BY id DESC 
+            "SELECT *
+             FROM {$table}
+             ORDER BY id DESC
              LIMIT %d",
             $limit
         ), ARRAY_A);
@@ -1173,12 +1290,41 @@ class Tracking_Controller extends Rest_Controller {
                 }
             }
 
+            $http_status = (int) $row['http_status'];
+            $raw_error   = isset($row['error']) ? (string) $row['error'] : '';
+            $raw_message = isset($row['message']) ? (string) $row['message'] : '';
+            $row_status  = isset($row['status']) && $row['status'] !== '' ? (string) $row['status'] : null;
+
+            $has_error_keyword = (
+                stripos($raw_error, 'Échec') !== false ||
+                stripos($raw_error, 'Erreur') !== false ||
+                stripos($raw_error, 'Error') !== false ||
+                stripos($raw_error, 'Failed') !== false
+            );
+
+            if ($row_status === null) {
+                if (in_array($http_status, [200, 201], true) && !$has_error_keyword) {
+                    $row_status = (stripos($raw_error, 'Ignoré') !== false) ? 'ignored' : 'success';
+                } else {
+                    $row_status = 'error';
+                }
+            }
+
+            if (in_array($row_status, ['success', 'ignored'], true) && !$has_error_keyword && $raw_error !== '') {
+                if ($raw_message === '') {
+                    $raw_message = $raw_error;
+                }
+                $raw_error = '';
+            }
+
             $logs[] = [
                 'id'          => (int) $row['id'],
                 'time'        => $row['time'],
                 'order_id'    => (int) $row['order_id'],
-                'http_status' => (int) $row['http_status'],
-                'error'       => $row['error'] ?: null,
+                'http_status' => $http_status,
+                'status'      => $row_status,
+                'message'     => $raw_message !== '' ? $raw_message : null,
+                'error'       => $raw_error !== '' ? $raw_error : null,
                 'payload'     => Redaction::redact_data($payload),
                 'response'    => Redaction::redact_data($response),
             ];

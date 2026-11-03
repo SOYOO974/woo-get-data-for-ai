@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-10-28 12:46+00:00\n"
-"PO-Revision-Date: 2026-10-28 12:46+00:00\n"
+"POT-Creation-Date: 2026-11-03 09:47+00:00\n"
+"PO-Revision-Date: 2026-11-03 09:47+00:00\n"
 "Last-Translator: SOYOO <julien@soyoo.re>\n"
 "Language-Team: Français <julien@soyoo.re>\n"
 "Language: fr_FR\n"
@@ -1724,199 +1724,199 @@ msgstr "Le terme de recherche doit comporter au moins 2 caractères."
 msgid "WooCommerce is not active on this site."
 msgstr "WooCommerce n'est pas actif sur ce site."
 
-#: includes/api/class-tracking-controller.php:344
+#: includes/api/class-tracking-controller.php:377
 msgid "Meta Tracking Server-Side plugin (woo-fb-tracking-server-side) is not active."
 msgstr "L'extension Meta Tracking Server-Side (woo-fb-tracking-server-side) n'est pas active."
 
-#: includes/api/class-tracking-controller.php:345
+#: includes/api/class-tracking-controller.php:378
 msgid "Activate woo-fb-tracking-server-side to enable hybrid Meta Pixel + Conversions API (CAPI) tracking."
 msgstr "Activez woo-fb-tracking-server-side pour activer le tracking hybride Pixel Meta + Conversions API (CAPI)."
 
-#: includes/api/class-tracking-controller.php:354
+#: includes/api/class-tracking-controller.php:387
 msgid "Meta Pixel ID is missing in configuration."
 msgstr "L'identifiant Meta Pixel ID est manquant dans la configuration."
 
-#: includes/api/class-tracking-controller.php:355
+#: includes/api/class-tracking-controller.php:388
 msgid "Enter your 15-16 digit Meta Dataset / Pixel ID in Woo FB Tracking settings."
 msgstr "Renseignez votre Pixel / Dataset ID Meta de 15-16 chiffres dans les réglages Woo FB Tracking."
 
-#: includes/api/class-tracking-controller.php:361
+#: includes/api/class-tracking-controller.php:394
 msgid "Meta Pixel ID format appears invalid (%s). Expected 10-16 numeric digits."
 msgstr "Le format du Pixel ID Meta semble invalide (%s). 10 à 16 chiffres numériques attendus."
 
-#: includes/api/class-tracking-controller.php:362
+#: includes/api/class-tracking-controller.php:395
 msgid "Verify the Pixel ID in Meta Events Manager."
 msgstr "Vérifiez le Pixel ID dans le Gestionnaire d'événements Meta."
 
-#: includes/api/class-tracking-controller.php:371
+#: includes/api/class-tracking-controller.php:404
 msgid "Meta CAPI Access Token is missing."
 msgstr "Le jeton d'accès Meta CAPI (Access Token) est manquant."
 
-#: includes/api/class-tracking-controller.php:372
+#: includes/api/class-tracking-controller.php:405
 msgid "Generate a System User token with ads_management permissions in Meta Events Manager and paste it in plugin settings."
 msgstr "Générez un jeton d'utilisateur système avec les permissions ads_management dans le Gestionnaire d'événements Meta et collez-le dans les réglages."
 
-#: includes/api/class-tracking-controller.php:378
+#: includes/api/class-tracking-controller.php:411
 msgid "Meta Access Token appears abnormally short or malformed."
 msgstr "Le jeton d'accès Meta semble anormalement court ou malformé."
 
-#: includes/api/class-tracking-controller.php:379
+#: includes/api/class-tracking-controller.php:412
 msgid "Check the token in Meta Business Manager."
 msgstr "Vérifiez le jeton dans Meta Business Manager."
 
-#: includes/api/class-tracking-controller.php:388
+#: includes/api/class-tracking-controller.php:421
 msgid "Meta Test Event Code is active in production: \"%s\"."
 msgstr "Le code d'événement de test Meta est actif en production : « %s »."
 
-#: includes/api/class-tracking-controller.php:389
+#: includes/api/class-tracking-controller.php:422
 msgid "Clear the Test Event Code field in plugin settings once testing is finished to avoid treating live purchases as test events."
 msgstr "Effacez le champ Test Event Code dans les réglages dès la fin des tests pour éviter que les vrais achats ne soient traités comme des tests."
 
-#: includes/api/class-tracking-controller.php:398
+#: includes/api/class-tracking-controller.php:431
 msgid "No order trigger statuses configured for Meta CAPI."
 msgstr "Aucun statut de commande déclencheur configuré pour Meta CAPI."
 
-#: includes/api/class-tracking-controller.php:399
+#: includes/api/class-tracking-controller.php:432
 msgid "Select at least \"processing\" and \"completed\" in Woo FB Tracking settings."
 msgstr "Sélectionnez au moins « En cours » (processing) et « Terminée » (completed) dans les réglages Woo FB Tracking."
 
-#: includes/api/class-tracking-controller.php:408
+#: includes/api/class-tracking-controller.php:441
 msgid "Meta CAPI is configured to bypass customer cookie consent."
 msgstr "Meta CAPI est configuré pour ignorer le consentement des cookies client."
 
-#: includes/api/class-tracking-controller.php:409
+#: includes/api/class-tracking-controller.php:442
 msgid "Enable \"Respect GDPR Consent\" to comply with European privacy regulations (ePrivacy / RGPD)."
 msgstr "Activez « Respecter le consentement RGPD » pour respecter la législation européenne sur la vie privée (ePrivacy / RGPD)."
 
-#: includes/api/class-tracking-controller.php:420
+#: includes/api/class-tracking-controller.php:453
 msgid "%d Meta CAPI Action Scheduler jobs failed in the last 7 days."
 msgstr "%d tâche(s) Action Scheduler de Meta CAPI ont échoué ces 7 derniers jours."
 
-#: includes/api/class-tracking-controller.php:421
+#: includes/api/class-tracking-controller.php:454
 msgid "Inspect Action Scheduler failures under WooCommerce > Status > Action Scheduler (group: wfbt_capi)."
 msgstr "Inspectez les échecs d'Action Scheduler dans WooCommerce > État > Action Scheduler (groupe : wfbt_capi)."
 
-#: includes/api/class-tracking-controller.php:428
+#: includes/api/class-tracking-controller.php:461
 msgid "Backlog of %d pending Meta CAPI actions in Action Scheduler."
 msgstr "File d'attente de %d action(s) Meta CAPI en attente dans Action Scheduler."
 
-#: includes/api/class-tracking-controller.php:429
+#: includes/api/class-tracking-controller.php:462
 msgid "Verify WP-Cron execution to ensure background jobs are processing smoothly."
 msgstr "Vérifiez l'exécution de WP-Cron pour vous assurer que les tâches de fond s'exécutent correctement."
 
-#: includes/api/class-tracking-controller.php:439
+#: includes/api/class-tracking-controller.php:472
 msgid "%d of last %d orders failed Meta CAPI transmission."
 msgstr "%d des %d dernières commandes ont échoué à la transmission Meta CAPI."
 
-#: includes/api/class-tracking-controller.php:440
+#: includes/api/class-tracking-controller.php:473
 msgid "Check recent error reasons in the recent_failed_samples array."
 msgstr "Consultez les motifs d'erreur récents dans le tableau recent_failed_samples."
 
-#: includes/api/class-tracking-controller.php:645
+#: includes/api/class-tracking-controller.php:681
 msgid "Google Ads Server-Side Tracking plugin (woo-gads-tracking-server-side) is not active."
 msgstr "L'extension Google Ads Server-Side Tracking (woo-gads-tracking-server-side) n'est pas active."
 
-#: includes/api/class-tracking-controller.php:646
+#: includes/api/class-tracking-controller.php:682
 msgid "Activate woo-gads-tracking-server-side to enable server-side Google Ads conversion uploads."
 msgstr "Activez woo-gads-tracking-server-side pour permettre l'envoi server-side des conversions Google Ads."
 
-#: includes/api/class-tracking-controller.php:654
+#: includes/api/class-tracking-controller.php:690
 msgid "Google Ads Developer Token is missing."
 msgstr "Le Developer Token Google Ads est manquant."
 
-#: includes/api/class-tracking-controller.php:655
+#: includes/api/class-tracking-controller.php:691
 msgid "Enter your Google Ads Developer Token from the Google Ads API Center."
 msgstr "Renseignez votre Developer Token Google Ads depuis le Centre API Google Ads."
 
-#: includes/api/class-tracking-controller.php:665
+#: includes/api/class-tracking-controller.php:701
 msgid "Google Ads Merchant Customer ID is missing."
 msgstr "L'identifiant client Google Ads (Merchant Customer ID) est manquant."
 
-#: includes/api/class-tracking-controller.php:666
+#: includes/api/class-tracking-controller.php:702
 msgid "Enter your 10-digit Google Ads account ID (without dashes)."
 msgstr "Renseignez votre identifiant de compte Google Ads à 10 chiffres (sans tirets)."
 
-#: includes/api/class-tracking-controller.php:672
+#: includes/api/class-tracking-controller.php:708
 msgid "Google Ads Customer ID (%s) does not have exactly 10 digits."
 msgstr "L'identifiant client Google Ads (%s) ne comporte pas exactement 10 chiffres."
 
-#: includes/api/class-tracking-controller.php:673
+#: includes/api/class-tracking-controller.php:709
 msgid "Verify your Google Ads account ID."
 msgstr "Vérifiez votre identifiant de compte Google Ads."
 
-#: includes/api/class-tracking-controller.php:682
+#: includes/api/class-tracking-controller.php:718
 msgid "Google Ads Conversion Action ID is missing."
 msgstr "L'ID d'action de conversion Google Ads est manquant."
 
-#: includes/api/class-tracking-controller.php:683
+#: includes/api/class-tracking-controller.php:719
 msgid "Enter the numeric Conversion Action ID from Google Ads > Conversions."
 msgstr "Renseignez l'ID numérique d'action de conversion depuis Google Ads > Conversions."
 
-#: includes/api/class-tracking-controller.php:692
+#: includes/api/class-tracking-controller.php:728
 msgid "Google Cloud OAuth Client ID or Client Secret is missing."
 msgstr "Le Client ID ou Client Secret OAuth Google Cloud est manquant."
 
-#: includes/api/class-tracking-controller.php:693
+#: includes/api/class-tracking-controller.php:729
 msgid "Create OAuth credentials in Google Cloud Console and paste them in plugin settings."
 msgstr "Créez des identifiants OAuth dans Google Cloud Console et collez-les dans les réglages."
 
-#: includes/api/class-tracking-controller.php:701
+#: includes/api/class-tracking-controller.php:737
 msgid "Google Ads OAuth is not connected (Refresh Token missing)."
 msgstr "La connexion Google Ads OAuth n'est pas établie (Refresh Token manquant)."
 
-#: includes/api/class-tracking-controller.php:702
+#: includes/api/class-tracking-controller.php:738
 msgid "Click \"Se connecter avec Google\" in the Google Ads plugin settings to authorize API transmission."
 msgstr "Cliquez sur « Se connecter avec Google » dans les réglages de l'extension Google Ads pour autoriser l'API."
 
-#: includes/api/class-tracking-controller.php:711
+#: includes/api/class-tracking-controller.php:747
 msgid "No order trigger statuses configured for Google Ads conversions."
 msgstr "Aucun statut de commande déclencheur configuré pour Google Ads."
 
-#: includes/api/class-tracking-controller.php:712
+#: includes/api/class-tracking-controller.php:748
 msgid "Select at least \"processing\" and \"completed\" in Google Ads Server-Side settings."
 msgstr "Sélectionnez au moins « En cours » (processing) et « Terminée » (completed) dans les réglages Google Ads Server-Side."
 
-#: includes/api/class-tracking-controller.php:723
+#: includes/api/class-tracking-controller.php:759
 msgid "%d Google Ads API conversion uploads resulted in errors in recent logs."
 msgstr "%d envoi(s) de conversions à l'API Google Ads ont provoqué des erreurs dans les logs récents."
 
-#: includes/api/class-tracking-controller.php:724
+#: includes/api/class-tracking-controller.php:760
 msgid "Review recent error details in google_ads_tracking.database_logs.recent_errors."
 msgstr "Consultez les détails des erreurs récentes dans google_ads_tracking.database_logs.recent_errors."
 
-#: includes/api/class-tracking-controller.php:924
+#: includes/api/class-tracking-controller.php:1041
 msgid "No published Privacy Policy page configured in WordPress (Settings > Privacy)."
 msgstr "Aucune page de politique de confidentialité publiée n'est configurée dans WordPress (Réglages > Confidentialité)."
 
-#: includes/api/class-tracking-controller.php:925
+#: includes/api/class-tracking-controller.php:1042
 msgid "Assign and publish a legal Privacy Policy page to satisfy RGPD requirements."
 msgstr "Assignez et publiez une page légale de politique de confidentialité pour satisfaire aux exigences du RGPD."
 
-#: includes/api/class-tracking-controller.php:962
+#: includes/api/class-tracking-controller.php:1079
 msgid "No active cookie banner or CMP detected while server-side tracking is active."
 msgstr "Aucune bannière de cookies ni CMP active détectée alors que le tracking server-side est activé."
 
-#: includes/api/class-tracking-controller.php:963
+#: includes/api/class-tracking-controller.php:1080
 msgid "Activate the built-in banner in Woo Google Ads settings or install a certified CMP (Complianz, Axeptio, Concord) to prevent RGPD non-compliance."
 msgstr "Activez la bannière intégrée dans les réglages Woo Google Ads ou installez une CMP certifiée (Complianz, Axeptio, Concord) pour éviter une non-conformité RGPD."
 
-#: includes/api/class-tracking-controller.php:977
+#: includes/api/class-tracking-controller.php:1094
 msgid "Cookie names match between tracking plugins and banner."
 msgstr "Les noms de cookies correspondent entre les extensions de tracking et la bannière."
 
-#: includes/api/class-tracking-controller.php:985
+#: includes/api/class-tracking-controller.php:1102
 msgid "Cookie Mismatch! Google Ads native banner sets \"woo_gads_consent\", but Meta CAPI is watching \"%s\". Meta CAPI will never detect user consent!"
 msgstr "Désynchronisation de cookie ! La bannière native Google Ads écrit « woo_gads_consent », mais Meta CAPI surveille « %s ». Meta CAPI ne détectera jamais le consentement utilisateur !"
 
-#: includes/api/class-tracking-controller.php:993
+#: includes/api/class-tracking-controller.php:1110
 msgid "Set \"Concord / Consent Cookie Name\" to \"woo_gads_consent\" in Woo FB Tracking settings to align with the native banner."
 msgstr "Définissez « Nom du cookie Concord / Consentement » sur « woo_gads_consent » dans les réglages Woo FB Tracking pour vous synchroniser avec la bannière native."
 
-#: includes/api/class-tracking-controller.php:999
+#: includes/api/class-tracking-controller.php:1116
 msgid "Potential Cookie Mismatch: CMP uses \"%s\", but Meta CAPI is watching \"%s\"."
 msgstr "Désynchronisation potentielle de cookie : la CMP utilise « %s », mais Meta CAPI surveille « %s »."
 
-#: includes/api/class-tracking-controller.php:1008
+#: includes/api/class-tracking-controller.php:1125
 msgid "Verify that Meta CAPI cookie name is configured to \"%s\"."
 msgstr "Vérifiez que le nom de cookie Meta CAPI est bien configuré sur « %s »."
 
