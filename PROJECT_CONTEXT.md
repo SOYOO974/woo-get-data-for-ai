@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-11-03  
+> **Last Updated**: 2026-11-17  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -418,6 +418,17 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.45.2 (2026-11-17)
+- **Statuts Logistiques Post-Paiement Dynamiques (`wc_get_is_paid_statuses()`) & Drapeau `is_paid` (`Woocommerce_Controller` & `Guardian_Controller`)** :
+  - **Analytics Ventes, Best-Sellers & Pacing (`Woocommerce_Controller`)** :
+    - Nouveau helper centralisé `Woocommerce_Controller::get_paid_order_statuses($include_on_hold = true)` fusionnant les statuts natifs (`completed`, `processing`, et `on-hold` pour les rapports de ventes) avec `wc_get_is_paid_statuses()` (normalisés avec et sans préfixe `wc-`, avec repli défensif si `wc_get_is_paid_statuses()` n'existe pas).
+    - Branché sur `GET /woocommerce/analytics/sales`, `GET /woocommerce/analytics/top-performers` et `GET /woocommerce/analytics/pacing` afin de ne plus exclure les commandes passées dans des statuts logistiques custom post-paiement (`ready-for-pickup`, `shipped`, `relais-dispo`, `preparation`, etc.).
+  - **Détail & Liste des Commandes (`GET /woocommerce/order/{id}` & `GET /woocommerce/orders`)** :
+    - Exposition explicite du booléen `'is_paid' => (bool) $order->is_paid()` dans la sérialisation des commandes.
+  - **Sentinelle `GET /guardian/snapshot` (`Guardian_Controller`)** :
+    - Helpers centralisés `raw_paid_statuses()` (liste séquentielle JSON garantie via `array_values()`) et `paid_order_statuses($include_on_hold)` fusionnant dynamiquement `wc_get_is_paid_statuses()` pour `orders.paid_since`, `orders.last_paid_order_at`, la détection de récupération 48h des paniers Alma High-Ticket (`section_alma()`) et l'agrégation 30j des best-sellers en rupture (`section_stock()`).
+    - Exposition de `orders.paid_statuses` (`wc_get_is_paid_statuses()`) et `orders.missing_paid_statuses` (statuts logistiques enregistrés dans `wc_get_order_statuses()` mais absents de `wc_get_is_paid_statuses()`) dans le bloc `orders`.
 
 ### v1.45.1 (2026-11-03)
 - **Correctif Audit Google Ads Server-Side (`Tracking_Controller`) — Compatibilité `woo-gads-tracking-server-side` < v1.5.5 & >= v1.5.5** :

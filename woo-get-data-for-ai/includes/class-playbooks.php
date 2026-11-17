@@ -328,7 +328,7 @@ class Playbooks {
                         'endpoint'    => '/guardian/snapshot',
                         'params'      => ['since' => '<ISO 8601 UTC>', 'top' => 10],
                         'description' => esc_html__('Nightly monitoring shortcut: one request returning raw dated figures for PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures and feeds, plus the change journal (updates, activations, gateway settings keys, mu-plugins drift) to explain any anomaly. Thresholds stay on the caller side.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['php.fatals_since', 'payments.failed_orders_since', 'orders.paid_since', 'orders.processing_over_72h.count', 'alma.unrecovered_high_ticket', 'scheduler.as_past_due_pending', 'mail.wp_mail_failed_since', 'changes[]', 'meta.timings', 'meta.urls'],
+                        'key_signals' => ['php.fatals_since', 'payments.failed_orders_since', 'orders.paid_since', 'orders.paid_statuses', 'orders.missing_paid_statuses', 'orders.processing_over_72h.count', 'alma.unrecovered_high_ticket', 'scheduler.as_past_due_pending', 'mail.wp_mail_failed_since', 'changes[]', 'meta.timings', 'meta.urls'],
                     ],
                 ],
             ],
@@ -382,7 +382,7 @@ class Playbooks {
                         'endpoint'    => '/woocommerce/orders',
                         'params'      => ['status' => 'failed,cancelled', 'per_page' => 10],
                         'description' => esc_html__('Extracts recent failed, cancelled, or pending orders with customer PII anonymization to identify failure patterns, gateways used, applied coupons, and order totals. Supports direct filtering by coupon code (?coupon=...).', 'woo-get-data-for-ai'),
-                        'key_signals' => ['orders[].status', 'orders[].payment_method', 'orders[].total', 'orders[].coupon_codes', 'orders[].date_created'],
+                        'key_signals' => ['orders[].status', 'orders[].is_paid', 'orders[].payment_method', 'orders[].total', 'orders[].coupon_codes', 'orders[].date_created'],
                     ],
                     [
                         'step'        => 2,
@@ -390,7 +390,7 @@ class Playbooks {
                         'endpoint'    => '/woocommerce/order/{id}',
                         'params'      => ['id' => '<failing_order_id>'],
                         'description' => esc_html__('Inspects order notes for raw payment gateway decline reasons, refund history, item line metadata, shipping lines with fs_costs, and applied coupon lines. For coupon-specific checkout stalls, inspect /woocommerce/coupon/{id} to verify validity, remaining usage quotas, and active held checkout sessions.', 'woo-get-data-for-ai'),
-                        'key_signals' => ['order_notes[].content', 'order_notes[].customer_note', 'shipping_lines[].meta_data.fs_costs', 'coupon_lines[].code', 'payment_method_title'],
+                        'key_signals' => ['is_paid', 'order_notes[].content', 'order_notes[].customer_note', 'shipping_lines[].meta_data.fs_costs', 'coupon_lines[].code', 'payment_method_title'],
                     ],
                     [
                         'step'        => 3,

@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.45.1
+Stable tag: 1.45.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,12 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.45.2 - 2026-11-17 =
+* Fix: Dynamically merge `wc_get_is_paid_statuses()` (with and without `wc-` prefix, with safe fallback when unavailable) in `Woocommerce_Controller` (`GET /woocommerce/analytics/sales`, `GET /woocommerce/analytics/top-performers`, and `GET /woocommerce/analytics/pacing`) so orders in custom post-payment logistics statuses are included in revenue and product rankings.
+* Fix: Dynamically merge `wc_get_is_paid_statuses()` in `Guardian_Controller` (`GET /guardian/snapshot`) for `orders.paid_since`, `orders.last_paid_order_at`, Alma 48h high-ticket recovery checks (`alma.unrecovered_high_ticket` / `recovered_count`), and 30-day best-seller stock-out aggregation (`stock.top_sellers_unavailable`).
+* Feature: Expose `orders.paid_statuses` (sequential array from `wc_get_is_paid_statuses()`) and `orders.missing_paid_statuses` (registered post-payment logistics statuses missing from `wc_get_is_paid_statuses()`) in `GET /guardian/snapshot`.
+* Fix: Expose `"is_paid": (bool) $order->is_paid()` in `GET /woocommerce/order/{id}` and `GET /woocommerce/orders`.
 
 = 1.45.1 - 2026-11-03 =
 * Fix: In `Tracking_Controller::get_google_ads_db_logs_health()` and `fetch_google_ads_db_logs()`, support the `status` (`success` / `ignored` / `error`) and `message` columns introduced in `woo-gads-tracking-server-side` v1.5.5 while treating legacy HTTP 200/201 rows with consent messages in `error` (no error keywords `Échec`, `Erreur`, `Error`, `Failed`, `Ignoré`) as successes.

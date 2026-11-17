@@ -409,9 +409,9 @@ class Woocommerce_Controller extends Rest_Controller {
                     'description'       => 'End date for custom range (YYYY-MM-DD)',
                 ],
                 'status'         => [
-                    'default'           => 'wc-completed,wc-processing,wc-on-hold',
+                    'default'           => '',
                     'sanitize_callback' => 'sanitize_text_field',
-                    'description'       => 'Comma-separated paid order statuses to include',
+                    'description'       => 'Comma-separated paid order statuses to include (defaults to completed, processing, on-hold + wc_get_is_paid_statuses())',
                 ],
                 'monthly_budget' => [
                     'default'           => 0,
@@ -458,6 +458,43 @@ class Woocommerce_Controller extends Rest_Controller {
      */
     protected function is_woocommerce_active() {
         return class_exists('WooCommerce');
+    }
+
+    /**
+     * Build the normalized list of paid order statuses (both with and without 'wc-' prefix),
+     * merging core statuses with dynamic wc_get_is_paid_statuses() so custom post-payment
+     * logistics statuses are never excluded from sales, top-performers, or pacing analytics.
+     *
+     * @param bool $include_on_hold Include 'on-hold' alongside paid statuses (default true for analytics).
+     * @return string[]
+     */
+    protected function get_paid_order_statuses($include_on_hold = true) {
+        $base = ['completed', 'processing'];
+        if ($include_on_hold) {
+            $base[] = 'on-hold';
+        }
+
+        if (function_exists('wc_get_is_paid_statuses')) {
+            $dynamic = wc_get_is_paid_statuses();
+            if (is_array($dynamic)) {
+                $base = array_merge($base, $dynamic);
+            }
+        }
+
+        $statuses = [];
+        foreach ($base as $status) {
+            if (!is_scalar($status)) {
+                continue;
+            }
+            $clean = strtolower((string) preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) preg_replace('/^wc-/i', '', trim((string) $status))));
+            if ($clean === '') {
+                continue;
+            }
+            $statuses[] = 'wc-' . $clean;
+            $statuses[] = $clean;
+        }
+
+        return array_values(array_unique($statuses));
     }
 
     /**
@@ -1914,6 +1951,7 @@ class Woocommerce_Controller extends Rest_Controller {
                     'id'                   => $order_obj->get_id(),
                     'order_number'         => $order_number,
                     'status'               => $order_obj->get_status(),
+                    'is_paid'              => method_exists($order_obj, 'is_paid') ? (bool) $order_obj->is_paid() : false,
                     'date_created'         => $order_obj->get_date_created() ? $order_obj->get_date_created()->date('Y-m-d H:i:s') : null,
                     'date_modified'        => $order_obj->get_date_modified() ? $order_obj->get_date_modified()->date('Y-m-d H:i:s') : null,
                     'date_paid'            => $order_obj->get_date_paid() ? $order_obj->get_date_paid()->date('Y-m-d H:i:s') : null,
@@ -2084,6 +2122,7 @@ class Woocommerce_Controller extends Rest_Controller {
             'id'                   => $order->get_id(),
             'order_number'         => method_exists($order, 'get_order_number') ? $order->get_order_number() : (string) $order->get_id(),
             'status'               => $order->get_status(),
+            'is_paid'              => method_exists($order, 'is_paid') ? (bool) $order->is_paid() : false,
             'date_created'         => $order->get_date_created() ? $order->get_date_created()->date('Y-m-d H:i:s') : null,
             'date_modified'        => $order->get_date_modified() ? $order->get_date_modified()->date('Y-m-d H:i:s') : null,
             'date_paid'            => $order->get_date_paid() ? $order->get_date_paid()->date('Y-m-d H:i:s') : null,
@@ -2625,7 +2664,7 @@ class Woocommerce_Controller extends Rest_Controller {
         $order_stats_table = $wpdb->prefix . 'wc_order_stats';
         $has_order_stats   = $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
 
-        $paid_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+        $paid_statuses = $this->get_paid_order_statuses(true);
         $status_placeholders = implode("','", array_map('esc_sql', $paid_statuses));
 
         if ($has_order_stats) {
@@ -2832,7 +2871,7 @@ class Woocommerce_Controller extends Rest_Controller {
         $has_order_stats    = $wpdb->get_var("SHOW TABLES LIKE '{$order_stats_table}'") === $order_stats_table;
         $has_coupon_lookup  = $wpdb->get_var("SHOW TABLES LIKE '{$coupon_lookup_table}'") === $coupon_lookup_table;
 
-        $paid_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+        $paid_statuses = $this->get_paid_order_statuses(true);
         $status_placeholders = implode("','", array_map('esc_sql', $paid_statuses));
 
         $top_products = [];
@@ -3140,27 +3179,27 @@ class Woocommerce_Controller extends Rest_Controller {
             $raw_statuses = $status_param;
         } elseif (is_string($status_param) && trim($status_param) !== '') {
             $raw_statuses = array_map('trim', explode(',', $status_param));
-        } else {
-            $raw_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold'];
         }
 
         $normalized_statuses = [];
-        foreach ($raw_statuses as $st) {
-            $st = sanitize_text_field(trim($st));
-            if ($st === '') {
-                continue;
+        if (!empty($raw_statuses)) {
+            foreach ($raw_statuses as $st) {
+                $st = sanitize_text_field(trim($st));
+                if ($st === '') {
+                    continue;
+                }
+                if (strpos($st, 'wc-') === 0) {
+                    $normalized_statuses[] = $st;
+                    $normalized_statuses[] = substr($st, 3);
+                } else {
+                    $normalized_statuses[] = 'wc-' . $st;
+                    $normalized_statuses[] = $st;
+                }
             }
-            if (strpos($st, 'wc-') === 0) {
-                $normalized_statuses[] = $st;
-                $normalized_statuses[] = substr($st, 3);
-            } else {
-                $normalized_statuses[] = 'wc-' . $st;
-                $normalized_statuses[] = $st;
-            }
+            $normalized_statuses = array_values(array_unique($normalized_statuses));
         }
-        $normalized_statuses = array_values(array_unique($normalized_statuses));
         if (empty($normalized_statuses)) {
-            $normalized_statuses = ['wc-completed', 'wc-processing', 'wc-on-hold', 'completed', 'processing', 'on-hold'];
+            $normalized_statuses = $this->get_paid_order_statuses(true);
         }
         $status_placeholders = implode("','", array_map('esc_sql', $normalized_statuses));
 

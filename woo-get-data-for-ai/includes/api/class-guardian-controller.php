@@ -190,6 +190,62 @@ class Guardian_Controller extends Rest_Controller {
     }
 
     /**
+     * Raw paid status slugs returned by wc_get_is_paid_statuses() (guaranteed sequential array),
+     * falling back to ['processing', 'completed'] when unavailable.
+     *
+     * @return string[]
+     */
+    private function raw_paid_statuses() {
+        if (function_exists('wc_get_is_paid_statuses')) {
+            $dynamic = wc_get_is_paid_statuses();
+            if (is_array($dynamic)) {
+                $clean = [];
+                foreach ($dynamic as $status) {
+                    if (!is_scalar($status)) {
+                        continue;
+                    }
+                    $val = trim((string) $status);
+                    if ($val !== '') {
+                        $clean[] = $val;
+                    }
+                }
+                return array_values(array_unique($clean));
+            }
+        }
+        return ['processing', 'completed'];
+    }
+
+    /**
+     * Normalized paid order statuses (both with and without 'wc-' prefix),
+     * merging core paid statuses with dynamic wc_get_is_paid_statuses().
+     *
+     * @param bool $include_on_hold Include 'on-hold' for wc_order_stats best-seller parity.
+     * @return string[]
+     */
+    private function paid_order_statuses($include_on_hold = false) {
+        $base = ['processing', 'completed'];
+        if ($include_on_hold) {
+            $base[] = 'on-hold';
+        }
+        $base = array_merge($base, $this->raw_paid_statuses());
+
+        $statuses = [];
+        foreach ($base as $status) {
+            if (!is_scalar($status)) {
+                continue;
+            }
+            $clean = strtolower((string) preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) preg_replace('/^wc-/i', '', trim((string) $status))));
+            if ($clean === '') {
+                continue;
+            }
+            $statuses[] = 'wc-' . $clean;
+            $statuses[] = $clean;
+        }
+
+        return array_values(array_unique($statuses));
+    }
+
+    /**
      * @return array<string, array{id: string, title: string, enabled: bool}>
      */
     private function gateways() {
@@ -445,12 +501,28 @@ class Guardian_Controller extends Rest_Controller {
             return ['error' => 'woocommerce_not_active'];
         }
 
-        $now = time();
+        $now              = time();
+        $paid_statuses    = $this->raw_paid_statuses();
+        $paid_for_queries = $this->paid_order_statuses(false);
+
+        $missing_paid = [];
+        if (function_exists('wc_get_order_statuses')) {
+            $paid_clean = array_map(function ($s) {
+                return strtolower((string) preg_replace('/^wc-/i', '', trim((string) $s)));
+            }, $paid_statuses);
+            $logistics_re = '/^(?:preparation|en-preparation|relais-dispo|pret-retrait|ready-for-pickup|in-transit|shipped|partial-delivery|expedie|livraison(?:-en-cours)?|delivered|livre)$/i';
+            foreach (array_keys((array) wc_get_order_statuses()) as $st_key) {
+                $slug = strtolower((string) preg_replace('/^wc-/i', '', trim((string) $st_key)));
+                if ($slug !== '' && preg_match($logistics_re, $slug) && !in_array($slug, $paid_clean, true)) {
+                    $missing_paid[] = $slug;
+                }
+            }
+        }
 
         $last_paid = null;
         $recent    = wc_get_orders([
             'type'    => 'shop_order',
-            'status'  => ['processing', 'completed'],
+            'status'  => $paid_for_queries,
             'limit'   => 5,
             'orderby' => 'date',
             'order'   => 'DESC',
@@ -474,11 +546,13 @@ class Guardian_Controller extends Rest_Controller {
         ]));
 
         return [
-            'paid_since'          => $this->count_orders([
-                'status'    => ['processing', 'completed'],
+            'paid_since'            => $this->count_orders([
+                'status'    => $paid_for_queries,
                 'date_paid' => '>=' . $this->since,
             ]),
-            'last_paid_order_at'  => $this->iso($last_paid),
+            'paid_statuses'         => $paid_statuses,
+            'missing_paid_statuses' => array_values(array_unique($missing_paid)),
+            'last_paid_order_at'    => $this->iso($last_paid),
             'pending_over_24h'    => $this->count_orders([
                 'status'       => ['pending'],
                 'date_created' => ($now - 30 * DAY_IN_SECONDS) . '...' . ($now - DAY_IN_SECONDS),
@@ -571,10 +645,11 @@ class Guardian_Controller extends Rest_Controller {
             }
         }
 
-        $now         = time();
-        $salt        = wp_salt('auth');
-        $unrecovered = [];
-        $recovered   = [];
+        $now              = time();
+        $salt             = wp_salt('auth');
+        $paid_for_queries = $this->paid_order_statuses(false);
+        $unrecovered      = [];
+        $recovered        = [];
         foreach ($candidates as $order) {
             $email   = strtolower(trim((string) $order->get_billing_email()));
             $created = $order->get_date_created();
@@ -585,7 +660,7 @@ class Guardian_Controller extends Rest_Controller {
             if ($email !== '') {
                 $paid_ids = wc_get_orders([
                     'type'          => 'shop_order',
-                    'status'        => ['processing', 'completed'],
+                    'status'        => $paid_for_queries,
                     'billing_email' => $email,
                     'date_paid'     => $created_ts . '...' . ($created_ts + 48 * HOUR_IN_SECONDS),
                     'exclude'       => [$order->get_id()],
@@ -657,12 +732,14 @@ class Guardian_Controller extends Rest_Controller {
         $issues = [];
         if ($this->table_exists($lookup) && $this->table_exists($stats)) {
             // Same aggregation as /woocommerce/analytics/top-performers (net revenue, paid statuses).
+            $paid_sql_statuses   = $this->paid_order_statuses(true);
+            $status_placeholders = implode("','", array_map('esc_sql', $paid_sql_statuses));
             $rows = $wpdb->get_results($wpdb->prepare("
                 SELECT l.product_id, COALESCE(SUM(l.product_qty), 0) AS units, COALESCE(SUM(l.product_net_revenue), 0) AS revenue
                 FROM {$lookup} l
                 INNER JOIN {$stats} s ON l.order_id = s.order_id
                 WHERE s.date_created >= %s
-                AND s.status IN ('wc-completed', 'wc-processing', 'wc-on-hold')
+                AND s.status IN ('{$status_placeholders}')
                 GROUP BY l.product_id
                 ORDER BY revenue DESC
                 LIMIT %d

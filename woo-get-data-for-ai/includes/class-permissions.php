@@ -621,7 +621,7 @@ class Permissions {
                     [
                         'path'        => '/woocommerce/analytics/pacing',
                         'methods'     => ['GET'],
-                        'params'      => ['range (last_12_months|last_24_months|all_time|custom, default: last_12_months)', 'start_date (YYYY-MM-DD)', 'end_date (YYYY-MM-DD)', 'status (default: wc-completed,wc-processing,wc-on-hold)', 'monthly_budget (optional float)'],
+                        'params'      => ['range (last_12_months|last_24_months|all_time|custom, default: last_12_months)', 'start_date (YYYY-MM-DD)', 'end_date (YYYY-MM-DD)', 'status (default: completed,processing,on-hold + wc_get_is_paid_statuses)', 'monthly_budget (optional float)'],
                         'description' => esc_html__('Advertising seasonality and budget pacing: month decades breakdown (days 1-10, 11-20, 21-31), payday window lift (days 25-5 vs 6-24), day-of-month rankings (1-31), day-of-week performance, 24-hour dayparting profile, and automatic budget pacing recommendations for Google Ads & Meta Ads.', 'woo-get-data-for-ai'),
                     ],
                     [
