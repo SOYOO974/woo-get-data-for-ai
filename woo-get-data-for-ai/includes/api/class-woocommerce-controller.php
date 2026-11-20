@@ -669,14 +669,33 @@ class Woocommerce_Controller extends Rest_Controller {
 
         if ($total_orders > 0) {
             if ($hpos_enabled) {
-                $stale_row = $wpdb->get_row(
-                    "SELECT 
-                        SUM(CASE WHEN status = 'wc-pending' AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS pending_30d,
-                        SUM(CASE WHEN status = 'wc-failed' AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS failed_60d,
-                        SUM(CASE WHEN status = 'wc-cancelled' AND date_paid_gmt IS NULL AND date_created_gmt < DATE_SUB(NOW(), INTERVAL 1 YEAR) THEN 1 ELSE 0 END) AS cancelled_1y
-                     FROM {$wpdb->prefix}wc_orders 
-                     WHERE status IN ('wc-pending', 'wc-failed', 'wc-cancelled')"
-                );
+                $orders_table     = $wpdb->prefix . 'wc_orders';
+                $op_table         = $wpdb->prefix . 'wc_order_operational_data';
+                $has_orders_table = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $orders_table)) === $orders_table;
+                $has_op_table     = $has_orders_table && ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $op_table)) === $op_table);
+
+                if ($has_op_table) {
+                    $stale_row = $wpdb->get_row(
+                        "SELECT 
+                            SUM(CASE WHEN o.status = 'wc-pending' AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS pending_30d,
+                            SUM(CASE WHEN o.status = 'wc-failed' AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS failed_60d,
+                            SUM(CASE WHEN o.status = 'wc-cancelled' AND od.date_paid_gmt IS NULL AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) THEN 1 ELSE 0 END) AS cancelled_1y
+                         FROM {$orders_table} o
+                         LEFT JOIN {$op_table} od ON od.order_id = o.id AND o.status = 'wc-cancelled'
+                         WHERE o.type = 'shop_order'
+                           AND o.status IN ('wc-pending', 'wc-failed', 'wc-cancelled')"
+                    );
+                } elseif ($has_orders_table) {
+                    $stale_row = $wpdb->get_row(
+                        "SELECT 
+                            SUM(CASE WHEN o.status = 'wc-pending' AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY) THEN 1 ELSE 0 END) AS pending_30d,
+                            SUM(CASE WHEN o.status = 'wc-failed' AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 60 DAY) THEN 1 ELSE 0 END) AS failed_60d,
+                            SUM(CASE WHEN o.status = 'wc-cancelled' AND o.date_created_gmt < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 YEAR) THEN 1 ELSE 0 END) AS cancelled_1y
+                         FROM {$orders_table} o
+                         WHERE o.type = 'shop_order'
+                           AND o.status IN ('wc-pending', 'wc-failed', 'wc-cancelled')"
+                    );
+                }
             } else {
                 $stale_row = $wpdb->get_row(
                     "SELECT 

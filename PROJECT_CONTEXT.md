@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-11-17  
+> **Last Updated**: 2026-11-20  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -419,6 +419,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 
 ## 7. Version Changelog
 
+### v1.45.3 (2026-11-20)
+- **Correctif SQL HPOS `wc_order_operational_data` sur `GET /woocommerce/summary` (`Woocommerce_Controller::get_summary()`)** :
+  - **Problème corrigé** : En mode HPOS (`custom_orders_table`), la requête d'estimation des commandes fantômes (`orders.health_analysis.cancelled_unpaid_older_than_1y_estimate`) interrogeait `date_paid_gmt` directement sur `{$wpdb->prefix}wc_orders` (`Unknown column 'date_paid_gmt' in 'SELECT'`), alors que `date_paid_gmt` est stockée dans `{$wpdb->prefix}wc_order_operational_data`.
+  - **Résolution & Optimisation d'Index** :
+    - Vérification défensive préalable de l'existence des tables `{$wpdb->prefix}wc_orders` et `{$wpdb->prefix}wc_order_operational_data` (avec repli sur `wc_orders` seule si la table opérationnelle est absente).
+    - Jointure `LEFT JOIN {$wpdb->prefix}wc_order_operational_data od ON od.order_id = o.id AND o.status = 'wc-cancelled'` pour tester `od.date_paid_gmt IS NULL` uniquement sur les commandes annulées.
+    - Ajout du filtre `o.type = 'shop_order'` permettant à MySQL/MariaDB d'exploiter directement l'index composite natif HPOS `type_status_date (type, status, date_created_gmt, id)` tout en excluant les remboursements ou abonnements HPOS.
+
 ### v1.45.2 (2026-11-17)
 - **Statuts Logistiques Post-Paiement Dynamiques (`wc_get_is_paid_statuses()`) & Drapeau `is_paid` (`Woocommerce_Controller` & `Guardian_Controller`)** :
   - **Analytics Ventes, Best-Sellers & Pacing (`Woocommerce_Controller`)** :
@@ -685,7 +693,7 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
     - Analyse de la constante WordPress `EMPTY_TRASH_DAYS` et confirmation du vidage automatique programmé de la corbeille (`is_trash_auto_delete_enabled`).
     - Formatage normalisé via `wc_parse_relative_date_option()` (`configured`, `value`, `unit`, `human`).
   - **Détection des Commandes Fantômes & Hygiène BDD dans `GET /woocommerce/summary`** :
-    - Requête SQL optimisée en une passe (compatible HPOS `wp_wc_orders` et CPT `wp_posts`) ventilant précisément le bloat des commandes non converties :
+    - Requête SQL optimisée en une passe (compatible HPOS `wp_wc_orders` + `wp_wc_order_operational_data` et CPT `wp_posts`) ventilant précisément le bloat des commandes non converties :
       - `pending_older_than_30d` : Commandes en attente abandonnées depuis plus de 30 jours (paniers morts).
       - `failed_older_than_60d` : Échecs de paiement de plus de 60 jours sans valeur technique résiduelle.
       - `cancelled_older_than_1y` : Commandes annulées non payées depuis plus d'un an.

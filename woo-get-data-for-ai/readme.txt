@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.45.2
+Stable tag: 1.45.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,9 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.45.3 - 2026-11-20 =
+* Fix: In `Woocommerce_Controller::get_summary()` (`GET /woocommerce/summary`), join `{$wpdb->prefix}wc_order_operational_data` (`od.order_id = o.id`) when checking `od.date_paid_gmt IS NULL` for `orders.health_analysis.cancelled_unpaid_older_than_1y_estimate` in HPOS (`custom_orders_table`) mode, add defensive table existence checks, and filter `o.type = 'shop_order'` to hit the native HPOS `type_status_date` composite index without SQL errors in `debug.log`.
 
 = 1.45.2 - 2026-11-17 =
 * Fix: Dynamically merge `wc_get_is_paid_statuses()` (with and without `wc-` prefix, with safe fallback when unavailable) in `Woocommerce_Controller` (`GET /woocommerce/analytics/sales`, `GET /woocommerce/analytics/top-performers`, and `GET /woocommerce/analytics/pacing`) so orders in custom post-payment logistics statuses are included in revenue and product rankings.
