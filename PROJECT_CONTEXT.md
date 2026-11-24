@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-11-20  
+> **Last Updated**: 2026-11-24  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -418,6 +418,14 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.45.4 (2026-11-24)
+- **Cohérence Native `woo_gads_consent` Priorité 1 & Détection des Dossiers Plugins (`Tracking_Controller`)** :
+  - **Suppression du faux positif `tracking_cookie_name_mismatch` (`audit_gdpr_consent()`)** :
+    - Lorsque la bannière native Google Ads (`enable_builtin_banner`) est active sur `woo-gads-server-side` aux côtés de `woo-fb-tracking-server-side` `>= 2.2.0` actif avec `wfbt_respect_consent = 'yes'`, la configuration est désormais reconnue comme cohérente (`is_cookie_coherent = true`, `meta_cookie_watched = 'woo_gads_consent (native priority 1)'`) même si `wfbt_concord_cookie_name` est vide ou différent de `woo_gads_consent`, puisque `woo-fb-tracking-server-side` (>= v2.2.0) lit nativement `woo_gads_consent` en Priorité 1 côté JS et PHP.
+  - **Détection étendue des dossiers d'extensions (`audit_google_ads_tracking()` & `audit_meta_tracking()`)** :
+    - Détection du chemin `woo-gads-server-side/woo-gads-server-side.php` en complément de `woo-gads-tracking-server-side/woo-gads-server-side.php` et `woo-google-ads-tracking-server-side/woo-gads-server-side.php`, plus résolution dynamique via `WOO_GADS_PLUGIN_DIR` et `WFBT_PLUGIN_BASENAME` (couvrant également les dossiers suffixés lors d'uploads ZIP manuels).
+    - Chargement défensif de `wp-admin/includes/plugin.php` (`is_plugin_active()`) au point d'entrée REST `get_audit()`.
 
 ### v1.45.3 (2026-11-20)
 - **Correctif SQL HPOS `wc_order_operational_data` sur `GET /woocommerce/summary` (`Woocommerce_Controller::get_summary()`)** :

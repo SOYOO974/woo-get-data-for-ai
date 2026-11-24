@@ -84,6 +84,10 @@ class Tracking_Controller extends Rest_Controller {
      * @return \WP_REST_Response
      */
     public function get_audit(\WP_REST_Request $request) {
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
         $meta_audit   = $this->audit_meta_tracking();
         $gads_audit   = $this->audit_google_ads_tracking();
         $consent_audit = $this->audit_gdpr_consent($meta_audit, $gads_audit);
@@ -346,10 +350,20 @@ class Tracking_Controller extends Rest_Controller {
     private function audit_meta_tracking() {
         $alerts = [];
 
-        $plugin_file = 'woo-fb-tracking-server-side/woo-fb-tracking-server-side.php';
-        $is_active   = is_plugin_active($plugin_file) || defined('WFBT_VERSION') || class_exists('\WFBT\Core');
+        $plugin_file = (defined('WFBT_PLUGIN_BASENAME') && is_string(WFBT_PLUGIN_BASENAME) && WFBT_PLUGIN_BASENAME !== '')
+            ? WFBT_PLUGIN_BASENAME
+            : 'woo-fb-tracking-server-side/woo-fb-tracking-server-side.php';
+        if (!file_exists(WP_PLUGIN_DIR . '/' . $plugin_file)) {
+            foreach ((array) get_option('active_plugins', []) as $active_entry) {
+                if (is_string($active_entry) && substr($active_entry, -32) === '/woo-fb-tracking-server-side.php') {
+                    $plugin_file = $active_entry;
+                    break;
+                }
+            }
+        }
+        $is_active    = (function_exists('is_plugin_active') && is_plugin_active($plugin_file)) || defined('WFBT_VERSION') || class_exists('\WFBT\Core');
         $is_installed = file_exists(WP_PLUGIN_DIR . '/' . $plugin_file);
-        $version     = defined('WFBT_VERSION') ? WFBT_VERSION : null;
+        $version      = defined('WFBT_VERSION') ? WFBT_VERSION : null;
 
         if (!$version && $is_installed && function_exists('get_file_data')) {
             $plugin_data = get_file_data(WP_PLUGIN_DIR . '/' . $plugin_file, ['Version' => 'Version']);
@@ -641,11 +655,35 @@ class Tracking_Controller extends Rest_Controller {
     private function audit_google_ads_tracking() {
         $alerts = [];
 
-        $plugin_file = 'woo-gads-tracking-server-side/woo-gads-server-side.php';
-        if (!file_exists(WP_PLUGIN_DIR . '/' . $plugin_file) && file_exists(WP_PLUGIN_DIR . '/woo-google-ads-tracking-server-side/woo-gads-server-side.php')) {
-            $plugin_file = 'woo-google-ads-tracking-server-side/woo-gads-server-side.php';
+        $gads_candidates = [
+            'woo-gads-tracking-server-side/woo-gads-server-side.php',
+            'woo-gads-server-side/woo-gads-server-side.php',
+            'woo-google-ads-tracking-server-side/woo-gads-server-side.php',
+        ];
+        if (defined('WOO_GADS_PLUGIN_DIR') && is_string(WOO_GADS_PLUGIN_DIR) && function_exists('plugin_basename')) {
+            $from_const = plugin_basename(rtrim(WOO_GADS_PLUGIN_DIR, '/\\') . '/woo-gads-server-side.php');
+            if ($from_const !== '' && !in_array($from_const, $gads_candidates, true)) {
+                array_unshift($gads_candidates, $from_const);
+            }
         }
-        $is_active    = is_plugin_active($plugin_file) || defined('WOO_GADS_VERSION') || class_exists('Woo_Gads');
+        $plugin_file    = $gads_candidates[0];
+        $matched_active = false;
+        foreach ($gads_candidates as $candidate) {
+            if (function_exists('is_plugin_active') && is_plugin_active($candidate)) {
+                $plugin_file    = $candidate;
+                $matched_active = true;
+                break;
+            }
+        }
+        if (!$matched_active) {
+            foreach ($gads_candidates as $candidate) {
+                if (file_exists(WP_PLUGIN_DIR . '/' . $candidate)) {
+                    $plugin_file = $candidate;
+                    break;
+                }
+            }
+        }
+        $is_active    = $matched_active || defined('WOO_GADS_VERSION') || class_exists('Woo_Gads');
         $is_installed = file_exists(WP_PLUGIN_DIR . '/' . $plugin_file);
         $version      = defined('WOO_GADS_VERSION') ? WOO_GADS_VERSION : null;
 
@@ -1084,7 +1122,13 @@ class Tracking_Controller extends Rest_Controller {
         // 4. Inter-Plugin Cookie Name Coherence Check (Critical Point)
         $meta_cookie_target = $meta_audit['configuration']['concord_cookie_name'] ?? 'concord_consent';
         $gads_cookie_target = $gads_audit['configuration']['consent_cookie_name'] ?? 'concord_consent';
-        $is_builtin_gads    = !empty($gads_audit['configuration']['enable_builtin_banner']);
+        $is_builtin_gads    = !empty($gads_audit['plugin']['is_active']) && !empty($gads_audit['configuration']['enable_builtin_banner']);
+
+        $meta_version              = (string) ($meta_audit['plugin']['version'] ?? '');
+        $meta_native_gads_priority = !empty($meta_audit['plugin']['is_active'])
+            && $meta_version !== ''
+            && version_compare($meta_version, '2.2.0', '>=')
+            && !empty($meta_audit['configuration']['respect_consent']);
 
         $coherence = [
             'is_cookie_coherent'   => true,
@@ -1096,7 +1140,10 @@ class Tracking_Controller extends Rest_Controller {
 
         // If Google Ads native banner is active, it sets 'woo_gads_consent'
         if ($is_builtin_gads && $meta_audit['plugin']['is_active']) {
-            if ($meta_cookie_target !== 'woo_gads_consent') {
+            if ($meta_native_gads_priority) {
+                $coherence['is_cookie_coherent']  = true;
+                $coherence['meta_cookie_watched'] = 'woo_gads_consent (native priority 1)';
+            } elseif ($meta_cookie_target !== 'woo_gads_consent') {
                 $coherence['is_cookie_coherent'] = false;
                 $coherence['message'] = sprintf(
                     esc_html__('Cookie Mismatch! Google Ads native banner sets "woo_gads_consent", but Meta CAPI is watching "%s". Meta CAPI will never detect user consent!', 'woo-get-data-for-ai'),
@@ -1147,7 +1194,7 @@ class Tracking_Controller extends Rest_Controller {
      */
     private function detect_cookie_management_provider($gads_audit) {
         // 1. Native Woo Gads built-in banner
-        if (!empty($gads_audit['configuration']['enable_builtin_banner'])) {
+        if (!empty($gads_audit['plugin']['is_active']) && !empty($gads_audit['configuration']['enable_builtin_banner'])) {
             return [
                 'provider'    => 'native_woo_gads',
                 'name'        => 'Woo Google Ads Built-in Banner (Consent Mode v2)',
