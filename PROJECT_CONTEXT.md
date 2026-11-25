@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-11-24  
+> **Last Updated**: 2026-11-25  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -418,6 +418,16 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.45.5 (2026-11-25)
+- **Compact Inverted-Pyramid `SKILL.md` Generator (`<= 14 KB`, Zero `read_file` Truncation) (`Playbooks`, `Permissions`, `System_Controller`, `cli/sync.js`)** :
+  - **Root Cause Fixed** : `GET /wp-json/agent-bridge/v1/capabilities?format=skill` previously generated a ~68 KB monolithic `SKILL.md` exceeding AI coding assistants' single-pass `read_file` ceiling (46,080 bytes), truncating the bottom `QUICK START cURL EXAMPLES` section containing the live REST URL and Bearer token.
+  - **Inverted-Pyramid Refactoring (`Playbooks::generate_skill_markdown()`)** :
+    - Enforces a strict `<= 300` character ceiling on the YAML frontmatter `description` (`Playbooks::truncate_single_line()`, mirrored in `cli/sync.js`), while still preserving custom non-generic descriptions.
+    - Places the Live Site metadata header and `QUICK START cURL EXAMPLES` block (including `/ping`, JSON `/capabilities`, `?format=skill` refresh, entry-point cURLs for the 7 pillars, and `POST /performance/cache/purge`) immediately at the top of the file.
+    - Consolidates the Read-Only security contract, active-first code integrity rule, direct WPCode/Code Snippets admin edit links, and key production audit reflexes (`SAVEQUERIES`, HPOS/async emails, 404 pattern clustering).
+    - Renders a tabular summary of the 7 MECE procedural playbooks (ordered endpoint chains) and active modules/routes (`<= 14,000` bytes and `<= 250` lines even in `fr_FR` locale with all 18 modules enabled), explicitly instructing agents to query `GET /capabilities` in JSON for exhaustive query parameter schemas and `key_signals`.
+  - **Catalog Completeness** : Added the `tracking` module (`/tracking/audit`, `/tracking/orders`, `/tracking/logs`) to `Permissions::get_capabilities_catalog()` and `/guardian` module detection to `Playbooks::detect_module_from_endpoint()`.
 
 ### v1.45.4 (2026-11-24)
 - **Cohérence Native `woo_gads_consent` Priorité 1 & Détection des Dossiers Plugins (`Tracking_Controller`)** :

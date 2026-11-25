@@ -156,10 +156,26 @@ function extractSkillDescription(markdown) {
     return '';
 }
 
+function truncateSingleLine(text, maxChars = 300) {
+    const clean = String(text || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const chars = Array.from(clean);
+    if (chars.length <= maxChars) return clean;
+    const sliceLen = Math.max(16, maxChars - 3);
+    let cut = chars.slice(0, sliceLen).join('');
+    const lastSp = cut.lastIndexOf(' ');
+    if (lastSp > sliceLen * 0.6) {
+        cut = cut.slice(0, lastSp);
+    }
+    return cut.replace(/[ \t.,;:-]+$/, '') + '...';
+}
+
 function isGenericSkillDescription(desc) {
     const clean = String(desc || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
     if (!clean) return true;
-    return /^Expert WordPress & WooCommerce diagnostic skill for .+?\.\s*Automatically synchronizes with live site capabilities and procedural playbooks\.$/i.test(clean);
+    if (/^Expert WordPress & WooCommerce diagnostic skill for .+?\.\s*Automatically synchronizes with live site capabilities and procedural playbooks\.$/i.test(clean)) {
+        return true;
+    }
+    return /^Read-only WordPress & WooCommerce diagnostic API skill for .+?\.\s*Exposes live system state, performance, SEO, orders, logs, snippets, and 7 audit playbooks\.$/i.test(clean);
 }
 
 function writeSkillFile(filePath, incomingMarkdown) {
@@ -179,7 +195,7 @@ function writeSkillFile(filePath, incomingMarkdown) {
     }
 
     if (descToUse) {
-        const cleanDesc = descToUse.replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+        const cleanDesc = truncateSingleLine(descToUse, 300);
         const newFrontmatter = `---\nname: wp-agent-bridge\ndescription: >-\n  ${cleanDesc}\n---`;
         if (/^---\n[\s\S]*?\n---(?:\n|$)/.test(md)) {
             md = md.replace(/^---\n[\s\S]*?\n---/, newFrontmatter);

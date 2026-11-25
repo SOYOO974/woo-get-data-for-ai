@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.45.4
+Stable tag: 1.45.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,10 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.45.5 - 2026-11-25 =
+* Improvement: Compact `Playbooks::generate_skill_markdown()` (`GET /capabilities?format=skill`) into an inverted-pyramid `SKILL.md` strictly <= 14,000 bytes (down from ~68 KB) so single-pass `read_file` calls never truncate connection credentials: caps YAML frontmatter `description` at <= 300 characters, moves Live Site metadata and Quick Start cURL examples (URL + Bearer token) to the top of the file, consolidates the Read-Only security contract, summarizes the 7 MECE playbooks and active module routes in compact tables, and directs agents to query `GET /capabilities` (JSON) for full parameter schemas and `key_signals`.
+* Fix: Include the `tracking` module (`/tracking/audit`, `/tracking/orders`, `/tracking/logs`) in `Permissions::get_capabilities_catalog()` and map `/guardian` in `Playbooks::detect_module_from_endpoint()`.
 
 = 1.45.4 - 2026-11-24 =
 * Fix: In `Tracking_Controller::audit_gdpr_consent()` (`GET /tracking/audit`), treat cookie consent configuration as coherent (`is_cookie_coherent = true`, `meta_cookie_watched = 'woo_gads_consent (native priority 1)'`, no false `tracking_cookie_name_mismatch` critical alert) when the built-in banner (`enable_builtin_banner`) is active on `woo-gads-server-side` alongside `woo-fb-tracking-server-side` >= v2.2.0 with `wfbt_respect_consent = 'yes'`, since `woo-fb-tracking-server-side` natively reads `woo_gads_consent` in Priority 1 (JS and PHP).

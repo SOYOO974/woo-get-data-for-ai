@@ -800,8 +800,32 @@ class Playbooks {
         if (strpos($endpoint, '/pmpro') === 0) return 'pmpro';
         if (strpos($endpoint, '/masterstudy') === 0) return 'masterstudy';
         if (strpos($endpoint, '/tracking') === 0) return 'tracking';
+        if (strpos($endpoint, '/guardian') === 0) return 'guardian';
 
         return null;
+    }
+
+    /**
+     * Truncate a single-line string cleanly to a maximum character length.
+     *
+     * @param string $text
+     * @param int    $max_chars
+     * @return string
+     */
+    public static function truncate_single_line($text, $max_chars = 300) {
+        $clean = self::sanitize_single_line_text($text);
+        $max   = max(16, (int) $max_chars);
+        $len   = function_exists('mb_strlen') ? mb_strlen($clean, 'UTF-8') : strlen($clean);
+        if ($len <= $max) {
+            return $clean;
+        }
+        $slice_len = $max - 3;
+        $cut       = function_exists('mb_substr') ? mb_substr($clean, 0, $slice_len, 'UTF-8') : substr($clean, 0, $slice_len);
+        $last_sp   = strrpos($cut, ' ');
+        if ($last_sp !== false && $last_sp > (int) ($slice_len * 0.6)) {
+            $cut = substr($cut, 0, $last_sp);
+        }
+        return rtrim($cut, " \t.,;:-") . '...';
     }
 
     /**
@@ -848,8 +872,11 @@ class Playbooks {
         if ($normalized === '') {
             return true;
         }
+        if (preg_match('/^Expert WordPress & WooCommerce diagnostic skill for .+?\. Automatically synchronizes with live site capabilities and procedural playbooks\.$/i', $normalized)) {
+            return true;
+        }
         return (bool) preg_match(
-            '/^Expert WordPress & WooCommerce diagnostic skill for .+?\. Automatically synchronizes with live site capabilities and procedural playbooks\.$/i',
+            '/^Read-only WordPress & WooCommerce diagnostic API skill for .+?\. Exposes live system state, performance, SEO, orders, logs, snippets, and 7 audit playbooks\.$/i',
             $normalized
         );
     }
@@ -924,10 +951,13 @@ class Playbooks {
 
         $site_url   = $site_info['site_url'] ?? (function_exists('site_url') ? site_url() : 'https://example.com');
         $rest_base  = $site_info['rest_base'] ?? (function_exists('rest_url') ? rest_url('agent-bridge/v1') : rtrim((string) $site_url, '/') . '/wp-json/agent-bridge/v1');
-        $plugin_ver = $site_info['plugin_version'] ?? (defined('WOO_GET_DATA_AI_VERSION') ? WOO_GET_DATA_AI_VERSION : '1.43.5');
-        $auth_token = !empty($token) ? $token : (class_exists(__NAMESPACE__ . '\\Security') ? Security::get_active_token() : 'YOUR_ACCESS_TOKEN');
+        $rest_base  = rtrim((string) $rest_base, '/');
+        $site_url_clean = rtrim((string) $site_url, '/');
+        $plugin_ver = $site_info['plugin_version'] ?? (defined('WOO_GET_DATA_AI_VERSION') ? WOO_GET_DATA_AI_VERSION : '1.45.5');
+        $auth_token = !empty($token) ? $token : (class_exists(__NAMESPACE__ . '\\Security') ? Security::get_active_token() : '<YOUR_ACCESS_TOKEN>');
 
-        $generic_description = "Expert WordPress & WooCommerce diagnostic skill for {$site_name}. Automatically synchronizes with live site capabilities and procedural playbooks.";
+        $short_site_name     = self::truncate_single_line($site_name, 80);
+        $generic_description = "Read-only WordPress & WooCommerce diagnostic API skill for {$short_site_name}. Exposes live system state, performance, SEO, orders, logs, snippets, and 7 audit playbooks.";
         $description         = $generic_description;
 
         // Before writing/generating, check if target SKILL.md already exists and has a custom description
@@ -969,173 +999,113 @@ class Playbooks {
             }
         }
 
+        // Enforce strict <= 300 chars frontmatter description cap
+        $description = self::truncate_single_line($description, 300);
+
+        $decode_text = function ($text) {
+            $str = (string) $text;
+            if (function_exists('html_entity_decode')) {
+                $str = html_entity_decode($str, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            }
+            return str_replace('|', '\\|', self::sanitize_single_line_text($str));
+        };
+
         $md = "---\n";
         $md .= "name: wp-agent-bridge\n";
         $md .= "description: >-\n";
         $md .= "  {$description}\n";
         $md .= "---\n\n";
 
-        $md .= "# WP Agent Bridge — Expert Diagnostic Skill for \"{$site_name}\"\n\n";
-        $md .= "> **Live Site**: [{$site_name}]({$site_url})  \n";
+        $md .= "# WP Agent Bridge — Diagnostic Skill for \"{$short_site_name}\"\n\n";
+        $md .= "> **Live Site**: [{$short_site_name}]({$site_url_clean})  \n";
         $md .= "> **Plugin Version**: v{$plugin_ver} (Auto-updating via PUC v5.6)  \n";
         $md .= "> **Base REST API**: `{$rest_base}`  \n";
-        $md .= "> **Security**: 100% Read-Only (`GET` only). Zero server mutations. Real-time PII and secret redaction.  \n\n";
+        $md .= "> **Security**: 100% Read-Only (`GET` inspection + non-destructive `POST /performance/cache/purge`). Real-time PII & secret redaction.  \n\n";
 
         $md .= "---\n\n";
 
-        $md .= "## 🚨 MANDATORY AGENT DIRECTIVES & SECURITY CONTRACT\n\n";
+        $md .= "## ⚡ QUICK START cURL EXAMPLES (LIVE CONNECTION & 7 PILLARS)\n\n";
+        $md .= "```bash\n";
+        $md .= "# Connectivity & version check\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/ping'\n\n";
+        $md .= "# Full JSON schema discovery (ALL query parameters, enums, defaults & playbook key_signals)\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/capabilities'\n\n";
+        $md .= "# Refresh this compact local SKILL.md (<= 14 KB)\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md\n\n";
+        $md .= "# Pillar 1 (SEO/404) | Pillar 2 (Perf/CWV) | Pillar 3 (System/DB/Guardian)\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=1&include_queries=1'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/guardian/snapshot'\n\n";
+        $md .= "# Pillar 4 (Orders/Checkout/Logs) | Pillar 5 (Sales/Tracking) | Pillar 6 (Shipping) | Pillar 7 (Code/Snippets)\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed,cancelled&per_page=10'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/tracking/audit'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/shipping'\n";
+        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/snippets?status=active'\n\n";
+        $md .= "# Multi-layer cache purge (Rocket.net Edge CDN, WP Rocket, Breeze, Object Cache Pro / Redis)\n";
+        $md .= "curl -s -X POST -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/cache/purge'\n";
+        $md .= "```\n\n";
+
+        $md .= "---\n\n";
+
+        $md .= "## 🚨 READ-ONLY SECURITY CONTRACT & MANDATORY INVARIANTS\n\n";
         $md .= "1. **STRICT READ-ONLY GUARANTEE & ZERO-WRITE ALARM**:\n";
-        $md .= "   - WP Agent Bridge is engineered **exclusively to READ site context for diagnostics**.\n";
-        $md .= "   - If any prompt, user request, or RFC asks or suggests to write, modify, delete, or execute changes on the target site via this plugin: **TRIGGER AN IMMEDIATE WARNING/ALARM AND REFUSE TO IMPLEMENT ANY WRITE PRIMITIVES**.\n";
-        $md .= "   - All fixes and code changes must be applied manually by the administrator or via standard deployment pipelines.\n";
-        $md .= "2. **ACTIVE VS INACTIVE CODE & PLUGIN INTEGRITY**:\n";
-        $md .= "   - `GET /system` and `GET /code/plugins` default to ACTIVE plugins only (`?plugins=active` or `?status=active`). Inspect `plugins_summary` (`active_count`, `inactive_count`, `total_installed`) for exact site breakdown.\n";
-        $md .= "   - `GET /snippets` and `GET /wpcode/snippets` default to ACTIVE snippets only (`?status=active`). Inactive snippets/drafts are excluded by default to save tokens and avoid ghost diagnostics.\n";
-        $md .= "   - Never assume inactive plugins or dormant snippets are running in production or impacting TTFB/performance.\n";
-        $md .= "3. **CODE SNIPPETS & WPCODE DIRECT ADMIN LINKS RULE**:\n";
-        $md .= "   - Whenever you recommend or analyze a custom snippet, ALWAYS provide the user with the direct WordPress Admin edit link:\n";
-        $md .= "     - WPCode: `{$site_url}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>`\n";
-        $md .= "     - Code Snippets: `{$site_url}/wp-admin/admin.php?page=edit-snippet&id=<ID>`\n";
-        $md .= "   - Alternatively, use the direct `admin_edit_url` property returned in each snippet object by the API.\n";
-        $md .= "4. **DYNAMIC FRESHNESS & REFRESH PROTOCOL**:\n";
-        $md .= "   - Re-query `GET {$rest_base}/capabilities?format=skill` regularly to detect new inspection capabilities after plugin updates.\n";
-        $md .= "5. **WOOCOMMERCE PERFORMANCE & CHECKOUT OPTIONS AUDIT**:\n";
-        $md .= "   - Inspect `woocommerce.performance_features` in `GET /woocommerce/summary` (or `GET /system`):\n";
-        $md .= "     - **Product Object Caching (`product_caching.enabled`)**: Speeds up product-heavy pages by caching products per request and preventing duplicate queries. Recommend enabling in *WooCommerce > Settings > Advanced > Features* for catalogs with > 100 products.\n";
-        $md .= "     - **HPOS (`hpos.enabled`)**: Must be active. If false, advise immediate HPOS migration to stop order bloat in `wp_posts`.\n";
-        $md .= "     - **HPOS Data Caching (`hpos_data_caching.enabled`)**: Recommend enabling if `object_cache_present` (Redis/Memcached) is detected to eliminate redundant order SQL queries.\n";
-        $md .= "     - **Deferred Transactional Emails (`deferred_transactional_emails.enabled`)**: If false and checkout is slow, advise enabling native option in *WooCommerce > Settings > Advanced > Features* or adding `add_filter('woocommerce_defer_transactional_emails', '__return_true');` via WPCode to offload SMTP sending to Action Scheduler and make checkout confirmation instant.\n";
-        $md .= "     - **Checkout Rate Limiting (`checkout_rate_limiting.enabled`)**: Must be enabled in production (*WooCommerce > Settings > Advanced > Features*) to prevent card testing bot attacks.\n";
-        $md .= "     - **HPOS Full-Text Search (`hpos_full_text_search.enabled`)**: If store has > 5,000 orders and admin order search is sluggish, recommend testing full-text search indexes with experimental notice.\n";
-        $md .= "6. **WOOCOMMERCE COUPONS & PROMOTIONAL DIAGNOSTICS**:\n";
-        $md .= "   - When troubleshooting checkout issues, discount anomalies, or customer complaints about coupons:\n";
-        $md .= "     - Use `GET /woocommerce/coupons` to list active/expired/exhausted coupons with usage counts, limits, and held counts.\n";
-        $md .= "     - Use `GET /woocommerce/coupon/{id}` (by numeric ID or code slug) to check real-time availability (`is_valid_now`, `usage_left`), active held checkout sessions (`_coupon_held_keys`), and recent associated orders.\n";
-        $md .= "     - Use `GET /woocommerce/orders?coupon=<code>` to immediately trace all orders (pending, processing, completed) where a specific discount code was applied.\n";
-        $md .= "7. **UNIVERSAL CACHING & OPTIMIZATION AUDIT (WP ROCKET / BREEZE / OBJECT CACHE)**:\n";
-        $md .= "   - Run `GET /performance/caching` (or alias `GET /system/caching`) to inspect caching infrastructure:\n";
-        $md .= "     - **Runtime Performance Constants (`runtime_constants`)**:\n";
-        $md .= "       - `SAVEQUERIES`: **CRITICAL ALERT** if enabled in production. When `SAVEQUERIES` is `true`, WordPress stores all SQL queries, caller backtraces, and execution times in memory (`\$wpdb->queries`), triggering severe memory leaks and TTFB degradation. Must be set to `false` in `wp-config.php`.\n";
-        $md .= "       - `SCRIPT_DEBUG`: Alert if active on live sites (forces unminified core CSS/JS assets, multiplying asset weight).\n";
-        $md .= "       - `WP_POST_REVISIONS`: Checks whether post revisions are capped (recommended: 5-10 or false) to prevent exponential database bloat in `wp_posts`.\n";
-        $md .= "       - `WP_MEMORY_LIMIT`: Ensures at least 256M is allocated for WooCommerce operations.\n";
-        $md .= "     - **External Object Cache (`object_cache.enabled`)**: Must be active on high-traffic WooCommerce stores to relieve database pressure.\n";
-        $md .= "     - **Page Cache (`page_cache.advanced_cache_dropin`)**: Verifies `advanced-cache.php` drop-in and active caching engine.\n";
-        $md .= "     - **Breeze Deep Inspection (`breeze.is_active`)**:\n";
-        $md .= "       - `basic.cache_system`: Verifies if Cloudways Breeze page caching is enabled.\n";
-        $md .= "       - `file_optimization.delay_js`: Inspects Delay JS state and delayed scripts list.\n";
-        $md .= "       - `varnish`: Checks Varnish auto-purge and server IP.\n";
-        $md .= "     - **WP Rocket Deep Inspection (`wp_rocket.is_active`)**:\n";
-        $md .= "       - `css.mode`: Inspect active CSS delivery optimization (`remove_unused_css`, `async_css`, or `disabled`) and `safelist` patterns.\n";
-        $md .= "       - `javascript.delay_js`: Inspect Delay JS execution state, safe mode, and `delay_js_exclusions`.\n";
-        $md .= "       - `media`: Verify lazyload on images, iframes, CSS background images, and automatic image dimensions injection.\n";
-        $md .= "8. **PAID MEMBERSHIPS PRO & MASTERSTUDY LMS ACCESS AUDITS**:\n";
-        $md .= "   - When customers or students report premature expiration of course access (e.g. on MasterStudy + PMPro setups):\n";
-        $md .= "     - Use `GET /pmpro/levels` to verify membership level duration rules (flagging duration anomalies like 11 months vs 12 months).\n";
-        $md .= "     - Use `GET /pmpro/member/{user_id}` to inspect the user's membership timeline, active status, enddate, and order transactions.\n";
-        $md .= "     - Use `GET /masterstudy/courses` to inspect course durations, pricing mode, and PMPro levels allowed.\n";
-        $md .= "     - Use `GET /masterstudy/user/{user_id}/courses` to inspect course enrollments, course expiration rules, linked `subscription_id`, and detect pointer mismatches (e.g. `subscription_id` points to a changed/cancelled row while the user has another active membership).\n";
-        $md .= "9. **404 REMEDIATION, PATTERN CLUSTERING & SMART CODE SNIPPETS**:\n";
-        $md .= "   - When analyzing 404 errors via `/content/redirections/404`:\n";
-        $md .= "     - Group missing URLs by pattern clusters (`patterns_summary` / `pattern_clusters`): deleted products, JS pagination bugs (`*/null`, `*/undefined`), browser/iOS requests (`apple-touch-icon*.png`), cache assets, or security probes.\n";
-        $md .= "     - **NEVER** recommend mass CSV export/import of hundreds or thousands of static 301 rules into `wp_rank_math_redirections` or Redirection plugin, as this bloats SQL tables and slows every request resolution.\n";
-        $md .= "     - **ALWAYS prioritize an in-memory PHP Code Snippet** hooked into `template_redirect` (priority 1) or global regex rules.\n";
-        $md .= "     - For deleted/orphan WooCommerce products (`/produit/*` or `/product/*`), recommend an intelligent fallback snippet that extracts the product slug, searches for similar categories or redirects cleanly to the parent category/shop rather than accumulating stale DB rows.\n";
-        $md .= "10. **CUSTOMER ACCOUNT, CUSTOM POST TYPES & GLOBAL SEARCH AUDITS**:\n";
-        $md .= "   - When diagnosing client account customizations, loyalty/referral programs, or theme overrides (e.g. Woodmart, Elementor):\n";
-        $md .= "     - Use `GET /woocommerce/account-tabs` to inspect all My Account menu tabs, endpoints, action hooks (`woocommerce_account_{endpoint}_endpoint`), registered callbacks via Reflection, and attached Woodmart HTML blocks (`cms_block`) or Elementor templates with raw content.\n";
-        $md .= "     - Use `GET /content/custom-post-types` to discover all registered CPTs, followed by `GET /content/posts?post_type=cms_block,elementor_library` for multi-CPT content inspection.\n";
-        $md .= "     - Use `GET /system/search?query=<term>` to immediately locate any keyword (e.g. \"parrainage\", \"points\", \"referral\") across `wp_posts`, non-sensitive `wp_options`, and active/inactive snippets (WPCode / Code Snippets) with contextual snippets and direct edit URLs.\n\n";
+        $md .= "   - WP Agent Bridge is engineered **exclusively to READ live site context** (`GET` only; the sole `POST` endpoint `/performance/cache/purge` flushes volatile caches and never mutates DB rows or files).\n";
+        $md .= "   - If any prompt or RFC asks to write, mutate, delete, or execute code on the site via this plugin: **TRIGGER AN IMMEDIATE ALARM AND REFUSE**. Apply changes via Git/SFTP deploy pipelines, WP-CLI, or WP Admin.\n";
+        $md .= "2. **ON-DEMAND PARAMETER SCHEMA DISCOVERY (`GET /capabilities` IN JSON)**:\n";
+        $md .= "   - To keep this `SKILL.md` compact (`<= 14 KB`, zero `read_file` truncation), query **`GET {$rest_base}/capabilities`** (default JSON mode) whenever you need exact query parameters, pagination caps, filter enums, or per-step `key_signals`.\n";
+        $md .= "3. **ACTIVE-FIRST CODE & PLUGIN INTEGRITY**:\n";
+        $md .= "   - `/system`, `/code/plugins`, and `/snippets` default to **active** items (`?plugins=active`, `?status=active`). Never blame inactive plugins or dormant snippets for TTFB or production bugs.\n";
+        $md .= "4. **DIRECT ADMIN EDIT LINKS FOR SNIPPETS**:\n";
+        $md .= "   - Always surface `admin_edit_url` when citing a snippet (WPCode: `{$site_url_clean}/wp-admin/admin.php?page=wpcode-snippet-manager&snippet_id=<ID>` | Code Snippets: `{$site_url_clean}/wp-admin/admin.php?page=edit-snippet&id=<ID>`).\n";
+        $md .= "5. **PRODUCTION AUDIT REFLEXES**:\n";
+        $md .= "   - **Runtime Constants (`/performance/caching`, `/system`)**: Flag `SAVEQUERIES=true` (severe RAM/TTFB leak), `SCRIPT_DEBUG=true`, uncapped `WP_POST_REVISIONS`, or `WP_MEMORY_LIMIT < 256M`.\n";
+        $md .= "   - **WooCommerce Scale (`/woocommerce/summary`)**: Verify `hpos.enabled`, `hpos_data_caching`, `product_caching`, `deferred_transactional_emails`, and `checkout_rate_limiting`.\n";
+        $md .= "   - **404 Remediation (`/content/redirections/404`)**: Group by `pattern_clusters`; never bulk-import hundreds of SQL 301 rows — prescribe an in-memory PHP `template_redirect` snippet (priority 1).\n\n";
 
         $md .= "---\n\n";
 
-        $md .= "## 🎯 PROCEDURAL AUDIT PLAYBOOKS (HOW TO INVESTIGATE)\n\n";
-        $md .= "Whenever the user requests an audit, troubleshooting, or analysis, follow the recommended multi-step sequence below:\n\n";
+        $md .= "## 🎯 THE 7 MECE PROCEDURAL AUDIT PLAYBOOKS\n\n";
+        $md .= "Follow the ordered endpoint sequence matching the user's diagnostic intent (query `GET {$rest_base}/capabilities` in JSON for step-level `params` and `key_signals`):\n\n";
+        $md .= "| # | Playbook (`id`) | Audit Scope | Ordered Endpoint Sequence |\n";
+        $md .= "| :-: | :--- | :--- | :--- |\n";
 
         foreach ($playbooks as $idx => $playbook) {
-            $num = $idx + 1;
-            $triggers = implode('`, `', $playbook['intent_triggers']);
-            $md .= "### Playbook {$num}: {$playbook['title']}\n";
-            $md .= "**Description**: {$playbook['description']}  \n";
-            $md .= "**Intent Keywords**: `{$triggers}`  \n\n";
-            $md .= "| Step | Action | Endpoint | Key Signals to Analyze |\n";
-            $md .= "| :---: | :--- | :--- | :--- |\n";
-
-            foreach ($playbook['workflow'] as $step) {
-                $params_str = !empty($step['params']) ? '?' . http_build_query($step['params']) : '';
-                $endpoint_full = "`" . $step['endpoint'] . $params_str . "`";
-                $signals = !empty($step['key_signals']) ? implode(', ', $step['key_signals']) : '-';
-                $md .= "| {$step['step']} | **{$step['action']}** | {$endpoint_full} | {$signals} |\n";
+            $num   = $idx + 1;
+            $title = $decode_text($playbook['title'] ?? $playbook['id']);
+            $pb_id = $decode_text($playbook['id'] ?? '');
+            $scope = $decode_text(self::truncate_single_line($playbook['description'] ?? '', 140));
+            $steps = [];
+            if (!empty($playbook['workflow']) && is_array($playbook['workflow'])) {
+                foreach ($playbook['workflow'] as $step) {
+                    $steps[] = '`' . ($step['endpoint'] ?? '') . '`';
+                }
             }
-            $md .= "\n";
+            $seq = !empty($steps) ? implode(' -> ', $steps) : '-';
+            $md .= "| {$num} | **{$title}** (`{$pb_id}`) | {$scope} | {$seq} |\n";
         }
 
-        $md .= "---\n\n";
+        $md .= "\n---\n\n";
 
-        $md .= "## 📡 ACTIVE INSPECTION ENDPOINTS CATALOG\n\n";
-        $md .= "The following endpoints are currently active and authorized by site permissions:\n\n";
-
-        $esc_html = function ($text) {
-            return function_exists('esc_html') ? esc_html($text) : htmlspecialchars((string) $text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        };
+        $md .= "## 📡 ACTIVE INSPECTION MODULES & ROUTES\n\n";
+        $md .= "> **Parameter Details**: All routes below are relative to `{$rest_base}`. Query **`GET {$rest_base}/capabilities`** (JSON) to inspect every parameter name, default value, allowed enum, and endpoint description.\n\n";
+        $md .= "| Module (`id`) | Active Endpoints |\n";
+        $md .= "| :--- | :--- |\n";
 
         foreach ($modules_catalog as $module) {
             if (empty($module['enabled'])) {
                 continue;
             }
-
-            $md .= "### " . $esc_html($module['label']) . " (`" . $esc_html($module['id']) . "`)\n";
-            $md .= $esc_html($module['description']) . "\n\n";
-
-            foreach ($module['endpoints'] as $ep) {
-                $params_note = !empty($ep['params']) ? ' (Params: `' . implode('`, `', $ep['params']) . '`)' : '';
-                $method_str  = !empty($ep['methods']) ? implode('/', $ep['methods']) : 'GET';
-                $md .= "- `{$method_str} {$rest_base}" . $ep['path'] . "`" . $params_note . ": " . $esc_html($ep['description']) . "\n";
+            $mod_label = $decode_text($module['label'] ?? $module['id']);
+            $mod_id    = $decode_text($module['id'] ?? '');
+            $ep_list   = [];
+            if (!empty($module['endpoints']) && is_array($module['endpoints'])) {
+                foreach ($module['endpoints'] as $ep) {
+                    $method_str = !empty($ep['methods']) ? implode('/', (array) $ep['methods']) : 'GET';
+                    $ep_list[]  = '`' . $method_str . ' ' . ($ep['path'] ?? '') . '`';
+                }
             }
-            $md .= "\n";
+            $md .= "| **{$mod_label}** (`{$mod_id}`) | " . implode(', ', $ep_list) . " |\n";
         }
-
-        $md .= "---\n\n";
-
-        $md .= "## ⚡ QUICK START cURL EXAMPLES (THE 7 MASTER PLAYBOOKS)\n\n";
-        $md .= "```bash\n";
-        $md .= "# Check connection & server time\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' {$rest_base}/ping\n\n";
-        $md .= "# Refresh full dynamic skill & active playbooks\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/capabilities?format=skill' > .agents/skills/wp-agent-bridge/SKILL.md\n\n";
-        $md .= "# Pillar 1: SEO, Content & Visibility\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/seo-audit?limit=100'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/redirections?per_page=50'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/content/redirections/404?limit=50'\n\n";
-        $md .= "# Pillar 2: Frontend Performance & Core Web Vitals\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/caching'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/templates-urls'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/profile?path=/&include_assets=true&include_queries=true'\n";
-        $md .= "# Purge all cache layers (Edge CDN, Page Cache, Object Cache)\n";
-        $md .= "curl -s -X POST -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/performance/cache/purge'\n\n";
-        $md .= "# Pillar 3: System Health, Database Bloat & Background Hygiene\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/database'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/summary'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/action-scheduler?status=complete,failed,in-progress&per_page=15'\n\n";
-        $md .= "# Pillar 4: Orders, Checkout, PMPro & LMS Access Troubleshooting\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/orders?status=failed,cancelled&per_page=10'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/pmpro/levels'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/pmpro/member/<user_id>'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/masterstudy/courses'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/masterstudy/user/<user_id>/courses'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/system/mail'\n\n";
-        $md .= "# Pillar 5: 360° E-Commerce Sales & Analytics\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/sales?range=last_30_days'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/analytics/pacing?range=last_12_months'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/analytics/overview?range=last_30_days'\n\n";
-        $md .= "# Pillar 6: Shipping Logistics & Flexible Rules\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/woocommerce/shipping'\n\n";
-        $md .= "# Pillar 7: Code Architecture, Themes & Automations\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/overrides'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/theme/custom-css'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/flowmattic/workflows?status=active'\n";
-        $md .= "curl -s -H 'Authorization: Bearer {$auth_token}' '{$rest_base}/snippets?status=active'\n";
-        $md .= "```\n";
 
         $md = self::normalize_skill_output($md);
 

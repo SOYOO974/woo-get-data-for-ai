@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-11-24 12:09+00:00\n"
+"POT-Creation-Date: 2026-11-25 05:11+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -549,6 +549,7 @@ msgstr ""
 
 #: includes/admin/views/tab-docs.php:232
 #: includes/class-permissions.php:98
+#: includes/class-permissions.php:802
 msgid "Server-Side Tracking & GDPR Consent"
 msgstr ""
 
@@ -2261,16 +2262,17 @@ msgid "Allows inspecting MasterStudy LMS courses, pricing, lesson counts, course
 msgstr ""
 
 #: includes/class-permissions.php:99
+#: includes/class-permissions.php:803
 msgid "Allows inspecting Meta CAPI & Pixel status, Google Ads Server-Side tracking, Action Scheduler queues, database conversion logs, cookie banner configuration (native/CMP), and Google Consent Mode v2 compliance."
 msgstr ""
 
 #: includes/class-permissions.php:103
-#: includes/class-permissions.php:802
+#: includes/class-permissions.php:827
 msgid "Guardian Health Snapshot"
 msgstr ""
 
 #: includes/class-permissions.php:104
-#: includes/class-permissions.php:803
+#: includes/class-permissions.php:828
 msgid "Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents."
 msgstr ""
 
@@ -2648,7 +2650,19 @@ msgstr ""
 msgid "Detailed user enrollment audit: course progress, start/end dates, linked PMPro subscription record, and root cause diagnosis for premature access expirations or pointer desync."
 msgstr ""
 
-#: includes/class-permissions.php:810
+#: includes/class-permissions.php:809
+msgid "Comprehensive server-side tracking audit: Meta Conversions API (CAPI v21.0), Google Ads server conversions, cookie banner & CMP detection, Google Consent Mode v2 signals, and consent cookie coherence."
+msgstr ""
+
+#: includes/class-permissions.php:815
+msgid "Order-level conversion tracking attribution signals: Meta CAPI status, Google Ads status, event IDs, and click identifiers (fbclid, gclid) with strict PII anonymization."
+msgstr ""
+
+#: includes/class-permissions.php:821
+msgid "Unified server-side tracking event logs across Meta CAPI WC Logger and Google Ads database logs with secret redaction."
+msgstr ""
+
+#: includes/class-permissions.php:835
 msgid "One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {\"error\"} without breaking the response."
 msgstr ""
 

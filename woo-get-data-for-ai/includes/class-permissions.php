@@ -798,6 +798,31 @@ class Permissions {
                 ],
             ],
             [
+                'id'          => 'tracking',
+                'label'       => esc_html__('Server-Side Tracking & GDPR Consent', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows inspecting Meta CAPI & Pixel status, Google Ads Server-Side tracking, Action Scheduler queues, database conversion logs, cookie banner configuration (native/CMP), and Google Consent Mode v2 compliance.', 'woo-get-data-for-ai'),
+                'enabled'     => !empty($permissions['tracking']),
+                'endpoints'   => [
+                    [
+                        'path'        => '/tracking/audit',
+                        'methods'     => ['GET'],
+                        'description' => esc_html__('Comprehensive server-side tracking audit: Meta Conversions API (CAPI v21.0), Google Ads server conversions, cookie banner & CMP detection, Google Consent Mode v2 signals, and consent cookie coherence.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/tracking/orders',
+                        'methods'     => ['GET'],
+                        'params'      => ['status (default: all)', 'tracking_filter (all|errors|missing_consent, default: all)', 'limit (default: 20, max: 100)'],
+                        'description' => esc_html__('Order-level conversion tracking attribution signals: Meta CAPI status, Google Ads status, event IDs, and click identifiers (fbclid, gclid) with strict PII anonymization.', 'woo-get-data-for-ai'),
+                    ],
+                    [
+                        'path'        => '/tracking/logs',
+                        'methods'     => ['GET'],
+                        'params'      => ['provider (all|meta|google, default: all)', 'limit (default: 30, max: 100)'],
+                        'description' => esc_html__('Unified server-side tracking event logs across Meta CAPI WC Logger and Google Ads database logs with secret redaction.', 'woo-get-data-for-ai'),
+                    ],
+                ],
+            ],
+            [
                 'id'          => 'guardian',
                 'label'       => esc_html__('Guardian Health Snapshot', 'woo-get-data-for-ai'),
                 'description' => esc_html__('Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents.', 'woo-get-data-for-ai'),
