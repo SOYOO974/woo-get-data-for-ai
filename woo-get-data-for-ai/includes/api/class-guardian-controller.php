@@ -34,6 +34,13 @@ class Guardian_Controller extends Rest_Controller {
     private $top = 10;
 
     /**
+     * Review funnel 30-day window start (UTC timestamp).
+     *
+     * @var int
+     */
+    private $review_since = 0;
+
+    /**
      * Registered gateways cache for this request.
      *
      * @var array|null
@@ -48,13 +55,17 @@ class Guardian_Controller extends Rest_Controller {
                 return $this->check_access($request, 'guardian');
             },
             'args'                => [
-                'since' => [
+                'since'        => [
                     'default'           => '',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
-                'top'   => [
+                'top'          => [
                     'default'           => 10,
                     'sanitize_callback' => 'absint',
+                ],
+                'review_since' => [
+                    'default'           => '',
+                    'sanitize_callback' => 'sanitize_text_field',
                 ],
             ],
         ]);
@@ -77,7 +88,23 @@ class Guardian_Controller extends Rest_Controller {
         $this->since = (int) min($now, max($now - 31 * DAY_IN_SECONDS, $since_ts));
         $this->top   = min(50, max(1, (int) ($request->get_param('top') ?: 10)));
 
-        $cache_key = 'agent_bridge_guardian_' . md5($this->since . '|' . $this->top);
+        $default_review_since = $now - 30 * DAY_IN_SECONDS;
+        $parsed_review_since  = $this->parse_review_since((string) $request->get_param('review_since'));
+        if ($parsed_review_since !== false) {
+            $this->review_since = (int) min($now, max($default_review_since, $parsed_review_since));
+            if ($parsed_review_since <= $default_review_since) {
+                $review_cache_part = 'clamped_30d';
+            } elseif ($parsed_review_since >= $now) {
+                $review_cache_part = 'clamped_now';
+            } else {
+                $review_cache_part = (string) $this->review_since;
+            }
+        } else {
+            $this->review_since = $default_review_since;
+            $review_cache_part  = '';
+        }
+
+        $cache_key = 'agent_bridge_guardian_' . md5($this->since . '|' . $this->top . '|' . $review_cache_part);
         $cached    = get_transient($cache_key);
         if (is_array($cached)) {
             $cached['meta']['cached'] = true;
@@ -93,6 +120,8 @@ class Guardian_Controller extends Rest_Controller {
             'scheduler' => 'section_scheduler',
             'mail'      => 'section_mail',
             'feeds'     => 'section_feeds',
+            'whatsapp'  => 'section_whatsapp',
+            'reviews'   => 'section_reviews',
             'changes'   => 'section_changes',
         ];
 
@@ -117,6 +146,7 @@ class Guardian_Controller extends Rest_Controller {
                 'hpos_enabled'   => $this->is_hpos_enabled(),
                 'site_timezone'  => wp_timezone_string(),
                 'since'          => $this->iso($this->since),
+                'review_since'   => $this->iso($this->review_since),
                 'top'            => $this->top,
                 'generated_at'   => $this->iso($now),
                 'urls'           => $this->store_urls(),
@@ -141,6 +171,51 @@ class Guardian_Controller extends Rest_Controller {
      */
     private function iso($ts) {
         return $ts ? gmdate('Y-m-d\TH:i:s\Z', (int) $ts) : null;
+    }
+
+    /**
+     * Parse optional review_since parameter (YYYY-MM-DD in site timezone, or ISO 8601).
+     *
+     * @param string $raw
+     * @return int|false
+     */
+    private function parse_review_since($raw) {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return false;
+        }
+        if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})(?:[T\s]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+\-]\d{2}:?\d{2})?)?$/i', $raw, $m)) {
+            return false;
+        }
+        if (!checkdate((int) $m[2], (int) $m[3], (int) $m[1])) {
+            return false;
+        }
+        try {
+            $tz = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone('UTC');
+            $dt = new \DateTimeImmutable($raw, $tz);
+            return $dt->getTimestamp();
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Evaluate mixed constant/option booleans ('yes', 'true', '1', 1, true).
+     *
+     * @param mixed $val
+     * @return bool
+     */
+    private function is_truthy($val) {
+        if (is_bool($val)) {
+            return $val;
+        }
+        if (is_int($val) || is_float($val)) {
+            return (int) $val === 1;
+        }
+        if (is_string($val)) {
+            return in_array(strtolower(trim($val)), ['1', 'true', 'yes', 'on'], true);
+        }
+        return false;
     }
 
     /**
@@ -902,6 +977,500 @@ class Guardian_Controller extends Rest_Controller {
         }
 
         return $result;
+    }
+
+    /**
+     * WhatsApp gateway health, banned unofficial connectors, 7-day counters & last scrubbed error.
+     * Zero PII exposed.
+     *
+     * @return array
+     */
+    private function section_whatsapp() {
+        global $wpdb;
+        $now          = time();
+        $since_7d_ts  = $now - 7 * DAY_IN_SECONDS;
+        $since_7d_gmt = gmdate('Y-m-d H:i:s', $since_7d_ts);
+
+        // 1. Active official WhatsApp bridge detection (SOYOO / Cloud API / ManyChat).
+        $enabled = false;
+        foreach (['CC_WHATSAPP_IS_ACTIVE', 'SOYOO_WA_MANYCHAT_ACTIVE', 'JN_WHATSAPP_IS_ACTIVE'] as $const_name) {
+            if (defined($const_name) && $this->is_truthy(constant($const_name))) {
+                $enabled = true;
+                break;
+            }
+        }
+        if (!$enabled) {
+            foreach (['cdc_whatsapp_manychat_enabled', 'soyoo_whatsapp_manychat_enabled'] as $opt_name) {
+                if ($this->is_truthy(get_option($opt_name, false))) {
+                    $enabled = true;
+                    break;
+                }
+            }
+        }
+        if (!$enabled) {
+            $cloud_creds = get_option('_soyoo_alma_wa_cloud_credentials', []);
+            if (is_string($cloud_creds) && $cloud_creds !== '') {
+                $decoded_creds = json_decode($cloud_creds, true);
+                if (is_array($decoded_creds)) {
+                    $cloud_creds = $decoded_creds;
+                }
+            }
+            if (is_array($cloud_creds)) {
+                $wa_token = trim((string) ($cloud_creds['token'] ?? $cloud_creds['access_token'] ?? ''));
+                $wa_phone = trim((string) ($cloud_creds['phone_id'] ?? $cloud_creds['phone_number_id'] ?? ''));
+                if ($wa_token !== '' && $wa_phone !== '') {
+                    $enabled = true;
+                }
+            }
+        }
+
+        // 2. Banned unofficial connectors (active plugins + active WPCode / Code Snippets).
+        $banned = [];
+        $active_plugins = (array) get_option('active_plugins', []);
+        if (function_exists('is_multisite') && is_multisite()) {
+            $active_plugins = array_merge($active_plugins, array_keys((array) get_site_option('active_sitewide_plugins', [])));
+        }
+        foreach (array_unique($active_plugins) as $plugin_file) {
+            if (!is_string($plugin_file) || $plugin_file === '') {
+                continue;
+            }
+            if (preg_match('/(?:wawp|ultramsg|wp-whatsapp-wawp)/i', $plugin_file)) {
+                $banned[] = $plugin_file;
+                continue;
+            }
+            $full_plugin_path = WP_PLUGIN_DIR . '/' . ltrim($plugin_file, '/');
+            if (is_readable($full_plugin_path)) {
+                $headers = get_file_data($full_plugin_path, ['Name' => 'Plugin Name']);
+                if (!empty($headers['Name']) && preg_match('/(?:wawp|ultramsg|wp-whatsapp-wawp)/i', (string) $headers['Name'])) {
+                    $banned[] = $plugin_file;
+                }
+            }
+        }
+
+        // Active WPCode snippets ('wpcode' CPT with post_status = 'publish').
+        $wpcode_rows = $wpdb->get_results($wpdb->prepare("
+            SELECT p.ID, p.post_content, pm.meta_key, pm.meta_value
+            FROM {$wpdb->posts} p
+            LEFT JOIN {$wpdb->postmeta} pm
+                ON pm.post_id = p.ID AND pm.meta_key IN ('_wpcode_snippet_code', 'wpcode_snippet_code')
+            WHERE p.post_type = 'wpcode'
+              AND p.post_status = 'publish'
+              AND (
+                  p.post_content LIKE %s OR p.post_content LIKE %s OR p.post_content LIKE %s
+                  OR pm.meta_value LIKE %s OR pm.meta_value LIKE %s OR pm.meta_value LIKE %s
+              )
+            LIMIT 100
+        ", '%wawp.net%', '%wawp.io%', '%ultramsg.com%', '%wawp.net%', '%wawp.io%', '%ultramsg.com%'), ARRAY_A);
+
+        $wpcode_by_id = [];
+        foreach ((array) $wpcode_rows as $row) {
+            $sid = (int) ($row['ID'] ?? 0);
+            if ($sid <= 0) {
+                continue;
+            }
+            if (!isset($wpcode_by_id[$sid])) {
+                $wpcode_by_id[$sid] = ['post_content' => (string) ($row['post_content'] ?? ''), 'meta' => []];
+            }
+            if (!empty($row['meta_key']) && isset($row['meta_value']) && $row['meta_value'] !== '') {
+                $wpcode_by_id[$sid]['meta'][(string) $row['meta_key']] = (string) $row['meta_value'];
+            }
+        }
+        foreach ($wpcode_by_id as $sid => $entry) {
+            $code = $entry['meta']['_wpcode_snippet_code']
+                ?? $entry['meta']['wpcode_snippet_code']
+                ?? $entry['post_content'];
+            $prov = $this->detect_banned_whatsapp_in_code($code);
+            if ($prov !== null) {
+                $banned[] = 'wpcode:#' . $sid . ' (' . $prov . ')';
+            }
+        }
+
+        // Active Code Snippets rows ({$wpdb->prefix}snippets with active = 1).
+        $snippets_table = $wpdb->prefix . 'snippets';
+        if ($this->table_exists($snippets_table)) {
+            $cs_rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, code FROM `{$snippets_table}` WHERE active = 1 AND (code LIKE %s OR code LIKE %s OR code LIKE %s) LIMIT 50",
+                '%wawp.net%',
+                '%wawp.io%',
+                '%ultramsg.com%'
+            ), ARRAY_A);
+            foreach ((array) $cs_rows as $row) {
+                $prov = $this->detect_banned_whatsapp_in_code((string) ($row['code'] ?? ''));
+                if ($prov !== null) {
+                    $banned[] = 'snippets:#' . (int) $row['id'] . ' (' . $prov . ')';
+                }
+            }
+        }
+
+        // 3. 7-day WooCommerce order notes counters + last scrubbed error.
+        $notes_row = $wpdb->get_row($wpdb->prepare("
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN comment_content LIKE %s
+                      OR comment_content LIKE %s
+                      OR comment_content LIKE %s
+                    THEN 1 ELSE 0 END), 0) AS sent_7d,
+                COALESCE(SUM(CASE
+                    WHEN comment_content LIKE %s
+                      OR (comment_content LIKE %s AND comment_content LIKE %s)
+                    THEN 1 ELSE 0 END), 0) AS trial_skipped_7d,
+                COALESCE(SUM(CASE
+                    WHEN comment_content LIKE %s
+                     AND comment_content NOT LIKE %s
+                     AND comment_content NOT LIKE %s
+                    THEN 1 ELSE 0 END), 0) AS failed_notes_7d
+            FROM {$wpdb->comments}
+            WHERE comment_type = 'order_note'
+              AND comment_approved != 'trash'
+              AND comment_date_gmt >= %s
+        ",
+            'Message WhatsApp envoyé%',
+            '%Relance WhatsApp envoyée%',
+            'WhatsApp CSAT envoyé%',
+            '%Permission denied to import wa_id%',
+            'WhatsApp non envoyé%',
+            '%import wa_id%',
+            'Erreur API WhatsApp%',
+            '%Permission denied to import wa_id%',
+            '%import wa_id%',
+            $since_7d_gmt
+        ), ARRAY_A);
+
+        $sent_7d          = (int) ($notes_row['sent_7d'] ?? 0);
+        $trial_skipped_7d = (int) ($notes_row['trial_skipped_7d'] ?? 0);
+        $failed_notes_7d  = (int) ($notes_row['failed_notes_7d'] ?? 0);
+
+        $last_error = null;
+        if ($failed_notes_7d > 0) {
+            $raw_last_error = $wpdb->get_var($wpdb->prepare("
+                SELECT comment_content
+                FROM {$wpdb->comments}
+                WHERE comment_type = 'order_note'
+                  AND comment_approved != 'trash'
+                  AND comment_date_gmt >= %s
+                  AND comment_content LIKE %s
+                  AND comment_content NOT LIKE %s
+                  AND comment_content NOT LIKE %s
+                ORDER BY comment_date_gmt DESC, comment_ID DESC
+                LIMIT 1
+            ",
+                $since_7d_gmt,
+                'Erreur API WhatsApp%',
+                '%Permission denied to import wa_id%',
+                '%import wa_id%'
+            ));
+            if (is_string($raw_last_error) && trim($raw_last_error) !== '') {
+                $clean_err = wp_strip_all_tags($raw_last_error);
+                $clean_err = preg_replace('/\s+/u', ' ', (string) $clean_err);
+                $clean_err = Change_Journal::scrub(trim((string) $clean_err));
+                if (class_exists('\WPAgentBridge\Redaction')) {
+                    $clean_err = \WPAgentBridge\Redaction::redact_string($clean_err, true);
+                }
+                $last_error = mb_substr($clean_err, 0, 160);
+            }
+        }
+
+        // 4. Failed Action Scheduler jobs on 7d whose hook contains 'whatsapp' or 'wawp'.
+        $as_failed_7d = 0;
+        $as_table     = $wpdb->prefix . 'actionscheduler_actions';
+        if ($this->table_exists($as_table)) {
+            $as_failed_7d = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$as_table} WHERE status = 'failed' AND last_attempt_gmt >= %s AND (LOWER(hook) LIKE %s OR LOWER(hook) LIKE %s)",
+                $since_7d_gmt,
+                '%whatsapp%',
+                '%wawp%'
+            ));
+        }
+
+        // 5. Eligible paid/completed orders with a Réunion or France mobile phone over last 7 days.
+        $triggers_7d = ($enabled && $this->is_wc()) ? $this->count_whatsapp_triggers_7d($since_7d_ts) : 0;
+
+        return [
+            'enabled'                => $enabled,
+            'banned_connectors'      => array_values(array_unique($banned)),
+            'sent_7d'                => $sent_7d,
+            'trial_wa_id_skipped_7d' => $trial_skipped_7d,
+            'failed_7d'              => $failed_notes_7d + $as_failed_7d,
+            'triggers_7d'            => $triggers_7d,
+            'last_error'             => $last_error,
+        ];
+    }
+
+    /**
+     * Detect an active call to wawp.net, wawp.io, or ultramsg.com in snippet code,
+     * ignoring PHP comments, adapter function names, and snippets gated by *_WAWP_IS_ACTIVE = false.
+     *
+     * @param string $code
+     * @return string|null 'wawp'|'ultramsg'|null
+     */
+    private function detect_banned_whatsapp_in_code($code) {
+        $code = (string) $code;
+        if ($code === '') {
+            return null;
+        }
+
+        // Strip PHP comments via tokenizer so historical docblocks never trigger false positives.
+        $clean = $code;
+        if (function_exists('token_get_all')) {
+            $wrapped = (strpos($code, '<?') === false) ? "<?php\n" . $code : $code;
+            $tokens  = @token_get_all($wrapped);
+            if (is_array($tokens)) {
+                $buf = '';
+                foreach ($tokens as $tok) {
+                    if (is_array($tok)) {
+                        if ($tok[0] === T_COMMENT || $tok[0] === T_DOC_COMMENT) {
+                            continue;
+                        }
+                        $buf .= $tok[1];
+                    } else {
+                        $buf .= $tok;
+                    }
+                }
+                $clean = $buf;
+            }
+        }
+
+        if (!preg_match('/\b(?:wawp\.(?:net|io)|ultramsg\.com)\b/i', $clean, $m)) {
+            return null;
+        }
+
+        // Ignore if *_WAWP_IS_ACTIVE is explicitly defined to false in the snippet or runtime.
+        if (preg_match('/define\s*\(\s*[\'"][A-Z0-9_]*WAWP_IS_ACTIVE[\'"]\s*,\s*(?:false|0|[\'"](?:false|0|no|off)[\'"])\s*\)/i', $clean)) {
+            return null;
+        }
+        if (preg_match_all('/\b([A-Z0-9_]*WAWP_IS_ACTIVE)\b/', $clean, $cm)) {
+            foreach (array_unique($cm[1]) as $const_name) {
+                if (defined($const_name) && !$this->is_truthy(constant($const_name))) {
+                    return null;
+                }
+            }
+        }
+
+        return stripos($m[0], 'ultramsg') !== false ? 'ultramsg' : 'wawp';
+    }
+
+    /**
+     * Check whether a raw billing phone is an eligible Réunion (+262 692/693, 0692/0693)
+     * or Metropolitan France (+33 6/7, 06/07) mobile number.
+     *
+     * @param string $raw_phone
+     * @return bool
+     */
+    private function is_eligible_whatsapp_mobile($raw_phone) {
+        $phone = preg_replace('/[\s\-\.\(\)\x{00A0}]+/u', '', (string) $raw_phone);
+        if ($phone === null || $phone === '') {
+            return false;
+        }
+        if (strpos($phone, '00') === 0) {
+            $phone = '+' . substr($phone, 2);
+        }
+        $phone = (string) preg_replace('/^\+2620(69[23]\d{6})$/', '+262$1', $phone);
+        $phone = (string) preg_replace('/^\+330([67]\d{8})$/', '+33$1', $phone);
+
+        if (preg_match('/^\+?(?:26269[23]\d{6}|33[67]\d{8})$/', $phone)) {
+            return true;
+        }
+        if (preg_match('/^0(?:69[23]\d{6}|[67]\d{8})$/', $phone)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Count orders that transitioned to a paid/completed status in the last 7 days
+     * and carry an eligible billing mobile phone (HPOS & CPT compatible, memory-safe, zero PII).
+     *
+     * @param int $since_ts
+     * @return int
+     */
+    private function count_whatsapp_triggers_7d($since_ts) {
+        global $wpdb;
+        $since_gmt         = gmdate('Y-m-d H:i:s', (int) $since_ts);
+        $paid_statuses     = $this->paid_order_statuses(false);
+        $status_sql_values = implode("','", array_map('esc_sql', $paid_statuses));
+
+        if ($this->is_hpos_enabled()) {
+            $orders_table = $wpdb->prefix . 'wc_orders';
+            $addr_table   = $wpdb->prefix . 'wc_order_addresses';
+            $op_table     = $wpdb->prefix . 'wc_order_operational_data';
+
+            if ($this->table_exists($orders_table) && $this->table_exists($addr_table)) {
+                if ($this->table_exists($op_table)) {
+                    $rows = $wpdb->get_results($wpdb->prepare("
+                        SELECT DISTINCT o.id, oa.phone
+                        FROM {$orders_table} o
+                        INNER JOIN {$addr_table} oa
+                            ON oa.order_id = o.id AND oa.address_type = 'billing'
+                        LEFT JOIN {$op_table} od
+                            ON od.order_id = o.id
+                        WHERE o.type = 'shop_order'
+                          AND o.status IN ('{$status_sql_values}')
+                          AND (o.date_updated_gmt >= %s OR o.date_created_gmt >= %s)
+                          AND (
+                              od.date_paid_gmt >= %s
+                              OR od.date_completed_gmt >= %s
+                              OR (od.date_paid_gmt IS NULL AND od.date_completed_gmt IS NULL AND o.date_created_gmt >= %s)
+                          )
+                          AND oa.phone IS NOT NULL
+                          AND oa.phone != ''
+                        LIMIT 5000
+                    ", $since_gmt, $since_gmt, $since_gmt, $since_gmt, $since_gmt), ARRAY_A);
+                } else {
+                    $rows = $wpdb->get_results($wpdb->prepare("
+                        SELECT DISTINCT o.id, oa.phone
+                        FROM {$orders_table} o
+                        INNER JOIN {$addr_table} oa
+                            ON oa.order_id = o.id AND oa.address_type = 'billing'
+                        WHERE o.type = 'shop_order'
+                          AND o.status IN ('{$status_sql_values}')
+                          AND o.date_created_gmt >= %s
+                          AND oa.phone IS NOT NULL
+                          AND oa.phone != ''
+                        LIMIT 5000
+                    ", $since_gmt), ARRAY_A);
+                }
+
+                $count = 0;
+                foreach ((array) $rows as $row) {
+                    if ($this->is_eligible_whatsapp_mobile((string) ($row['phone'] ?? ''))) {
+                        $count++;
+                    }
+                }
+                return $count;
+            }
+        }
+
+        // Legacy CPT storage (wp_posts + wp_postmeta).
+        $rows = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT p.ID, p.post_date_gmt, pm_phone.meta_value AS phone, pm_paid.meta_value AS date_paid, pm_comp.meta_value AS date_completed
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm_phone
+                ON pm_phone.post_id = p.ID AND pm_phone.meta_key = '_billing_phone' AND pm_phone.meta_value != ''
+            LEFT JOIN {$wpdb->postmeta} pm_paid
+                ON pm_paid.post_id = p.ID AND pm_paid.meta_key = '_date_paid'
+            LEFT JOIN {$wpdb->postmeta} pm_comp
+                ON pm_comp.post_id = p.ID AND pm_comp.meta_key = '_date_completed'
+            WHERE p.post_type = 'shop_order'
+              AND p.post_status IN ('{$status_sql_values}')
+              AND (p.post_modified_gmt >= %s OR p.post_date_gmt >= %s)
+            LIMIT 5000
+        ", $since_gmt, $since_gmt), ARRAY_A);
+
+        $count = 0;
+        foreach ((array) $rows as $row) {
+            $paid_raw = isset($row['date_paid']) ? trim((string) $row['date_paid']) : '';
+            $comp_raw = isset($row['date_completed']) ? trim((string) $row['date_completed']) : '';
+            $paid_ts  = $paid_raw !== '' ? (ctype_digit($paid_raw) ? (int) $paid_raw : (int) strtotime($paid_raw)) : 0;
+            $comp_ts  = $comp_raw !== '' ? (ctype_digit($comp_raw) ? (int) $comp_raw : (int) strtotime($comp_raw)) : 0;
+            $in_win   = ($paid_ts >= $since_ts)
+                || ($comp_ts >= $since_ts)
+                || ($paid_ts <= 0 && $comp_ts <= 0 && !empty($row['post_date_gmt']) && (int) strtotime($row['post_date_gmt'] . ' UTC') >= $since_ts);
+
+            if ($in_win && $this->is_eligible_whatsapp_mobile((string) ($row['phone'] ?? ''))) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Post-purchase product review funnel (30-day rolling window or `review_since` floor).
+     * Dynamically discovers `{$wpdb->prefix}%_review_email_logs` tables; never targets CSAT Google Maps flows.
+     * Zero PII exposed.
+     *
+     * @return array
+     */
+    private function section_reviews() {
+        global $wpdb;
+
+        $review_since_gmt   = gmdate('Y-m-d H:i:s', $this->review_since);
+        $review_since_local = function_exists('wp_date')
+            ? wp_date('Y-m-d H:i:s', $this->review_since)
+            : get_date_from_gmt($review_since_gmt, 'Y-m-d H:i:s');
+
+        $reviews_created_30d = (int) $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$wpdb->comments} c
+            INNER JOIN {$wpdb->posts} p ON p.ID = c.comment_post_ID
+            WHERE c.comment_type = 'review'
+              AND p.post_type = 'product'
+              AND c.comment_approved NOT IN ('trash', 'spam')
+              AND c.comment_date_gmt >= %s
+        ", $review_since_gmt));
+
+        $like_pattern = $wpdb->esc_like($wpdb->prefix) . '%\_review\_email\_logs';
+        $raw_tables   = (array) $wpdb->get_col($wpdb->prepare('SHOW TABLES LIKE %s', $like_pattern));
+
+        $valid_tables = [];
+        foreach ($raw_tables as $tbl) {
+            $tbl = (string) $tbl;
+            if ($tbl !== '' && preg_match('/^[A-Za-z0-9_]+$/', $tbl)) {
+                $valid_tables[] = $tbl;
+            }
+        }
+
+        if (empty($valid_tables)) {
+            return [
+                'reminders_sent_30d'     => null,
+                'reminders_email_30d'    => null,
+                'reminders_whatsapp_30d' => null,
+                'reviews_created_30d'    => $reviews_created_30d,
+                'log_table'              => null,
+            ];
+        }
+
+        $email_total = 0;
+        $wa_total    = 0;
+        $rel_tables  = [];
+
+        foreach ($valid_tables as $tbl) {
+            $cols_raw = (array) $wpdb->get_col("SHOW COLUMNS FROM `{$tbl}`", 0);
+            $cols     = array_map('strtolower', array_map('strval', $cols_raw));
+            $date_col = in_array('sent_at', $cols, true) ? 'sent_at' : (in_array('created_at', $cols, true) ? 'created_at' : null);
+            if ($date_col === null) {
+                continue;
+            }
+
+            $status_where = in_array('status', $cols, true) ? "AND status = 'sent'" : '';
+            if (in_array('channel', $cols, true)) {
+                $row = $wpdb->get_row($wpdb->prepare("
+                    SELECT
+                        COALESCE(SUM(CASE WHEN channel IS NULL OR channel = '' OR LOWER(channel) = 'email' THEN 1 ELSE 0 END), 0) AS email_cnt,
+                        COALESCE(SUM(CASE WHEN LOWER(channel) = 'whatsapp' THEN 1 ELSE 0 END), 0) AS wa_cnt
+                    FROM `{$tbl}`
+                    WHERE `{$date_col}` >= %s {$status_where}
+                ", $review_since_local), ARRAY_A);
+            } else {
+                $row = $wpdb->get_row($wpdb->prepare("
+                    SELECT COUNT(*) AS email_cnt, 0 AS wa_cnt
+                    FROM `{$tbl}`
+                    WHERE `{$date_col}` >= %s {$status_where}
+                ", $review_since_local), ARRAY_A);
+            }
+
+            $email_total += (int) ($row['email_cnt'] ?? 0);
+            $wa_total    += (int) ($row['wa_cnt'] ?? 0);
+            $rel_tables[] = (strpos($tbl, $wpdb->prefix) === 0) ? substr($tbl, strlen($wpdb->prefix)) : $tbl;
+        }
+
+        if (empty($rel_tables)) {
+            return [
+                'reminders_sent_30d'     => null,
+                'reminders_email_30d'    => null,
+                'reminders_whatsapp_30d' => null,
+                'reviews_created_30d'    => $reviews_created_30d,
+                'log_table'              => null,
+            ];
+        }
+
+        return [
+            'reminders_sent_30d'     => $email_total + $wa_total,
+            'reminders_email_30d'    => $email_total,
+            'reminders_whatsapp_30d' => $wa_total,
+            'reviews_created_30d'    => $reviews_created_30d,
+            'log_table'              => implode(',', $rel_tables),
+        ];
     }
 
     /**

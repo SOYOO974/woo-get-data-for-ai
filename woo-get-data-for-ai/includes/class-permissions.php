@@ -825,14 +825,14 @@ class Permissions {
             [
                 'id'          => 'guardian',
                 'label'       => esc_html__('Guardian Health Snapshot', 'woo-get-data-for-ai'),
-                'description' => esc_html__('Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents.', 'woo-get-data-for-ai'),
+                'description' => esc_html__('Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds, WhatsApp gateway health, post-purchase review funnel) and the passive change journal, for nightly monitoring agents.', 'woo-get-data-for-ai'),
                 'enabled'     => !empty($permissions['guardian']),
                 'endpoints'   => [
                     [
                         'path'        => '/guardian/snapshot',
                         'methods'     => ['GET'],
-                        'params'      => ['since (ISO 8601 UTC, default: now - 24h, max: 31 days)', 'top (1-50, default: 10)'],
-                        'description' => esc_html__('One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {"error"} without breaking the response.', 'woo-get-data-for-ai'),
+                        'params'      => ['since (ISO 8601 UTC, default: now - 24h, max: 31 days)', 'top (1-50, default: 10)', 'review_since (YYYY-MM-DD or ISO 8601, optional post-fix floor clamped to 30 days)'],
+                        'description' => esc_html__('One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, WhatsApp bridge status/counters/banned connectors, 30-day review reminders vs created product reviews, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {"error"} without breaking the response.', 'woo-get-data-for-ai'),
                     ],
                 ],
             ],

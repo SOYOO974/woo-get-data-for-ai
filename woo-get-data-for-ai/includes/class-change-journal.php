@@ -367,7 +367,9 @@ class Change_Journal {
      */
     public static function scrub($text) {
         $text = preg_replace('/[a-zA-Z0-9_.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-.]+/', '[email]', (string) $text);
-        $text = preg_replace('/\+\d[\d\s.\-]{7,}\d/', '[phone]', $text);
+        $text = preg_replace('/(?:\+|\b00)\d[\d\s.\-]{7,16}\d/', '[phone]', $text);
+        $text = preg_replace('/\b262[\s.\-]?(?:69[23]|26[23])(?:[\s.\-]?\d{2}){3}\b/', '[phone]', $text);
+        $text = preg_replace('/\b33[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}\b/', '[phone]', $text);
         return preg_replace('/\b0[1-9](?:[\s.\-]?\d{2}){4}\b/', '[phone]', $text);
     }
 }

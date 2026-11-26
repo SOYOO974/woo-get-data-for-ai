@@ -4,7 +4,7 @@ Tags: woocommerce, ai, diagnostics, rest-api, audit
 Requires at least: 5.8
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.45.5
+Stable tag: 1.46.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.txt
 
@@ -15,6 +15,11 @@ Enterprise-grade, read-only inspection API for WordPress & WooCommerce. Securely
 WP Agent Bridge exposes a protected, read-only REST API (`agent-bridge/v1/`) designed for AI coding assistants and developer tools to inspect live WordPress and WooCommerce stores safely without full SSH, SFTP, or database credentials.
 
 == Changelog ==
+
+= 1.46.0 - 2026-11-26 =
+* Feature: Add read-only `whatsapp` section to `GET /guardian/snapshot` (zero PII) returning bridge activation status (`enabled`), active unofficial connector detection across plugins, WPCode, and Code Snippets (`banned_connectors` ignoring adapter function names and disabled `*_WAWP_IS_ACTIVE = false` switches), 7-day WooCommerce order note & Action Scheduler counters (`sent_7d`, `trial_wa_id_skipped_7d`, `failed_7d`), HPOS/CPT-compatible eligible mobile order triggers (`triggers_7d`), and scrubbed `last_error` excerpt (`<= 160` chars).
+* Feature: Add read-only `reviews` section and optional `review_since` query parameter (`YYYY-MM-DD` or ISO 8601, clamped to `[now - 30d, now]` and included in the 60 s transient cache key) to `GET /guardian/snapshot`, dynamically detecting `{$wpdb->prefix}%_review_email_logs` tables (`reminders_sent_30d`, `reminders_email_30d`, `reminders_whatsapp_30d`, relative `log_table`, or `null` when absent) alongside 30-day published product review counts (`reviews_created_30d`).
+* Security: Harden `Change_Journal::scrub()` to mask raw international E.164 phone numbers without `+` (`262692...`, `336...`) and `00`-prefixed numbers in free-text error excerpts.
 
 = 1.45.5 - 2026-11-25 =
 * Improvement: Compact `Playbooks::generate_skill_markdown()` (`GET /capabilities?format=skill`) into an inverted-pyramid `SKILL.md` strictly <= 14,000 bytes (down from ~68 KB) so single-pass `read_file` calls never truncate connection credentials: caps YAML frontmatter `description` at <= 300 characters, moves Live Site metadata and Quick Start cURL examples (URL + Bearer token) to the top of the file, consolidates the Read-Only security contract, summarizes the 7 MECE playbooks and active module routes in compact tables, and directs agents to query `GET /capabilities` (JSON) for full parameter schemas and `key_signals`.

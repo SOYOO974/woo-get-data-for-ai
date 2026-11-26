@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: WP Agent Bridge (Data for AI)\n"
 "Report-Msgid-Bugs-To: https://github.com/SOYOO974/woo-get-data-for-ai\n"
-"POT-Creation-Date: 2026-11-25 05:11+00:00\n"
+"POT-Creation-Date: 2026-11-26 19:08+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -557,75 +557,85 @@ msgstr ""
 msgid "Complete 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0) and Google Ads Server-Side conversions: checks API credentials, Action Scheduler health, database log tables, CMP/cookie banner detection, Google Consent Mode v2 signals, inter-plugin cookie name coherence, and recent order transmission status with click identifiers (gclid, wbraid, gbraid, fbp, fbc)."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:245
+#: includes/admin/views/tab-docs.php:237
+#: includes/class-permissions.php:103
+#: includes/class-permissions.php:827
+msgid "Guardian Health Snapshot"
+msgstr ""
+
+#: includes/admin/views/tab-docs.php:239
+msgid "One-call nightly health snapshot returning raw dated figures only (PHP fatals, payments, stuck orders, Alma shield & unrecovered high tickets, best-seller stock-outs, schedulers, mail failures, Meta feed/CAPI, WhatsApp gateway health, 30-day review funnel, and passive change journal) with zero PII."
+msgstr ""
+
+#: includes/admin/views/tab-docs.php:250
 msgid "Dynamic Procedural Playbooks & AI Skill Generator"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:248
+#: includes/admin/views/tab-docs.php:253
 msgid "WP Agent Bridge is more than raw endpoints: it embeds 7 structured MECE Master Playbooks and dynamically generates ready-to-use AI skills."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:255
+#: includes/admin/views/tab-docs.php:260
 msgid "Self-Updating Skill (?format=skill)"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:258
+#: includes/admin/views/tab-docs.php:263
 msgid "When an AI agent queries /capabilities?format=skill, the plugin generates an up-to-date SKILL.md file with active routes and playbooks. When you update the plugin, the AI detects new capabilities without re-copying prompts."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:265
+#: includes/admin/views/tab-docs.php:270
 msgid "7 MECE Master Audit Playbooks"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:268
+#: includes/admin/views/tab-docs.php:273
 msgid "Organized into 7 Strategic MECE Master Pillars: 360° SEO & Content, Agency Performance & Core Web Vitals, System Health & Database Bloat Hygiene, Orders & Checkout Troubleshooting, 360° E-Commerce Sales & Analytics, Shipping Logistics & Flexible Shipping, and Code Architecture & Automations Map."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:275
+#: includes/admin/views/tab-docs.php:280
 msgid "Permission-Adaptive Workflows"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:278
+#: includes/admin/views/tab-docs.php:283
 msgid "Playbooks dynamically adapt to your site settings. If you disable a module in the Permissions tab, associated playbook steps are automatically pruned so the AI never triggers 403 Forbidden errors."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:290
+#: includes/admin/views/tab-docs.php:295
 msgid "Open Source & Plugin Evolution (GitHub)"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:292
+#: includes/admin/views/tab-docs.php:297
 msgid "WP Agent Bridge is actively maintained and open source. If you need new inspection capabilities or wish to contribute improvements, you are warmly invited to participate!"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:297
+#: includes/admin/views/tab-docs.php:302
 msgid "View Repository on GitHub"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:303
+#: includes/admin/views/tab-docs.php:308
 msgid "Suggesting New Endpoints"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:305
+#: includes/admin/views/tab-docs.php:310
 msgid "Need to inspect WooCommerce shipping zones, tax rules, payment gateway settings, or custom database tables? You can open an issue or submit a Pull Request on GitHub."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:308
+#: includes/admin/views/tab-docs.php:313
 msgid "The AI Mega-Prompt is also programmed to formulate ready-to-send feature requests and sample PHP controller code whenever your AI assistant identifies missing technical context!"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:313
+#: includes/admin/views/tab-docs.php:318
 msgid "Automatic Updates via PUC"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:315
+#: includes/admin/views/tab-docs.php:320
 msgid "This plugin embeds the Plugin Update Checker (PUC v5.6). Whenever a new GitHub Release is tagged and published with a higher version number, your WordPress installation will automatically notify you and allow 1-click updates right from your Plugins dashboard."
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:320
+#: includes/admin/views/tab-docs.php:325
 msgid "Contact & Direct Support"
 msgstr ""
 
-#: includes/admin/views/tab-docs.php:322
+#: includes/admin/views/tab-docs.php:327
 msgid "Have questions, ideas, or feedback? You can contact the author directly at:"
 msgstr ""
 
@@ -2266,13 +2276,7 @@ msgstr ""
 msgid "Allows inspecting Meta CAPI & Pixel status, Google Ads Server-Side tracking, Action Scheduler queues, database conversion logs, cookie banner configuration (native/CMP), and Google Consent Mode v2 compliance."
 msgstr ""
 
-#: includes/class-permissions.php:103
-#: includes/class-permissions.php:827
-msgid "Guardian Health Snapshot"
-msgstr ""
-
 #: includes/class-permissions.php:104
-#: includes/class-permissions.php:828
 msgid "Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds) and the passive change journal, for nightly monitoring agents."
 msgstr ""
 
@@ -2662,8 +2666,12 @@ msgstr ""
 msgid "Unified server-side tracking event logs across Meta CAPI WC Logger and Google Ads database logs with secret redaction."
 msgstr ""
 
+#: includes/class-permissions.php:828
+msgid "Allows fetching a single dated raw-figures snapshot (PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds, WhatsApp gateway health, post-purchase review funnel) and the passive change journal, for nightly monitoring agents."
+msgstr ""
+
 #: includes/class-permissions.php:835
-msgid "One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {\"error\"} without breaking the response."
+msgid "One-call nightly health snapshot returning raw dated figures only (no severity verdict): PHP fatals with fingerprints, gateway failed orders and declined/technical log errors, stuck orders, Alma shield integrity and unrecovered high tickets, best sellers out of stock, Action Scheduler and WP-Cron lag, wp_mail failures, Meta feed and CAPI counters, WhatsApp bridge status/counters/banned connectors, 30-day review reminders vs created product reviews, and the change journal. Localized cart, checkout and shop URLs in meta.urls, per-section timings in meta.timings, 60 s cache, a failing section returns {\"error\"} without breaking the response."
 msgstr ""
 
 #: includes/class-playbooks.php:29
@@ -2847,7 +2855,7 @@ msgid "One-Call Guardian Snapshot & Change Journal"
 msgstr ""
 
 #: includes/class-playbooks.php:330
-msgid "Nightly monitoring shortcut: one request returning raw dated figures for PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures and feeds, plus the change journal (updates, activations, gateway settings keys, mu-plugins drift) to explain any anomaly. Thresholds stay on the caller side."
+msgid "Nightly monitoring shortcut: one request returning raw dated figures for PHP fatals, payments, stuck orders, Alma, best-seller stock-outs, schedulers, mail failures, feeds, WhatsApp gateway health, and 30-day review reminders vs created product reviews, plus the change journal (updates, activations, gateway settings keys, mu-plugins drift) to explain any anomaly. Thresholds stay on the caller side."
 msgstr ""
 
 #: includes/class-playbooks.php:341

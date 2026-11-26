@@ -233,6 +233,11 @@ $github_url     = defined('WOO_GET_DATA_AI_GITHUB_REPO') ? WOO_GET_DATA_AI_GITHU
                     <td><code>/tracking/audit</code>, <code>/tracking/orders</code>, <code>/tracking/logs</code></td>
                     <td><?php esc_html_e('Complete 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0) and Google Ads Server-Side conversions: checks API credentials, Action Scheduler health, database log tables, CMP/cookie banner detection, Google Consent Mode v2 signals, inter-plugin cookie name coherence, and recent order transmission status with click identifiers (gclid, wbraid, gbraid, fbp, fbc).', 'woo-get-data-for-ai'); ?></td>
                 </tr>
+                <tr>
+                    <td><strong><?php esc_html_e('Guardian Health Snapshot', 'woo-get-data-for-ai'); ?></strong></td>
+                    <td><code>/guardian/snapshot</code></td>
+                    <td><?php esc_html_e('One-call nightly health snapshot returning raw dated figures only (PHP fatals, payments, stuck orders, Alma shield & unrecovered high tickets, best-seller stock-outs, schedulers, mail failures, Meta feed/CAPI, WhatsApp gateway health, 30-day review funnel, and passive change journal) with zero PII.', 'woo-get-data-for-ai'); ?></td>
+                </tr>
             </tbody>
         </table>
     </div>

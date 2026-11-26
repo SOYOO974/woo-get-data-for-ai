@@ -1,6 +1,6 @@
 # WP Agent Bridge — Project Context & Architecture Memory
 
-> **Last Updated**: 2026-11-25  
+> **Last Updated**: 2026-11-26  
 > **Plugin Identifier / Slug**: `woo-get-data-for-ai`  
 > **Main Plugin File**: `woo-get-data-for-ai/woo-get-data-for-ai.php`  
 > **GitHub Repository**: `https://github.com/SOYOO974/woo-get-data-for-ai`  
@@ -333,7 +333,7 @@ Enables/disables modules on a per-site basis:
 | `GET /tracking/audit` | GET | Master 360° audit of Meta Ads Hybrid Tracking (Pixel + CAPI v21.0), Google Ads Server-Side conversions, cookie banner / CMP detection (native woo-gads, Complianz, Axeptio, Cookiebot), Google Consent Mode v2 signals, inter-plugin cookie name coherence check, and Action Scheduler health |
 | `GET /tracking/orders` | GET | Recent orders with server-side tracking metadata, CAPI sync status, Google Ads conversion status, consent states, and click identifiers (`gclid`, `wbraid`, `gbraid`, `fbp`, `fbc`) (`?limit=20`, `?status=`, `?tracking_filter=all\|failed\|missing_consent\|has_identifiers\|meta_failed\|gads_failed`) |
 | `GET /tracking/logs` | GET | Unified tracking logs from Google Ads database table (`wp_woo_gads_logs`) and Meta CAPI WooCommerce log files (`wfbt-server-side-*.log`) (`?provider=all\|meta\|google_ads`, `?limit=30`) |
-| `GET /guardian/snapshot` | GET | One-call nightly health snapshot, raw dated figures only, thresholds stay on the caller side (`?since=<ISO 8601 UTC>` default now-24h clamped to 31 days, `?top=10` max 50). Sections: `meta`, `php`, `payments`, `orders`, `alma` (null without active alma* gateway), `stock`, `scheduler`, `mail`, `feeds`, `changes`. 60 s transient cache, `meta.timings` per section, failing section returns `{"error"}` with HTTP 200. `meta.urls` gives localized `cart`, `checkout`, `shop` URLs |
+| `GET /guardian/snapshot` | GET | One-call nightly health snapshot, raw dated figures only, thresholds stay on the caller side (`?since=<ISO 8601 UTC>` default now-24h clamped to 31 days, `?top=10` max 50, `?review_since=<YYYY-MM-DD\|ISO 8601>` optional post-fix floor clamped to 30 days). Sections: `meta`, `php`, `payments`, `orders`, `alma` (null without active alma* gateway), `stock`, `scheduler`, `mail`, `feeds`, `whatsapp`, `reviews`, `changes`. 60 s transient cache (keyed by `since`, `top`, `review_since`), `meta.timings` per section, failing section returns `{"error"}` with HTTP 200. `meta.urls` gives localized `cart`, `checkout`, `shop` URLs |
 
 ---
 
@@ -418,6 +418,21 @@ To prevent AI prompt stagnation and trial-and-error querying across 25+ endpoint
 ---
 
 ## 7. Version Changelog
+
+### v1.46.0 (2026-11-26)
+- **Guardian Snapshot — WhatsApp Gateway Health & Post-Purchase Review Funnel (`Guardian_Controller`, `Change_Journal`, `Permissions`, `Playbooks`)** :
+  - **Optional `review_since` Query Parameter (`GET /guardian/snapshot`)** :
+    - Accepts `review_since` (`sanitize_text_field`, `YYYY-MM-DD` in site timezone or ISO 8601), clamped to `[now - 30d, now]` so monitoring callers can ignore pre-fix review reminder history (`review_funnel_since` in `GUARDIAN.md`).
+    - Included in the 60 s transient cache key (`agent_bridge_guardian_*`) without invalidating default 30-day cache hits, and exposed in `meta.review_since`.
+  - **New Read-Only `whatsapp` Section (Zero PII)** :
+    - `enabled` (`bool`): detects active SOYOO / Cloud API / ManyChat bridges via constants (`CC_WHATSAPP_IS_ACTIVE`, `SOYOO_WA_MANYCHAT_ACTIVE`, `JN_WHATSAPP_IS_ACTIVE`), options (`cdc_whatsapp_manychat_enabled`, `soyoo_whatsapp_manychat_enabled`), or non-empty `token` + `phone_id` in `_soyoo_alma_wa_cloud_credentials`.
+    - `banned_connectors` (`string[]`): flags active plugins matching `wawp`, `ultramsg`, or `wp-whatsapp-wawp`, plus active WPCode (`wpcode` CPT `publish`) and Code Snippets (`{$wpdb->prefix}snippets` `active = 1`) whose uncommented code targets `wawp.net`, `wawp.io`, or `ultramsg.com` without `*_WAWP_IS_ACTIVE` set to `false` (ignoring adapter function names `cc_wawp_*` / `jn_wawp_*`).
+    - 7-day counters: `sent_7d`, `trial_wa_id_skipped_7d` (`Permission denied to import wa_id` / trial `import wa_id` notes), `failed_7d` (`Erreur API WhatsApp%` excluding trial `wa_id` skips + failed Action Scheduler jobs on `*whatsapp*` / `*wawp*` hooks), `triggers_7d` (HPOS & CPT-compatible count of paid/completed orders over 7 days with an eligible `+262 692/693`, `0692/0693`, `+33 6/7`, or `06/07` billing mobile), and PII-scrubbed `last_error` (`<= 160` chars).
+  - **New Read-Only `reviews` Section (Zero PII)** :
+    - Dynamically discovers `{$wpdb->prefix}%_review_email_logs` tables via `SHOW TABLES LIKE` (never targeting Google Maps CSAT flows without `*_review_email_logs`) and inspects columns defensively (`sent_at`, `status`, `channel`).
+    - Returns `reviews_created_30d` (non-trash/spam `review` comments on `product` posts since `review_since`) alongside `reminders_sent_30d`, `reminders_email_30d`, `reminders_whatsapp_30d`, and relative `log_table` (or `null` when no review reminder log table exists).
+  - **PII Scrubbing Hardening (`Change_Journal::scrub()`)** :
+    - Masks raw E.164 phone numbers without `+` (`262692...`, `336...`) and `00`-prefixed international numbers in free-text error excerpts.
 
 ### v1.45.5 (2026-11-25)
 - **Compact Inverted-Pyramid `SKILL.md` Generator (`<= 14 KB`, Zero `read_file` Truncation) (`Playbooks`, `Permissions`, `System_Controller`, `cli/sync.js`)** :
